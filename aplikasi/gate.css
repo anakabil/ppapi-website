@@ -1,0 +1,200 @@
+/* ==========================================================================
+   PPAPI — Gerbang & bilah portal aplikasi anggota  (aplikasi/gate.css)
+   --------------------------------------------------------------------------
+   Dipakai oleh aplikasi/perencanaan/ dan aplikasi/simulator/ bersama gate.js.
+   Halaman aplikasi sengaja TIDAK memuat assets/css/main.css: CSS aplikasi lama
+   memakai selektor umum (header, nav, main, .card, .btn, .tab, .chip …) yang
+   akan bentrok dengan sistem desain situs. Karena itu token warna situs disalin
+   di sini dengan awalan --pp- (nilainya sama persis dengan main.css).
+
+   Isi:
+   1. Token          4. Notifikasi (PPAPI.ui.toast di dalam aplikasi)
+   2. Layar gerbang  5. Gerak dikurangi & cetak
+   3. Bilah portal
+   ========================================================================== */
+
+/* 1. Token ---------------------------------------------------------------- */
+:root {
+  --pp-black: #0a0a0b; --pp-ink: #111113; --pp-graphite: #1a1a1d; --pp-steel: #26262a; --pp-iron: #3a3a3f;
+  --pp-slate: #5c5c63; --pp-gray: #8b8b92; --pp-silver: #b9b9bf; --pp-mist: #dcdcdf; --pp-bone: #ececea;
+  --pp-paper: #f6f6f4; --pp-white: #ffffff;
+  --pp-ok-soft: #a8c0ae; --pp-warn-soft: #d6c290; --pp-err-soft: #d89c95;
+  --pp-metal: linear-gradient(135deg, #f4f4f5 0%, #c4c4c9 30%, #8e8e94 52%, #dadade 72%, #9a9aa0 100%);
+  --pp-metal-line: linear-gradient(90deg, rgba(185,185,191,0) 0%, #c4c4c9 22%, #f4f4f5 50%, #8e8e94 78%, rgba(185,185,191,0) 100%);
+  --pp-f-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --pp-f-cond: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --pp-f-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pp-ease: cubic-bezier(.2,.7,.1,1);
+  /* tinggi bilah portal — aplikasi menggeser tata letaknya sebesar nilai ini */
+  --pbar-h: 48px;
+}
+@media (max-width: 767px) { :root { --pbar-h: 44px; } }
+
+/* 2. Layar gerbang (tampil sampai status keanggotaan dipastikan) ------------ */
+html.app-gate-pending body > :not(#app-gate) { visibility: hidden !important; }
+html.app-gate-pending, html.app-gate-pending body { overflow: hidden; }
+#app-gate {
+  position: fixed; inset: 0; z-index: 1000;
+  display: grid; place-content: center; justify-items: center; gap: 22px;
+  padding: 24px; text-align: center;
+  color: var(--pp-bone); background: var(--pp-black);
+  font: 400 15px/1.6 var(--pp-f-body);
+}
+#app-gate::before {   /* garis rangka perancah samar di latar */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px) 0 0 / 120px 100%,
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 100% 120px;
+}
+html:not(.app-gate-pending) #app-gate { display: none; }
+#app-gate > * { position: relative; }
+.app-gate__logo { width: 148px; height: auto; display: block; }
+.app-gate__spin {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.14); border-top-color: var(--pp-bone);
+  animation: pp-spin 1s linear infinite;
+}
+.app-gate__eyebrow {
+  margin: 0; font: 600 12px/1 var(--pp-f-cond); letter-spacing: .28em; text-transform: uppercase; color: var(--pp-gray);
+}
+.app-gate__msg { margin: 0; max-width: 34ch; color: var(--pp-bone); }
+.app-gate__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.app-gate__actions a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px;
+  color: var(--pp-bone); text-decoration: none; border: 1px solid rgba(255,255,255,.24); border-radius: 2px;
+  font: 600 13px/1 var(--pp-f-cond); letter-spacing: .16em; text-transform: uppercase;
+}
+.app-gate__actions a:first-child { color: var(--pp-ink); background: var(--pp-bone); border-color: var(--pp-bone); }
+.app-gate__actions a:focus-visible { outline: 2px solid var(--pp-bone); outline-offset: 3px; }
+#app-gate.is-error .app-gate__spin { display: none; }
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+
+/* 3. Bilah portal --------------------------------------------------------- */
+.pp-bar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 0;
+  height: var(--pbar-h); padding: 0 clamp(8px, 2vw, 20px);
+  color: var(--pp-bone); background: var(--pp-black);
+  font: 500 13px/1 var(--pp-f-body); letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+.pp-bar::after {    /* garis logam tipis di tepi bawah */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: var(--pp-metal-line); opacity: .45; pointer-events: none;
+}
+.pp-bar *, .pp-bar *::before, .pp-bar *::after { box-sizing: border-box; }
+.pp-bar svg { display: block; flex: none; }
+.pp-bar a, .pp-bar button {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; margin: 0; padding: 0 10px;
+  color: inherit; background: none; border: 0; border-radius: 2px;
+  font: inherit; letter-spacing: inherit; text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp-bar a:hover, .pp-bar button:hover { color: var(--pp-white); background: rgba(255,255,255,.06); }
+.pp-bar a:focus-visible, .pp-bar button:focus-visible { outline: 2px solid var(--pp-bone); outline-offset: -2px; }
+.pp-sr {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.pp-skip {
+  position: fixed; left: 12px; top: 8px; z-index: 1100; padding: 12px 18px;
+  font: 600 14px/1 var(--pp-f-body); color: var(--pp-ink); background: var(--pp-white);
+  text-decoration: none; border-radius: 2px; transform: translateY(-160%);
+}
+.pp-skip:focus, .pp-skip:focus-visible {
+  transform: none; outline: 2px solid var(--pp-black); outline-offset: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12), 0 24px 60px rgba(0,0,0,.18);
+}
+.pp-bar__back { flex: none; font-weight: 600; }
+.pp-bar__back-short { display: none; }
+.pp-bar__back svg { transition: transform .35s var(--pp-ease); }
+.pp-bar__back:hover svg { transform: translateX(-3px); }
+.pp-bar__sep { flex: none; width: 1px; height: 20px; margin: 0 6px; background: rgba(255,255,255,.18); }
+.pp-bar__title {
+  flex: 1 1 auto; min-width: 0; margin: 0 0 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 12.5px/1 var(--pp-f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--pp-silver);
+}
+.pp-bar__title-short { display: none; }
+.pp-bar__demo {
+  flex: none; margin: 0 6px 0 10px; padding: 4px 8px;
+  font: 600 10.5px/1 var(--pp-f-cond); letter-spacing: .18em; text-transform: uppercase;
+  color: var(--pp-warn-soft); border: 1px solid rgba(214,194,144,.4); border-radius: 2px;
+}
+.pp-bar__user { flex: none; max-width: 40ch; }
+.pp-bar__avatar {
+  display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%;
+  font: 600 11px/1 var(--pp-f-cond); letter-spacing: .06em; color: var(--pp-white);
+  background: linear-gradient(var(--pp-steel), var(--pp-steel)) padding-box, var(--pp-metal) border-box;
+  border: 1.5px solid transparent; overflow: hidden;
+}
+.pp-bar__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 24ch; }
+.pp-bar__badge {
+  flex: none; padding: 4px 7px 3px;
+  font: 600 10.5px/1 var(--pp-f-cond); letter-spacing: .16em; text-transform: uppercase;
+  color: var(--pp-bone); border: 1px solid rgba(255,255,255,.26); border-radius: 2px;
+}
+.pp-bar__badge--admin { color: var(--pp-ink); border-color: transparent; background: var(--pp-metal); }
+.pp-bar__out { flex: none; color: var(--pp-silver) !important; }
+.pp-bar__out:hover { color: var(--pp-white) !important; }
+
+@media (max-width: 1023px) {
+  .pp-bar__title-long { display: none; }
+  .pp-bar__title-short { display: inline; }
+  .pp-bar__name { max-width: 16ch; }
+}
+@media (max-width: 767px) {
+  .pp-bar { padding: 0 4px; }
+  .pp-bar a, .pp-bar button { padding: 0 8px; }
+  .pp-bar__back-long, .pp-bar__name, .pp-bar__badge, .pp-bar__demo, .pp-bar__out span { display: none; }
+  .pp-bar__back-short { display: inline; }
+  .pp-bar__out { min-width: 44px; justify-content: center; }
+  .pp-bar__user { padding: 0 6px !important; min-width: 44px; justify-content: center; }
+  .pp-bar__title { font-size: 12px; letter-spacing: .12em; }
+}
+
+/* 4. Notifikasi — tampilan PPAPI.ui.toast di halaman aplikasi ---------------- */
+.toast-region {
+  position: fixed; z-index: 300; right: clamp(16px, 3vw, 32px); bottom: clamp(16px, 3vw, 32px);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  width: min(420px, calc(100vw - 32px)); pointer-events: none;
+  font: 400 14.5px/1.55 var(--pp-f-body);
+}
+.toast {
+  --toast-accent: var(--pp-silver);
+  pointer-events: auto; position: relative; overflow: hidden; box-sizing: border-box;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start;
+  width: 100%; padding: 15px 10px 15px 18px;
+  color: var(--pp-bone); background: rgba(26,26,29,.97);
+  border: 1px solid rgba(255,255,255,.1); border-left: 2px solid var(--toast-accent); border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12), 0 24px 60px rgba(0,0,0,.18);
+  animation: pp-toast-in .5s var(--pp-ease) both;
+}
+.toast .icon { display: block; }
+.toast__icon { margin-top: 1px; color: var(--toast-accent); }
+.toast__msg { padding-top: 1px; }
+.toast__close {
+  display: grid; place-items: center; width: 32px; height: 32px; margin: -6px 0; padding: 0;
+  color: var(--pp-gray); background: none; border: 0; border-radius: 2px; cursor: pointer;
+}
+.toast__close:hover { color: var(--pp-white); background: rgba(255,255,255,.06); }
+.toast__close:focus-visible { outline: 2px solid var(--pp-bone); outline-offset: 1px; }
+.toast--success { --toast-accent: var(--pp-ok-soft); }
+.toast--warn { --toast-accent: var(--pp-warn-soft); }
+.toast--error { --toast-accent: var(--pp-err-soft); }
+.toast.is-leaving { animation: pp-toast-out .3s var(--pp-ease) forwards; }
+@media (max-width: 479px) { .toast-region { right: 16px; left: 16px; width: auto; align-items: stretch; } }
+@keyframes pp-toast-in { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+@keyframes pp-toast-out { to { opacity: 0; transform: translate3d(16px, 0, 0); } }
+
+/* 5. Gerak dikurangi & cetak ---------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .app-gate__spin { animation: none; border-top-color: rgba(255,255,255,.14); border-color: rgba(255,255,255,.4); }
+  .pp-bar__back svg { transition: none; }
+  .pp-bar__back:hover svg { transform: none; }
+  .toast, .toast.is-leaving { animation: none; }
+}
+@media print {
+  .pp-bar, #app-gate, .toast-region { display: none !important; }
+}

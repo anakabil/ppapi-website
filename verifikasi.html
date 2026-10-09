@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verifikasi Anggota — PPAPI</title>
+  <meta name="description" content="Periksa keabsahan Kartu Tanda Anggota PPAPI berdasarkan nomor KTA atau nama untuk melihat status keanggotaan, kategori, dan masa berlakunya secara terbatas.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Verifikasi Anggota — PPAPI">
+  <meta property="og:description" content="Periksa keabsahan Kartu Tanda Anggota PPAPI berdasarkan nomor KTA atau nama untuk melihat status keanggotaan, kategori, dan masa berlakunya secara terbatas.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/verifikasi.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="verifikasi" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero page-hero--compact page-hero--center vf-hero" data-hero-img="assets/img/ringlock-pattern.webp">
+      <div data-scaffold data-cols="8" data-rows="3"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Verifikasi Anggota</li></ol>
+        </nav>
+        <p class="eyebrow eyebrow--center">Verifikasi Anggota</p>
+        <h1 class="h1 split-lines">Periksa keabsahan <em>KTA</em></h1>
+        <p class="lead">Pastikan seorang praktisi atau ahli perancah tercatat sebagai anggota PPAPI dengan memeriksa nomor Kartu Tanda Anggota atau namanya.</p>
+      </div>
+    </section>
+
+    <!-- ===================== LOOKUP ===================== -->
+    <section class="section vf-lookup-section" aria-labelledby="vf-form-title">
+      <div class="container container--narrow">
+        <div class="card card--lg card--metal vf-lookup">
+          <div class="vf-lookup__head">
+            <span class="vf-lookup__icon" data-icon="shield-check" data-icon-size="24"></span>
+            <div>
+              <h2 class="vf-lookup__title" id="vf-form-title">Pemeriksaan KTA</h2>
+              <p class="vf-lookup__sub">Masukkan nomor KTA lengkap atau nama anggota.</p>
+            </div>
+          </div>
+
+          <form class="vf-form" data-vf="form" role="search" aria-labelledby="vf-form-title" novalidate>
+            <div class="field" data-vf="field">
+              <label class="field__label" for="vf-q">Nomor KTA atau nama</label>
+              <div class="vf-form__row">
+                <div class="input-icon vf-form__input">
+                  <span data-icon="id-card" data-icon-size="18"></span>
+                  <input class="field__control" id="vf-q" name="kta" type="search" autocomplete="off" spellcheck="false" maxlength="80" placeholder="PPAPI-2026-000123" aria-describedby="vf-q-hint vf-q-err">
+                </div>
+                <button class="btn btn--primary vf-form__btn" type="submit"><span>Periksa</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+              </div>
+              <p class="field__hint" id="vf-q-hint">Format nomor KTA: <span class="vf-code">PPAPI-2026-000123</span>. Huruf besar-kecil dan spasi tidak berpengaruh; pencarian nama menampilkan paling banyak 10 hasil.</p>
+              <p class="field__error" id="vf-q-err" data-vf="error"></p>
+            </div>
+          </form>
+
+          <div class="vf-mine" data-vf="mine" hidden></div>
+        </div>
+
+        <p class="sr-only" role="status" aria-live="polite" data-vf="status"></p>
+        <div class="vf-results" data-vf="results"></div>
+        <script>/* ?kta= (kode QR): catatan & penjelasan di bawah hasil disembunyikan sampai hasil pertama tampil, agar tata letak tidak bergeser */(function (d) { if (!/[?&]kta=[^&]/.test(location.search)) return; var c = d.documentElement; c.classList.add('vf-pending'); setTimeout(function () { c.classList.remove('vf-pending'); }, 4000); })(document);</script>
+
+        <div class="vf-notes">
+          <div class="alert alert--info vf-sample" data-vf="sample" hidden>
+            <span data-icon="info" data-icon-size="20"></span>
+            <div>
+              <p class="alert__title">Data contoh untuk demonstrasi. Daftar resmi dikelola sekretariat.</p>
+              <p class="vf-sample__demo" data-vf="demo-note" hidden>Pada Mode Demo, anggota yang disetujui melalui Konsol Admin juga dapat diperiksa di peramban ini.</p>
+              <p class="vf-sample__try" data-vf="try"></p>
+            </div>
+          </div>
+          <p class="vf-privacy">
+            <span data-icon="lock" data-icon-size="18"></span>
+            <span>Demi pelindungan data pribadi, halaman ini hanya menampilkan data terbatas: nama, nomor KTA, kategori, kompetensi utama, kota, masa berlaku, dan status keanggotaan. Selengkapnya dalam <a class="link" href="kebijakan-privasi.html">Kebijakan Privasi</a>.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CARA KERJA ===================== -->
+    <section class="section section--bone vf-how" aria-labelledby="vf-how-title">
+      <div class="container">
+        <header class="section-head section-head--center" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow eyebrow--center">Cara kerja verifikasi</p>
+            <h2 class="h2" id="vf-how-title">Tiga langkah menuju <em>kepastian</em></h2>
+          </div>
+        </header>
+        <ol class="grid grid--3 vf-steps" role="list" data-reveal-stagger>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">01 <span>/ 03</span></span><span class="feature__icon" data-icon="qr-code" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Pindai QR pada KTA</h3>
+            <p class="feature__text">Kode QR pada Kartu Tanda Anggota digital membuka halaman ini dengan nomor KTA yang sudah terisi.</p>
+          </li>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">02 <span>/ 03</span></span><span class="feature__icon" data-icon="search" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Sistem mencocokkan nomor</h3>
+            <p class="feature__text">Nomor dicocokkan dengan daftar verifikasi yang diperbarui sekretariat setiap kali keanggotaan disetujui, tanpa terpengaruh huruf besar-kecil maupun spasi.</p>
+          </li>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">03 <span>/ 03</span></span><span class="feature__icon" data-icon="shield-check" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Status ditampilkan</h3>
+            <p class="feature__text">Hasil memperlihatkan status keanggotaan dan masa berlakunya, beserta data publik yang terbatas.</p>
+          </li>
+        </ol>
+        <div class="vf-how__foot" data-reveal>
+          <p>Belum tercatat sebagai anggota PPAPI?</p>
+          <a class="btn btn--link" href="keanggotaan.html#alur"><span>Pelajari alur pendaftaran</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/registry.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/verifikasi.js" defer></script>
+</body>
+</html>

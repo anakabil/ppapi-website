@@ -1,0 +1,20 @@
+# PPAPI — Perkumpulan Praktisi dan Ahli Perancah Indonesia
+# Semua halaman boleh dirayapi (crawl).
+#
+# Halaman anggota (dashboard.html, anggota.html) dan galeri komponen internal
+# (styleguide.html) TIDAK diblokir di sini, karena masing-masing sudah memuat
+# <meta name="robots" content="noindex">. Mesin pencari hanya dapat membaca tanda
+# noindex itu bila halamannya boleh dirayapi; jika diblokir dengan "Disallow",
+# alamatnya justru tetap bisa muncul di hasil pencarian tanpa isi.
+# (Pola "Disallow: /*anggota.html" juga ikut memblokir keanggotaan.html.)
+#
+# Catatan: robots.txt hanya dibaca di akar domain. Bila situs berada di subfolder
+# repositori (https://<user>.github.io/<repo>/), berkas ini tidak berpengaruh;
+# tanda noindex di halaman tetap berlaku.
+#
+# Sitemap belum dicantumkan karena alamat akhir situs belum ditetapkan. Setelah
+# situs online, tambahkan baris seperti:
+# Sitemap: https://<alamat-situs>/sitemap.xml
+
+User-agent: *
+Allow: /

@@ -1,0 +1,356 @@
+/* ==========================================================================
+   PPAPI — agenda.css  (Agenda Kegiatan)
+   Hanya memakai token dari main.css. Semua selektor dibatasi
+   body[data-page="agenda"].
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   HERO
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-hero { --hero-pos: 50% 38%; }
+/* baris ringkasan hero diisi agenda.js: pesan tingginya (1 baris; 2–3 baris di
+   ponsel, tempat ketiga butirnya terlipat) agar konten di bawah hero tidak bergeser */
+body[data-page="agenda"] #agenda-hero-meta:empty { min-height: calc(.74rem * 1.4); }
+@media (max-width: 559px) { body[data-page="agenda"] #agenda-hero-meta:empty { min-height: calc(.74rem * 2.8 + 10px); } }
+@media (max-width: 359px) { body[data-page="agenda"] #agenda-hero-meta:empty { min-height: calc(.74rem * 4.2 + 20px); } }
+html.no-js body[data-page="agenda"] #agenda-hero-meta { display: none; }
+
+/* --------------------------------------------------------------------------
+   AGENDA TERDEKAT — panel gelap + hitung mundur
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-next { padding-bottom: clamp(16px, 3vw, 40px); }
+
+body[data-page="agenda"] .agenda-feature {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "aside" "body" "actions";
+  gap: 32px;
+  padding: clamp(28px, 4.5vw, 64px);
+  color: var(--text); background: var(--c-graphite);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: var(--shadow-2);
+}
+body[data-page="agenda"] .agenda-feature::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: var(--noise); opacity: .55;
+}
+body[data-page="agenda"] .agenda-feature::before {
+  /* garis logam tipis di tepi atas */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--metal); opacity: .85;
+}
+body[data-page="agenda"] .agenda-feature__scaffold {
+  position: absolute; top: 0; bottom: 0; right: 0; width: 48%; z-index: -1; pointer-events: none;
+  color: rgba(185,185,191,.08);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, var(--c-black) 45%); mask-image: linear-gradient(90deg, transparent 0%, var(--c-black) 45%);
+}
+body[data-page="agenda"] .agenda-feature__scaffold .scaffold-draw { color: inherit; }
+@media (min-width: 1024px) {
+  body[data-page="agenda"] .agenda-feature {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-areas: "head aside" "body aside" "actions aside";
+    gap: 28px clamp(48px, 6vw, 96px);
+  }
+}
+
+body[data-page="agenda"] .agenda-feature__head { grid-area: head; min-width: 0; }
+body[data-page="agenda"] .agenda-feature__eyebrow { color: var(--c-silver); margin-bottom: 24px; }
+body[data-page="agenda"] .agenda-feature__title {
+  max-width: 24ch; margin-top: 14px;
+  font: 600 clamp(1.95rem, 3.3vw, 3rem)/1.08 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.01em; color: var(--c-white);
+}
+body[data-page="agenda"] .agenda-feature__title a {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px; background-position: 0 96%; background-repeat: no-repeat;
+  transition: background-size .8s var(--ease);
+}
+body[data-page="agenda"] .agenda-feature__title a:hover,
+body[data-page="agenda"] .agenda-feature__title a:focus-visible { background-size: 100% 1px; }
+
+body[data-page="agenda"] .agenda-feature__body { grid-area: body; min-width: 0; }
+body[data-page="agenda"] .agenda-feature__desc {
+  max-width: 62ch; font-weight: 300; font-size: 1.06rem; line-height: 1.7; color: var(--c-silver);
+}
+body[data-page="agenda"] .agenda-feature__facts {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 32px;
+  margin: 28px 0 0; border-top: 1px solid var(--line);
+}
+@media (min-width: 560px) {
+  body[data-page="agenda"] .agenda-feature__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body[data-page="agenda"] .agenda-feature__facts > div { padding: 16px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+body[data-page="agenda"] .agenda-feature__facts dt {
+  display: flex; align-items: center; gap: 8px;
+  font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="agenda"] .agenda-feature__facts dd { margin: 6px 0 0; color: var(--c-bone); }
+body[data-page="agenda"] .agenda-feature__actions { grid-area: actions; display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px; }
+
+body[data-page="agenda"] .agenda-feature__aside { grid-area: aside; display: flex; align-items: center; min-width: 0; }
+@media (min-width: 1024px) {
+  body[data-page="agenda"] .agenda-feature__aside { padding-left: clamp(40px, 5vw, 72px); border-left: 1px solid var(--line); }
+}
+
+/* Panel kerangka (HTML statis) — memesan ruang setinggi panel jadi agar jadwal
+   tidak terdorong saat agenda.js mengisi panel. Tinggi minimum mengikuti
+   ukuran panel terisi pada tiap rentang lebar layar. */
+body[data-page="agenda"] .agenda-feature--placeholder {
+  align-content: start; pointer-events: none; min-height: 1260px;
+}
+@media (min-width: 560px) { body[data-page="agenda"] .agenda-feature--placeholder { min-height: 940px; } }
+@media (min-width: 1024px) { body[data-page="agenda"] .agenda-feature--placeholder { min-height: 820px; } }
+html.no-js body[data-page="agenda"] #terdekat { display: none; }
+body[data-page="agenda"] .agenda-feature--placeholder .agenda-feature__eyebrow { margin-bottom: 26px; }
+body[data-page="agenda"] .agenda-ph { display: block; height: 12px; width: 92%; }
+body[data-page="agenda"] .agenda-ph + .agenda-ph { margin-top: 14px; }
+body[data-page="agenda"] .agenda-ph--meta { width: 168px; height: 22px; }
+body[data-page="agenda"] .agenda-ph.agenda-ph--title { width: 86%; height: clamp(28px, 3vw, 40px); margin-top: 18px; }
+body[data-page="agenda"] .agenda-ph.agenda-ph--short { width: 54%; }
+body[data-page="agenda"] .agenda-ph--label { width: 116px; }
+body[data-page="agenda"] .agenda-ph-cd { display: grid; gap: 18px; width: 100%; }
+body[data-page="agenda"] .agenda-ph-cd__units {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px);
+  padding: 24px 0 20px; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
+}
+body[data-page="agenda"] .agenda-ph-cd__units .skeleton__line { width: 100%; height: clamp(64px, 7vw, 92px); }
+
+/* panel terisi: isi muncul halus di dalam panel yang sudah berdiri */
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="agenda"] .agenda-feature.is-filled > :not(.agenda-feature__scaffold) { animation: agenda-fill-in .7s var(--ease) both; }
+  body[data-page="agenda"] .agenda-feature.is-filled > .agenda-feature__aside { animation-delay: 90ms; }
+  body[data-page="agenda"] .agenda-feature.is-filled > .agenda-feature__body { animation-delay: 140ms; }
+  body[data-page="agenda"] .agenda-feature.is-filled > .agenda-feature__actions { animation-delay: 190ms; }
+}
+@keyframes agenda-fill-in { from { opacity: 0; } }
+
+/* hitung mundur */
+body[data-page="agenda"] .agenda-cd { width: 100%; }
+body[data-page="agenda"] .agenda-cd__label {
+  margin-bottom: 18px;
+  font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-silver);
+}
+body[data-page="agenda"] .agenda-cd__units {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
+}
+body[data-page="agenda"] .agenda-cd__unit { position: relative; display: grid; gap: 12px; padding: 24px 0 20px; min-width: 0; }
+body[data-page="agenda"] .agenda-cd__unit + .agenda-cd__unit { padding-left: clamp(16px, 2vw, 28px); border-left: 1px solid var(--line); }
+body[data-page="agenda"] .agenda-cd__unit + .agenda-cd__unit::before {
+  content: ""; position: absolute; left: -3px; top: -3px; width: 5px; height: 5px; background: var(--c-silver);
+}
+body[data-page="agenda"] .agenda-cd__num {
+  font: 500 clamp(3.4rem, 6.4vw, 5.4rem)/.9 var(--f-cond); letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums lining-nums;
+  background: var(--metal); -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+body[data-page="agenda"] .agenda-cd__unit-label {
+  font: 600 .72rem/1 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="agenda"] .agenda-cd__live {
+  padding: 22px 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
+  font: italic 500 clamp(2rem, 3.4vw, 2.8rem)/1.1 var(--f-display); font-variant-numeric: lining-nums; color: var(--c-white);
+}
+body[data-page="agenda"] .agenda-cd__note {
+  margin-top: 18px;
+  font: 600 .74rem/1.5 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--c-silver);
+}
+
+/* --------------------------------------------------------------------------
+   TOOLBAR
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-schedule { padding-top: clamp(64px, 8vw, 112px); }
+body[data-page="agenda"] .agenda-schedule .section-head { margin-bottom: clamp(28px, 4vw, 44px); }
+body[data-page="agenda"] .agenda-toolbar {
+  display: grid; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line);
+}
+body[data-page="agenda"] .agenda-toolbar__top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 32px;
+}
+body[data-page="agenda"] .agenda-tabs { background: var(--surface); }
+body[data-page="agenda"] .agenda-tabs .segmented__option { min-height: 48px; padding: 0 22px; font-size: .8rem; }
+/* angka penghitung: dibedakan lewat bobot & warna token (bukan opacity) agar
+   kontras tetap ≥ 4.5:1 di kedua keadaan */
+body[data-page="agenda"] .agenda-tabs__count {
+  min-width: 1.6em; font-weight: 400; letter-spacing: .04em; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+body[data-page="agenda"] .agenda-tabs .segmented__option[aria-pressed="true"] .agenda-tabs__count { color: var(--c-silver); }
+body[data-page="agenda"] .agenda-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; min-width: 0; }
+body[data-page="agenda"] .agenda-filter__label {
+  min-width: 3.4em;
+  font: 600 .7rem/1 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="agenda"] .agenda-mode { background: var(--surface); }
+body[data-page="agenda"] .agenda-mode .segmented__option { min-height: 38px; padding: 0 14px; font-size: .72rem; }
+body[data-page="agenda"] .agenda-filter--jenis .filter-chips { flex: 1; min-width: 0; }
+/* jenis tanpa agenda pada penyaring aktif: tetap dapat dipilih (menampilkan
+   keterangan kosong), ditandai teks redup + garis putus-putus — tanpa opacity */
+body[data-page="agenda"] .chip.is-zero { color: var(--muted); border-style: dashed; border-color: var(--line-strong); }
+body[data-page="agenda"] .chip.is-zero:hover { color: var(--text); border-color: var(--text); }
+body[data-page="agenda"] .chip.is-zero .chip__count { opacity: 1; }
+@media (max-width: 767px) {
+  body[data-page="agenda"] .agenda-tabs { display: flex; width: 100%; }
+  body[data-page="agenda"] .agenda-tabs .segmented__option { flex: 1 1 0; padding: 0 10px; }
+  body[data-page="agenda"] .agenda-filter { display: grid; gap: 10px; width: 100%; }
+  body[data-page="agenda"] .agenda-mode { display: flex; width: 100%; }
+  body[data-page="agenda"] .agenda-mode .segmented__option { flex: 1 1 0; padding: 0 6px; }
+}
+@media (pointer: coarse) { body[data-page="agenda"] .agenda-mode .segmented__option { min-height: 44px; } }
+
+body[data-page="agenda"] .agenda-status {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 24px;
+  min-height: 44px; padding: 14px 0 clamp(24px, 3.5vw, 40px);
+}
+body[data-page="agenda"] .agenda-status__text {
+  font: 600 .76rem/1.5 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   DAFTAR PER BULAN
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-month { display: grid; grid-template-columns: minmax(0, 1fr); }
+body[data-page="agenda"] .agenda-month + .agenda-month { margin-top: clamp(40px, 5vw, 72px); }
+body[data-page="agenda"] .agenda-month__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--line-strong);
+}
+body[data-page="agenda"] .agenda-month__title { font: 600 clamp(1.75rem, 2.6vw, 2.3rem)/1.05 var(--f-display); font-variant-numeric: lining-nums; }
+body[data-page="agenda"] .agenda-month__year { font-style: italic; font-weight: 500; color: var(--em); }
+body[data-page="agenda"] .agenda-month__count {
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+@media (min-width: 1024px) {
+  body[data-page="agenda"] .agenda-month { grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+  body[data-page="agenda"] .agenda-month__head {
+    position: sticky; top: calc(var(--header-offset) + 24px); align-self: start;
+    display: grid; gap: 10px; padding: 22px 0 0; border-bottom: 0; border-top: 1px solid var(--line-strong);
+  }
+  body[data-page="agenda"] .agenda-month__head::before {
+    content: ""; position: absolute; left: 0; top: -3px; width: 5px; height: 5px; background: var(--text);
+  }
+  body[data-page="agenda"] .agenda-month__list { border-top: 1px solid var(--line-strong); }
+}
+
+/* baris agenda */
+body[data-page="agenda"] .agenda-row { padding: 26px 0; transition: background-color .6s var(--ease); }
+body[data-page="agenda"] .agenda-row .date-block { width: 88px; min-width: 0; }
+body[data-page="agenda"] .agenda-row .event-row__title {
+  /* h4 semantik: kembalikan ke gaya judul serif */
+  font: 600 1.42rem/1.25 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: 0; text-transform: none;
+  margin: 10px 0 10px;
+}
+body[data-page="agenda"] .agenda-row .event-row__title a {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px; background-position: 0 96%; background-repeat: no-repeat;
+  transition: background-size .7s var(--ease);
+}
+body[data-page="agenda"] .agenda-row .event-row__title a:hover,
+body[data-page="agenda"] .agenda-row .event-row__title a:focus-visible { text-decoration: none; background-size: 100% 1px; }
+body[data-page="agenda"] .agenda-row .event-row__info { gap: 6px 20px; }
+body[data-page="agenda"] .agenda-row .event-row__info svg { color: var(--faint); }
+body[data-page="agenda"] .agenda-row__ics { gap: 8px; }
+body[data-page="agenda"] .agenda-row__ics > svg { flex: none; }
+body[data-page="agenda"] .date-block__day { white-space: nowrap; }
+@media (max-width: 767px) {
+  body[data-page="agenda"] .agenda-row { gap: 16px 18px; }
+  body[data-page="agenda"] .agenda-row .event-row__aside { grid-column: 1 / -1; align-items: center; gap: 10px 22px; }
+  body[data-page="agenda"] .agenda-row .date-block { width: 84px; padding-inline: 6px; }
+  body[data-page="agenda"] .date-block--range .date-block__day { font-size: 1.45rem; }
+}
+@media (min-width: 768px) {
+  body[data-page="agenda"] .agenda-row .event-row__aside { flex-direction: column; align-items: stretch; gap: 6px; min-width: 200px; }
+  body[data-page="agenda"] .agenda-row__ics { justify-content: center; }
+}
+body[data-page="agenda"] .agenda-row.is-target { background: var(--hover-bg); }
+body[data-page="agenda"] .agenda-empty .empty-state { background: var(--surface); }
+
+/* --------------------------------------------------------------------------
+   MODAL DETAIL
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-modal { display: grid; gap: 24px; padding-bottom: 20px; }
+body[data-page="agenda"] .agenda-modal > * { margin: 0; }
+body[data-page="agenda"] .agenda-modal__top { display: flex; align-items: center; gap: 20px; }
+body[data-page="agenda"] .agenda-modal__top .date-block { flex: none; width: 92px; }
+body[data-page="agenda"] .agenda-modal__when { min-width: 0; }
+body[data-page="agenda"] .agenda-modal__when .event-row__meta { margin-top: 10px; }
+body[data-page="agenda"] .agenda-modal .agenda-modal__date { font: 600 1.32rem/1.25 var(--f-display); font-variant-numeric: lining-nums; color: var(--text); }
+body[data-page="agenda"] .agenda-modal .agenda-modal__rel {
+  margin-top: 4px;
+  font: 600 .74rem/1.4 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="agenda"] .agenda-modal .agenda-modal__desc { font-size: 1.02rem; line-height: 1.75; color: var(--text); }
+body[data-page="agenda"] .agenda-modal__muted { color: var(--muted); }
+body[data-page="agenda"] .agenda-modal__facts { grid-template-columns: minmax(0, 1fr); column-gap: clamp(20px, 3vw, 32px); }
+@media (min-width: 360px) {
+  body[data-page="agenda"] .agenda-modal__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body[data-page="agenda"] .agenda-modal__facts .kv__row { padding: 12px 0; align-content: start; }
+body[data-page="agenda"] .agenda-modal__facts dd { line-height: 1.5; }
+body[data-page="agenda"] .agenda-modal__actions {
+  display: grid; gap: 18px 32px; align-items: center; padding-top: 4px;
+}
+@media (min-width: 768px) {
+  body[data-page="agenda"] .agenda-modal__actions { grid-template-columns: minmax(0, 1fr) auto; }
+}
+body[data-page="agenda"] .agenda-modal__hints { display: grid; gap: 8px; min-width: 0; }
+body[data-page="agenda"] .agenda-modal .agenda-modal__hint {
+  display: flex; align-items: flex-start; gap: 10px; font-size: .88rem; line-height: 1.55; color: var(--muted);
+}
+body[data-page="agenda"] .agenda-modal__hint > svg { flex: none; margin-top: 2px; }
+body[data-page="agenda"] .agenda-modal__buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+@media (max-width: 479px) {
+  body[data-page="agenda"] .agenda-modal { gap: 20px; }
+  body[data-page="agenda"] .agenda-modal__top { align-items: flex-start; gap: 16px; }
+  body[data-page="agenda"] .agenda-modal__top .date-block { width: 80px; }
+  body[data-page="agenda"] .agenda-modal .agenda-modal__date { font-size: 1.18rem; }
+  body[data-page="agenda"] .agenda-modal__buttons { flex-direction: column-reverse; }
+  body[data-page="agenda"] .agenda-modal__buttons .btn { width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   TAUTAN LANJUTAN (pita tulang)
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-cross__grid {
+  display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--line-strong);
+}
+/* three links: stacked rows below 1024px, three hairline-separated columns from 1024px */
+@media (min-width: 1024px) { body[data-page="agenda"] .agenda-cross__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+body[data-page="agenda"] .agenda-cross__card {
+  --cross-gap: clamp(24px, 3vw, 44px);
+  position: relative; display: grid; align-content: start; gap: 14px;
+  padding: clamp(28px, 4vw, 44px) 0; color: var(--text); border-bottom: 1px solid var(--line);
+}
+body[data-page="agenda"] .agenda-cross__card:last-child { border-bottom: 0; }
+@media (min-width: 1024px) {
+  body[data-page="agenda"] .agenda-cross__card { padding: 40px var(--cross-gap) 32px 0; border-bottom: 0; }
+  body[data-page="agenda"] .agenda-cross__card + .agenda-cross__card { padding-left: var(--cross-gap); border-left: 1px solid var(--line); }
+  body[data-page="agenda"] .agenda-cross__card:last-child { padding-right: 0; }
+}
+body[data-page="agenda"] .agenda-cross__card::before {
+  content: ""; position: absolute; left: 0; top: -1px; width: 48px; height: 1px; background: var(--text);
+  transition: width .9s var(--ease);
+}
+@media (min-width: 1024px) { body[data-page="agenda"] .agenda-cross__card + .agenda-cross__card::before { left: var(--cross-gap); } }
+body[data-page="agenda"] .agenda-cross__card:hover::before { width: 100%; }
+@media (min-width: 1024px) {
+  body[data-page="agenda"] .agenda-cross__card:hover::before { width: calc(100% - var(--cross-gap)); }
+  body[data-page="agenda"] .agenda-cross__card + .agenda-cross__card:not(:last-child):hover::before { width: calc(100% - 2 * var(--cross-gap)); }
+}
+body[data-page="agenda"] .agenda-cross__title { font: 600 clamp(1.8rem, 3vw, 2.4rem)/1.1 var(--f-display); font-variant-numeric: lining-nums; }
+body[data-page="agenda"] .agenda-cross__text { max-width: 46ch; color: var(--muted); }
+body[data-page="agenda"] .agenda-cross__go {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 44px;
+  font: 600 .78rem/1 var(--f-cond); letter-spacing: .16em; text-transform: uppercase;
+}
+body[data-page="agenda"] .agenda-cross__go svg { transition: transform .5s var(--ease); }
+body[data-page="agenda"] .agenda-cross__card:hover .agenda-cross__go svg { transform: translateX(4px); }
+
+@media print {
+  body[data-page="agenda"] .agenda-toolbar,
+  body[data-page="agenda"] .agenda-status,
+  body[data-page="agenda"] .agenda-cross,
+  body[data-page="agenda"] .event-row__aside,
+  body[data-page="agenda"] .agenda-feature__actions,
+  body[data-page="agenda"] .agenda-feature__scaffold { display: none !important; }
+  body[data-page="agenda"] .agenda-feature { background: none !important; box-shadow: none !important; border: 1px solid var(--line) !important; }
+  body[data-page="agenda"] .agenda-cd__num { color: var(--c-black) !important; -webkit-text-fill-color: var(--c-black) !important; background: none !important; }
+}

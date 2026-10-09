@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kontak &amp; Umpan Balik — PPAPI</title>
+  <meta name="description" content="Sampaikan kritik, saran, pertanyaan, pengaduan, atau apresiasi kepada Sekretariat PPAPI, serta temukan informasi sekretariat dan jawaban atas pertanyaan umum.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Kontak &amp; Umpan Balik — PPAPI">
+  <meta property="og:description" content="Sampaikan kritik, saran, pertanyaan, pengaduan, atau apresiasi kepada Sekretariat PPAPI, serta temukan informasi sekretariat dan jawaban atas pertanyaan umum.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/umpan-balik.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="umpan-balik" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero ub-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/stair-tower.webp" srcset="assets/img/stair-tower-sm.webp 720w, assets/img/stair-tower.webp 1920w" sizes="100vw" alt="" width="1920" height="1280" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Kontak &amp; Umpan Balik</li></ol>
+        </nav>
+        <p class="eyebrow">Kontak &amp; Umpan Balik</p>
+        <h1 class="display split-lines">Setiap masukan<br>memperkokoh <em>standar</em>.</h1>
+        <p class="lead">Sampaikan kritik, saran, pertanyaan, pengaduan, maupun apresiasi kepada Sekretariat PPAPI. Masukan Anda membantu kami meningkatkan layanan bagi praktisi dan ahli perancah.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#formulir"><span>Tulis umpan balik</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="#sekretariat"><span>Informasi sekretariat</span></a>
+        </div>
+        <div class="page-hero__meta">
+          <span><span data-icon="message" data-icon-size="16"></span>Lima kategori masukan</span>
+          <span><span data-icon="user" data-icon-size="16"></span>Dapat dikirim tanpa identitas</span>
+          <span><span data-icon="shield-check" data-icon-size="16"></span>Sesuai Kebijakan Privasi</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FORMULIR + SEKRETARIAT ===================== -->
+    <section class="section ub-main" id="formulir" aria-labelledby="ub-form-heading">
+      <div class="container">
+        <div class="section-head ub-head">
+          <div class="section-head__text" data-reveal>
+            <p class="eyebrow">01 — Kritik &amp; Saran</p>
+            <h2 class="h2" id="ub-form-heading">Sampaikan <em>masukan</em> Anda</h2>
+            <p class="lead muted">Isi formulir berikut dengan jelas dan ringkas. Kolom bertanda <span class="ub-opt-word">opsional</span> boleh dikosongkan, dan pesan juga dapat dikirim tanpa identitas.</p>
+          </div>
+          <div class="ub-guide" data-reveal data-reveal-delay="120">
+            <p class="eyebrow">Panduan singkat</p>
+            <ul class="list-rule list-rule--compact list-rule--nodes ub-guide__list">
+              <li>Satu pesan untuk satu topik agar mudah ditelaah.</li>
+              <li>Sebutkan konteks: kegiatan, lokasi, atau waktu kejadian.</li>
+              <li>Untuk pengaduan, uraikan kronologi secara runtut dan faktual.</li>
+              <li>Cantumkan email aktif bila Anda mengharapkan balasan.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="split split--wide-left split--top ub-layout">
+
+          <!-- Formulir -->
+          <div class="card card--lg card--metal ub-card" data-reveal>
+            <form class="form ub-form" novalidate data-ub-form aria-labelledby="ub-form-heading">
+
+              <!-- 01 Kategori -->
+              <fieldset class="ub-group">
+                <legend class="ub-legend"><span class="ub-legend__num">01</span>Kategori pesan</legend>
+                <div class="segmented ub-seg">
+                  <label><input type="radio" name="kategori" value="Kritik" checked aria-describedby="ub-kat-hint"><span class="segmented__option">Kritik</span></label>
+                  <label><input type="radio" name="kategori" value="Saran" aria-describedby="ub-kat-hint"><span class="segmented__option">Saran</span></label>
+                  <label><input type="radio" name="kategori" value="Pertanyaan" aria-describedby="ub-kat-hint"><span class="segmented__option">Pertanyaan</span></label>
+                  <label><input type="radio" name="kategori" value="Pengaduan" aria-describedby="ub-kat-hint"><span class="segmented__option">Pengaduan</span></label>
+                  <label><input type="radio" name="kategori" value="Apresiasi" aria-describedby="ub-kat-hint"><span class="segmented__option">Apresiasi</span></label>
+                </div>
+                <p class="field__hint ub-kat-hint" id="ub-kat-hint" data-ub-kat-hint>Sampaikan hal yang menurut Anda perlu diperbaiki dari layanan, kegiatan, atau situs PPAPI.</p>
+              </fieldset>
+
+              <!-- 02 Identitas -->
+              <fieldset class="ub-group ub-identity" data-ub-identity>
+                <legend class="ub-legend"><span class="ub-legend__num">02</span>Identitas pengirim</legend>
+                <p class="ub-signed" data-ub-signed hidden></p>
+                <div class="field ub-field-name">
+                  <label class="field__label" for="ub-nama">Nama lengkap</label>
+                  <div class="input-icon"><span data-icon="user" data-icon-size="18"></span><input class="field__control" id="ub-nama" name="nama" type="text" autocomplete="name" maxlength="120" placeholder="Nama sesuai identitas" aria-describedby="ub-nama-err"></div>
+                  <p class="field__error" id="ub-nama-err"></p>
+                </div>
+                <div class="form__row form__row--2">
+                  <div class="field">
+                    <label class="field__label" for="ub-email">Email</label>
+                    <div class="input-icon"><span data-icon="mail" data-icon-size="18"></span><input class="field__control" id="ub-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="200" placeholder="nama@domain.id" aria-describedby="ub-email-err"></div>
+                    <p class="field__error" id="ub-email-err"></p>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="ub-phone">Nomor HP <span class="opt">(opsional)</span></label>
+                    <div class="input-group"><span class="input-group__prefix" aria-hidden="true">+62</span><input class="field__control" id="ub-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="20" placeholder="812-3456-7890" aria-describedby="ub-phone-hint ub-phone-err"></div>
+                    <p class="field__hint" id="ub-phone-hint">Nomor seluler Indonesia, misalnya <span class="nowrap">0812-3456-7890</span>.</p>
+                    <p class="field__error" id="ub-phone-err"></p>
+                  </div>
+                </div>
+                <div class="ub-anon">
+                  <label class="check"><input type="checkbox" name="anonim" id="ub-anon" aria-describedby="ub-anon-hint"><span class="check__box"></span><span class="check__label">Kirim sebagai anonim</span></label>
+                  <p class="field__hint" id="ub-anon-hint" data-ub-anon-hint>Nama, email, dan nomor HP tidak akan dikirim. Sekretariat tidak dapat membalas pesan anonim secara langsung.</p>
+                </div>
+              </fieldset>
+
+              <!-- 03 Pesan -->
+              <fieldset class="ub-group">
+                <legend class="ub-legend"><span class="ub-legend__num">03</span>Isi pesan</legend>
+                <div class="field">
+                  <label class="field__label" for="ub-subjek">Subjek</label>
+                  <input class="field__control" id="ub-subjek" name="subjek" type="text" maxlength="150" placeholder="Ringkasan singkat pesan Anda" aria-describedby="ub-subjek-err">
+                  <p class="field__error" id="ub-subjek-err"></p>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="ub-pesan">Pesan <span class="field__counter" data-ub-counter aria-hidden="true">0 / 2.000</span></label>
+                  <textarea class="field__control ub-textarea" id="ub-pesan" name="pesan" rows="7" maxlength="2000" placeholder="Uraikan kritik, saran, atau pertanyaan Anda…" aria-describedby="ub-pesan-hint ub-pesan-count ub-pesan-err"></textarea>
+                  <p class="field__hint" id="ub-pesan-hint">Minimal 10 karakter. Jangan mencantumkan data sensitif seperti nomor KTP, data kesehatan, atau kata sandi.</p>
+                  <p class="sr-only" id="ub-pesan-count" aria-live="polite" data-ub-count-sr></p>
+                  <p class="field__error" id="ub-pesan-err"></p>
+                </div>
+              </fieldset>
+
+              <!-- 04 Penilaian -->
+              <fieldset class="rating ub-group ub-rating">
+                <legend class="ub-legend"><span class="ub-legend__num">04</span>Penilaian layanan <span class="opt">(opsional)</span></legend>
+                <div class="ub-rating__row">
+                  <div class="rating__stars">
+                    <input type="radio" id="ub-r5" name="rating" value="5"><label for="ub-r5" title="5 dari 5 — Sangat baik"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">5 bintang, sangat baik</span></label>
+                    <input type="radio" id="ub-r4" name="rating" value="4"><label for="ub-r4" title="4 dari 5 — Baik"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">4 bintang, baik</span></label>
+                    <input type="radio" id="ub-r3" name="rating" value="3"><label for="ub-r3" title="3 dari 5 — Cukup"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">3 bintang, cukup</span></label>
+                    <input type="radio" id="ub-r2" name="rating" value="2"><label for="ub-r2" title="2 dari 5 — Kurang"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">2 bintang, kurang</span></label>
+                    <input type="radio" id="ub-r1" name="rating" value="1"><label for="ub-r1" title="1 dari 5 — Sangat kurang"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">1 bintang, sangat kurang</span></label>
+                  </div>
+                  <p class="ub-rating__label" data-ub-rating-label aria-live="polite">Belum dinilai</p>
+                  <button type="button" class="btn btn--link btn--sm ub-rating__clear" data-ub-rating-clear hidden><span>Hapus penilaian</span></button>
+                </div>
+              </fieldset>
+
+              <!-- Persetujuan -->
+              <div class="field ub-consent">
+                <label class="check"><input type="checkbox" name="consent" id="ub-consent" aria-describedby="ub-consent-err"><span class="check__box"></span><span class="check__label">Saya menyetujui pemrosesan data pada formulir ini sesuai <a href="kebijakan-privasi.html">Kebijakan Privasi</a> PPAPI.</span></label>
+                <p class="field__error" id="ub-consent-err"></p>
+              </div>
+
+              <div class="alert alert--err" aria-live="polite" data-ub-alert></div>
+
+              <div class="form__actions ub-actions">
+                <button type="submit" class="btn btn--primary" data-ub-submit><span>Kirim umpan balik</span><span data-icon="send" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                <p class="ub-alt" data-ub-alt hidden></p>
+              </div>
+            </form>
+
+            <div class="ub-success" data-ub-success hidden></div>
+          </div>
+
+          <!-- Sekretariat -->
+          <section class="ub-aside" id="sekretariat" aria-labelledby="sekretariat-title" data-ub-aside>
+            <div class="card card--dark card--lg ub-office" data-reveal data-reveal-delay="120">
+              <div class="ub-office__head">
+                <img class="ub-office__logo" src="assets/img/logo-light.png" alt="PPAPI" width="1200" height="418" loading="lazy" decoding="async">
+                <span class="ub-office__tag">Sekretariat</span>
+              </div>
+              <h2 class="h3 ub-office__title" id="sekretariat-title">Sekretariat PPAPI</h2>
+              <p class="ub-office__org">Perkumpulan Praktisi dan Ahli Perancah Indonesia</p>
+              <div data-ub-office>
+                <ul class="ub-office__list" role="list">
+                  <li class="ub-office__row"><span class="ub-office__ico" data-icon="map-pin" data-icon-size="18"></span><div><p class="ub-office__label">Alamat</p><p class="ub-office__value ub-office__value--fallback">Alamat sekretariat akan segera diperbarui.</p></div></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="section section--bone ub-faq" id="faq" aria-labelledby="ub-faq-heading" data-ub-faq-section>
+      <div class="container">
+        <div class="split split--top split--wide-right">
+          <header class="ub-faq__head" data-reveal>
+            <p class="eyebrow">02 — Pertanyaan Umum</p>
+            <h2 class="h2" id="ub-faq-heading">Pertanyaan yang <em>sering diajukan</em></h2>
+            <p class="lead muted">Jawaban singkat atas hal yang paling sering ditanyakan kepada sekretariat.</p>
+            <a class="btn btn--link mt-3" href="keanggotaan.html"><span>Pertanyaan seputar keanggotaan</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          </header>
+          <div class="ub-faq__list" data-ub-faq data-reveal data-reveal-delay="120"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/organisasi.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/umpan-balik.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dasbor Anggota — PPAPI</title>
+  <meta name="description" content="Dasbor anggota PPAPI: status keanggotaan dan tahapan pendaftaran, agenda terdekat, berita, pengumuman, Produk Pengetahuan, aplikasi anggota, serta pengingat masa berlaku keanggotaan dan sertifikat.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Dasbor Anggota — PPAPI">
+  <meta property="og:description" content="Dasbor anggota PPAPI: status keanggotaan dan tahapan pendaftaran, agenda terdekat, berita, pengumuman, Produk Pengetahuan, aplikasi anggota, serta pengingat masa berlaku keanggotaan dan sertifikat.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/dashboard.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="dashboard" data-auth="required">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== 1. SAPAAN (pita gelap kompak) ===================== -->
+    <section class="page-hero page-hero--compact dash-hero" aria-labelledby="dash-title">
+      <div data-scaffold data-cols="12" data-rows="3" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <div class="dash-hero__row">
+          <div class="dash-hero__who">
+            <span class="avatar avatar--lg dash-hero__avatar" id="dash-avatar" aria-hidden="true"></span>
+            <div class="dash-hero__text">
+              <p class="eyebrow dash-hero__eyebrow" id="dash-eyebrow">Dasbor Anggota</p>
+              <h1 class="h1 dash-hero__title" id="dash-title">Selamat datang</h1>
+              <div class="page-hero__meta dash-hero__meta" id="dash-meta" aria-busy="true">
+                <span class="dash-skel dash-skel--meta" aria-hidden="true"></span>
+                <span class="dash-skel dash-skel--meta-sm" aria-hidden="true"></span>
+                <span class="sr-only">Memuat data keanggotaan…</span>
+              </div>
+            </div>
+          </div>
+          <div class="dash-hero__actions" id="dash-hero-actions"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Galat memuat data keanggotaan (diisi dashboard.js bila perlu) -->
+    <div class="container dash-error-wrap" id="dash-error" hidden></div>
+
+    <!-- =====================================================================
+         A. PUSAT STATUS — keanggotaan BELUM Aktif
+         (Draf · Menunggu Verifikasi · Perlu Perbaikan · Ditolak · Nonaktif · Kedaluwarsa)
+         ===================================================================== -->
+    <div class="dash-view dash-view--status" id="dash-status-view" hidden>
+
+      <section class="dash-sc-wrap" aria-labelledby="dash-sc-title">
+        <div class="container">
+          <article class="dash-sc" id="dash-sc"></article>
+        </div>
+      </section>
+
+      <section class="dash-teaser-sec" aria-labelledby="dash-h-fitur">
+        <div class="container">
+          <header class="dash-panel__head">
+            <div class="dash-panel__heading">
+              <p class="eyebrow">Fitur Anggota</p>
+              <!-- judul, pengantar, dan blok bantuan disesuaikan dashboard.js dengan status (calon anggota · perpanjangan · ditolak) -->
+              <h2 class="dash-panel__title" id="dash-h-fitur">Terbuka setelah keanggotaan <em>Aktif</em></h2>
+              <p class="dash-panel__lead" id="dash-fitur-lead">Fitur berikut tersedia bagi anggota berstatus Aktif.</p>
+            </div>
+          </header>
+          <div class="dash-teasers" id="dash-teasers"></div>
+        </div>
+      </section>
+
+      <section class="dash-help" aria-labelledby="dash-h-help">
+        <div class="container">
+          <header class="dash-help__head">
+            <span class="dash-widget__icon" data-icon="compass" data-icon-size="18"></span>
+            <div>
+              <h2 class="dash-help__title" id="dash-h-help">Informasi keanggotaan</h2>
+              <p class="dash-help__lead" id="dash-help-lead">Halaman publik berikut tetap dapat dibuka kapan saja.</p>
+            </div>
+          </header>
+          <ul class="dash-actions dash-actions--row" role="list" id="dash-help-links">
+            <li><a class="dash-action" href="keanggotaan.html"><span class="dash-action__icon" data-icon="award" data-icon-size="18"></span><span class="dash-action__label">Syarat &amp; kategori keanggotaan</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+            <li><a class="dash-action" href="pustaka.html"><span class="dash-action__icon" data-icon="book" data-icon-size="18"></span><span class="dash-action__label">Katalog Produk Pengetahuan</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+            <li><a class="dash-action" href="agenda.html"><span class="dash-action__icon" data-icon="calendar" data-icon-size="18"></span><span class="dash-action__label">Agenda kegiatan</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+            <li><a class="dash-action" href="umpan-balik.html?kategori=pertanyaan"><span class="dash-action__icon" data-icon="message" data-icon-size="18"></span><span class="dash-action__label">Tanya sekretariat</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- =====================================================================
+         B. DASBOR ANGGOTA — anggota berstatus Aktif (dan admin PPAPI)
+         ===================================================================== -->
+    <div class="dash-view dash-view--active" id="dash-active-view" hidden>
+
+      <!-- 2a. KONSOL ADMIN (khusus admin) — antrean kerja admin menempati tepi pita gelap,
+               di atas ringkasan keanggotaan pribadi (body[data-dash-admin]) -->
+      <div class="dash-admin-wrap">
+        <div class="container">
+          <section class="dash-admin theme-dark" id="dash-admin" aria-labelledby="dash-h-admin" hidden>
+            <div data-scaffold data-cols="5" data-rows="4" data-braces="false"></div>
+            <header class="dash-widget__head">
+              <span class="dash-widget__icon" data-icon="shield" data-icon-size="18"></span>
+              <h2 class="dash-widget__title" id="dash-h-admin">Konsol Admin</h2>
+              <span class="badge badge--metal">Admin</span>
+            </header>
+            <div id="dash-admin-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat ringkasan admin…</span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- 2b. RINGKASAN (KPI) + pengingat masa berlaku. Admin yang keanggotaan pribadinya
+               belum Aktif: baris KPI diganti satu baris "Keanggotaan pribadi" (#dash-self). -->
+      <section class="dash-kpis" aria-labelledby="dash-kpis-title">
+        <h2 class="sr-only" id="dash-kpis-title">Ringkasan keanggotaan</h2>
+        <div class="container">
+          <div class="grid grid--4 dash-kpis__grid" id="dash-kpis" aria-busy="true">
+            <div class="stat stat--card dash-kpi"><div class="skeleton" role="status"><span class="sr-only">Memuat…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div></div>
+            <div class="stat stat--card dash-kpi"><div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div></div>
+            <div class="stat stat--card dash-kpi"><div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div></div>
+            <div class="stat stat--card dash-kpi"><div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div></div>
+          </div>
+          <div class="dash-self" id="dash-self" hidden></div>
+          <div class="dash-renew" id="dash-renew" hidden></div>
+        </div>
+      </section>
+
+      <!-- 3. APLIKASI ANGGOTA (aset aplikasi PPAPI) -->
+      <section class="dash-apps-band" aria-labelledby="dash-h-apps">
+        <div class="container">
+          <header class="dash-panel__head">
+            <div class="dash-panel__heading">
+              <p class="eyebrow">Aset Aplikasi PPAPI</p>
+              <h2 class="dash-panel__title" id="dash-h-apps">Aplikasi <em>Anggota</em></h2>
+              <p class="dash-panel__lead">Perencanaan dan analisis struktur perancah, serta simulator urutan pemasangan perancah tube &amp; coupler.</p>
+            </div>
+            <a class="btn btn--link btn--sm" href="anggota.html#aplikasi"><span>Rincian aplikasi</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+          </header>
+          <div id="dash-apps" aria-busy="true">
+            <div class="skeleton" role="status"><span class="sr-only">Memuat aplikasi…</span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ISI DASBOR -->
+      <div class="dash-body">
+        <div class="container dash-grid">
+
+          <!-- ---------- Kolom utama ---------- -->
+          <div class="dash-main">
+
+            <section class="dash-panel" aria-labelledby="dash-h-agenda">
+              <header class="dash-panel__head">
+                <div class="dash-panel__heading">
+                  <p class="eyebrow">01 — Agenda</p>
+                  <h2 class="dash-panel__title" id="dash-h-agenda">Kegiatan <em>Mendatang</em></h2>
+                  <p class="dash-panel__lead">Kegiatan terdekat dari agenda perkumpulan.</p>
+                </div>
+                <a class="btn btn--link btn--sm" href="agenda.html"><span>Semua agenda</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+              </header>
+              <div class="dash-agenda" id="dash-agenda" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat agenda…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+            <div class="divider divider--left dash-divider" aria-hidden="true"></div>
+
+            <section class="dash-panel" aria-labelledby="dash-h-pustaka">
+              <header class="dash-panel__head">
+                <div class="dash-panel__heading">
+                  <p class="eyebrow">02 — Pengetahuan</p>
+                  <h2 class="dash-panel__title" id="dash-h-pustaka">Produk Pengetahuan <em>Terbaru</em></h2>
+                  <p class="dash-panel__lead">Standar, Code of Practice, petunjuk teknis, dan modul pelatihan PPAPI.</p>
+                </div>
+                <a class="btn btn--link btn--sm" href="pustaka.html"><span>Katalog lengkap</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+              </header>
+              <div id="dash-pustaka" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat Produk Pengetahuan…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+            <div class="divider divider--left dash-divider" aria-hidden="true"></div>
+
+            <section class="dash-panel" aria-labelledby="dash-h-berita">
+              <header class="dash-panel__head">
+                <div class="dash-panel__heading">
+                  <p class="eyebrow">03 — Berita</p>
+                  <h2 class="dash-panel__title" id="dash-h-berita">Berita <em>Terbaru</em></h2>
+                  <p class="dash-panel__lead">Kabar organisasi, kegiatan, dan edukasi perancah.</p>
+                </div>
+                <a class="btn btn--link btn--sm" href="berita.html"><span>Semua berita</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+              </header>
+              <div class="dash-news" id="dash-berita" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat berita…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+            <div class="divider divider--left dash-divider" aria-hidden="true"></div>
+
+            <section class="dash-panel" aria-labelledby="dash-h-regulasi">
+              <header class="dash-panel__head">
+                <div class="dash-panel__heading">
+                  <p class="eyebrow">04 — Regulasi</p>
+                  <h2 class="dash-panel__title" id="dash-h-regulasi">Peraturan <em>Perundang-undangan</em></h2>
+                  <p class="dash-panel__lead">Regulasi kunci yang menjadi rujukan pekerjaan perancah.</p>
+                </div>
+                <a class="btn btn--link btn--sm" href="regulasi.html"><span>Pustaka regulasi</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+              </header>
+              <div id="dash-regulasi" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat regulasi…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- ---------- Kolom samping ---------- -->
+          <aside class="dash-aside" aria-label="Informasi dan pintasan anggota">
+
+            <section class="dash-widget card" aria-labelledby="dash-h-pengumuman">
+              <header class="dash-widget__head">
+                <span class="dash-widget__icon" data-icon="bell" data-icon-size="18"></span>
+                <h2 class="dash-widget__title" id="dash-h-pengumuman">Pengumuman</h2>
+                <span class="dash-widget__count" id="dash-pengumuman-count"></span>
+              </header>
+              <div id="dash-pengumuman" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat pengumuman…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+            <section class="dash-widget card" aria-labelledby="dash-h-sertifikat">
+              <header class="dash-widget__head">
+                <span class="dash-widget__icon" data-icon="certificate" data-icon-size="18"></span>
+                <h2 class="dash-widget__title" id="dash-h-sertifikat">Pengingat Sertifikat</h2>
+              </header>
+              <div id="dash-pengingat" aria-busy="true">
+                <div class="skeleton" role="status"><span class="sr-only">Memuat sertifikat…</span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+              </div>
+            </section>
+
+            <section class="dash-widget card" id="dash-nudge" aria-labelledby="dash-h-profil" hidden>
+              <header class="dash-widget__head">
+                <span class="dash-widget__icon" data-icon="user" data-icon-size="18"></span>
+                <h2 class="dash-widget__title" id="dash-h-profil">Lengkapi Profil</h2>
+              </header>
+              <div id="dash-nudge-body"></div>
+            </section>
+
+            <section class="dash-widget dash-widget--plain" aria-labelledby="dash-h-aksi">
+              <header class="dash-widget__head">
+                <span class="dash-widget__icon" data-icon="grid" data-icon-size="18"></span>
+                <h2 class="dash-widget__title" id="dash-h-aksi">Aksi Cepat</h2>
+              </header>
+              <ul class="dash-actions" role="list">
+                <li><a class="dash-action" href="anggota.html#sertifikat"><span class="dash-action__icon" data-icon="plus" data-icon-size="18"></span><span class="dash-action__label">Tambah sertifikat</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+                <li><a class="dash-action" href="anggota.html#kartu"><span class="dash-action__icon" data-icon="id-card" data-icon-size="18"></span><span class="dash-action__label">Kartu anggota</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+                <li><a class="dash-action" href="pustaka.html"><span class="dash-action__icon" data-icon="book" data-icon-size="18"></span><span class="dash-action__label">Produk pengetahuan</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+                <li><a class="dash-action" href="umpan-balik.html"><span class="dash-action__icon" data-icon="message" data-icon-size="18"></span><span class="dash-action__label">Kirim umpan balik</span><span class="dash-action__go" data-icon="arrow-right" data-icon-size="16"></span></a></li>
+              </ul>
+            </section>
+
+          </aside>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/agenda.js" defer></script>
+  <script src="assets/data/berita.js" defer></script>
+  <script src="assets/data/regulasi.js" defer></script>
+  <script src="assets/data/pustaka.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/dashboard.js" defer></script>
+</body>
+</html>

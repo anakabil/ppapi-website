@@ -1,0 +1,239 @@
+/* ==========================================================================
+   PPAPI — verifikasi.html · Verifikasi Anggota
+   Page-specific styles only; scoped to body[data-page="verifikasi"], tokens only.
+   ========================================================================== */
+body[data-page="verifikasi"] { --vf-overlap: clamp(56px, 7vw, 92px); }
+
+/* ---------- Hero (compact, centred, leaves room for the lookup card) ---------- */
+body[data-page="verifikasi"] .vf-hero {
+  --hero-pos: center 42%;
+  padding-bottom: calc(clamp(36px, 5vw, 52px) + var(--vf-overlap));
+}
+body[data-page="verifikasi"] .vf-hero .lead { max-width: 52ch; }
+body[data-page="verifikasi"] .vf-hero h1 { max-width: 20ch; }
+
+/* ---------- Lookup card ---------- */
+body[data-page="verifikasi"] .vf-lookup-section { padding-top: 0; }
+body[data-page="verifikasi"] .vf-lookup {
+  z-index: 2; margin-top: calc(-1 * var(--vf-overlap));
+  box-shadow: var(--shadow-2);
+}
+body[data-page="verifikasi"] .vf-lookup__head {
+  display: flex; align-items: center; gap: 18px;
+  padding-bottom: 24px; margin-bottom: 26px; border-bottom: 1px solid var(--line);
+}
+body[data-page="verifikasi"] .vf-lookup__icon {
+  position: relative; display: grid; place-items: center; flex: none; width: 56px; height: 56px;
+  color: var(--text); border: 1px solid var(--line-strong); border-radius: 50%;
+}
+body[data-page="verifikasi"] .vf-lookup__icon::after {
+  content: ""; position: absolute; inset: 5px; border-radius: 50%; border: 1px solid var(--line);
+}
+body[data-page="verifikasi"] .vf-lookup__title { font: 600 1.6rem/1.15 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; }
+body[data-page="verifikasi"] .vf-lookup__sub { margin-top: 4px; font-size: .95rem; color: var(--muted); }
+
+body[data-page="verifikasi"] .vf-form .field { gap: 10px; }
+body[data-page="verifikasi"] .vf-form__row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) {
+  body[data-page="verifikasi"] .vf-form__row { grid-template-columns: minmax(0, 1fr) auto; }
+}
+body[data-page="verifikasi"] .vf-form__input .field__control {
+  min-height: 56px; font-size: 1.05rem; letter-spacing: .02em;
+}
+body[data-page="verifikasi"] .vf-form__btn { min-height: 56px; padding-inline: 30px; }
+body[data-page="verifikasi"] .vf-code {
+  font: 600 .92em/1 var(--f-cond); letter-spacing: .1em; color: var(--text); white-space: nowrap;
+}
+
+/* signed-in shortcut */
+body[data-page="verifikasi"] .vf-mine {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+  margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line);
+  font-size: .92rem; color: var(--muted);
+}
+body[data-page="verifikasi"] .vf-mine > svg { color: var(--text); }
+body[data-page="verifikasi"] .vf-mine strong { color: var(--text); font-weight: 600; }
+body[data-page="verifikasi"] .vf-mine .btn { margin-left: auto; }
+@media (max-width: 479px) { body[data-page="verifikasi"] .vf-mine .btn { margin-left: 30px; } }
+
+/* ---------- Results ---------- */
+body[data-page="verifikasi"] .vf-results:empty { display: none; }
+body[data-page="verifikasi"] .vf-results { margin-top: clamp(24px, 3vw, 32px); }
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="verifikasi"] .vf-results > * { animation: fade-up .6s var(--ease) both; }
+}
+
+body[data-page="verifikasi"] .vf-result { --tone: var(--muted); --tone-bg: var(--surface-2); }
+body[data-page="verifikasi"] .vf-result--ok { --tone: var(--ok-fg); --tone-bg: var(--ok-bg); }
+body[data-page="verifikasi"] .vf-result--warn { --tone: var(--warn-fg); --tone-bg: var(--warn-bg); }
+body[data-page="verifikasi"] .vf-result--self { --tone: var(--text); --tone-bg: var(--surface-2); }
+body[data-page="verifikasi"] .vf-result::after {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--tone);
+}
+body[data-page="verifikasi"] .vf-result--self::after { background: var(--metal); }
+body[data-page="verifikasi"] .vf-result--none::after { background: var(--line-strong); }
+
+body[data-page="verifikasi"] .vf-result__head {
+  display: flex; align-items: center; gap: 20px;
+  padding-bottom: 24px; border-bottom: 1px solid var(--line);
+}
+body[data-page="verifikasi"] .vf-seal {
+  position: relative; display: grid; place-items: center; flex: none; width: 68px; height: 68px;
+  color: var(--tone); background: var(--tone-bg); border: 1px solid var(--tone); border-radius: 50%;
+}
+body[data-page="verifikasi"] .vf-seal::after {
+  content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--tone); opacity: .3;
+}
+body[data-page="verifikasi"] .vf-result--none .vf-seal { color: var(--muted); border-color: var(--line-strong); background: transparent; }
+body[data-page="verifikasi"] .vf-result--none .vf-seal::after { border-color: var(--line); opacity: 1; }
+body[data-page="verifikasi"] .vf-result__verdict { min-width: 0; }
+body[data-page="verifikasi"] .vf-result__state {
+  font: 600 clamp(1.5rem, 2.3vw, 1.85rem)/1.15 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--tone);
+}
+body[data-page="verifikasi"] .vf-result--none .vf-result__state,
+body[data-page="verifikasi"] .vf-result--self .vf-result__state { color: var(--text); }
+body[data-page="verifikasi"] .vf-result__state:focus { outline: none; }
+body[data-page="verifikasi"] .vf-result__state:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+body[data-page="verifikasi"] .vf-result__desc { margin-top: 6px; max-width: 58ch; font-size: .95rem; line-height: 1.6; color: var(--muted); }
+body[data-page="verifikasi"] .vf-result__desc strong { color: var(--text); font-weight: 600; }
+body[data-page="verifikasi"] .vf-nowrap { white-space: nowrap; }
+
+body[data-page="verifikasi"] .vf-result__id {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 28px 0 22px;
+}
+body[data-page="verifikasi"] .vf-result__name {
+  font: 600 clamp(1.9rem, 3.4vw, 2.6rem)/1.08 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.01em; color: var(--text-strong);
+}
+body[data-page="verifikasi"] .vf-result__kta {
+  display: flex; align-items: center; gap: 10px; flex-basis: 100%;
+  font: 500 1.15rem/1.2 var(--f-cond); letter-spacing: .14em; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+body[data-page="verifikasi"] .vf-result__kta > span { color: var(--text); }
+body[data-page="verifikasi"] .vf-result__kv dd { font-size: .98rem; }
+body[data-page="verifikasi"] .vf-rel { font-size: .88rem; color: var(--muted); }
+body[data-page="verifikasi"] .vf-rel.text-warn { color: var(--warn-fg); }
+
+body[data-page="verifikasi"] .vf-comps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+body[data-page="verifikasi"] .vf-comps > li { position: relative; padding-left: 18px; line-height: 1.5; }
+body[data-page="verifikasi"] .vf-comps > li::before {
+  content: ""; position: absolute; left: 1px; top: .62em; width: 6px; height: 6px; border: 1px solid var(--text);
+}
+
+body[data-page="verifikasi"] .vf-result__mine {
+  display: flex; align-items: flex-start; gap: 12px; margin-top: 22px; padding: 14px 16px;
+  font-size: .92rem; color: var(--text); background: var(--surface-2); border-radius: var(--radius-sm);
+}
+body[data-page="verifikasi"] .vf-result__mine > svg { margin-top: 2px; flex: none; }
+body[data-page="verifikasi"] .vf-result__alert { margin-top: 22px; }
+
+body[data-page="verifikasi"] .vf-result__mine a.link { font-weight: 600; }
+body[data-page="verifikasi"] .vf-result__err { font-size: .86rem; color: var(--muted); }
+body[data-page="verifikasi"] .vf-result--error::after { background: var(--warn-fg); }
+body[data-page="verifikasi"] .vf-result--none.vf-result--error .vf-seal { color: var(--warn-fg); border-color: var(--warn-fg); background: var(--warn-bg); }
+
+/* slow lookup (Firebase): skeleton in place of the result */
+body[data-page="verifikasi"] .vf-loading { min-height: 220px; justify-content: center; }
+
+body[data-page="verifikasi"] .vf-guide { margin-top: 10px; }
+body[data-page="verifikasi"] .vf-guide > li { color: var(--muted); font-size: .95rem; }
+body[data-page="verifikasi"] .vf-guide > li:last-child { border-bottom: 0; }
+
+body[data-page="verifikasi"] .vf-result__foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 20px;
+  margin-top: 26px;
+}
+body[data-page="verifikasi"] .vf-result--none .vf-result__foot { justify-content: flex-start; padding-top: 22px; border-top: 1px solid var(--line); }
+body[data-page="verifikasi"] .vf-result__checked {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+
+/* name / partial number matches */
+body[data-page="verifikasi"] .vf-list__head { padding-bottom: 20px; border-bottom: 1px solid var(--line-strong); }
+body[data-page="verifikasi"] .vf-list__title { font: 600 1.6rem/1.15 var(--f-display); font-variant-numeric: lining-nums; }
+body[data-page="verifikasi"] .vf-list__title:focus { outline: none; }
+body[data-page="verifikasi"] .vf-list__title:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+body[data-page="verifikasi"] .vf-list__sub { margin-top: 6px; font-size: .95rem; color: var(--muted); }
+body[data-page="verifikasi"] .vf-list__items { list-style: none; margin: 0; padding: 0; }
+body[data-page="verifikasi"] .vf-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px 18px;
+  padding: 18px 0; border-bottom: 1px solid var(--line);
+}
+body[data-page="verifikasi"] .vf-item:last-child { border-bottom: 0; padding-bottom: 4px; }
+body[data-page="verifikasi"] .vf-item__name { font: 600 1.3rem/1.25 var(--f-display); font-variant-numeric: lining-nums; color: var(--text); }
+body[data-page="verifikasi"] .vf-item__name .badge { vertical-align: .2em; margin-left: 4px; }
+body[data-page="verifikasi"] .vf-item__meta {
+  display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 4px; font-size: .88rem; color: var(--muted);
+}
+body[data-page="verifikasi"] .vf-item__kta { font: 500 .95rem/1.4 var(--f-cond); letter-spacing: .1em; color: var(--text); }
+@media (max-width: 479px) { body[data-page="verifikasi"] .vf-item__kta { flex-basis: 100%; } }
+body[data-page="verifikasi"] .vf-item__aside {
+  grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px;
+}
+@media (min-width: 640px) {
+  body[data-page="verifikasi"] .vf-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+  body[data-page="verifikasi"] .vf-item__aside { grid-column: auto; justify-content: flex-end; }
+}
+body[data-page="verifikasi"] .vf-hl {
+  color: inherit; background: rgba(185,185,191,.42); border-radius: 1px; padding: 0 1px;
+}
+body[data-page="verifikasi"] .vf-list__more {
+  display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 16px;
+  border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted);
+}
+
+/* ?kta= on load: content below the (not yet rendered) result stays invisible until it is in place,
+   so its arrival does not shift visible content (class set inline in verifikasi.html, removed by verifikasi.js) */
+html.vf-pending body[data-page="verifikasi"] .vf-notes,
+html.vf-pending body[data-page="verifikasi"] .vf-how { visibility: hidden; }
+
+/* ---------- Notes (sample data + privacy) ---------- */
+body[data-page="verifikasi"] .vf-notes { display: grid; gap: 18px; margin-top: clamp(28px, 4vw, 40px); }
+body[data-page="verifikasi"] .vf-sample .alert__title { font-weight: 500; }
+body[data-page="verifikasi"] .vf-sample__demo { margin-top: 6px; color: var(--muted); }
+body[data-page="verifikasi"] .vf-sample__demo[hidden] { display: none; }
+body[data-page="verifikasi"] .vf-mine__status { display: inline-flex; }
+body[data-page="verifikasi"] .vf-sample__try {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 8px; color: var(--muted);
+}
+body[data-page="verifikasi"] .vf-try__label { margin-right: 4px; }
+body[data-page="verifikasi"] .vf-try__item { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; margin-right: 10px; }
+@media (max-width: 479px) {
+  body[data-page="verifikasi"] .vf-sample__try { display: grid; justify-items: start; gap: 0; }
+}
+body[data-page="verifikasi"] .vf-try {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px;
+  font: 600 .86rem/1 var(--f-cond); letter-spacing: .1em; color: var(--text);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--line-strong);
+  transition: text-decoration-color .3s;
+}
+body[data-page="verifikasi"] .vf-try:hover { text-decoration-color: currentColor; }
+body[data-page="verifikasi"] .vf-try__note { font-size: .85rem; }
+body[data-page="verifikasi"] .vf-privacy {
+  display: flex; align-items: flex-start; gap: 12px; padding: 0 2px;
+  font-size: .88rem; line-height: 1.6; color: var(--muted);
+}
+body[data-page="verifikasi"] .vf-privacy > [data-icon] { margin-top: 2px; color: var(--text); }
+
+/* ---------- How it works ---------- */
+body[data-page="verifikasi"] .vf-steps { list-style: none; margin: 0; padding: 0; }
+body[data-page="verifikasi"] .vf-how__foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 18px;
+  margin-top: clamp(40px, 5vw, 64px); text-align: center; color: var(--muted);
+}
+
+@media (max-width: 479px) {
+  body[data-page="verifikasi"] .vf-lookup__head { gap: 14px; }
+  body[data-page="verifikasi"] .vf-lookup__icon { width: 48px; height: 48px; }
+  body[data-page="verifikasi"] .vf-result__head { align-items: flex-start; gap: 16px; }
+  body[data-page="verifikasi"] .vf-seal { width: 56px; height: 56px; }
+  body[data-page="verifikasi"] .vf-seal::after { inset: -5px; }
+  body[data-page="verifikasi"] .vf-result .kv__row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  body[data-page="verifikasi"] .vf-result__foot .btn { width: 100%; }
+}
+
+@media print {
+  body[data-page="verifikasi"] .vf-form, body[data-page="verifikasi"] .vf-how,
+  body[data-page="verifikasi"] .vf-result__foot .btn, body[data-page="verifikasi"] .vf-mine { display: none !important; }
+  body[data-page="verifikasi"] .vf-lookup { box-shadow: none; margin-top: 0; }
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulir Pendaftaran Anggota — PPAPI</title>
+  <meta name="description" content="Formulir pendaftaran dan perpanjangan anggota PPAPI: pilih kategori, lengkapi data diri dan profesional, dokumen pendukung, serta pernyataan, lalu ajukan untuk diverifikasi sekretariat.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Formulir Pendaftaran Anggota — PPAPI">
+  <meta property="og:description" content="Formulir pendaftaran dan perpanjangan anggota PPAPI: pilih kategori, lengkapi data diri dan profesional, dokumen pendukung, serta pernyataan, lalu ajukan untuk diverifikasi sekretariat.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/pendaftaran.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="pendaftaran" data-auth="required">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== 1. KEPALA HALAMAN (pita gelap kompak) ===================== -->
+    <section class="page-hero page-hero--compact daf-hero" aria-labelledby="daf-title">
+      <div data-scaffold data-cols="12" data-rows="3" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb daf-hero__crumbs" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li><a href="dashboard.html">Dasbor</a></li><li aria-current="page">Formulir Pendaftaran</li></ol>
+        </nav>
+        <div class="daf-hero__row">
+          <div class="daf-hero__text">
+            <p class="eyebrow daf-hero__eyebrow" id="daf-eyebrow">Formulir Pendaftaran Anggota</p>
+            <h1 class="h1 daf-hero__title" id="daf-title">Formulir <em>pendaftaran</em></h1>
+            <p class="daf-hero__lead" id="daf-lead">Memuat data pendaftaran Anda…</p>
+          </div>
+          <div class="daf-hero__status" id="daf-hero-status" aria-live="polite">
+            <span class="daf-skel" aria-hidden="true"></span>
+            <span class="daf-skel daf-skel--sm" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 2. ISI (dirender sesuai status keanggotaan) ===================== -->
+    <section class="section section--tight daf-body" aria-label="Pendaftaran keanggotaan">
+      <div class="container">
+        <div id="daf-root" class="daf-root" aria-busy="true">
+          <div class="daf-loading">
+            <span class="spinner" aria-hidden="true"></span>
+            <p class="daf-loading__text">Menyiapkan formulir pendaftaran…</p>
+          </div>
+        </div>
+        <noscript>
+          <div class="alert alert--warn" role="alert"><div><p class="alert__title">JavaScript dinonaktifkan</p><p>Formulir pendaftaran memerlukan JavaScript. Aktifkan JavaScript pada peramban Anda, lalu muat ulang halaman ini.</p></div></div>
+        </noscript>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/organisasi.js" defer></script>
+  <script src="assets/data/kompetensi.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/pendaftaran.js" defer></script>
+</body>
+</html>

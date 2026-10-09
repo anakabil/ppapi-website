@@ -1,0 +1,341 @@
+/* ==========================================================================
+   Simulator Pemasangan Perancah Tube & Coupler — gaya halaman (aplikasi/simulator/)
+   --------------------------------------------------------------------------
+   Diporting dari simulator.html lama. Kerangka antarmuka (bilah atas, panel,
+   tab, tombol, layar pembuka, notifikasi) memakai bahasa visual PPAPI yang
+   monokrom (token --pp-* dari ../gate.css). Warna fungsional DIPERTAHANKAN
+   hanya di dalam adegan 3D dan legendanya: pita warna jenis klem, tag
+   hijau/merah, garis alat ukur, dan sorotan "ghost" komponen berikutnya.
+   ========================================================================== */
+:root{
+  --sim-bg:#ededeb; --sim-line:rgba(17,17,19,.12); --sim-line-2:rgba(17,17,19,.22);
+  --sim-ink:var(--pp-ink); --sim-text:#2b2b30; --sim-muted:var(--pp-slate); --sim-faint:#6e6e75;
+  /* warna fungsional (alat ukur & status) — selaras dengan objek 3D */
+  --ok:#2e9e5b; --bad:#d0463a; --info:#2f86c4; --amber:#e39a1b;
+  --r:2px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--sim-bg);
+  font:400 14px/1.55 var(--pp-f-body);color:var(--sim-text);overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sim-ink);outline-offset:2px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* panggung 3D — di bawah bilah portal (--pbar-h dari gate.css) */
+#app-main{position:fixed;left:0;right:0;bottom:0;top:var(--pbar-h);overflow:hidden;outline:none}
+#app-main canvas{display:block;position:absolute;inset:0;touch-action:none}
+#app-main canvas:focus-visible{outline:2px solid var(--sim-ink);outline-offset:-4px}
+#vign{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 0%,transparent 58%,rgba(120,120,126,.22) 100%)}
+
+/* ---------- bilah atas: merek + tab modul ---------- */
+#top{position:absolute;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:16px;
+  padding:14px 18px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(237,237,235,.96),rgba(237,237,235,.7) 72%,rgba(237,237,235,0))}
+.brand{display:flex;align-items:center;gap:12px;pointer-events:auto;min-width:0}
+.mark{width:36px;height:36px;flex:none;position:relative;border-radius:var(--r);background:var(--pp-ink);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.mark::before,.mark::after{content:"";position:absolute;background:var(--pp-silver)}
+.mark::before{left:11px;top:7px;width:2px;height:22px;box-shadow:12px 0 0 var(--pp-silver)}
+.mark::after{left:7px;top:17px;width:22px;height:2px;box-shadow:0 -6px 0 rgba(185,185,191,.45),0 6px 0 rgba(185,185,191,.45)}
+.brand h1{margin:0;font:600 15px/1.05 var(--pp-f-cond);letter-spacing:.14em;text-transform:uppercase;color:var(--sim-ink)}
+.brand h1 span{color:var(--sim-muted);font-weight:500}
+.brand p{margin:3px 0 0;font-size:11.5px;color:var(--sim-muted)}
+
+#tabs{margin-left:auto;display:flex;gap:2px;padding:3px;pointer-events:auto;border-radius:var(--r);
+  background:rgba(255,255,255,.82);border:1px solid var(--sim-line);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tab{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;cursor:pointer;white-space:nowrap;
+  font:600 12.5px/1 var(--pp-f-cond);letter-spacing:.12em;text-transform:uppercase;color:var(--sim-muted);
+  background:none;border:0;border-radius:var(--r);transition:color .2s,background-color .2s}
+.tab .n{font-weight:500;letter-spacing:.06em;color:var(--sim-faint)}
+.tab:hover{color:var(--sim-ink)}
+.tab.on{background:var(--pp-ink);color:var(--pp-bone)}
+.tab.on .n{color:var(--pp-gray)}
+.tab:focus-visible{outline-offset:-2px}
+.tab.on:focus-visible{outline-color:var(--pp-bone)}
+
+/* ---------- panel samping ---------- */
+#panel{position:absolute;z-index:25;top:80px;right:16px;width:352px;max-height:calc(100% - 156px);
+  display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r);
+  background:rgba(255,255,255,.93);border:1px solid var(--sim-line);
+  box-shadow:0 1px 2px rgba(0,0,0,.06),0 18px 40px rgba(17,17,19,.12);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+#panel::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--pp-metal);opacity:.9}
+.p-head{position:relative;padding:18px 20px 14px;border-bottom:1px solid var(--sim-line)}
+.p-eyebrow{display:flex;align-items:center;gap:10px;margin:0;font:600 11px/1 var(--pp-f-cond);letter-spacing:.28em;text-transform:uppercase;color:var(--sim-muted)}
+.p-eyebrow::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
+.p-title{margin:8px 0 0;font:600 25px/1.1 var(--pp-f-display);font-variant-numeric:lining-nums;letter-spacing:-.01em;color:var(--sim-ink)}
+.p-sub{margin:6px 0 0;font-size:12.8px;line-height:1.55;color:var(--sim-muted)}
+.sheet-toggle,.cam-toggle{display:none}
+.p-body{padding:14px 20px 18px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--sim-line-2) transparent}
+
+/* progres */
+.prog{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.prog .bar{flex:1;height:4px;background:#e2e2e0;overflow:hidden}
+.prog .fill{height:100%;width:0;background:var(--pp-ink);transition:width .35s}
+.prog .cnt{font:600 13px/1 var(--pp-f-cond);letter-spacing:.08em;color:var(--sim-ink);min-width:3.4em}
+
+/* kartu tahap */
+.stepcard{border:1px solid var(--sim-line);border-radius:var(--r);padding:16px;margin-top:12px;background:#fff}
+.stepcard .lead{display:flex;align-items:flex-start;gap:12px}
+.stepno{flex:none;display:grid;place-items:center;width:30px;height:30px;font:600 15px/1 var(--pp-f-cond);
+  color:var(--pp-bone);background:var(--pp-ink);border-radius:var(--r)}
+.stepcard h3{margin:2px 0 0;font:600 19px/1.2 var(--pp-f-display);font-variant-numeric:lining-nums;color:var(--sim-ink)}
+.stepcard .desc{margin:10px 0 0;font-size:13px;line-height:1.6;color:var(--sim-muted)}
+.stepcard .desc b{color:var(--sim-ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:5px 10px 5px 8px;
+  font-size:11.5px;font-weight:600;color:var(--sim-text);border:1px solid var(--sim-line-2);border-radius:20px;background:#f6f6f4}
+.chip .dot{width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.checks{list-style:none;margin:10px 0 0;padding:0}
+/* butir yang harus diperiksa pada tahap ini — kotak kosong, bukan tanda centang (belum diperiksa) */
+.checks li{position:relative;margin-top:7px;padding-left:24px;font-size:12.5px;line-height:1.5;color:var(--sim-muted);overflow-wrap:break-word}
+.checks li::before{content:"";position:absolute;left:0;top:3px;width:13px;height:13px;border:1px solid var(--sim-line-2);border-radius:var(--r);background:#fff}
+.ref{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--sim-line);font-size:11.5px;line-height:1.5;color:var(--sim-muted);overflow-wrap:break-word}
+.ref span{display:block;margin-bottom:2px;font:600 10.5px/1.4 var(--pp-f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--sim-faint)}
+.tip{margin:10px 0 0;font-size:11.5px;text-align:center;color:var(--sim-faint)}
+/* status tag (merah/hijau = semantik keselamatan di lapangan) */
+.tagline{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:12px;font-weight:500;color:var(--sim-muted)}
+.tagline .tdot{flex:none;width:10px;height:14px;border-radius:1px;background:#c9c9cc;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.tagline.is-red .tdot{background:var(--bad)}
+.tagline.is-green .tdot{background:var(--ok)}
+.insp-mini{margin-top:12px;padding:10px 12px;font-size:12.3px;line-height:1.5;border:1px solid var(--sim-line-2);border-left:3px solid var(--sim-ink);border-radius:var(--r);background:#fafaf9}
+.insp-mini b{display:block;color:var(--sim-ink)}
+.insp-mini span{display:block;margin-top:2px;color:var(--sim-muted)}
+.insp-mini.ok{border-left-color:var(--ok)}
+.insp-mini.bad{border-left-color:var(--bad)}
+
+/* tombol */
+.row{display:flex;gap:8px;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:44px;padding:0 14px;cursor:pointer;
+  font:600 13px/1 var(--pp-f-cond);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--sim-ink);background:#fff;border:1px solid var(--sim-line-2);border-radius:var(--r);transition:background-color .2s,border-color .2s,color .2s}
+.btn:hover{border-color:var(--sim-ink)}
+.btn.primary{flex:2;color:var(--pp-white);background:var(--pp-ink);border-color:var(--pp-ink)}
+.btn.primary:hover{background:var(--pp-steel)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghosted{flex:none;width:48px;padding:0;font-size:18px;letter-spacing:0}
+/* tombol tahap selalu terlihat di dasar panel/lembar (kartu tahap kini memuat acuan & hasil ukur) */
+.p-body .row{position:sticky;bottom:0;z-index:2;padding:10px 0;background:#fff;box-shadow:0 -10px 14px -10px rgba(17,17,19,.18)}
+.stepcard .row{margin:12px -16px 0;padding:10px 16px}
+
+.done-banner{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding:14px;border:1px solid rgba(46,158,91,.4);border-left:3px solid var(--ok);border-radius:var(--r);background:#f2f7f3}
+.done-banner .ic{flex:none;display:grid;place-items:center;width:30px;height:30px;font-weight:700;color:#fff;background:var(--ok);border-radius:var(--r)}
+.done-banner h4{margin:0;font:600 18px/1.2 var(--pp-f-display);color:var(--sim-ink)}
+.done-banner p{margin:4px 0 0;font-size:12.5px;line-height:1.55;color:var(--sim-muted)}
+
+/* katalog komponen */
+.lib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px}
+.lib-grid button{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:58px;padding:9px 4px;cursor:pointer;
+  font-size:11.5px;font-weight:500;line-height:1.15;text-align:center;color:var(--sim-muted);
+  background:#fff;border:1px solid var(--sim-line);border-radius:var(--r);transition:border-color .2s,color .2s}
+.lib-grid button .sw{width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.lib-grid button:hover{color:var(--sim-ink);border-color:var(--sim-line-2)}
+.lib-grid button.on{color:var(--sim-ink);border-color:var(--sim-ink);box-shadow:inset 0 0 0 1px var(--sim-ink);background:#f6f6f4}
+.spec{margin-top:16px}
+.spec h3{margin:0;font:600 21px/1.2 var(--pp-f-display);font-variant-numeric:lining-nums;color:var(--sim-ink)}
+.spec .ftn{margin:10px 0 0;font-size:13px;line-height:1.6;color:var(--sim-muted)}
+.meta{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--sim-line)}
+.meta .r{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--sim-line);font-size:12.5px}
+.meta .k{font:600 11px/1.6 var(--pp-f-cond);letter-spacing:.2em;text-transform:uppercase;color:var(--sim-faint)}
+.meta .v{text-align:right;font-weight:500;color:var(--sim-ink)}
+
+/* sakelar inspeksi */
+.insp-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.toggle{display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:52px;padding:9px 10px;cursor:pointer;text-align:left;
+  background:#fff;border:1px solid var(--sim-line);border-radius:var(--r);transition:border-color .2s,background-color .2s}
+.toggle:hover{border-color:var(--sim-line-2)}
+.toggle.on{border-color:var(--c,var(--info));background:color-mix(in srgb,var(--c,var(--info)) 8%,#fff)}
+.toggle .tg{flex:none;position:relative;width:34px;height:20px;border-radius:20px;background:#dedede;border:1px solid var(--sim-line-2);transition:background-color .2s}
+.toggle.on .tg{background:var(--c,var(--info));border-color:transparent}
+.toggle .tg::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#9a9aa0;transition:left .2s,background-color .2s}
+.toggle.on .tg::after{left:16px;background:#fff}
+.toggle .tlbl{flex:1;min-width:0}       /* B1: dulu .lbl — bentrok dengan label 3D */
+.toggle .tlbl b{display:block;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--sim-ink);overflow-wrap:break-word}
+.toggle .tlbl small{display:block;margin-top:1px;font-size:11px;line-height:1.35;color:var(--sim-muted);overflow-wrap:break-word}
+.insp-note{margin-top:14px;padding:13px;font-size:12.3px;line-height:1.6;color:var(--sim-muted);border:1px dashed var(--sim-line-2);border-radius:var(--r);background:#fafaf9}
+.insp-note b{color:var(--sim-ink)}
+/* status & hasil ukur inspeksi */
+.insp-status{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--sim-line-2);border-left:3px solid var(--sim-ink);border-radius:var(--r);background:#fff}
+.insp-status .st{font:600 14px/1.2 var(--pp-f-cond);letter-spacing:.16em;text-transform:uppercase;color:var(--sim-ink)}
+.insp-status .sub{font-size:12.3px;line-height:1.5;color:var(--sim-muted)}
+.insp-status.is-ok{border-left-color:var(--ok)}
+.insp-status.is-bad{border-left-color:var(--bad)}
+.insp-h{margin:18px 0 0;font:600 19px/1.2 var(--pp-f-display);color:var(--sim-ink)}
+.insp-grp{margin:14px 0 4px;font:600 10.5px/1.4 var(--pp-f-cond);letter-spacing:.22em;text-transform:uppercase;color:var(--sim-faint)}
+.insp-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--sim-line)}
+.insp-list li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--sim-line)}
+.insp-list .i{flex:none;display:grid;place-items:center;width:18px;height:18px;margin-top:1px;font-size:11px;font-weight:700;color:#fff;border-radius:var(--r);background:var(--sim-ink)}
+.insp-list li.ok .i{background:var(--ok)}
+.insp-list li.bad .i{background:var(--bad)}
+.insp-list .t{min-width:0;flex:1}
+.insp-list .t b{display:block;font-size:12.8px;font-weight:600;line-height:1.35;color:var(--sim-ink)}
+.insp-list .v{display:block;margin-top:2px;font-size:12px;line-height:1.45;color:var(--sim-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.insp-list .lim,.insp-list .src{display:block;font-size:11px;line-height:1.45;color:var(--sim-muted);overflow-wrap:anywhere}
+.insp-list .src{color:var(--sim-faint)}
+@media (max-width:380px){ .insp-tools{grid-template-columns:1fr} }
+
+/* legenda (kiri bawah) — warna pita = jenis klem */
+#legend{position:absolute;z-index:20;left:16px;bottom:16px;max-width:248px;padding:12px 14px;border-radius:var(--r);
+  background:rgba(255,255,255,.88);border:1px solid var(--sim-line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#legend .lt{margin-bottom:8px;font:600 10.5px/1 var(--pp-f-cond);letter-spacing:.22em;text-transform:uppercase;color:var(--sim-faint)}
+#legend .items{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}
+#legend .it{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--sim-muted)}
+#legend .it .d{flex:none;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+
+/* kontrol kamera (kanan bawah) */
+#cam{position:absolute;z-index:26;right:16px;bottom:16px;display:flex;gap:8px;align-items:flex-end}
+#panel ~ #cam{right:384px}
+#cam .hint{max-width:160px;padding:8px 11px;font-size:11.5px;line-height:1.5;color:var(--sim-muted);
+  background:rgba(255,255,255,.85);border:1px solid var(--sim-line);border-radius:var(--r)}
+#cam .pad{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:4px;padding:6px;
+  grid-template-areas:". u ." "l c r" ". d .";background:rgba(255,255,255,.75);border:1px solid var(--sim-line);border-radius:var(--r);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#u{grid-area:u}#l{grid-area:l}#camReset{grid-area:c}#r{grid-area:r}#d{grid-area:d}
+#cam .xrow{display:flex;flex-direction:column;gap:4px}
+#cam button{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;cursor:pointer;
+  font-size:15px;line-height:1;color:var(--sim-muted);background:rgba(255,255,255,.95);border:1px solid var(--sim-line);border-radius:var(--r);
+  transition:color .15s,border-color .15s,background-color .15s}
+#cam button:hover{color:var(--sim-ink);border-color:var(--sim-line-2)}
+#cam button:active{transform:scale(.94)}
+#laserBtn{width:auto!important;padding:0 10px!important;gap:5px;font:600 12px/1 var(--pp-f-cond)!important;letter-spacing:.1em;text-transform:uppercase}
+#laserBtn[aria-pressed="true"]{color:#fff;background:var(--bad);border-color:var(--bad)}
+#workerBtn[aria-pressed="true"]{color:var(--pp-bone);background:var(--pp-ink);border-color:var(--pp-ink)}
+
+/* label 3D (diproyeksikan dari adegan) */
+#labels{position:absolute;inset:0;z-index:15;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-50%);padding:4px 7px;white-space:nowrap;border-radius:2px;
+  font:600 11px/1 var(--pp-f-body);font-variant-numeric:tabular-nums;border:1px solid rgba(255,255,255,.14);box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.lbl.dim{background:rgba(17,17,19,.92);color:#e8e8e6;border-color:#3a3a3f}
+.lbl.ok{background:rgba(14,40,24,.94);color:#bdf0d0;border-color:#2c7048}
+.lbl.bad{background:rgba(48,16,14,.94);color:#ffc2ba;border-color:#7a322c}
+.lbl.axis{background:rgba(26,26,29,.94);color:#f4dca8;border-color:#6b5a32}
+
+/* layar pembuka */
+#intro{position:fixed;left:0;right:0;bottom:0;top:var(--pbar-h);z-index:60;display:grid;place-items:center;padding:24px;overflow-y:auto;
+  background:rgba(10,10,11,.58);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#intro[hidden]{display:none}
+#intro .card{position:relative;width:100%;max-width:580px;margin:auto;padding:36px 36px 28px;color:var(--sim-text);
+  background:var(--pp-paper);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);box-shadow:0 2px 6px rgba(0,0,0,.12),0 24px 60px rgba(0,0,0,.28)}
+#intro .card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--pp-metal)}
+#intro .k{display:flex;align-items:center;gap:12px;margin:0;font:600 11.5px/1 var(--pp-f-cond);letter-spacing:.28em;text-transform:uppercase;color:var(--sim-muted)}
+#intro .k::before{content:"";width:40px;height:1px;background:currentColor;opacity:.6}
+#intro h2{margin:14px 0 0;font:600 clamp(28px,4.4vw,36px)/1.08 var(--pp-f-display);font-variant-numeric:lining-nums;letter-spacing:-.01em;color:var(--sim-ink)}
+#intro h2 em{font-style:italic;color:var(--pp-slate)}
+#intro p.lead{margin:14px 0 0;font-size:14px;line-height:1.65;color:var(--sim-muted)}
+#intro .feats{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:22px 0 4px;border-top:1px solid var(--sim-line)}
+#intro .feat{padding:14px 14px 14px 0;border-bottom:1px solid var(--sim-line)}
+#intro .feat:nth-child(odd){border-right:1px solid var(--sim-line)}
+#intro .feat:nth-child(even){padding-left:16px}
+#intro .feat .no{display:block;font:500 12px/1 var(--pp-f-cond);letter-spacing:.12em;color:var(--sim-faint)}
+#intro .feat b{display:block;margin-top:6px;font:600 16px/1.2 var(--pp-f-display);color:var(--sim-ink)}
+#intro .feat small{display:block;margin-top:4px;font-size:12px;line-height:1.45;color:var(--sim-muted)}
+#intro .resume{margin:16px 0 0;padding:10px 12px;font-size:12.5px;color:var(--sim-text);border-left:2px solid var(--sim-ink);background:#fff}
+#intro .resume[hidden]{display:none}
+#intro .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+#intro .actions .btn{flex:1 1 220px;min-height:52px;font-size:14px}
+#intro .actions .btn[hidden]{display:none}
+#intro .foot{margin:16px 0 0;font-size:11.5px;line-height:1.55;text-align:center;color:var(--sim-faint)}
+
+/* pesan (tanpa WebGL / pustaka 3D gagal / konteks hilang) */
+#sim-msg{position:absolute;inset:0;z-index:55;display:grid;place-items:center;padding:24px;background:var(--sim-bg)}
+#sim-msg[hidden]{display:none}
+#sim-msg .box{max-width:460px;padding:28px;text-align:center;background:#fff;border:1px solid var(--sim-line);border-radius:var(--r)}
+#sim-msg h2{margin:0;font:600 24px/1.2 var(--pp-f-display);color:var(--sim-ink)}
+#sim-msg p{margin:10px 0 0;font-size:13.5px;color:var(--sim-muted)}
+#sim-msg .btn{margin-top:16px;max-width:260px}
+#sim-msg.is-soft{background:rgba(237,237,235,.6)}
+
+/* notifikasi (B2: dulu teks gelap di atas latar gelap ±1,1:1) */
+#toast{position:absolute;z-index:40;left:50%;top:84px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);
+  padding:11px 16px;font-size:13px;font-weight:500;color:var(--pp-bone);background:rgba(17,17,19,.95);
+  border:1px solid rgba(255,255,255,.1);border-left:2px solid var(--pp-silver);border-radius:var(--r);box-shadow:0 12px 30px rgba(0,0,0,.3);
+  opacity:0;pointer-events:none;transform:translateX(-50%) translateY(-10px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast .d{flex:none;width:8px;height:8px;background:var(--pp-silver)}
+/* layar lebar: notifikasi di tengah area adegan (kiri panel), tidak menimpa panel */
+@media (min-width:761px){ #toast{left:calc((100% - 384px) / 2);max-width:calc(100% - 416px)} }
+
+/* ---------- ponsel: panel menjadi lembar bawah ---------- */
+@media (max-width:760px){
+  #top{flex-wrap:wrap;gap:8px;padding:10px 12px 14px}
+  .brand{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #tabs{margin-left:0;width:100%;justify-content:stretch}
+  .tab{flex:1;justify-content:center;min-height:44px;padding:0 6px;font-size:12px;letter-spacing:.08em;gap:5px}
+  .tab .n{display:none}
+  #panel{top:auto;left:0;right:0;bottom:0;width:100%;max-height:min(54%,calc(100% - 210px));border-radius:0;border-left:0;border-right:0;border-bottom:0}
+  .p-head{padding:14px 64px 12px 16px}
+  .p-title{font-size:22px}
+  .p-sub{font-size:12.3px}
+  .sheet-toggle{display:grid;place-items:center;position:absolute;top:8px;right:8px;width:44px;height:44px;padding:0;cursor:pointer;
+    color:var(--sim-ink);background:none;border:1px solid var(--sim-line);border-radius:var(--r)}
+  .sheet-toggle svg{transition:transform .25s}
+  #panel.is-collapsed .sheet-toggle svg{transform:rotate(180deg)}
+  #panel.is-collapsed .p-body,#panel.is-collapsed .p-sub{display:none}
+  .p-body{padding:12px 16px 16px}
+  #legend{display:none}
+  /* kontrol kamera di balik satu tombol (gestur seret/cubit tetap berfungsi) */
+  .cam-toggle{display:grid;place-items:center;position:absolute;z-index:27;right:10px;bottom:calc(var(--sheet-h,0px) + 10px);
+    width:44px;height:44px;padding:0;cursor:pointer;color:var(--sim-ink);background:rgba(255,255,255,.95);border:1px solid var(--sim-line-2);border-radius:var(--r)}
+  .cam-toggle[aria-expanded="true"]{color:var(--pp-bone);background:var(--pp-ink);border-color:var(--pp-ink)}
+  #app-main:not(.cam-open) #cam{display:none}
+  #cam,#panel ~ #cam{right:62px;bottom:calc(var(--sheet-h,0px) + 10px);flex-direction:row;align-items:flex-end;gap:6px}
+  #cam .hint{display:none}
+  #cam .pad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}
+  #toast{top:72px}
+  #intro{padding:14px;place-items:start center}
+  #intro .card{padding:24px 20px 18px}
+  #intro .k{letter-spacing:.2em;font-size:10.5px}
+  #intro .k::before{display:none}
+  #intro h2{font-size:27px;margin-top:10px}
+  #intro p.lead{font-size:13.5px;line-height:1.6;margin-top:10px}
+  #intro .feats{margin-top:16px}
+  #intro .feat{padding:10px 10px 10px 0}
+  #intro .feat:nth-child(even){padding-left:12px}
+  #intro .feat b{font-size:15px;margin-top:4px}
+  #intro .feat small{display:none}
+  #intro .actions{margin-top:14px}
+  #intro .foot{margin-top:12px;font-size:11px}
+}
+@media (max-width:760px) and (max-height:680px){ #panel{max-height:min(60%,calc(100% - 150px))} }
+/* tablet: ruang adegan di kiri panel sempit → kontrol kamera di balik satu tombol */
+@media (min-width:761px) and (max-width:1100px){
+  .cam-toggle{display:grid;place-items:center;position:absolute;z-index:27;right:384px;bottom:16px;
+    width:44px;height:44px;padding:0;cursor:pointer;color:var(--sim-ink);background:rgba(255,255,255,.95);border:1px solid var(--sim-line-2);border-radius:var(--r)}
+  .cam-toggle[aria-expanded="true"]{color:var(--pp-bone);background:var(--pp-ink);border-color:var(--pp-ink)}
+  #app-main:not(.cam-open) #cam{display:none}
+  #cam,#panel ~ #cam{right:436px}
+  #cam .hint{display:none}
+}
+/* ponsel lanskap (B5): panel di kanan lebih ramping */
+@media (min-width:600px) and (max-height:500px){
+  #panel{top:64px;width:300px;max-height:calc(100% - 76px)}
+  /* kepala panel ringkas agar kartu tahap & tombolnya muat di layar pendek */
+  .p-head{padding:10px 16px 8px}
+  .p-eyebrow,.p-sub{display:none}
+  .p-title{margin:0;font-size:19px}
+  .p-body{padding:10px 16px 14px}
+  #toast{top:64px;left:calc((100% - 316px) / 2);max-width:calc(100% - 340px)}
+  #legend,#cam .hint{display:none}
+  #top{padding:8px 12px}
+  .brand p{display:none}
+  /* layar pembuka ringkas agar tombol mulai terlihat tanpa menggulir */
+  #intro{padding:12px;place-items:center}
+  #intro .card{max-width:640px;padding:20px 26px 16px}
+  #intro h2{font-size:24px;margin-top:8px}
+  #intro p.lead,#intro .feats{display:none}
+  #intro .actions{margin-top:14px}
+  #intro .actions .btn{min-height:46px}
+  #intro .foot{margin-top:10px}
+  /* kontrol kamera di balik satu tombol, di kiri panel */
+  .cam-toggle{display:grid;place-items:center;position:absolute;z-index:27;right:326px;bottom:12px;
+    width:44px;height:44px;padding:0;cursor:pointer;color:var(--sim-ink);background:rgba(255,255,255,.95);border:1px solid var(--sim-line-2);border-radius:var(--r)}
+  .cam-toggle[aria-expanded="true"]{color:var(--pp-bone);background:var(--pp-ink);border-color:var(--pp-ink)}
+  #app-main:not(.cam-open) #cam{display:none}
+  #cam,#panel ~ #cam{right:378px;bottom:12px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .tab,.btn,.toggle,.toggle .tg,.toggle .tg::after,.prog .fill,#toast,.sheet-toggle svg{transition:none}
+  #cam button:active{transform:none}
+}

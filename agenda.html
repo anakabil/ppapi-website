@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda Kegiatan — PPAPI</title>
+  <meta name="description" content="Jadwal pelatihan, sertifikasi, seminar, webinar, rapat, dan kunjungan teknis PPAPI — lengkap dengan detail kegiatan dan berkas pengingat kalender.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Agenda Kegiatan — PPAPI">
+  <meta property="og:description" content="Jadwal pelatihan, sertifikasi, seminar, webinar, rapat, dan kunjungan teknis PPAPI — lengkap dengan detail kegiatan dan berkas pengingat kalender.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/agenda.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="agenda" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- Hero -->
+    <section class="page-hero agenda-hero" aria-labelledby="agenda-hero-title">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/stage-silhouette.webp" srcset="assets/img/stage-silhouette-sm.webp 480w, assets/img/stage-silhouette.webp 1281w" sizes="100vw" alt="" width="1281" height="1920" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Agenda</li></ol>
+        </nav>
+        <p class="eyebrow">Agenda Kegiatan</p>
+        <h1 class="display split-lines" id="agenda-hero-title">Ruang belajar<br>para <em>praktisi</em>.</h1>
+        <p class="lead">Pelatihan, sertifikasi, seminar, dan kunjungan teknis bagi praktisi dan ahli perancah — dijadwalkan dan diumumkan oleh sekretariat PPAPI.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#jadwal"><span>Lihat jadwal</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="berita.html?kategori=Kegiatan"><span>Liputan kegiatan</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+        </div>
+        <div class="page-hero__meta" id="agenda-hero-meta"></div>
+      </div>
+    </section>
+
+    <!-- Agenda terdekat + hitung mundur.
+         Panel kerangka menyiapkan ruang sejak awal agar jadwal di bawahnya tidak
+         terdorong saat agenda.js mengisi panel (CLS); bagian ini disembunyikan
+         oleh agenda.js bila tidak ada agenda yang akan datang. -->
+    <section class="section agenda-next" id="terdekat" aria-label="Agenda terdekat">
+      <div class="container" id="agenda-next" data-reveal>
+        <div class="agenda-feature agenda-feature--placeholder theme-dark" aria-hidden="true">
+          <div class="agenda-feature__head">
+            <p class="eyebrow agenda-feature__eyebrow">Agenda terdekat</p>
+            <span class="skeleton__line agenda-ph agenda-ph--meta"></span>
+            <span class="skeleton__line agenda-ph agenda-ph--title"></span>
+            <span class="skeleton__line agenda-ph agenda-ph--title agenda-ph--short"></span>
+          </div>
+          <div class="agenda-feature__aside">
+            <span class="agenda-ph-cd"><span class="skeleton__line agenda-ph agenda-ph--label"></span><span class="agenda-ph-cd__units"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></span></span>
+          </div>
+          <div class="agenda-feature__body">
+            <span class="skeleton__line agenda-ph"></span>
+            <span class="skeleton__line agenda-ph"></span>
+            <span class="skeleton__line agenda-ph agenda-ph--short"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jadwal -->
+    <section class="section agenda-schedule" id="jadwal" aria-labelledby="jadwal-title">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text" data-reveal>
+            <p class="eyebrow">Kalender</p>
+            <h2 class="h2" id="jadwal-title">Jadwal <em>kegiatan</em></h2>
+            <p class="lead muted">Saring menurut waktu, jenis, dan mode pelaksanaan. Buka detail untuk informasi lengkap, atau simpan agenda ke kalender Anda.</p>
+          </div>
+        </header>
+
+        <div class="agenda-toolbar" data-reveal>
+          <div class="agenda-toolbar__top">
+            <div class="segmented agenda-tabs" id="agenda-tabs" data-segmented role="group" aria-label="Waktu kegiatan">
+              <button type="button" class="segmented__option" data-value="akan-datang" aria-pressed="true">Akan Datang <span class="agenda-tabs__count" data-count-for="akan-datang"></span></button>
+              <button type="button" class="segmented__option" data-value="telah-berlangsung" aria-pressed="false">Telah Berlangsung <span class="agenda-tabs__count" data-count-for="telah-berlangsung"></span></button>
+            </div>
+            <div class="agenda-filter agenda-filter--mode">
+              <span class="agenda-filter__label" id="agenda-mode-label">Mode</span>
+              <div class="segmented agenda-mode" id="agenda-mode" data-segmented role="group" aria-labelledby="agenda-mode-label">
+                <button type="button" class="segmented__option" data-value="" aria-pressed="true">Semua</button>
+                <button type="button" class="segmented__option" data-value="Luring" aria-pressed="false">Luring</button>
+                <button type="button" class="segmented__option" data-value="Daring" aria-pressed="false">Daring</button>
+                <button type="button" class="segmented__option" data-value="Hybrid" aria-pressed="false">Hybrid</button>
+              </div>
+            </div>
+          </div>
+          <div class="agenda-filter agenda-filter--jenis">
+            <span class="agenda-filter__label" id="agenda-jenis-label">Jenis</span>
+            <div class="filter-chips" id="agenda-chips" role="group" aria-labelledby="agenda-jenis-label"></div>
+          </div>
+        </div>
+
+        <div class="agenda-status">
+          <p class="agenda-status__text" id="agenda-count" aria-live="polite"></p>
+          <button type="button" class="btn btn--link btn--sm" id="agenda-reset" hidden><span>Hapus filter</span><span data-icon="refresh" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+        </div>
+
+        <div class="agenda-list" id="agenda-list">
+          <noscript><p class="muted">Aktifkan JavaScript pada peramban Anda untuk menampilkan jadwal kegiatan.</p></noscript>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tautan lanjutan -->
+    <section class="section section--bone section--tight agenda-cross" aria-label="Tautan terkait">
+      <div class="container">
+        <div class="agenda-cross__grid" data-reveal-stagger>
+          <a class="agenda-cross__card" href="berita.html?kategori=Kegiatan">
+            <span class="index-num">01 <span>/ 03</span></span>
+            <h2 class="agenda-cross__title">Liputan <em>kegiatan</em></h2>
+            <p class="agenda-cross__text">Baca catatan dan rangkuman materi dari kegiatan yang telah diselenggarakan.</p>
+            <span class="agenda-cross__go"><span>Buka berita kegiatan</span><span data-icon="arrow-right" data-icon-size="18"></span></span>
+          </a>
+          <a class="agenda-cross__card" href="pustaka.html?kategori=modul-pelatihan#katalog">
+            <span class="index-num">02 <span>/ 03</span></span>
+            <h2 class="agenda-cross__title">Materi <em>pelatihan</em></h2>
+            <p class="agenda-cross__text">Modul dan panduan pelatihan PPAPI dihimpun di Produk Pengetahuan; isi lengkapnya terbuka bagi anggota berstatus Aktif.</p>
+            <span class="agenda-cross__go"><span>Buka modul pelatihan</span><span data-icon="arrow-right" data-icon-size="18"></span></span>
+          </a>
+          <a class="agenda-cross__card" href="umpan-balik.html?kategori=Saran#formulir">
+            <span class="index-num">03 <span>/ 03</span></span>
+            <h2 class="agenda-cross__title">Usulkan <em>kegiatan</em></h2>
+            <p class="agenda-cross__text">Punya gagasan pelatihan, seminar, atau kunjungan teknis? Sampaikan kepada sekretariat melalui halaman Kontak.</p>
+            <span class="agenda-cross__go"><span>Hubungi sekretariat</span><span data-icon="arrow-right" data-icon-size="18"></span></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/agenda.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/agenda.js" defer></script>
+</body>
+</html>

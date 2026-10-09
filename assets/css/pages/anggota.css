@@ -1,0 +1,694 @@
+/* ==========================================================================
+   PPAPI — pages/anggota.css · Halaman Anggota (anggota.html)
+   Profil diri, kompetensi, sertifikat, KTA digital, aplikasi.
+   Every rule is scoped to body[data-page="anggota"] and uses design tokens only.
+
+   CONTENTS
+   01. Hero (profile band)
+   02. Tabs bar & panel heads
+   03. Profil Diri (form, save bar, completeness)
+   04. Kompetensi (cards, level meter)
+   05. Sertifikat (summary, table)
+   06. Kartu Anggota (KTA digital, flip, QR)
+   07. Aplikasi (launch cards)
+   08. Modal forms
+   09. Reduced motion
+   10. Print (card only, both sides)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   01. HERO
+   ========================================================================== */
+body[data-page="anggota"] .agt-hero { padding-bottom: clamp(36px, 4.4vw, 56px); }
+body[data-page="anggota"] .agt-hero .breadcrumb { margin-bottom: clamp(24px, 3.2vw, 40px); }
+body[data-page="anggota"] .agt-hero__row {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 28px 48px;
+}
+body[data-page="anggota"] .agt-hero__who {
+  display: flex; align-items: center; gap: clamp(20px, 3vw, 36px);
+  flex: 1 1 560px; min-width: 0;
+}
+body[data-page="anggota"] .agt-hero__text { min-width: 0; }
+body[data-page="anggota"] .agt-hero__eyebrow { margin-bottom: 12px; }
+body[data-page="anggota"] .agt-hero__name {
+  font-size: clamp(2.2rem, 4.2vw, 3.5rem); line-height: 1.04; max-width: 22ch; color: var(--c-white);
+}
+body[data-page="anggota"] .agt-hero__meta { margin-top: 16px; gap: 10px 20px; }
+body[data-page="anggota"] .agt-hero__kta { color: var(--c-bone); letter-spacing: .26em; }
+body[data-page="anggota"] .agt-hero__since { color: var(--c-silver); }
+body[data-page="anggota"] .agt-skel {
+  display: inline-block; width: 168px; height: 12px; background: rgba(255,255,255,.08); border-radius: var(--radius-sm);
+}
+body[data-page="anggota"] .agt-skel--sm { width: 96px; }
+
+/* avatar: initials (or photo) inside a thin metal ring + outer hairline */
+body[data-page="anggota"] .agt-avatar {
+  position: relative; flex: none; display: block;
+  width: clamp(76px, 9vw, 124px); aspect-ratio: 1; padding: 1.5px; border-radius: 50%;
+  background: var(--metal);
+  box-shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+}
+body[data-page="anggota"] .agt-avatar::after {
+  content: ""; position: absolute; inset: -8px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12); pointer-events: none;
+}
+body[data-page="anggota"] .agt-avatar__inner {
+  display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border-radius: 50%;
+  font: 500 clamp(1.8rem, 3.2vw, 2.7rem)/1 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: .02em; color: var(--c-white);
+  background: radial-gradient(circle at 32% 26%, var(--c-iron) 0%, var(--c-steel) 42%, var(--c-graphite) 100%);
+}
+body[data-page="anggota"] .agt-avatar__inner img { width: 100%; height: 100%; object-fit: cover; }
+
+/* contact chips */
+body[data-page="anggota"] .agt-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 20px 0 0; padding: 0;
+}
+body[data-page="anggota"] .agt-chip {
+  display: inline-flex; align-items: center; gap: 9px; max-width: 100%; min-height: 36px; padding: 0 15px 0 13px;
+  font-size: .86rem; line-height: 1.2; color: rgba(236,236,234,.86);
+  background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 999px;
+}
+body[data-page="anggota"] .agt-chip > svg { color: var(--c-gray); }
+body[data-page="anggota"] .agt-chip__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-page="anggota"] .agt-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+body[data-page="anggota"] .agt-hero__actions .btn > [data-icon]:first-child { margin-left: -4px; }
+
+@media (max-width: 767px) {
+  body[data-page="anggota"] .agt-hero__who { align-items: flex-start; flex-basis: 100%; }
+  body[data-page="anggota"] .agt-avatar { width: 68px; margin-top: 4px; }
+  body[data-page="anggota"] .agt-avatar::after { inset: -6px; }
+  body[data-page="anggota"] .agt-avatar__inner { font-size: 1.55rem; }
+  body[data-page="anggota"] .agt-hero__name { font-size: clamp(1.9rem, 8.4vw, 2.4rem); }
+  body[data-page="anggota"] .agt-hero__actions { width: 100%; }
+  body[data-page="anggota"] .agt-hero__actions .btn { flex: 1 1 auto; }
+}
+
+
+/* ==========================================================================
+   02. TABS BAR & PANEL HEADS
+   ========================================================================== */
+body[data-page="anggota"] .agt-body { padding-top: clamp(28px, 4vw, 52px); }
+body[data-page="anggota"] .agt-load-error { margin-bottom: 32px; }
+
+body[data-page="anggota"] .agt-tabs__bar { position: relative; }
+body[data-page="anggota"] .agt-tabs__bar::before,
+body[data-page="anggota"] .agt-tabs__bar::after {
+  content: ""; position: absolute; top: 0; bottom: 1px; z-index: 2; width: 56px; pointer-events: none;
+  opacity: 0; transition: opacity .3s var(--ease);
+}
+body[data-page="anggota"] .agt-tabs__bar::before { left: 0; background: linear-gradient(270deg, rgba(246,246,244,0), var(--bg) 80%); }
+body[data-page="anggota"] .agt-tabs__bar::after { right: 0; background: linear-gradient(90deg, rgba(246,246,244,0), var(--bg) 80%); }
+body[data-page="anggota"] .agt-tabs__bar[data-more-left]::before,
+body[data-page="anggota"] .agt-tabs__bar[data-more-right]::after { opacity: 1; }
+body[data-page="anggota"] .agt-tabs .tabs__list { scroll-behavior: auto; }
+
+body[data-page="anggota"] .agt-tab-count {
+  display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; margin-left: -2px;
+  font: 600 .66rem/1 var(--f-cond); letter-spacing: .04em; color: var(--muted);
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  transition: background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease);
+}
+body[data-page="anggota"] .agt-tab-count:empty { display: none; }
+body[data-page="anggota"] .tabs__tab[aria-selected="true"] .agt-tab-count { color: var(--bg); background: var(--text); border-color: var(--text); }
+
+body[data-page="anggota"] .agt-panel-head {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 20px 48px; margin-bottom: clamp(30px, 3.6vw, 48px);
+}
+body[data-page="anggota"] .agt-panel-head__text { max-width: 700px; }
+body[data-page="anggota"] .agt-panel-head .eyebrow { margin-bottom: 16px; }
+body[data-page="anggota"] .agt-panel-title {
+  font-family: var(--f-display); font-weight: 600; font-size: clamp(2rem, 3.4vw, 2.8rem);
+  line-height: 1.06; letter-spacing: -.01em;
+}
+body[data-page="anggota"] .agt-panel-lead { margin-top: 14px; max-width: 62ch; color: var(--muted); }
+body[data-page="anggota"] .agt-panel-head__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 479px) {
+  body[data-page="anggota"] .agt-panel-head__actions,
+  body[data-page="anggota"] .agt-panel-head__actions .btn { width: 100%; }
+}
+
+
+/* ==========================================================================
+   03. PROFIL DIRI
+   ========================================================================== */
+body[data-page="anggota"] .agt-layout {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4vw, 56px); align-items: start;
+}
+body[data-page="anggota"] .agt-layout__aside { order: -1; }
+/* desktop: heading + form on the left, completeness card beside the heading (sticky) */
+@media (min-width: 1024px) {
+  body[data-page="anggota"] #panel-profil {
+    display: grid; grid-template-columns: minmax(0, 1fr) 336px; column-gap: 56px; align-items: start;
+    grid-template-areas: "head aside" "main aside";
+  }
+  body[data-page="anggota"] #panel-profil > .agt-panel-head { grid-area: head; }
+  body[data-page="anggota"] #panel-profil > .agt-layout { display: contents; }
+  body[data-page="anggota"] .agt-layout__main { grid-area: main; min-width: 0; }
+  body[data-page="anggota"] .agt-layout__aside {
+    grid-area: aside; order: 0; align-self: start;
+    position: sticky; top: calc(var(--header-offset) + 28px);
+  }
+}
+@media (min-width: 1280px) {
+  body[data-page="anggota"] #panel-profil { grid-template-columns: minmax(0, 1fr) 352px; column-gap: 88px; }
+}
+
+body[data-page="anggota"] .field { align-content: start; }
+body[data-page="anggota"] .agt-form { display: grid; gap: clamp(40px, 4.4vw, 56px); }
+body[data-page="anggota"] .agt-form__note { margin-bottom: -16px; font-size: .88rem; color: var(--muted); }
+body[data-page="anggota"] .agt-req { color: var(--text); font-family: var(--f-body); letter-spacing: 0; }
+
+body[data-page="anggota"] .agt-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+body[data-page="anggota"] .agt-fieldset__legend {
+  position: relative; float: left; width: 100%;
+  display: flex; align-items: baseline; gap: 18px;
+  margin: 0 0 28px; padding: 0 0 16px; border-bottom: 1px solid var(--line);
+}
+/* coupler node on the hairline */
+body[data-page="anggota"] .agt-fieldset__legend::after {
+  content: ""; position: absolute; left: 0; bottom: -3px; width: 5px; height: 5px; background: var(--text);
+}
+body[data-page="anggota"] .agt-fieldset__title { font: 600 1.55rem/1.2 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--text); }
+body[data-page="anggota"] .agt-fieldset__body { clear: both; display: grid; gap: 22px; }
+body[data-page="anggota"] .agt-fieldset[disabled] .agt-fieldset__body { opacity: .55; }
+
+body[data-page="anggota"] .agt-radio-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+body[data-page="anggota"] .agt-radio-group > legend { float: left; width: 100%; margin-bottom: 6px; }
+body[data-page="anggota"] .agt-radio-row { clear: both; display: flex; flex-wrap: wrap; align-items: center; gap: 0 32px; min-height: 52px; }
+body[data-page="anggota"] .agt-radio-row .check { align-items: center; min-height: 44px; padding-block: 0; }
+body[data-page="anggota"] .agt-radio-row .check > input { top: 12px; }
+body[data-page="anggota"] .agt-radio-row .check__box { margin-top: 0; }
+
+body[data-page="anggota"] .agt-textarea--sm { min-height: 108px; }
+body[data-page="anggota"] .agt-suffix { position: relative; }
+body[data-page="anggota"] .agt-suffix > .field__control { padding-right: 84px; -moz-appearance: textfield; appearance: textfield; }
+body[data-page="anggota"] .agt-suffix > .field__control::-webkit-inner-spin-button,
+body[data-page="anggota"] .agt-suffix > .field__control::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+body[data-page="anggota"] .agt-suffix__unit {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none;
+  font: 600 .72rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-note {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  font-size: .88rem; line-height: 1.6; color: var(--muted);
+  background: var(--surface-2); border-left: 2px solid var(--line-strong);
+}
+body[data-page="anggota"] .agt-note > [data-icon] { margin-top: 3px; color: var(--muted); }
+
+/* save bar: in flow while clean, sticks to the viewport bottom while there are unsaved changes */
+body[data-page="anggota"] .agt-savebar {
+  position: relative; z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
+  margin-top: -12px; padding: 18px 0 18px;
+  background: var(--bg); border-top: 1px solid var(--line);
+  transition: border-color .4s var(--ease), box-shadow .4s var(--ease);
+}
+body[data-page="anggota"] .agt-savebar.is-dirty {
+  position: sticky; bottom: 0;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  border-top-color: var(--line-strong);
+  box-shadow: 0 -24px 32px -28px rgba(10,10,11,.35);
+}
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="anggota"] .agt-savebar.is-dirty { animation: fade-up .45s var(--ease); }
+}
+body[data-page="anggota"] .agt-dirty {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 20px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-dirty:not(:empty)::before {
+  content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ok-fg);
+}
+body[data-page="anggota"] .agt-savebar.is-dirty .agt-dirty { color: var(--warn-fg); }
+body[data-page="anggota"] .agt-savebar.is-dirty .agt-dirty::before { background: var(--warn-fg); }
+body[data-page="anggota"] .agt-savebar__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 599px) {
+  body[data-page="anggota"] .agt-savebar__actions { width: 100%; }
+  body[data-page="anggota"] .agt-savebar__actions .btn { flex: 1 1 0; }
+  body[data-page="anggota"] .agt-savebar__actions .btn--primary { flex-grow: 1.6; }
+}
+
+/* completeness card */
+body[data-page="anggota"] .agt-complete {
+  position: relative; padding: clamp(24px, 2.4vw, 30px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="anggota"] .agt-complete::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal);
+}
+body[data-page="anggota"] .agt-complete__title {
+  font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-complete .skeleton { margin-top: 20px; }
+body[data-page="anggota"] .agt-complete__num {
+  display: flex; align-items: baseline; gap: 4px; margin-top: 14px;
+  font: 500 clamp(3.2rem, 4.4vw, 3.9rem)/.9 var(--f-cond); letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums lining-nums; color: var(--text);
+}
+body[data-page="anggota"] .agt-complete__num small { font-size: .42em; letter-spacing: .04em; color: var(--muted); }
+body[data-page="anggota"] .agt-complete .progress { margin-top: 18px; }
+body[data-page="anggota"] .agt-complete__caption { margin-top: 14px; font-size: .9rem; line-height: 1.6; color: var(--muted); }
+body[data-page="anggota"] .agt-checklist { list-style: none; margin: 20px 0 0; padding: 0; border-top: 1px solid var(--line); }
+body[data-page="anggota"] .agt-checklist > li {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0;
+  font-size: .93rem; border-bottom: 1px solid var(--line);
+}
+body[data-page="anggota"] .agt-checklist__mark {
+  display: grid; place-items: center; flex: none; width: 22px; height: 22px;
+  color: transparent; border: 1px solid var(--line-strong); border-radius: 50%;
+}
+body[data-page="anggota"] .agt-checklist > li.is-done .agt-checklist__mark { color: var(--bg); background: var(--text); border-color: var(--text); }
+body[data-page="anggota"] .agt-checklist__count {
+  margin-left: auto; font: 600 .8rem/1 var(--f-cond); letter-spacing: .1em; font-variant-numeric: tabular-nums; color: var(--muted);
+}
+body[data-page="anggota"] .agt-checklist__link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; text-align: left;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--line-strong);
+}
+body[data-page="anggota"] .agt-checklist__link:hover { text-decoration-color: currentColor; }
+body[data-page="anggota"] .agt-missing { margin-top: 20px; }
+body[data-page="anggota"] .agt-missing__label {
+  margin-bottom: 10px; font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-missing__list { display: flex; flex-wrap: wrap; gap: 6px; }
+body[data-page="anggota"] .agt-missing__chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px;
+  font-size: .84rem; color: var(--text); background: transparent;
+  border: 1px dashed var(--line-strong); border-radius: 999px;
+  transition: border-color .3s var(--ease), background-color .3s var(--ease);
+}
+body[data-page="anggota"] .agt-missing__chip:hover { border-style: solid; border-color: var(--text); background: var(--hover-bg); }
+@media (pointer: coarse) { body[data-page="anggota"] .agt-missing__chip { min-height: 44px; } }
+body[data-page="anggota"] .agt-complete__meta {
+  display: grid; gap: 6px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);
+  font-size: .84rem; line-height: 1.55; color: var(--muted);
+}
+/* above the form on tablets/phones: keep the summary compact */
+@media (max-width: 1023px) {
+  body[data-page="anggota"] .agt-complete { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 24px; align-items: end; }
+  body[data-page="anggota"] .agt-complete > * { grid-column: 1 / -1; }
+  body[data-page="anggota"] .agt-complete__num { grid-column: 1; grid-row: 2; margin-top: 12px; font-size: 3rem; }
+  body[data-page="anggota"] .agt-complete__caption { grid-column: 2; grid-row: 2; margin: 0 0 4px; font-size: .86rem; line-height: 1.5; }
+  body[data-page="anggota"] .agt-complete .agt-checklist,
+  body[data-page="anggota"] .agt-complete__meta { display: none; }
+}
+
+
+/* ==========================================================================
+   04. KOMPETENSI
+   ========================================================================== */
+body[data-page="anggota"] .agt-comp-grid {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(18px, 2.2vw, 28px);
+}
+@media (min-width: 768px) { body[data-page="anggota"] .agt-comp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+body[data-page="anggota"] .agt-comp { --card-pad: clamp(22px, 2.4vw, 32px); }
+body[data-page="anggota"] .agt-comp:hover { border-color: var(--line-strong); }
+body[data-page="anggota"] .agt-comp__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+body[data-page="anggota"] .agt-comp__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-top: 10px; }
+body[data-page="anggota"] .agt-code {
+  display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px;
+  font: 600 .72rem/1 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+body[data-page="anggota"] .agt-code--muted { color: var(--muted); border-style: dashed; }
+body[data-page="anggota"] .agt-comp__actions { display: flex; gap: 2px; margin: -4px -10px 0 0; }
+body[data-page="anggota"] .agt-comp__actions .icon-btn { color: var(--muted); }
+body[data-page="anggota"] .agt-comp__actions .icon-btn:hover { color: var(--text); }
+body[data-page="anggota"] .agt-comp__actions .icon-btn[data-action^="delete"]:hover { color: var(--err-fg); border-color: var(--err-fg); }
+body[data-page="anggota"] .agt-comp__title { margin: 14px 0 26px; font: 600 1.5rem/1.2 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; }
+
+/* 4-step level meter */
+body[data-page="anggota"] .agt-level { display: grid; gap: 10px; }
+body[data-page="anggota"] .agt-level__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  font: 600 .7rem/1.2 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-level__step { font-variant-numeric: tabular-nums; letter-spacing: .14em; }
+body[data-page="anggota"] .agt-level__step b { color: var(--text); font-weight: 600; }
+body[data-page="anggota"] .agt-level__bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+body[data-page="anggota"] .agt-level__bars > span { position: relative; height: 5px; background: var(--line); overflow: hidden; }
+body[data-page="anggota"] .agt-level__bars > span.is-on { background: var(--text); }
+body[data-page="anggota"] .agt-level__labels {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px;
+  font: 600 .66rem/1.2 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+}
+body[data-page="anggota"] .agt-level__labels > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-page="anggota"] .agt-level__labels > .is-current { color: var(--text); }
+body[data-page="anggota"] .agt-comp__foot {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin-top: 24px; padding-top: 16px;
+  font-size: .9rem; color: var(--muted); border-top: 1px solid var(--line);
+}
+body[data-page="anggota"] .agt-comp__foot strong { font: 600 1.05rem/1 var(--f-cond); letter-spacing: .06em; color: var(--text); }
+body[data-page="anggota"] .agt-comp__notes { margin-top: 12px; font-size: .92rem; line-height: 1.6; color: var(--muted); }
+
+
+/* ==========================================================================
+   05. SERTIFIKAT
+   ========================================================================== */
+body[data-page="anggota"] .agt-sum {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: clamp(24px, 3vw, 36px);
+  background: var(--surface); border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+}
+@media (min-width: 768px) { body[data-page="anggota"] .agt-sum { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body[data-page="anggota"] .agt-sum__cell {
+  display: grid; align-content: start; gap: 12px; padding: 20px 22px 18px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+body[data-page="anggota"] .agt-sum__num {
+  font: 500 clamp(2.3rem, 3.4vw, 3rem)/.92 var(--f-cond); letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums lining-nums; color: var(--text);
+}
+body[data-page="anggota"] .agt-sum__label {
+  display: flex; align-items: center; gap: 8px;
+  font: 600 .7rem/1.35 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="anggota"] .agt-sum__sub { font-weight: 500; letter-spacing: .12em; color: var(--faint); }
+body[data-page="anggota"] .agt-sum__dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--text); }
+body[data-page="anggota"] .agt-sum__dot--ok { background: var(--ok-fg); }
+body[data-page="anggota"] .agt-sum__dot--warn { background: var(--warn-fg); }
+body[data-page="anggota"] .agt-sum__dot--err { background: var(--err-fg); }
+body[data-page="anggota"] #sertifikat-alert .alert { margin-bottom: clamp(20px, 2.6vw, 32px); }
+
+body[data-page="anggota"] .agt-cert-table td { vertical-align: middle; }
+body[data-page="anggota"] .agt-cert__title { display: block; font: 600 1.18rem/1.3 var(--f-display); font-variant-numeric: lining-nums; color: var(--text); }
+body[data-page="anggota"] .agt-cert-table .badge { margin-bottom: 2px; }
+body[data-page="anggota"] .agt-cert-table time { white-space: nowrap; }
+body[data-page="anggota"] .agt-cert__actions { text-align: right; }
+body[data-page="anggota"] .agt-cert__actions-in { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px 14px; }
+body[data-page="anggota"] .agt-cert__btns { display: inline-flex; gap: 2px; }
+body[data-page="anggota"] .agt-cert__btns .icon-btn { color: var(--muted); }
+body[data-page="anggota"] .agt-cert__btns .icon-btn:hover { color: var(--text); }
+body[data-page="anggota"] .agt-cert__btns .icon-btn[data-action^="delete"]:hover { color: var(--err-fg); border-color: var(--err-fg); }
+body[data-page="anggota"] .agt-doclink { white-space: nowrap; }
+body[data-page="anggota"] .agt-nolink { font-size: .85rem; color: var(--faint); white-space: nowrap; }
+@media (min-width: 768px) and (max-width: 1099px) {
+  body[data-page="anggota"] .agt-cert__actions-in { flex-direction: column; align-items: flex-end; }
+}
+@media (max-width: 767px) {
+  body[data-page="anggota"] .agt-cert-table td.agt-cert__actions { text-align: left; padding-top: 8px; padding-bottom: 8px; }
+  body[data-page="anggota"] .agt-cert__actions-in { display: flex; width: 100%; justify-content: space-between; }
+  body[data-page="anggota"] .agt-cert__btns { margin-left: auto; margin-right: -10px; }
+  body[data-page="anggota"] .agt-cert__title { font-size: 1.12rem; }
+}
+
+
+/* ==========================================================================
+   06. KARTU ANGGOTA — KTA digital (ID-1 ratio 85.6 × 54)
+   ========================================================================== */
+body[data-page="anggota"] .agt-kartu {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4vw, 64px); align-items: start;
+}
+@media (min-width: 1024px) { body[data-page="anggota"] .agt-kartu { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+
+body[data-page="anggota"] .agt-kta-stage {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: grid; justify-items: center; gap: 22px;
+  padding: clamp(36px, 5.4vw, 72px) clamp(14px, 4vw, 56px) clamp(26px, 3vw, 36px);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="anggota"] .agt-kta-stage > [data-scaffold] { z-index: -1; }
+body[data-page="anggota"] .agt-kta-stage::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 55% at 50% 42%, rgba(255,255,255,.65) 0%, rgba(255,255,255,0) 100%);
+}
+
+body[data-page="anggota"] .agt-kta {
+  position: relative; width: min(100%, 520px); container-type: inline-size;
+  perspective: 1800px; cursor: pointer; border-radius: 3.7% / 5.9%;
+  -webkit-tap-highlight-color: transparent;
+}
+body[data-page="anggota"] .agt-kta:focus-visible { outline: 2px solid var(--c-ink); outline-offset: 6px; }
+body[data-page="anggota"] .agt-kta__inner {
+  position: relative; width: 100%; aspect-ratio: 85.6 / 54;
+  transform-style: preserve-3d; transition: transform 1.1s var(--ease-in-out);
+}
+body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__inner { transform: rotateY(180deg); }
+body[data-page="anggota"] .agt-kta__face {
+  position: absolute; inset: 0; padding: 1px; border-radius: 3.7% / 5.9%;
+  background: var(--metal);
+  box-shadow: 0 2px 4px rgba(10,10,11,.16), 0 34px 64px -26px rgba(10,10,11,.6);
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+body[data-page="anggota"] .agt-kta__face--back { transform: rotateY(180deg); }
+body[data-page="anggota"] .agt-kta__surface {
+  position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden;
+  padding: 6.2cqw 6.6cqw 5.4cqw; border-radius: 3.6% / 5.8%;
+  color: var(--c-bone);
+  background:
+    radial-gradient(110% 130% at 100% 0%, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 52%),
+    radial-gradient(80% 100% at 0% 100%, rgba(185,185,191,.07) 0%, rgba(185,185,191,0) 60%),
+    linear-gradient(160deg, var(--c-graphite) 0%, var(--c-black) 64%);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+body[data-page="anggota"] .agt-kta__surface::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; background-image: var(--noise); opacity: .55;
+}
+body[data-page="anggota"] .agt-kta__surface > * { position: relative; z-index: 1; }
+body[data-page="anggota"] .agt-kta__surface > .agt-kta__lines {
+  position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; color: rgba(185,185,191,.11); pointer-events: none;
+}
+body[data-page="anggota"] .agt-kta__lines line { stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; fill: none; }
+body[data-page="anggota"] .agt-kta__lines rect { fill: var(--c-black); stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
+
+/* front */
+body[data-page="anggota"] .agt-kta__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 4cqw; }
+body[data-page="anggota"] .agt-kta__logo { width: auto; height: 8.6cqw; }
+body[data-page="anggota"] .agt-kta__heading { display: grid; justify-items: end; gap: 1.3cqw; text-align: right; }
+body[data-page="anggota"] .agt-kta__heading b {
+  font: 600 2.45cqw/1 var(--f-cond); letter-spacing: .32em; text-transform: uppercase; color: var(--c-white); margin-right: -.32em;
+}
+body[data-page="anggota"] .agt-kta__heading span { max-width: 34cqw; font: 400 1.85cqw/1.4 var(--f-body); color: var(--c-silver); }
+body[data-page="anggota"] .agt-kta__id { margin-top: auto; }
+body[data-page="anggota"] .agt-kta__name {
+  font: 600 6.3cqw/1.08 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--c-white); text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+body[data-page="anggota"] .agt-kta__name.is-long { font-size: 5.3cqw; }
+body[data-page="anggota"] .agt-kta__name.is-xlong { font-size: 4.6cqw; }
+body[data-page="anggota"] .agt-kta__no {
+  margin-top: 1.9cqw; font: 500 3.5cqw/1 var(--f-cond); letter-spacing: .24em; font-variant-numeric: tabular-nums;
+  background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+}
+body[data-page="anggota"] .agt-kta__facts {
+  display: grid; grid-template-columns: 1fr 1.25fr 1.2fr; gap: 3cqw;
+  margin: 4.4cqw 0 0; padding-top: 2.8cqw; border-top: 1px solid rgba(255,255,255,.16);
+}
+body[data-page="anggota"] .agt-kta__facts dt { font: 600 1.8cqw/1.2 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-gray); }
+body[data-page="anggota"] .agt-kta__facts dd { margin: 1.1cqw 0 0; font: 500 2.85cqw/1.15 var(--f-cond); letter-spacing: .06em; color: var(--c-bone); }
+body[data-page="anggota"] .agt-kta__status { display: inline-flex; align-items: center; gap: 1.2cqw; }
+body[data-page="anggota"] .agt-kta__status::before { content: ""; flex: none; width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: var(--c-silver); }
+body[data-page="anggota"] .agt-kta__status--ok::before { background: var(--c-ok-soft); }
+body[data-page="anggota"] .agt-kta__status--warn::before { background: var(--c-warn-soft); }
+body[data-page="anggota"] .agt-kta__status--err::before { background: var(--c-err-soft); }
+
+/* back */
+body[data-page="anggota"] .agt-kta__back { display: grid; grid-template-columns: 29cqw minmax(0, 1fr); gap: 5cqw; align-items: center; }
+body[data-page="anggota"] .agt-kta__qr {
+  position: relative; display: grid; place-items: center; width: 29cqw; aspect-ratio: 1;
+  padding: 1.9cqw; color: var(--c-ink); background: var(--c-white); border-radius: 1.2cqw;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+body[data-page="anggota"] .agt-kta__qr svg { display: block; width: 100%; height: 100%; }
+body[data-page="anggota"] .agt-kta__qr-fallback { font: 500 1.9cqw/1.35 var(--f-body); text-align: center; color: var(--c-iron); }
+body[data-page="anggota"] .agt-kta__label { font: 600 2.3cqw/1.2 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-white); }
+body[data-page="anggota"] .agt-kta__text { margin-top: 1.6cqw; font: 400 2.2cqw/1.45 var(--f-body); color: var(--c-silver); }
+body[data-page="anggota"] .agt-kta__url { margin-top: 2cqw; font: 500 1.85cqw/1.35 var(--f-cond); letter-spacing: .05em; color: var(--c-gray); overflow-wrap: anywhere; }
+body[data-page="anggota"] .agt-kta__terms {
+  margin-top: auto; padding-top: 2.6cqw; border-top: 1px solid rgba(255,255,255,.16);
+  font: 400 1.72cqw/1.45 var(--f-body); color: var(--c-gray);
+}
+body[data-page="anggota"] .agt-kta__sec {
+  display: flex; justify-content: space-between; gap: 3cqw; margin-top: 1.4cqw;
+  font: 600 1.65cqw/1.25 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--c-silver);
+}
+body[data-page="anggota"] .agt-kta__sec > span:last-child { flex: none; }
+
+/* small cards (phones): nudge micro-type up a little for legibility */
+@container (max-width: 400px) {
+  body[data-page="anggota"] .agt-kta__heading span { font-size: 2.1cqw; }
+  body[data-page="anggota"] .agt-kta__facts dt { font-size: 2.1cqw; letter-spacing: .16em; }
+  body[data-page="anggota"] .agt-kta__text { font-size: 2.45cqw; }
+  body[data-page="anggota"] .agt-kta__terms { font-size: 1.95cqw; }
+}
+
+/* specular sheen on hover (motion only) */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  body[data-page="anggota"] .agt-kta__surface::before {
+    content: ""; position: absolute; inset: -30% -60%; z-index: 2; pointer-events: none;
+    background: linear-gradient(105deg, rgba(255,255,255,0) 42%, rgba(255,255,255,.07) 50%, rgba(255,255,255,0) 58%);
+    transform: translateX(-38%); transition: transform 1.6s var(--ease);
+  }
+  body[data-page="anggota"] .agt-kta:hover .agt-kta__surface::before { transform: translateX(38%); }
+}
+
+body[data-page="anggota"] .agt-kta-hint {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--em); /* sits in the card's drop shadow, so one step darker than --muted */
+}
+body[data-page="anggota"] .agt-kta-hint__touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  body[data-page="anggota"] .agt-kta-hint__fine { display: none; }
+  body[data-page="anggota"] .agt-kta-hint__touch { display: inline; }
+}
+body[data-page="anggota"] .agt-kta-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+body[data-page="anggota"] .agt-kta-controls .btn--ghost { background-color: var(--surface-2); }
+body[data-page="anggota"] .agt-kta-controls .btn > svg:first-child { margin-left: -4px; }
+@media (max-width: 479px) {
+  body[data-page="anggota"] .agt-kta-controls { flex-direction: column; width: 100%; }
+  body[data-page="anggota"] .agt-kta-controls .btn { width: 100%; }
+}
+
+body[data-page="anggota"] .agt-kta-info { display: grid; gap: 28px; }
+body[data-page="anggota"] .agt-kta-info .kv dd { overflow-wrap: anywhere; }
+body[data-page="anggota"] .agt-verify {
+  display: grid; gap: 10px; padding: 22px 24px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="anggota"] .agt-verify__label {
+  display: flex; align-items: center; gap: 10px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+/* standalone link: 3px block padding keeps the target ≥ 24px tall (WCAG 2.5.8); the negative margin keeps the rhythm */
+body[data-page="anggota"] .agt-verify__url { justify-self: start; padding-block: 3px; margin-block: -3px; font-size: .92rem; line-height: 1.5; overflow-wrap: anywhere; }
+body[data-page="anggota"] .agt-verify__text { font-size: .88rem; line-height: 1.6; color: var(--muted); }
+body[data-page="anggota"] .agt-verify__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+body[data-page="anggota"] .agt-verify__actions .btn > svg:first-child { margin-left: -4px; }
+/* v2: admin whose own membership is not Aktif — no card is issued, an explanatory panel instead */
+body[data-page="anggota"] .agt-nocard { grid-column: 1 / -1; width: 100%; max-width: 760px; }
+/* v2: validity reminder (≤ 60 days) above the card details */
+body[data-page="anggota"] .agt-renew .alert__title { font-variant-numeric: lining-nums; }
+
+
+/* ==========================================================================
+   07. APLIKASI
+   ========================================================================== */
+body[data-page="anggota"] .agt-apps { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 2.4vw, 32px); }
+@media (min-width: 900px) { body[data-page="anggota"] .agt-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+body[data-page="anggota"] .agt-app {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; flex-direction: column; min-width: 0;
+  color: var(--text); background: var(--c-black);
+  border: 1px solid rgba(255,255,255,.06); border-radius: var(--radius-sm);
+  transition: translate .6s var(--ease), box-shadow .6s var(--ease);
+}
+body[data-page="anggota"] .agt-app::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: 3; height: 1px; background: var(--metal-line);
+}
+body[data-page="anggota"] .agt-app:hover { box-shadow: var(--shadow-2); }
+body[data-page="anggota"] .agt-app__media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--c-steel); }
+body[data-page="anggota"] .agt-app__media img { width: 100%; height: 100%; object-fit: cover; }
+body[data-page="anggota"] .agt-app__media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    var(--noise),
+    linear-gradient(180deg, rgba(10,10,11,.25) 0%, rgba(10,10,11,0) 26%, rgba(10,10,11,.5) 60%, rgba(10,10,11,.88) 84%, var(--c-black) 100%);
+}
+/* phones: the photo is short, so the eyebrow / index row (pulled 56px up into it) needs a deeper fade */
+@media (max-width: 599px) {
+  body[data-page="anggota"] .agt-app__media::after {
+    background:
+      var(--noise),
+      linear-gradient(0deg, var(--c-black) 0, rgba(10,10,11,.72) 64px, rgba(10,10,11,0) 132px),
+      linear-gradient(180deg, rgba(10,10,11,.25) 0%, rgba(10,10,11,0) 26%, rgba(10,10,11,.5) 60%, rgba(10,10,11,.88) 84%, var(--c-black) 100%);
+  }
+}
+body[data-page="anggota"] .agt-app:hover .img-mono { filter: grayscale(.2) contrast(1.02); }
+body[data-page="anggota"] .agt-app__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+body[data-page="anggota"] .agt-app__head .eyebrow { margin: 0; }
+body[data-page="anggota"] .agt-app__index { color: var(--c-silver); }
+body[data-page="anggota"] .agt-app__body {
+  position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1;
+  margin-top: -56px; padding: 0 clamp(24px, 3vw, 40px) clamp(26px, 3vw, 40px);
+}
+body[data-page="anggota"] .agt-app__body .eyebrow { color: var(--c-silver); }
+body[data-page="anggota"] .agt-app__title { font: 600 clamp(1.95rem, 2.8vw, 2.5rem)/1.08 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.01em; color: var(--c-white); }
+body[data-page="anggota"] .agt-app__desc { margin-top: 14px; color: rgba(236,236,234,.74); }
+body[data-page="anggota"] .agt-app__features { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1px solid var(--line); }
+body[data-page="anggota"] .agt-app__features > li {
+  display: flex; align-items: flex-start; gap: 12px; padding: 11px 0;
+  font-size: .94rem; line-height: 1.55; color: var(--c-bone); border-bottom: 1px solid var(--line);
+}
+body[data-page="anggota"] .agt-app__features > li > svg { flex: none; margin-top: 4px; color: var(--c-gray); }
+body[data-page="anggota"] .agt-app__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: auto; padding-top: 30px; }
+body[data-page="anggota"] .agt-app__note {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-gray);
+}
+body[data-page="anggota"] .agt-apps-note { margin-top: clamp(24px, 3vw, 36px); }
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="anggota"] .agt-app:hover { translate: 0 -4px; }
+  body[data-page="anggota"] .agt-app:hover .img-mono { scale: 1.04; }
+}
+
+
+/* ==========================================================================
+   08. MODAL FORMS (rendered into .modal by PPAPI.ui.modal)
+   ========================================================================== */
+body[data-page="anggota"] .agt-mform { gap: 20px; padding-bottom: 6px; }
+body[data-page="anggota"] .agt-mform .field__hint { margin-top: -2px; }
+body[data-page="anggota"] .agt-mform textarea.field__control { min-height: 96px; }
+body[data-page="anggota"] .agt-mform .check { font-size: .92rem; }
+body[data-page="anggota"] .agt-mform__desc {
+  padding: 12px 14px; font-size: .86rem; line-height: 1.6; color: var(--muted);
+  background: var(--surface-2); border-left: 2px solid var(--line-strong);
+}
+body[data-page="anggota"] .agt-mform__desc:empty { display: none; }
+body[data-page="anggota"] .modal .agt-mform p { color: inherit; }
+body[data-page="anggota"] .modal .agt-mform .field__hint,
+body[data-page="anggota"] .modal .agt-mform .agt-mform__desc { color: var(--muted); }
+body[data-page="anggota"] .modal .agt-mform .field__error { color: var(--err-fg); }
+
+
+/* ==========================================================================
+   09. REDUCED MOTION — crossfade instead of a 3D flip
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="anggota"] .agt-kta__inner { transform: none !important; transform-style: flat; }
+  body[data-page="anggota"] .agt-kta__face { -webkit-backface-visibility: visible; backface-visibility: visible; transition: opacity .3s, visibility .3s; }
+  body[data-page="anggota"] .agt-kta__face--back { transform: none; opacity: 0; visibility: hidden; }
+  body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__face--front { opacity: 0; visibility: hidden; }
+  body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__face--back { opacity: 1; visibility: visible; }
+}
+
+
+/* ==========================================================================
+   10. PRINT — only the member card, front and back at true size
+   ========================================================================== */
+@media print {
+  @page { size: A4 portrait; margin: 16mm; }
+  body[data-page="anggota"] main { padding: 0 !important; }
+  body[data-page="anggota"] .agt-hero,
+  body[data-page="anggota"] .agt-tabs__bar,
+  body[data-page="anggota"] .agt-load-error,
+  body[data-page="anggota"] .tabs__panel,
+  body[data-page="anggota"] #panel-kartu > .agt-panel-head,
+  body[data-page="anggota"] .agt-kta-info,
+  body[data-page="anggota"] .agt-kta-hint,
+  body[data-page="anggota"] .agt-kta-controls,
+  body[data-page="anggota"] .agt-kta-stage > [data-scaffold] { display: none !important; }
+  body[data-page="anggota"] #panel-kartu { display: block !important; padding: 0 !important; animation: none !important; }
+  body[data-page="anggota"] .agt-body { padding: 0 !important; }
+  body[data-page="anggota"] .agt-body > .container { max-width: none; padding: 0; }
+  body[data-page="anggota"] .agt-kartu { display: block; }
+  body[data-page="anggota"] .agt-kta-stage {
+    display: block; padding: 0; background: none !important; border: 0; overflow: visible;
+  }
+  body[data-page="anggota"] .agt-kta-stage::after { display: none; }
+  body[data-page="anggota"] .agt-kta-print-head { display: block !important; margin: 0 0 8mm; font: 600 9pt/1.4 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: #444; }
+  body[data-page="anggota"] .agt-kta { width: 85.6mm; perspective: none; cursor: default; }
+  body[data-page="anggota"] .agt-kta__inner { aspect-ratio: auto; transform: none !important; transform-style: flat; display: grid; gap: 10mm; }
+  body[data-page="anggota"] .agt-kta__face,
+  body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__face {
+    position: relative; inset: auto; width: 85.6mm; height: 54mm;
+    transform: none !important; opacity: 1 !important; visibility: visible !important;
+    -webkit-backface-visibility: visible; backface-visibility: visible;
+    box-shadow: none; break-inside: avoid; outline: .2mm dashed #999; outline-offset: 2mm;
+  }
+  body[data-page="anggota"] .agt-kta__surface::before { display: none; }
+}

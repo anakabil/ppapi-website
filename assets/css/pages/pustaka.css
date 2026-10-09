@@ -1,0 +1,444 @@
+/* ==========================================================================
+   PPAPI — pustaka.html · Produk Pengetahuan
+   Page-specific styles only; scoped to body[data-page="pustaka"] and built on
+   the design tokens + shared components of main.css (doc-card, locked, chips,
+   segmented, kv, badges). No new colour values.
+   ========================================================================== */
+
+/* ---------- Hero ---------- */
+body[data-page="pustaka"] .pk-hero { --hero-pos: center 42%; }
+body[data-page="pustaka"] .pk-hero .lead { max-width: 64ch; }
+body[data-page="pustaka"] .pk-hero-access { color: var(--c-mist); }
+
+/* ==========================================================================
+   RUANG KOLEKSI — ruled index of collections (card-catalogue drawers)
+   ========================================================================== */
+body[data-page="pustaka"] .pk-tiles {
+  position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0; padding: 0; list-style: none;
+  border-top: 1px solid var(--line-strong); border-left: 1px solid var(--line);
+}
+@media (min-width: 1024px) { body[data-page="pustaka"] .pk-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body[data-page="pustaka"] .pk-tile-wrap { display: flex; min-width: 0; }
+body[data-page="pustaka"] .pk-tile {
+  position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0;
+  padding: clamp(22px, 2.6vw, 34px) clamp(18px, 2.2vw, 30px) clamp(20px, 2.2vw, 26px);
+  color: var(--text); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  transition: background-color .6s var(--ease);
+}
+/* coupler node on the top-left intersection of every drawer */
+body[data-page="pustaka"] .pk-tile::before {
+  content: ""; position: absolute; left: -4px; top: -4px; z-index: 1; width: 7px; height: 7px;
+  background: var(--bg); border: 1px solid var(--line-strong); pointer-events: none;
+}
+body[data-page="pustaka"] .pk-tile:hover { background: var(--surface); }
+body[data-page="pustaka"] .pk-tile:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+body[data-page="pustaka"] .pk-tile__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+body[data-page="pustaka"] .pk-tile__icon {
+  display: grid; place-items: center; flex: none; width: 42px; height: 42px;
+  border: 1px solid var(--line-strong); border-radius: 50%; color: var(--text);
+  transition: background-color .45s var(--ease), color .45s var(--ease), border-color .45s var(--ease);
+}
+body[data-page="pustaka"] .pk-tile:hover .pk-tile__icon { background: var(--text); color: var(--bg); border-color: var(--text); }
+body[data-page="pustaka"] .pk-tile__num {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 4px; margin-top: clamp(22px, 3vw, 36px);
+  font: 500 clamp(2.6rem, 4vw, 3.5rem)/1 var(--f-cond); letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums lining-nums; color: var(--text-strong);
+}
+body[data-page="pustaka"] .pk-tile__num small {
+  margin-left: 4px; font: 600 .7rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+/* all items in the drawer are samples → the same Contoh mark the cards carry */
+body[data-page="pustaka"] .pk-tile__num .badge { align-self: center; margin-left: 8px; min-height: 20px; padding: 1px 7px; letter-spacing: .18em; }
+/* mixed drawer (Standar): what the count is made of */
+body[data-page="pustaka"] .pk-tile__split {
+  display: block; margin-top: 10px;
+  font: 600 .66rem/1.45 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-tile__name {
+  display: block; margin-top: 12px;
+  font: 600 clamp(1.18rem, 1.5vw, 1.36rem)/1.22 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em;
+}
+body[data-page="pustaka"] .pk-tile__desc {
+  display: -webkit-box; margin-top: 10px; font-size: .9rem; line-height: 1.6; color: var(--muted);
+  -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+body[data-page="pustaka"] .pk-tile__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: auto; padding-top: 22px;
+}
+body[data-page="pustaka"] .pk-tile__desc + .pk-tile__foot { margin-top: auto; }
+body[data-page="pustaka"] .pk-tile__unit { font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+body[data-page="pustaka"] .pk-tile__arrow { flex: none; transition: transform .5s var(--ease); }
+body[data-page="pustaka"] .pk-tile:hover .pk-tile__arrow { transform: translateX(4px); }
+body[data-page="pustaka"] .pk-tile.is-empty .pk-tile__num { color: var(--faint); }
+@media (max-width: 599px) {
+  body[data-page="pustaka"] .pk-tile { padding: 18px 16px 16px; }
+  body[data-page="pustaka"] .pk-tile__icon { width: 36px; height: 36px; }
+  body[data-page="pustaka"] .pk-tile__num { margin-top: 18px; font-size: 2.3rem; }
+  body[data-page="pustaka"] .pk-tile__name { margin-top: 8px; font-size: 1.08rem; overflow-wrap: anywhere; hyphens: auto; }
+  body[data-page="pustaka"] .pk-tile__desc { display: none; }
+  body[data-page="pustaka"] .pk-tile__foot { padding-top: 14px; }
+  body[data-page="pustaka"] .pk-tile__unit { font-size: .64rem; letter-spacing: .14em; }
+}
+
+/* ==========================================================================
+   KATALOG — access bar
+   ========================================================================== */
+body[data-page="pustaka"] .pk-access { margin-bottom: clamp(20px, 3vw, 28px); }
+body[data-page="pustaka"] .pk-access:empty { display: none; }
+@media (min-width: 900px) {
+  body[data-page="pustaka"] .pk-lockbar {
+    grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 24px; row-gap: 4px; align-items: center;
+    padding: 24px 28px;
+  }
+  body[data-page="pustaka"] .pk-lockbar .locked__icon { grid-column: 1; grid-row: 1 / span 3; align-self: center; margin: 0; }
+  body[data-page="pustaka"] .pk-lockbar .locked__eyebrow,
+  body[data-page="pustaka"] .pk-lockbar .locked__title,
+  body[data-page="pustaka"] .pk-lockbar .locked__text { grid-column: 2; }
+  body[data-page="pustaka"] .pk-lockbar .locked__text { max-width: 72ch; }
+  body[data-page="pustaka"] .pk-lockbar .locked__actions { grid-column: 3; grid-row: 1 / span 3; align-self: center; margin: 0; flex-wrap: nowrap; }
+}
+@media (max-width: 899px) {
+  body[data-page="pustaka"] .pk-lockbar .locked__actions { justify-self: stretch; }
+  body[data-page="pustaka"] .pk-lockbar .locked__actions .btn { flex: 1 1 auto; }
+}
+body[data-page="pustaka"] .pk-granted {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px 18px;
+  padding: 18px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="pustaka"] .pk-granted::before { content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 2px; background: var(--c-ok); }
+body[data-page="pustaka"] .pk-granted__icon {
+  display: grid; place-items: center; width: 44px; height: 44px; color: var(--ok-fg);
+  border: 1px solid var(--line-strong); border-radius: 50%;
+}
+body[data-page="pustaka"] .pk-granted__title {
+  margin: 0 0 2px; font: 600 .74rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="pustaka"] .pk-granted__text p:last-child { font-size: .92rem; line-height: 1.55; color: var(--muted); }
+body[data-page="pustaka"] .pk-granted > .btn { grid-column: 1 / -1; justify-self: start; }
+@media (min-width: 768px) {
+  body[data-page="pustaka"] .pk-granted { grid-template-columns: auto minmax(0, 1fr) auto; }
+  body[data-page="pustaka"] .pk-granted > .btn { grid-column: auto; }
+}
+
+/* ==========================================================================
+   KATALOG — toolbar
+   ========================================================================== */
+body[data-page="pustaka"] .pk-toolbar {
+  position: relative; display: grid; gap: 22px;
+  padding: clamp(20px, 2.8vw, 32px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="pustaka"] .pk-toolbar::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal);
+}
+body[data-page="pustaka"] .pk-toolbar .field { gap: 10px; }
+body[data-page="pustaka"] .pk-chipset,
+body[data-page="pustaka"] .pk-viewset { display: grid; gap: 10px; align-content: start; min-width: 0; }
+body[data-page="pustaka"] .pk-chipset > .field__label,
+body[data-page="pustaka"] .pk-viewset > .field__label { margin: 0; }
+/* the collection row sits under its own rule */
+body[data-page="pustaka"] .pk-chipset { padding-top: 20px; border-top: 1px solid var(--line); }
+body[data-page="pustaka"] .pk-toolbar .chip { gap: 8px; padding: 0 12px; letter-spacing: .12em; }
+body[data-page="pustaka"] .pk-toolbar .chip.is-zero { color: var(--muted); border-style: dashed; }
+body[data-page="pustaka"] .pk-toolbar .chip.is-zero .chip__count { opacity: 1; }
+body[data-page="pustaka"] .pk-toolbar .chip.is-zero:hover { color: var(--text); border-color: var(--text); }
+body[data-page="pustaka"] .pk-view { display: flex; }
+body[data-page="pustaka"] .pk-view .segmented__option { flex: 1 1 0; padding: 0 14px; gap: 8px; }
+
+/* ≥ 768px: every control visible, laid out on the form's own grid (wrappers dissolve) */
+@media (min-width: 768px) {
+  body[data-page="pustaka"] .pk-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 22px 20px;
+  }
+  body[data-page="pustaka"] .pk-toolbar__top,
+  body[data-page="pustaka"] .pk-toolbar__saring { display: contents; }
+  body[data-page="pustaka"] .pk-toolbar__search { grid-column: 1 / -1; }
+  body[data-page="pustaka"] .pk-toolbar__toggle { display: none; }
+  body[data-page="pustaka"] .pk-chipset { grid-column: 1 / -1; }
+  body[data-page="pustaka"] .pk-view .segmented__option { min-height: 42px; }
+}
+/* ≥ 1024px: search · status · urutan · tampilan on one line, collections underneath */
+@media (min-width: 1024px) {
+  body[data-page="pustaka"] .pk-toolbar { grid-template-columns: minmax(0, 1fr) 200px 180px auto; }
+  body[data-page="pustaka"] .pk-toolbar__search { grid-column: auto; }
+}
+
+/* < 768px: search + "Saring" on one line; Status, Urutkan and Tampilan fold away; chips become a rail */
+@media (max-width: 767px) {
+  body[data-page="pustaka"] .pk-toolbar { gap: 18px; padding: 20px; }
+  body[data-page="pustaka"] .pk-toolbar__top { display: flex; align-items: flex-end; gap: 10px; }
+  body[data-page="pustaka"] .pk-toolbar__search { flex: 1 1 auto; min-width: 0; }
+  body[data-page="pustaka"] .pk-toolbar__toggle { flex: none; gap: 8px; padding: 0 14px; letter-spacing: .14em; border-color: var(--field-border); background: var(--field-bg); }
+  body[data-page="pustaka"] .pk-toolbar__toggle[aria-expanded="true"] { border-color: var(--text); }
+  body[data-page="pustaka"] .pk-toolbar__n {
+    display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-left: -2px;
+    font: 600 .7rem/1 var(--f-cond); letter-spacing: 0; color: var(--bg); background: var(--text); border-radius: 10px;
+  }
+  body[data-page="pustaka"] .pk-toolbar__n[hidden] { display: none; }
+  body[data-page="pustaka"] .pk-toolbar__saring { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-page="pustaka"] .pk-toolbar__saring > .pk-viewset { grid-column: 1 / -1; }
+  body[data-page="pustaka"] .pk-toolbar:not(.is-saring-open) .pk-toolbar__saring { display: none; }
+  body[data-page="pustaka"] .pk-chipset { padding-top: 16px; }
+  body[data-page="pustaka"] .pk-chipset .filter-chips {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    margin-inline: -20px; padding: 2px 20px 4px; scroll-padding-inline: 20px;
+  }
+  body[data-page="pustaka"] .pk-chipset .filter-chips::-webkit-scrollbar { display: none; }
+  body[data-page="pustaka"] .pk-chipset .chip { flex: none; }
+}
+@media (max-width: 479px) {
+  body[data-page="pustaka"] .pk-toolbar__saring { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- summary line ---------- */
+body[data-page="pustaka"] .pk-summary {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 24px;
+  margin: clamp(28px, 4vw, 44px) 0 4px; min-height: 44px;
+}
+body[data-page="pustaka"] .pk-count { font-size: .95rem; color: var(--muted); }
+body[data-page="pustaka"] .pk-count strong {
+  font: 600 1.15rem/1 var(--f-cond); letter-spacing: .02em; color: var(--text); font-variant-numeric: tabular-nums;
+}
+body[data-page="pustaka"] .pk-apphint {
+  display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 0; font-size: .92rem; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-apphint > svg { flex: none; margin-top: .2em; color: var(--text); }
+body[data-page="pustaka"] .pk-apphint a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+body[data-page="pustaka"] .pk-apphint a:hover { text-decoration-color: currentColor; }
+body[data-page="pustaka"] .pk-hl { color: inherit; background: rgba(185,185,191,.42); border-radius: 1px; padding: 0 1px; }
+
+/* ==========================================================================
+   KATALOG — shelves (one per collection)
+   ========================================================================== */
+body[data-page="pustaka"] .pk-results { margin-top: clamp(20px, 3vw, 32px); }
+body[data-page="pustaka"] .pk-shelf + .pk-shelf { margin-top: clamp(44px, 5.5vw, 72px); }
+/* Shelf = one condensed rule line ("02 / 07 · Code of Practice · 2 rancangan"). The collection
+   descriptions live once, on the Ruang Koleksi tiles above. */
+body[data-page="pustaka"] .pk-shelf__head {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px;
+  margin-bottom: clamp(18px, 2.2vw, 24px); padding-bottom: 14px; border-bottom: 1px solid var(--line-strong);
+}
+/* coupler node where the shelf rule starts */
+body[data-page="pustaka"] .pk-shelf__head::after {
+  content: ""; position: absolute; left: 0; bottom: -4px; width: 7px; height: 7px;
+  background: var(--bg); border: 1px solid var(--line-strong);
+}
+body[data-page="pustaka"] .pk-shelf__head > .index-num { flex: none; min-width: 4.6em; }
+body[data-page="pustaka"] .pk-shelf__title {
+  display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0;
+  font: 600 clamp(1.3rem, 1.8vw, 1.55rem)/1.2 var(--f-display); font-variant-numeric: lining-nums;
+  letter-spacing: -.005em; text-transform: none; color: var(--text);
+}
+body[data-page="pustaka"] .pk-shelf__icon {
+  display: grid; place-items: center; flex: none; width: 34px; height: 34px;
+  border: 1px solid var(--line-strong); border-radius: 50%; color: var(--text);
+}
+body[data-page="pustaka"] .pk-shelf__count {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+body[data-page="pustaka"] .pk-shelf__count::before { content: ""; width: 14px; height: 1px; background: var(--line-strong); }
+body[data-page="pustaka"] .pk-shelf__count .badge { min-height: 20px; padding: 1px 7px; }
+body[data-page="pustaka"] .pk-shelf__link { min-height: 40px; margin-left: auto; }
+@media (max-width: 767px) {
+  /* line 1: index + title; line 2: count (+ link to Regulasi & Standar) */
+  body[data-page="pustaka"] .pk-shelf__head { gap: 8px 14px; padding-bottom: 12px; }
+  body[data-page="pustaka"] .pk-shelf__head > .index-num { min-width: 0; }
+  body[data-page="pustaka"] .pk-shelf__title { flex: 1 1 70%; }
+  body[data-page="pustaka"] .pk-shelf__count::before { content: none; }
+  body[data-page="pustaka"] .pk-shelf__link { min-height: 36px; }
+  body[data-page="pustaka"] .pk-shelf__icon { width: 30px; height: 30px; }
+}
+body[data-page="pustaka"] .pk-shelf__more { margin-top: 24px; }
+
+/* ---------- card grid ---------- */
+body[data-page="pustaka"] .pk-grid { display: grid; gap: clamp(16px, 2vw, 24px); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { body[data-page="pustaka"] .pk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { body[data-page="pustaka"] .pk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+body[data-page="pustaka"] .pk-card .doc-card__title { font-size: 1.28rem; }
+body[data-page="pustaka"] .pk-card .doc-card__foot .badge { min-height: 22px; padding: 2px 8px; font-size: .62rem; }
+body[data-page="pustaka"] .doc-card__access.is-muted { color: var(--muted); }
+body[data-page="pustaka"] .pk-meta--stack { display: grid; gap: 2px; }
+body[data-page="pustaka"] .pk-meta--stack > * + *::before { content: none; }
+body[data-page="pustaka"] .doc-card__access > svg { flex: none; }
+@media (max-width: 767px) {
+  body[data-page="pustaka"] .pk-card { gap: 12px; padding: 22px 20px 18px; }
+  body[data-page="pustaka"] .pk-card .doc-card__summary { -webkit-line-clamp: 2; line-clamp: 2; font-size: .94rem; }
+  body[data-page="pustaka"] .pk-card .doc-card__title { font-size: 1.22rem; }
+  body[data-page="pustaka"] .pk-card .doc-card__foot { padding-top: 14px; }
+}
+
+/* ---------- list view: a library index ---------- */
+body[data-page="pustaka"] .pk-index { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+body[data-page="pustaka"] .pk-row {
+  position: relative; display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "code access" "main main" "badges badges";
+  gap: 8px 16px; padding: 18px 4px; border-bottom: 1px solid var(--line);
+  transition: background-color .4s var(--ease);
+}
+@media (min-width: 1024px) {
+  body[data-page="pustaka"] .pk-row {
+    grid-template-columns: 148px minmax(0, 1fr) minmax(0, auto) 168px; grid-template-areas: "code main badges access";
+    gap: 8px 28px; padding: 20px 16px;
+  }
+}
+body[data-page="pustaka"] .pk-row:hover { background: var(--surface); }
+body[data-page="pustaka"] .pk-row:focus-within { outline: 2px solid var(--focus); outline-offset: -2px; }
+body[data-page="pustaka"] .pk-row__code {
+  grid-area: code; min-width: 0; overflow-wrap: anywhere;
+  font: 500 .86rem/1.35 var(--f-cond); letter-spacing: .1em; font-variant-numeric: tabular-nums lining-nums; color: var(--text-strong);
+}
+body[data-page="pustaka"] .pk-row__main { grid-area: main; min-width: 0; }
+body[data-page="pustaka"] .pk-row__kind {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: 600 .66rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-row__kind > svg { color: var(--text); }
+body[data-page="pustaka"] .pk-row__title {
+  margin: 6px 0 0; font: 600 1.16rem/1.3 var(--f-display); font-variant-numeric: lining-nums;
+  letter-spacing: -.003em; text-transform: none; color: var(--text);
+}
+body[data-page="pustaka"] .pk-row__title button { color: inherit; text-align: left; font: inherit; letter-spacing: inherit; }
+body[data-page="pustaka"] .pk-row__title button::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+body[data-page="pustaka"] .pk-row__title button:focus-visible { outline: none; }
+body[data-page="pustaka"] .pk-row__meta {
+  display: flex; flex-wrap: wrap; gap: 2px 0; margin-top: 6px;
+  font: 600 .66rem/1.45 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-row__meta > * + *::before { content: "·"; margin: 0 8px; }
+body[data-page="pustaka"] .pk-row__badges { grid-area: badges; display: flex; flex-wrap: wrap; gap: 6px; }
+body[data-page="pustaka"] .pk-row__badges .badge { min-height: 22px; padding: 2px 8px; font-size: .62rem; }
+@media (min-width: 1024px) { body[data-page="pustaka"] .pk-row__badges { justify-content: flex-end; } }
+body[data-page="pustaka"] .pk-row__access {
+  grid-area: access; justify-self: end; display: inline-flex; align-items: center; gap: 7px; text-align: right;
+  font: 600 .68rem/1.3 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="pustaka"] .pk-row__access.is-muted,
+body[data-page="pustaka"] .pk-row__access.is-locked { color: var(--muted); }
+body[data-page="pustaka"] .pk-row__access > svg { flex: none; }
+
+/* ---------- empty + note ---------- */
+body[data-page="pustaka"] .pk-empty { margin-top: 12px; }
+body[data-page="pustaka"] .pk-empty .empty-state { background: var(--surface); }
+body[data-page="pustaka"] .pk-note { margin-top: clamp(40px, 5vw, 64px); max-width: 820px; }
+
+/* ==========================================================================
+   APLIKASI ANGGOTA (dark band, featured cards)
+   ========================================================================== */
+body[data-page="pustaka"] .pk-apps { position: relative; isolation: isolate; overflow: hidden; }
+body[data-page="pustaka"] .pk-apps > [data-scaffold] { z-index: -1; opacity: .5; }
+body[data-page="pustaka"] .pk-apps__list { display: grid; gap: clamp(20px, 3vw, 32px); }
+body[data-page="pustaka"] .pk-app { scroll-margin-top: calc(var(--header-offset) + 24px); }
+@media (min-width: 768px) {
+  /* editorial rhythm: the second card mirrors the first */
+  body[data-page="pustaka"] .pk-app:nth-child(even) { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  body[data-page="pustaka"] .pk-app:nth-child(even) .doc-card__media { order: 2; }
+  body[data-page="pustaka"] .pk-app .doc-card__media { min-height: 360px; }
+}
+body[data-page="pustaka"] .pk-app .doc-card__media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(0deg, rgba(10,10,11,.72) 0%, rgba(10,10,11,0) 46%);
+}
+body[data-page="pustaka"] .pk-app__num {
+  position: absolute; left: clamp(18px, 2.4vw, 28px); bottom: clamp(16px, 2.2vw, 24px); z-index: 1;
+  font: 500 .9rem/1 var(--f-cond); letter-spacing: .16em; font-variant-numeric: tabular-nums; color: var(--c-white);
+}
+body[data-page="pustaka"] .pk-app__num > span { color: var(--c-silver); }
+body[data-page="pustaka"] .pk-app .doc-card__title { max-width: 26ch; }
+body[data-page="pustaka"] .pk-app .doc-card__code { text-transform: uppercase; }
+body[data-page="pustaka"] .pk-app__desc { margin: 0; max-width: 64ch; color: var(--muted); }
+body[data-page="pustaka"] .pk-app__features,
+body[data-page="pustaka"] .pk-modal__features { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+body[data-page="pustaka"] .pk-app__features li { display: flex; align-items: flex-start; gap: 12px; font-size: .94rem; line-height: 1.55; color: var(--text); }
+body[data-page="pustaka"] .pk-app__features li > svg { flex: none; margin-top: .2em; color: var(--muted); }
+body[data-page="pustaka"] .pk-app .doc-card__foot { gap: 12px 14px; }
+body[data-page="pustaka"] .pk-app__lock,
+body[data-page="pustaka"] .pk-app__pending {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-app__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+@media (max-width: 479px) {
+  body[data-page="pustaka"] .pk-app__actions { flex-basis: 100%; margin-left: 0; }
+  body[data-page="pustaka"] .pk-app__actions .btn { flex: 1 1 100%; }
+}
+body[data-page="pustaka"] .pk-apps__note {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: clamp(24px, 3vw, 32px); max-width: 80ch;
+  font-size: .88rem; line-height: 1.6; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-apps__note:empty { display: none; }
+body[data-page="pustaka"] .pk-apps__note > svg { flex: none; margin-top: .2em; }
+
+/* ==========================================================================
+   Katalog tertutup (config.pustaka.katalogPublik = false, viewer not active)
+   ========================================================================== */
+body[data-page="pustaka"] .pk-closed__panel { margin-inline: auto; }
+body[data-page="pustaka"] .pk-closed__list {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px;
+  margin: 28px 0 0; padding: 0; list-style: none;
+  font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pustaka"] .pk-closed__list li { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ==========================================================================
+   CTA band
+   ========================================================================== */
+body[data-page="pustaka"] .pk-cta { isolation: isolate; overflow: hidden; }
+body[data-page="pustaka"] .pk-cta > [data-scaffold] { z-index: -1; opacity: .7; }
+@media (max-width: 767px) { body[data-page="pustaka"] .pk-cta > [data-scaffold] { opacity: .4; } }
+body[data-page="pustaka"] .pk-cta__inner { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px 64px; }
+body[data-page="pustaka"] .pk-cta__text { max-width: 680px; }
+body[data-page="pustaka"] .pk-cta__text .lead { margin-top: 18px; }
+body[data-page="pustaka"] .pk-cta__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; }
+@media (max-width: 479px) {
+  body[data-page="pustaka"] .pk-cta__actions { flex-direction: column; align-items: stretch; width: 100%; }
+  body[data-page="pustaka"] .pk-cta__actions .btn { width: 100%; }
+  body[data-page="pustaka"] .pk-cta__actions .btn--link { justify-content: center; }
+}
+
+/* ==========================================================================
+   Detail modal (appended to <body>)
+   ========================================================================== */
+body[data-page="pustaka"] .pk-modal { display: grid; gap: 22px; }
+body[data-page="pustaka"] .pk-modal > * + * { margin-top: 0; }
+body[data-page="pustaka"] .pk-modal__badges { display: flex; flex-wrap: wrap; gap: 8px; }
+body[data-page="pustaka"] .pk-modal__badges:empty { display: none; }
+body[data-page="pustaka"] .pk-modal__label {
+  margin: 0 0 8px; font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text) !important;
+}
+body[data-page="pustaka"] .pk-modal__summary p:last-child { line-height: 1.7; }
+body[data-page="pustaka"] .pk-modal__kv .kv__row { padding: 11px 0; grid-template-columns: minmax(110px, 32%) minmax(0, 1fr); }
+body[data-page="pustaka"] .pk-modal__kv dd { font-size: .95rem; overflow-wrap: anywhere; }
+body[data-page="pustaka"] .pk-modal__tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+body[data-page="pustaka"] .pk-modal__tags li {
+  display: inline-flex; align-items: center; min-height: 28px; padding: 3px 10px;
+  font: 600 .66rem/1.2 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="pustaka"] .pk-modal__access { display: grid; gap: 10px; }
+body[data-page="pustaka"] .pk-modal__links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; min-height: 44px; }
+body[data-page="pustaka"] .pk-modal__host { font-size: .85rem; color: var(--muted); }
+body[data-page="pustaka"] .pk-modal__reglink { justify-self: start; }
+body[data-page="pustaka"] .pk-modal__loading { display: inline-flex; align-items: center; gap: 10px; font-size: .9rem; color: var(--muted); }
+body[data-page="pustaka"] .pk-modal__pending {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start;
+  padding: 16px 18px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="pustaka"] .pk-modal__pending > svg { margin-top: .15em; color: var(--muted); }
+body[data-page="pustaka"] .pk-modal__pending-title {
+  margin: 0 0 4px; font: 600 .74rem/1.4 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--text) !important;
+}
+body[data-page="pustaka"] .pk-modal__pending p:last-child { font-size: .92rem; line-height: 1.55; }
+body[data-page="pustaka"] .pk-modal__locked { box-shadow: none; }
+body[data-page="pustaka"] .pk-modal__note { padding-top: 14px; border-top: 1px solid var(--line); font-size: .85rem; line-height: 1.55; color: var(--muted); }
+body[data-page="pustaka"] .pk-shelf .pk-index { border-top: 0; }
+
+/* ---------- print: the catalog as a reading list ---------- */
+@media print {
+  body[data-page="pustaka"] .pk-toolbar, body[data-page="pustaka"] .pk-cta, body[data-page="pustaka"] .pk-access,
+  body[data-page="pustaka"] .pk-summary .btn, body[data-page="pustaka"] .pk-shelf__more,
+  body[data-page="pustaka"] .pk-collections, body[data-page="pustaka"] .pk-app__actions { display: none !important; }
+  body[data-page="pustaka"] .pk-grid { grid-template-columns: 1fr 1fr; }
+}

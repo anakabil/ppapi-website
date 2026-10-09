@@ -1,0 +1,637 @@
+/* ==========================================================================
+   PPAPI — Beranda (index.html) · page styles
+   Scoped to body[data-page="beranda"]; design tokens only.
+   Sections: hero · marquee · tentang + angka · pilar · produk pengetahuan ·
+   aplikasi anggota · kabar · regulasi · galeri · CTA pendaftaran
+   ========================================================================== */
+
+/* ---------- shared bits ---------- */
+body[data-page="beranda"] .home-figcap {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 18px;
+  font: 600 .72rem/1.45 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="beranda"] .home-figcap .index-num { font-size: .72rem; letter-spacing: .2em; color: var(--text); }
+
+
+/* ==========================================================================
+   1. HERO — full viewport, dark, cinematic
+   ========================================================================== */
+body[data-page="beranda"] .home-hero {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; flex-direction: column;
+  min-height: 100vh; min-height: 100svh;
+  padding-top: calc(var(--header-offset) + clamp(28px, 6vh, 72px));
+  color: var(--text); background: var(--c-black);
+}
+body[data-page="beranda"] .home-hero > .hero-media { z-index: -3; }
+body[data-page="beranda"] .home-hero__media img {
+  object-position: 50% 60%;
+  filter: grayscale(1) contrast(1.12) brightness(.66);
+}
+/* extra veil: legible header + headline, keeps the silhouettes readable on the right */
+body[data-page="beranda"] .home-hero__veil {
+  position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 78% 38%, rgba(10,10,11,0) 0%, rgba(10,10,11,.35) 70%),
+    linear-gradient(90deg, rgba(10,10,11,.3) 0%, rgba(10,10,11,.18) 50%, rgba(10,10,11,0) 72%),
+    linear-gradient(180deg, rgba(10,10,11,.72) 0%, rgba(10,10,11,.18) 22%, rgba(10,10,11,0) 46%);
+}
+body[data-page="beranda"] .home-hero__scaffold { z-index: -1; }
+body[data-page="beranda"] .home-hero__scaffold .scaffold-draw { color: rgba(185,185,191,.13); }
+
+body[data-page="beranda"] .home-hero__inner {
+  position: relative; z-index: 1; flex: 1;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+body[data-page="beranda"] .home-hero__content { max-width: 940px; padding-bottom: clamp(36px, 7vh, 84px); }
+body[data-page="beranda"] .home-hero__eyebrow { color: var(--c-silver); margin-bottom: clamp(20px, 3vh, 30px); }
+body[data-page="beranda"] .home-hero__title {
+  max-width: none; color: var(--c-white);
+  font-size: clamp(2.5rem, 1.3rem + 4.95vw, 5.75rem); line-height: 1;
+}
+body[data-page="beranda"] .home-hero__title em { color: var(--c-silver); }
+body[data-page="beranda"] .home-hero__lead {
+  max-width: 54ch; margin-top: clamp(20px, 3vh, 32px);
+  color: rgba(236,236,234,.82);
+}
+body[data-page="beranda"] .home-hero__actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: clamp(28px, 4.2vh, 44px); }
+
+body[data-page="beranda"] .home-hero__foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px;
+  padding-block: 18px 22px; border-top: 1px solid rgba(255,255,255,.14);
+}
+body[data-page="beranda"] .home-hero__cue {
+  display: inline-flex; align-items: center; gap: 16px; min-height: 44px;
+  font: 600 .72rem/1 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-silver);
+  transition: color .3s;
+}
+body[data-page="beranda"] .home-hero__cue:hover { color: var(--c-white); }
+body[data-page="beranda"] .home-hero__cue-line {
+  position: relative; display: block; width: 1px; height: 40px; overflow: hidden; background: rgba(255,255,255,.22);
+}
+body[data-page="beranda"] .home-hero__cue-line::after {
+  content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 14px; background: var(--c-white);
+}
+body[data-page="beranda"] .home-hero__index {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 0; list-style: none; margin: 0; padding: 0;
+  font: 600 .8rem/1 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-bone);
+}
+body[data-page="beranda"] .home-hero__index li { display: inline-flex; align-items: center; gap: 10px; }
+body[data-page="beranda"] .home-hero__index li + li::before {
+  content: ""; width: 5px; height: 5px; margin-inline: 22px; border: 1px solid rgba(255,255,255,.4);
+}
+body[data-page="beranda"] .home-hero__index .index-num { font-size: .7rem; letter-spacing: .16em; color: var(--c-gray); }
+
+@media (max-width: 1023px) {
+  /* Phones and tablets: the portrait-ish crop puts the photo's bright sky behind the whole text block
+     (eyebrow → lead), where the desktop left-to-right shade is too light. Darken the photo evenly from
+     the headline down and leave the floodlight tower readable at the top. The grain sits under the
+     scrim, so it still shows on the open sky but cannot lift the dark behind the text. */
+  body[data-page="beranda"] .home-hero__media img { filter: grayscale(1) contrast(1.08) brightness(.6); }
+  body[data-page="beranda"] .home-hero__media::after {
+    background:
+      linear-gradient(0deg, rgba(10,10,11,.94) 0%, rgba(10,10,11,.76) 38%, rgba(10,10,11,.7) 70%, rgba(10,10,11,.44) 100%),
+      var(--noise);
+  }
+  body[data-page="beranda"] .home-hero__veil {
+    background: linear-gradient(180deg, rgba(10,10,11,.6) 0%, rgba(10,10,11,0) 22%);
+  }
+}
+@media (max-width: 767px) {
+  /* the photo fills the phone by height: slide the frame left so the walking silhouette clears the headline */
+  body[data-page="beranda"] .home-hero__media img { object-position: 30% 50%; }
+  body[data-page="beranda"] .home-hero__eyebrow { letter-spacing: .2em; line-height: 1.5; }
+  body[data-page="beranda"] .home-hero__eyebrow::before { width: 29px; background-size: 24px 1px, 5px 5px; }
+  body[data-page="beranda"] .home-hero__lead { font-size: 1.06rem; }
+  body[data-page="beranda"] .home-hero__actions .btn { width: 100%; }
+  body[data-page="beranda"] .home-hero__cue { display: none; }
+  body[data-page="beranda"] .home-hero__foot { justify-content: flex-start; padding-block: 16px 20px; }
+  body[data-page="beranda"] .home-hero__index { font-size: .7rem; letter-spacing: .2em; }
+  body[data-page="beranda"] .home-hero__index li + li::before { margin-inline: 12px; }
+  body[data-page="beranda"] .home-hero__index .index-num { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="beranda"] .home-hero__cue-line::after { animation: beranda-cue 2.6s var(--ease-in-out) infinite; }
+}
+@keyframes beranda-cue {
+  0% { transform: translateY(-16px); }
+  60%, 100% { transform: translateY(42px); }
+}
+
+
+/* ==========================================================================
+   2. MARQUEE — dark band continuing the hero
+   ========================================================================== */
+body[data-page="beranda"] .home-marquee { background: var(--c-black); }
+body[data-page="beranda"] .home-marquee .marquee {
+  padding-block: clamp(22px, 2.8vw, 34px);
+  border-top-color: rgba(255,255,255,.08); border-bottom-color: rgba(255,255,255,.08);
+  --marquee-duration: 56s;
+}
+body[data-page="beranda"] .home-marquee .marquee__item { font-size: clamp(1.1rem, 2.1vw, 1.65rem); color: var(--c-bone); }
+body[data-page="beranda"] .home-marquee .marquee__item--serif { font-size: clamp(1.45rem, 2.8vw, 2.25rem); color: var(--c-silver); }
+body[data-page="beranda"] .home-marquee .marquee__sep { color: var(--c-slate); }
+
+
+/* ==========================================================================
+   3. TENTANG + ANGKA
+   ========================================================================== */
+body[data-page="beranda"] .home-about__split { align-items: center; }
+body[data-page="beranda"] .home-about__text .h2 { max-width: 15ch; }
+body[data-page="beranda"] .home-about__body { margin-top: clamp(24px, 3vw, 36px); max-width: 60ch; }
+body[data-page="beranda"] .home-about__lead { color: var(--text); }
+body[data-page="beranda"] .home-about__para { margin-top: 1.1em; color: var(--muted); }
+body[data-page="beranda"] .home-about__actions { display: flex; flex-wrap: wrap; gap: 8px 36px; margin-top: clamp(24px, 3vw, 36px); }
+
+/* 432px = width of facade-bw-sm.webp, so a 1× desktop screen loads the small file (sizes="… 432px") */
+body[data-page="beranda"] .home-about__figure { width: 100%; max-width: 432px; margin: 0 auto; }
+/* caption clears the offset hairline frame (22px desktop / 14px mobile) */
+body[data-page="beranda"] .home-about__figure .home-figcap { margin-top: 44px; }
+@media (max-width: 767px) { body[data-page="beranda"] .home-about__figure .home-figcap { margin-top: 32px; } }
+body[data-page="beranda"] .home-about__frame { aspect-ratio: 4 / 5; }
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-about__figure { margin: 0 22px 0 auto; }
+  body[data-page="beranda"] .home-about__frame { aspect-ratio: 3 / 4; }
+}
+@media (max-width: 1023px) {
+  body[data-page="beranda"] .home-about__figure { max-width: 520px; margin-inline: 0 auto; padding-right: 10px; }
+  body[data-page="beranda"] .home-about__frame { aspect-ratio: 4 / 3; }
+}
+
+body[data-page="beranda"] .home-stats { margin-top: clamp(72px, 9vw, 128px); }
+body[data-page="beranda"] .home-stats__head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 32px;
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
+body[data-page="beranda"] .home-stats__title {
+  font: 600 .78rem/1.3 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="beranda"] .home-stats__note { font-size: .88rem; color: var(--muted); }
+body[data-page="beranda"] .home-stats__grid { --grid-gap: clamp(20px, 3vw, 40px); row-gap: 40px; }
+body[data-page="beranda"] .home-stat { position: relative; border-top-color: var(--line-strong); }
+body[data-page="beranda"] .home-stat::before {
+  content: ""; position: absolute; left: 0; top: -3px; width: 5px; height: 5px; background: var(--text);
+}
+body[data-page="beranda"] .home-stat .stat__num { font-size: clamp(3rem, 6vw, 5.2rem); }
+body[data-page="beranda"] .home-stat .stat__label { max-width: 30ch; }
+
+
+/* ==========================================================================
+   4. PILAR LAYANAN — numbered features on a hairline grid
+   ========================================================================== */
+body[data-page="beranda"] .home-pilar .section-head { align-items: flex-end; }
+body[data-page="beranda"] .home-pilar .h2 { max-width: 21ch; }
+body[data-page="beranda"] .home-pilar__aside,
+body[data-page="beranda"] .home-pk__aside,
+body[data-page="beranda"] .home-gallery__aside,
+body[data-page="beranda"] .home-apps__lead { flex: 0 1 40ch; max-width: 40ch; color: var(--muted); }
+body[data-page="beranda"] .home-pilar .section-head__text,
+body[data-page="beranda"] .home-pk .section-head__text,
+body[data-page="beranda"] .home-gallery .section-head__text,
+body[data-page="beranda"] .home-apps .section-head__text { flex: 1 1 520px; }
+
+body[data-page="beranda"] .home-pilar__grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+body[data-page="beranda"] .home-pilar__item { padding-bottom: clamp(32px, 3.4vw, 48px); }
+@media (max-width: 767px) {
+  body[data-page="beranda"] .home-pilar__item { padding-top: 24px; padding-bottom: 30px; }
+  body[data-page="beranda"] .home-pilar__item .feature__head { margin-bottom: 18px; }
+  body[data-page="beranda"] .home-pilar__item .feature__icon { width: 46px; height: 46px; }
+}
+body[data-page="beranda"] .home-pilar__item .feature__text { max-width: 44ch; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  body[data-page="beranda"] .home-pilar__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(28px, 4vw, 48px); }
+}
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-pilar__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+  body[data-page="beranda"] .home-pilar__item { padding-inline: clamp(24px, 2.6vw, 40px); border-left: 1px solid var(--line); }
+  body[data-page="beranda"] .home-pilar__item:nth-child(3n + 1) { padding-left: 0; border-left: 0; }
+  body[data-page="beranda"] .home-pilar__item:nth-child(3n) { padding-right: 0; }
+  /* coupler node where the hairlines cross */
+  body[data-page="beranda"] .home-pilar__item:not(:nth-child(3n + 1))::after {
+    content: ""; position: absolute; left: -3px; top: -3px; width: 5px; height: 5px;
+    background: var(--c-bone); border: 1px solid var(--line-strong);
+  }
+}
+
+
+/* ==========================================================================
+   5. PRODUK PENGETAHUAN — category tiles drawn as documents (folded corner)
+   ========================================================================== */
+body[data-page="beranda"] .home-pk .section-head { align-items: flex-end; }
+body[data-page="beranda"] .home-pk .h2 { max-width: 19ch; }
+
+body[data-page="beranda"] .home-pk__grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px;
+}
+@media (min-width: 560px) {
+  body[data-page="beranda"] .home-pk__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 20px); }
+}
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-pk__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+body[data-page="beranda"] .home-pk__item { display: flex; min-width: 0; }
+body[data-page="beranda"] .home-pk__tile {
+  position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0;
+  padding: 24px 24px 18px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  transition: translate .6s var(--ease), border-color .6s var(--ease), box-shadow .6s var(--ease);
+}
+/* folded corner: a document, not a box (shows the section paper behind it) */
+body[data-page="beranda"] .home-pk__tile::before {
+  content: ""; position: absolute; top: -1px; right: -1px; width: 22px; height: 22px; z-index: 1;
+  background: linear-gradient(225deg, var(--c-paper) 0 50%, var(--line-strong) 50% calc(50% + 1px), var(--surface-2) calc(50% + 1px));
+}
+body[data-page="beranda"] .home-pk__tile:hover { translate: 0 -4px; border-color: var(--line-strong); box-shadow: var(--shadow-hover); }
+body[data-page="beranda"] .home-pk__tile:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+body[data-page="beranda"] .home-pk__head { display: flex; align-items: center; gap: 12px; padding-right: 16px; }
+body[data-page="beranda"] .home-pk__head .index-num { white-space: nowrap; }
+/* four narrow tiles (1024–1279px): numeral without the "/ 08" total so it never wraps beside the badge */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  body[data-page="beranda"] .home-pk__tile { padding-inline: 20px; }
+  body[data-page="beranda"] .home-pk__head { gap: 10px; }
+  body[data-page="beranda"] .home-pk__head .index-num > span { display: none; }
+}
+body[data-page="beranda"] .home-pk__badge { display: inline-flex; }
+body[data-page="beranda"] .home-pk__badge--meta { display: none; }
+body[data-page="beranda"] .home-pk__icon {
+  margin-left: auto;
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  color: var(--text); border: 1px solid var(--line-strong); border-radius: 50%;
+  transition: background-color .5s var(--ease), color .5s var(--ease), border-color .5s var(--ease);
+}
+body[data-page="beranda"] .home-pk__tile:hover .home-pk__icon { background: var(--text); color: var(--surface); border-color: var(--text); }
+body[data-page="beranda"] .home-pk__name {
+  margin: 26px 0 8px; font: 600 clamp(1.32rem, 1.55vw, 1.5rem)/1.18 var(--f-display); font-variant-numeric: lining-nums;
+  letter-spacing: -.005em; text-transform: none; color: var(--text-strong);
+}
+body[data-page="beranda"] .home-pk__name a { color: inherit; }
+body[data-page="beranda"] .home-pk__name a::after { content: ""; position: absolute; inset: 0; z-index: 2; }
+body[data-page="beranda"] .home-pk__name a:focus-visible { outline: none; }
+body[data-page="beranda"] .home-pk__desc { flex: 1 0 auto; margin: 0 0 20px; font-size: .9rem; line-height: 1.6; color: var(--muted); max-width: 34ch; }
+body[data-page="beranda"] .home-pk__meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; padding-top: 14px; border-top: 1px solid var(--line);
+  min-height: 40px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="beranda"] .home-pk__tile.is-empty .home-pk__count { color: var(--muted); }
+body[data-page="beranda"] .home-pk__go { display: grid; place-items: center; margin-left: auto; color: var(--text); transition: transform .5s var(--ease); }
+body[data-page="beranda"] .home-pk__tile:hover .home-pk__go { transform: translateX(4px); }
+
+/* the "Aplikasi Anggota" tile is a dark plate — it leads into the dark apps band below */
+body[data-page="beranda"] .home-pk__tile--dark { background: var(--c-graphite); border-color: var(--c-graphite); }
+body[data-page="beranda"] .home-pk__tile--dark::before {
+  background: linear-gradient(225deg, var(--c-paper) 0 50%, var(--c-iron) 50% calc(50% + 1px), var(--c-steel) calc(50% + 1px));
+}
+body[data-page="beranda"] .home-pk__tile--dark::after {
+  content: ""; position: absolute; left: -1px; top: -1px; right: 21px; height: 1px; background: var(--metal-line); opacity: .7;
+}
+body[data-page="beranda"] .home-pk__tile--dark:hover { border-color: var(--c-iron); }
+body[data-page="beranda"] .home-pk__tile--dark:hover .home-pk__icon { color: var(--c-ink); }
+
+body[data-page="beranda"] .home-pk__foot {
+  position: relative;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px;
+  margin-top: clamp(32px, 3.4vw, 44px); padding-top: clamp(24px, 2.6vw, 30px); border-top: 1px solid var(--line-strong);
+}
+body[data-page="beranda"] .home-pk__foot::before {
+  content: ""; position: absolute; left: 0; top: -3px; width: 5px; height: 5px; background: var(--text);
+}
+body[data-page="beranda"] .home-pk__access { display: flex; align-items: center; gap: 14px; max-width: 62ch; margin: 0; font-size: .95rem; line-height: 1.55; color: var(--muted); }
+body[data-page="beranda"] .home-pk__access-icon {
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
+  color: var(--text); border: 1px solid var(--line-strong); border-radius: 50%;
+}
+body[data-page="beranda"] .home-pk__access.is-open { color: var(--text); }
+body[data-page="beranda"] .home-pk__access.is-open .home-pk__access-icon { color: var(--ok-fg); border-color: currentColor; }
+body[data-page="beranda"] .home-pk__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* phones: compact index rows — icon · name + count · arrow */
+@media (max-width: 559px) {
+  body[data-page="beranda"] .home-pk__tile {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 16px; row-gap: 6px;
+    padding: 16px 52px 16px 16px;
+  }
+  body[data-page="beranda"] .home-pk__tile:hover { translate: none; }
+  body[data-page="beranda"] .home-pk__head { grid-row: 1 / span 2; padding: 0; }
+  body[data-page="beranda"] .home-pk__head .index-num,
+  body[data-page="beranda"] .home-pk__badge--head { display: none; }
+  body[data-page="beranda"] .home-pk__badge--meta { display: inline-flex; }
+  body[data-page="beranda"] .home-pk__name { grid-column: 2; margin: 0; font-size: 1.24rem; }
+  body[data-page="beranda"] .home-pk__desc { display: none; }
+  body[data-page="beranda"] .home-pk__meta { grid-column: 2; min-height: 24px; padding: 0; border: 0; letter-spacing: .16em; }
+  body[data-page="beranda"] .home-pk__go { position: absolute; right: 18px; top: 50%; margin: -9px 0 0; }
+  body[data-page="beranda"] .home-pk__tile:hover .home-pk__go { transform: none; }
+  body[data-page="beranda"] .home-pk__foot { align-items: stretch; }
+  body[data-page="beranda"] .home-pk__access { align-items: flex-start; }
+  body[data-page="beranda"] .home-pk__actions { width: 100%; }
+  body[data-page="beranda"] .home-pk__actions .btn { width: 100%; }
+}
+
+/* ==========================================================================
+   6. APLIKASI ANGGOTA — dark band
+   ========================================================================== */
+body[data-page="beranda"] .home-apps { overflow: hidden; isolation: isolate; }
+body[data-page="beranda"] .home-apps::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(80% 60% at 100% 0%, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 60%),
+    var(--noise);
+  opacity: .9;
+}
+body[data-page="beranda"] .home-apps__scaffold { z-index: -1; }
+body[data-page="beranda"] .home-apps__scaffold .scaffold-draw { color: rgba(185,185,191,.07); }
+body[data-page="beranda"] .home-apps .h2 { max-width: 20ch; color: var(--c-white); }
+
+body[data-page="beranda"] .home-apps__grid { display: grid; gap: clamp(16px, 2vw, 28px); }
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-apps__grid { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+}
+body[data-page="beranda"] .home-apps__figure { margin: 0; min-height: 280px; border: 1px solid var(--line); }
+body[data-page="beranda"] .home-apps__figure > img { position: absolute; inset: 0; }
+body[data-page="beranda"] .home-apps__figure::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(0deg, rgba(10,10,11,.9) 0%, rgba(10,10,11,.55) 22%, rgba(10,10,11,0) 46%);
+}
+body[data-page="beranda"] .home-apps__figcap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 22px 24px;
+  font: 600 .72rem/1.45 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-bone);
+}
+body[data-page="beranda"] .home-apps__figcap .index-num { font-size: .72rem; letter-spacing: .2em; color: var(--c-white); }
+/* < 1024px the figure is a short 16:9 strip and the caption would wrap onto the brightest metal:
+   the caption moves under the photo onto a solid graphite plate (like a gallery label). */
+@media (max-width: 1023px) {
+  body[data-page="beranda"] .home-apps__figure { min-height: 0; background: var(--c-graphite); }
+  body[data-page="beranda"] .home-apps__figure > img {
+    position: relative; inset: auto; display: block; height: auto; aspect-ratio: 16 / 9; object-position: 50% 40%;
+  }
+  body[data-page="beranda"] .home-apps__figure::after { content: none; }
+  body[data-page="beranda"] .home-apps__figcap {
+    position: relative; padding: 16px 20px 18px;
+    background: var(--c-graphite); border-top: 1px solid var(--line); color: var(--c-silver);
+  }
+}
+
+body[data-page="beranda"] .home-apps__cards { display: grid; gap: clamp(16px, 2vw, 28px); }
+@media (min-width: 768px) {
+  body[data-page="beranda"] .home-apps__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body[data-page="beranda"] .home-app { --card-pad: clamp(24px, 2.6vw, 36px); background: rgba(26,26,29,.92); }
+body[data-page="beranda"] .home-app::after {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 1px; background: var(--metal-line); opacity: .55;
+}
+body[data-page="beranda"] .home-app__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+body[data-page="beranda"] .home-app__icon {
+  display: grid; place-items: center; width: 52px; height: 52px; flex: none;
+  color: var(--c-white); border: 1px solid var(--line-strong); border-radius: 50%;
+}
+body[data-page="beranda"] .home-app__title { font-size: clamp(1.6rem, 2.2vw, 2rem); color: var(--c-white); margin-bottom: 14px; }
+body[data-page="beranda"] .home-app__desc { color: var(--muted); font-size: .95rem; }
+body[data-page="beranda"] .home-app__fitur { margin-top: 22px; font-size: .9rem; color: var(--text); }
+body[data-page="beranda"] .home-app__foot { flex-direction: column; align-items: stretch; gap: 14px; padding-top: 28px; }
+body[data-page="beranda"] .home-app__access {
+  display: flex; align-items: center; gap: 8px;
+  font: 600 .7rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="beranda"] .home-app__btn { white-space: normal; text-align: left; justify-content: space-between; line-height: 1.25; padding-block: 12px; }
+body[data-page="beranda"] .home-apps__note {
+  display: flex; align-items: flex-start; gap: 10px; max-width: 80ch;
+  margin-top: clamp(24px, 3vw, 36px); font-size: .86rem; line-height: 1.6; color: var(--muted);
+}
+body[data-page="beranda"] .home-apps__note > svg { margin-top: 3px; color: var(--c-silver); }
+
+
+/* ==========================================================================
+   7. KABAR TERKINI — news + agenda panel
+   ========================================================================== */
+body[data-page="beranda"] .home-news__layout { display: grid; gap: clamp(48px, 5vw, 72px); }
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-news__layout { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: stretch; }
+}
+body[data-page="beranda"] .home-news__list { display: grid; gap: clamp(32px, 3.4vw, 44px); min-width: 0; }
+body[data-page="beranda"] .home-news__lead .news-card__media { aspect-ratio: 16 / 9; margin-bottom: 26px; }
+body[data-page="beranda"] .home-news__lead .news-card__title { font-size: clamp(1.65rem, 2.6vw, 2.25rem); line-height: 1.12; margin-bottom: 14px; }
+body[data-page="beranda"] .home-news__lead .news-card__excerpt { font-size: 1.02rem; max-width: 62ch; }
+
+/* berita kelolaan admin tanpa gambar: pelat grafit dengan garis perancah statis */
+body[data-page="beranda"] .home-media-fallback {
+  position: absolute; inset: 0; display: block; background: var(--c-graphite); color: rgba(185,185,191,.22);
+}
+body[data-page="beranda"] .home-news__rows { display: grid; border-top: 1px solid var(--line); }
+body[data-page="beranda"] .home-news__row {
+  grid-template-columns: 148px minmax(0, 1fr); gap: 24px; padding-block: 26px; border-bottom: 1px solid var(--line);
+}
+body[data-page="beranda"] .home-news__row .news-card__media { aspect-ratio: 4 / 3; }
+body[data-page="beranda"] .home-news__row .news-card__meta { margin-bottom: 8px; }
+body[data-page="beranda"] .home-news__row .news-card__title { font-size: clamp(1.2rem, 1.6vw, 1.38rem); margin-bottom: 6px; }
+body[data-page="beranda"] .home-news__row .news-card__excerpt { -webkit-line-clamp: 2; line-clamp: 2; font-size: .92rem; }
+@media (max-width: 479px) {
+  body[data-page="beranda"] .home-news__row { grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding-block: 22px; }
+  body[data-page="beranda"] .home-news__row .news-card__media { aspect-ratio: 1 / 1; }
+  body[data-page="beranda"] .home-news__row .news-card__excerpt { display: none; }
+}
+
+/* agenda panel (dark island in a light section) */
+body[data-page="beranda"] .home-agenda {
+  --card-pad: clamp(24px, 2.8vw, 40px);
+  isolation: isolate; overflow: hidden; background: var(--c-ink); border-color: var(--c-ink);
+}
+body[data-page="beranda"] .home-agenda__scaffold { z-index: -1; top: auto; height: 46%; }
+body[data-page="beranda"] .home-agenda__scaffold .scaffold-draw { color: rgba(185,185,191,.08); }
+body[data-page="beranda"] .home-agenda__scaffold::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, var(--c-ink) 0%, rgba(17,17,19,0) 60%);
+}
+body[data-page="beranda"] .home-agenda::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal); opacity: .8;
+}
+body[data-page="beranda"] .home-agenda__head { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+body[data-page="beranda"] .home-agenda__label {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  font: 600 .72rem/1 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-silver);
+}
+body[data-page="beranda"] .home-agenda__title { font-size: clamp(1.7rem, 2.4vw, 2.1rem); color: var(--c-white); }
+body[data-page="beranda"] .home-agenda .event-row { grid-template-columns: auto minmax(0, 1fr); gap: 16px 20px; padding-block: 24px; align-items: start; }
+body[data-page="beranda"] .home-agenda .date-block { min-width: 76px; background: transparent; }
+body[data-page="beranda"] .home-agenda .date-block--range .date-block__day { font-size: 1.55rem; }
+body[data-page="beranda"] .home-agenda .event-row__title {
+  font-size: 1.28rem; line-height: 1.25; letter-spacing: 0; text-transform: none; color: var(--c-white); margin: 10px 0 8px;
+}
+body[data-page="beranda"] .home-agenda .event-row__title a { color: inherit; }
+body[data-page="beranda"] .home-agenda .event-row__title a::after { content: ""; position: absolute; inset: 0; }
+body[data-page="beranda"] .home-agenda .event-row { position: relative; transition: background-color .4s var(--ease); }
+body[data-page="beranda"] .home-agenda .event-row__info { font-size: .86rem; gap: 6px 16px; }
+body[data-page="beranda"] .home-event__when { color: var(--c-bone); }
+body[data-page="beranda"] .home-agenda__foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px;
+  margin-top: auto; padding-top: 20px;
+}
+body[data-page="beranda"] .home-agenda__list { margin-bottom: 8px; }
+body[data-page="beranda"] .home-agenda__count {
+  font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-gray);
+}
+body[data-page="beranda"] .home-agenda__empty { display: grid; gap: 12px; padding: 28px 0; color: var(--muted); }
+body[data-page="beranda"] .home-agenda__empty > svg { color: var(--c-silver); }
+/* Desktop: the panel stretches to the height of the news column. The count + "Semua agenda" link
+   follow the list directly, and the height left over is filled by a scaffold elevation drawn from
+   the panel's base (an in-flow flex item that grows into the spare space, fading in at its top). */
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-agenda__foot { margin-top: 0; }
+  body[data-page="beranda"] .home-agenda__scaffold {
+    position: relative; inset: auto; z-index: 0; height: auto;
+    flex: 1 0 0; min-height: 0;
+    margin: 28px calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad));
+  }
+  body[data-page="beranda"] .home-agenda__scaffold .scaffold-draw { color: rgba(185,185,191,.15); }
+  body[data-page="beranda"] .home-agenda__scaffold::after {
+    background: linear-gradient(180deg, var(--c-ink) 0%, rgba(17,17,19,0) 45%);
+  }
+}
+
+
+/* ==========================================================================
+   8. REGULASI KUNCI
+   ========================================================================== */
+body[data-page="beranda"] .home-reg__split { align-items: start; }
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-reg__intro { position: sticky; top: calc(var(--header-offset) + 28px); }
+}
+body[data-page="beranda"] .home-reg__intro .h2 { max-width: 13ch; }
+body[data-page="beranda"] .home-reg__text { max-width: 44ch; margin: clamp(20px, 2.4vw, 28px) 0 clamp(28px, 3vw, 36px); color: var(--muted); }
+body[data-page="beranda"] .home-reg__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 30px; }
+body[data-page="beranda"] .home-reg__label {
+  margin-bottom: 18px; font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="beranda"] .home-reg__list { border-top-color: var(--line-strong); }
+body[data-page="beranda"] .home-reg__item { padding: 0; }
+body[data-page="beranda"] .home-reg__link {
+  position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 4px 20px; align-items: center;
+  padding: clamp(22px, 2.4vw, 30px) 0; color: var(--text);
+}
+body[data-page="beranda"] .home-reg__link::before {
+  content: ""; position: absolute; left: 0; bottom: -1px; width: 0; height: 1px; background: var(--text);
+  transition: width .8s var(--ease);
+}
+body[data-page="beranda"] .home-reg__link:hover::before, body[data-page="beranda"] .home-reg__link:focus-visible::before { width: 100%; }
+body[data-page="beranda"] .home-reg__num { align-self: start; padding-top: 6px; }
+body[data-page="beranda"] .home-reg__main { display: grid; gap: 6px; min-width: 0; }
+body[data-page="beranda"] .home-reg__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+body[data-page="beranda"] .home-reg__code {
+  margin-top: 4px; font: 600 clamp(1.45rem, 2.4vw, 1.9rem)/1.1 var(--f-cond); letter-spacing: .02em; color: var(--text-strong);
+}
+body[data-page="beranda"] .home-reg__title { font: 500 clamp(1.1rem, 1.4vw, 1.25rem)/1.35 var(--f-display); font-variant-numeric: lining-nums; color: var(--muted); max-width: 46ch; }
+body[data-page="beranda"] .home-reg__go {
+  display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--line-strong); border-radius: 50%;
+  color: var(--text); transition: background-color .45s var(--ease), color .45s var(--ease), border-color .45s var(--ease);
+}
+body[data-page="beranda"] .home-reg__go svg { transition: transform .45s var(--ease); }
+body[data-page="beranda"] .home-reg__link:hover .home-reg__go { background: var(--text); color: var(--bg); border-color: var(--text); }
+body[data-page="beranda"] .home-reg__link:hover .home-reg__go svg { transform: translateX(3px); }
+@media (max-width: 479px) {
+  body[data-page="beranda"] .home-reg__link { grid-template-columns: minmax(0, 1fr) auto; }
+  body[data-page="beranda"] .home-reg__num { display: none; }
+  body[data-page="beranda"] .home-reg__go { width: 44px; height: 44px; }
+}
+
+
+/* ==========================================================================
+   9. GALERI — asymmetric mosaic
+   ========================================================================== */
+body[data-page="beranda"] .home-gallery__grid {
+  display: grid; gap: clamp(10px, 1.4vw, 18px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: clamp(150px, 44vw, 240px);
+}
+body[data-page="beranda"] .home-gallery__item { margin: 0; height: 100%; }
+body[data-page="beranda"] .home-gallery__item > img { position: absolute; inset: 0; }
+body[data-page="beranda"] .home-gallery__item--a { grid-row: span 2; }
+body[data-page="beranda"] .home-gallery__item--b { grid-column: 1 / -1; grid-row: 3; }
+body[data-page="beranda"] .home-gallery__item--c { grid-column: 2; grid-row: 1; }
+body[data-page="beranda"] .home-gallery__item--d { grid-column: 2; grid-row: 2; }
+body[data-page="beranda"] .home-gallery__item--a > img { object-position: 50% 30%; }
+body[data-page="beranda"] .home-gallery__item--b > img { object-position: 50% 45%; }
+body[data-page="beranda"] .home-gallery__item--d > img { object-position: 45% 55%; }
+@media (min-width: 768px) {
+  body[data-page="beranda"] .home-gallery__grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-rows: clamp(220px, 22vw, 300px);
+  }
+  body[data-page="beranda"] .home-gallery__item--a { grid-column: 1 / span 5; grid-row: 1 / span 2; }
+  body[data-page="beranda"] .home-gallery__item--b { grid-column: 6 / span 7; grid-row: 1; }
+  body[data-page="beranda"] .home-gallery__item--c { grid-column: 6 / span 3; grid-row: 2; }
+  body[data-page="beranda"] .home-gallery__item--d { grid-column: 9 / span 4; grid-row: 2; }
+}
+/* scrim sized to the caption (1–3 lines), not to the tile, so tall and short tiles read the same */
+body[data-page="beranda"] .home-gallery__item::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(0deg, rgba(10,10,11,.9) 0, rgba(10,10,11,.64) 84px, rgba(10,10,11,0) 172px);
+  transition: opacity .8s var(--ease);
+}
+body[data-page="beranda"] .home-gallery__item:hover::after { opacity: .85; }
+body[data-page="beranda"] .home-gallery__item figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  display: flex; align-items: baseline; gap: 12px; padding: clamp(14px, 1.8vw, 24px);
+  font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-bone);
+}
+body[data-page="beranda"] .home-gallery__item figcaption .index-num { font-size: .72rem; color: var(--c-white); }
+@media (max-width: 767px) {
+  /* small tiles: captions wrap to 2–3 lines, so the scrim is taller and denser */
+  body[data-page="beranda"] .home-gallery__item::after {
+    background: linear-gradient(0deg, rgba(10,10,11,.92) 0%, rgba(10,10,11,.72) 38%, rgba(10,10,11,0) 75%);
+  }
+  body[data-page="beranda"] .home-gallery__item figcaption { font-size: .64rem; letter-spacing: .16em; }
+  body[data-page="beranda"] .home-gallery__item figcaption .index-num { display: none; }
+}
+
+
+/* ==========================================================================
+   10. CTA PENDAFTARAN — graphite band + membership track
+   ========================================================================== */
+body[data-page="beranda"] .home-cta { overflow: hidden; isolation: isolate; text-align: center; }
+body[data-page="beranda"] .home-cta::after {
+  content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(60% 80% at 50% 0%, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 70%),
+    var(--noise);
+  opacity: .75;
+}
+body[data-page="beranda"] .home-cta__scaffold { z-index: -1; }
+body[data-page="beranda"] .home-cta__scaffold .scaffold-draw { color: rgba(185,185,191,.08); }
+body[data-page="beranda"] .home-cta__inner { position: relative; display: flex; flex-direction: column; align-items: center; max-width: 1040px; }
+body[data-page="beranda"] .home-cta .eyebrow { color: var(--c-silver); }
+body[data-page="beranda"] .home-cta__title {
+  max-width: 20ch; color: var(--c-white);
+  font-size: clamp(2.3rem, 1.2rem + 4vw, 4.7rem); line-height: 1.04;
+}
+body[data-page="beranda"] .home-cta__lead { max-width: 56ch; margin-top: clamp(18px, 2.4vw, 28px); font: 300 clamp(1.05rem, 1.4vw, 1.2rem)/1.65 var(--f-body); color: rgba(236,236,234,.78); }
+/* membership track (shared .status-track): neutral for visitors, personal once signed in */
+body[data-page="beranda"] .home-cta__track {
+  position: relative; width: 100%; max-width: 940px; margin-top: clamp(36px, 4.4vw, 56px);
+  padding: clamp(22px, 2.6vw, 30px) clamp(20px, 3vw, 36px) clamp(24px, 2.8vw, 32px);
+  text-align: left; background: rgba(10,10,11,.32); border: 1px solid var(--line);
+}
+body[data-page="beranda"] .home-cta__track::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 1px; background: var(--metal-line); opacity: .6;
+}
+body[data-page="beranda"] .home-cta__track-label {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 24px;
+  font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-silver);
+}
+body[data-page="beranda"] .home-cta__track-label::before { content: ""; width: 28px; height: 1px; background: currentColor; opacity: .7; }
+body[data-page="beranda"] .home-cta__track .status-track { --bg: var(--c-graphite); }
+body[data-page="beranda"] .home-cta__track .status-track__label { color: var(--c-bone); letter-spacing: .14em; }
+body[data-page="beranda"] .home-cta__track.is-personal .status-track__step:not(.is-done):not(.is-current):not(.is-warn):not(.is-error) .status-track__label { color: var(--muted); }
+body[data-page="beranda"] .home-cta__track .status-track__step.is-warn .status-track__label { color: var(--warn-fg); }
+body[data-page="beranda"] .home-cta__track .status-track__step.is-error .status-track__label { color: var(--err-fg); }
+body[data-page="beranda"] .home-cta__step-num {
+  display: block; margin-bottom: 6px; font: 500 .7rem/1 var(--f-cond); letter-spacing: .16em; font-variant-numeric: tabular-nums; color: var(--c-gray);
+}
+body[data-page="beranda"] .home-cta__track .status-track__meta { color: var(--c-silver); }
+body[data-page="beranda"] .home-cta__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: clamp(28px, 3.6vw, 44px); }
+body[data-page="beranda"] .home-cta__login { margin-top: 26px; font-size: .92rem; color: var(--c-silver); }
+body[data-page="beranda"] .home-cta__login .link { color: var(--c-bone); }
+@media (max-width: 479px) {
+  body[data-page="beranda"] .home-cta__actions { width: 100%; }
+  body[data-page="beranda"] .home-cta__actions .btn { width: 100%; }
+}

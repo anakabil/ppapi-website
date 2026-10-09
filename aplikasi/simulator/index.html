@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="id" class="app-gate-pending" data-app="simulator" data-app-short="Simulator Perancah">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulator Pemasangan Perancah Tube &amp; Coupler · Aplikasi Anggota PPAPI</title>
+<meta name="description" content="Simulator 3D aplikasi anggota PPAPI untuk berlatih mengenali komponen, merakit perancah tube &amp; coupler dalam 20 tahap sesuai praktik baik, dan memeriksa hasilnya secara terukur sebelum serah terima.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&amp;family=Cormorant+Garamond:ital,wght@0,600;1,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="../gate.css">
+<link rel="stylesheet" href="simulator.css">
+</head>
+<body>
+<div id="app-gate" role="status" aria-live="polite">
+  <img class="app-gate__logo" src="../../assets/img/logo-light.png" width="148" height="52" alt="PPAPI">
+  <span class="app-gate__spin" aria-hidden="true"></span>
+  <p class="app-gate__eyebrow">Aplikasi Anggota PPAPI</p>
+  <p class="app-gate__msg" id="app-gate-msg">Memverifikasi status keanggotaan…</p>
+  <noscript><p class="app-gate__msg">Aplikasi ini memerlukan JavaScript. Aktifkan JavaScript pada peramban Anda.</p></noscript>
+</div>
+
+<main id="app-main" tabindex="-1">
+  <div id="vign" aria-hidden="true"></div>
+  <div id="labels" aria-hidden="true"></div>
+
+  <header id="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>Simulator Perancah <span>· Tube &amp; Coupler</span></h1>
+        <p>Pelatihan pemasangan perancah tubular · aplikasi anggota PPAPI</p>
+      </div>
+    </div>
+    <div id="tabs" role="tablist" aria-label="Modul simulator">
+      <button type="button" class="tab on" role="tab" id="tab-lib" data-tab="lib" aria-selected="true" aria-controls="panel"><span class="n" aria-hidden="true">01</span> Komponen</button>
+      <button type="button" class="tab" role="tab" id="tab-build" data-tab="build" aria-selected="false" aria-controls="panel" tabindex="-1"><span class="n" aria-hidden="true">02</span> Perakitan</button>
+      <button type="button" class="tab" role="tab" id="tab-insp" data-tab="insp" aria-selected="false" aria-controls="panel" tabindex="-1"><span class="n" aria-hidden="true">03</span> Inspeksi</button>
+    </div>
+  </header>
+
+  <section id="panel" role="tabpanel" aria-labelledby="tab-lib">
+    <div class="p-head">
+      <p class="p-eyebrow" id="pEyebrow">Modul 01</p>
+      <h2 class="p-title" id="pTitle">Pengenalan Komponen</h2>
+      <p class="p-sub" id="pSub">Kenali jenis klem (coupler) dan komponen dasar sebelum merakit.</p>
+      <button type="button" class="sheet-toggle" id="sheetToggle" aria-expanded="true" aria-controls="pBody" aria-label="Ciutkan panel">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+    <div class="p-body" id="pBody"></div>
+  </section>
+
+  <div id="legend" aria-label="Legenda warna pita klem">
+    <p class="lt">Warna pita = jenis klem</p>
+    <div class="items" id="legendItems"></div>
+  </div>
+
+  <button type="button" class="cam-toggle" id="camToggle" aria-expanded="false" aria-controls="cam" aria-label="Tampilkan kontrol kamera">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>
+  </button>
+  <div id="cam" role="group" aria-label="Kontrol kamera">
+    <p class="hint">Seret = putar · klik kanan/dua jari = geser · gulir/cubit = perbesar</p>
+    <div class="pad">
+      <button type="button" id="u" aria-label="Geser pandangan ke atas" title="Geser ke atas"><span aria-hidden="true">▲</span></button>
+      <button type="button" id="l" aria-label="Geser pandangan ke kiri" title="Geser ke kiri"><span aria-hidden="true">◀</span></button>
+      <button type="button" id="camReset" aria-label="Atur ulang kamera" title="Atur ulang kamera"><span aria-hidden="true">⟳</span></button>
+      <button type="button" id="r" aria-label="Geser pandangan ke kanan" title="Geser ke kanan"><span aria-hidden="true">▶</span></button>
+      <button type="button" id="d" aria-label="Geser pandangan ke bawah" title="Geser ke bawah"><span aria-hidden="true">▼</span></button>
+    </div>
+    <div class="xrow">
+      <button type="button" id="zoomIn" aria-label="Perbesar" title="Perbesar"><span aria-hidden="true">＋</span></button>
+      <button type="button" id="zoomOut" aria-label="Perkecil" title="Perkecil"><span aria-hidden="true">－</span></button>
+      <button type="button" id="workerBtn" aria-pressed="true" aria-label="Ilustrasi pekerja" title="Tampilkan/sembunyikan ilustrasi pekerja">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15a8 8 0 0 1 16 0"/><path d="M2 15h20v2H2z"/><path d="M10 7V4h4v3"/></svg>
+      </button>
+      <button type="button" id="laserBtn" aria-pressed="false" title="Laser penunjuk: arahkan kursor atau ketuk adegan; hilang sendiri setelah 2 detik"><span aria-hidden="true">⦿</span> Laser</button>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"><span class="d" aria-hidden="true"></span><span id="toastMsg"></span></div>
+
+  <div id="sim-msg" role="alert" hidden>
+    <div class="box">
+      <h2 id="sim-msg-title">Tampilan 3D tidak tersedia</h2>
+      <p id="sim-msg-text"></p>
+      <button type="button" class="btn primary" id="sim-msg-btn" hidden>Muat ulang halaman</button>
+    </div>
+  </div>
+</main>
+
+<section id="intro" aria-labelledby="intro-title">
+  <div class="card">
+    <p class="k">Simulator Pelatihan K3 · Perancah Tubular</p>
+    <h2 id="intro-title">Pasang perancah <em>tube &amp; coupler</em> secara virtual, langkah demi langkah.</h2>
+    <p class="lead">Latih urutan kerja dan ketelitian Anda: kenali setiap komponen dan klem, dirikan menara perancah sesuai urutan pemasangan yang aman, lalu periksa hasilnya — kelurusan, bracing, stabilitas, pelindung tepi, dan akses — dengan ukuran yang diambil langsung dari model.</p>
+    <div class="feats">
+      <div class="feat"><span class="no">01</span><b>Kenali komponen</b><small>18 komponen: klem mati, klem putar, sleeve, joint pin, putlog, klem papan, tag, dan alat ukur.</small></div>
+      <div class="feat"><span class="no">02</span><b>Rakit bertahap</b><small>20 tahap: persiapan dan tag merah, rangka, bracing per lift, outrigger, pelindung tepi, hingga akses.</small></div>
+      <div class="feat"><span class="no">03</span><b>Inspeksi terukur</b><small>Tinggi pagar, celah, toe board, bentang papan, bracing, dan stabilitas diukur dari model.</small></div>
+      <div class="feat"><span class="no">04</span><b>Serah terima</b><small>Tag hijau hanya dipasang setelah semua butir inspeksi memenuhi.</small></div>
+    </div>
+    <p class="resume" id="introResume" hidden></p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="startBtn">Mulai Simulasi <span aria-hidden="true">→</span></button>
+      <button type="button" class="btn" id="restartBtn" hidden>Mulai dari awal</button>
+    </div>
+    <p class="foot">Konfigurasi menara bersifat ilustratif untuk pelatihan (dalam batas tabel pedoman OSHA 1926 Subpart L App. A, <i>light duty</i>), bukan desain perancah. Acuan: Permenaker 9/2016, PER.01/MEN/1980, EN 12811-1, OSHA 1926 Subpart L, dan panduan NASC. Aset aplikasi anggota PPAPI · Dikembangkan oleh mrezahuzain@2026 · navigasi 3D mendukung tetikus, sentuh, dan tombol kamera.</p>
+  </div>
+</section>
+
+<script src="simulator.js" defer></script>
+<script src="../gate.js" defer onerror="var m=document.getElementById('app-gate-msg');if(m)m.textContent='Komponen gerbang aplikasi tidak dapat dimuat. Periksa koneksi, lalu muat ulang halaman.'"></script>
+</body>
+</html>

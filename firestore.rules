@@ -1,0 +1,396 @@
+rules_version = '2';
+
+// ===========================================================================
+// Aturan keamanan Firestore — situs PPAPI (versi 2: pendaftaran, admin,
+// konten, Produk Pengetahuan)
+// Salin seluruh isi berkas ini ke Firebase Console › Firestore › Rules, lalu
+// klik "Publish". (Lihat README.md bagian "Aturan Firestore v2".)
+//
+// PRINSIP: setiap pihak hanya mendapat akses seminimal mungkin.
+// • members/{uid}      Anggota membaca & mengubah datanya sendiri, TETAPI hanya
+//                      kolom profil + formulir pendaftaran. Status hanya dapat
+//                      diubah anggota untuk: mengajukan formulir, menarik
+//                      pengajuan, atau mengajukan perpanjangan. Kolom yang
+//                      ditetapkan sekretariat (kta, kategori, masa berlaku,
+//                      persetujuan, catatan sekretariat, tanggal bergabung)
+//                      tidak dapat diubah anggota. Kolom email hanya boleh
+//                      berisi email akun yang sedang masuk (atau kosong).
+//                      Admin membaca/menulis semua.
+// • admins/{uid}       Daftar admin (sekretariat). Seseorang adalah admin bila
+//                      dokumen admins/{uid}-nya ada. Admin PERTAMA dibuat manual
+//                      di Firebase Console (README); berikutnya lewat Konsol Admin.
+// • registry/{kta}     Daftar verifikasi publik: dibaca siapa pun, ditulis admin.
+// • content_*/{id}     Berita, pengumuman, agenda, produk pengetahuan, regulasi
+//                      yang dikelola admin: dibaca siapa pun, ditulis admin.
+// • pustaka_files/{id} Tautan berkas KHUSUS ANGGOTA: dibaca admin atau anggota
+//                      berstatus Aktif (masa berlaku belum habis); ditulis admin.
+// • feedback/{id}      Siapa pun boleh mengirim; hanya admin yang dapat membaca
+//                      dan memperbarui status (tercatat atas nama admin yang
+//                      mengubah); tidak ada yang dapat menghapus.
+// • counters/{id}      Penghitung nomor KTA (hanya admin).
+// • audit_log/{id}     Log aktivitas admin: hanya admin; tidak dapat diubah/dihapus.
+// • Koleksi lain       Ditolak.
+//
+// Batasan yang tidak dapat diperiksa aturan: isi tiap butir daftar
+// (pengalaman, dokumen, kompetensi, sertifikat); jumlahnya tetap dibatasi dan
+// ukuran dokumen maksimal 1 MiB.
+// ===========================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------
+    // Fungsi bantu umum
+    // ---------------------------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Admin = dokumen admins/{uid milik pengguna} ada.
+    function isAdmin() {
+      return signedIn()
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function optString(d, key, max) {
+      return !(key in d) || d[key] == null || (d[key] is string && d[key].size() <= max);
+    }
+
+    function emptyOrMissing(d, key) {
+      return !(key in d) || d[key] == null || d[key] == '';
+    }
+
+    function isoDate(s) {
+      return s is string && s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // 'TAHUN-BULAN-TANGGAL' → timestamp (pukul 00.00 UTC pada tanggal tersebut)
+    function dateTs(s) {
+      let p = s.split('-');
+      return timestamp.date(int(p[0]), int(p[1]), int(p[2]));
+    }
+
+    // Masa berlaku masih berjalan (validUntil kosong = tanpa batas, data lama v1).
+    function validityOk(m) {
+      return !('validUntil' in m) || m.validUntil == null || m.validUntil == ''
+          || (isoDate(m.validUntil) && dateTs(m.validUntil) + duration.value(1, 'd') > request.time);
+    }
+
+    // Anggota berstatus Aktif dan masa berlakunya belum habis.
+    function isActiveMember() {
+      return signedIn()
+          && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+          && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.status == 'Aktif'
+          && validityOk(get(/databases/$(database)/documents/members/$(request.auth.uid)).data);
+    }
+
+    // ---------------------------------------------------------------------
+    // members/{uid}
+    // ---------------------------------------------------------------------
+    // profile: hanya 12 kolom yang dipakai situs (sama dengan store.js), teks dibatasi panjangnya.
+    function validProfile(p) {
+      return p is map
+          && p.keys().hasOnly([
+               'birthPlace', 'birthDate', 'gender', 'city', 'province', 'address',
+               'company', 'position', 'experienceYears', 'education', 'bio', 'linkedin'
+             ])
+          && optString(p, 'birthPlace', 300) && optString(p, 'birthDate', 300)
+          && optString(p, 'gender', 300) && optString(p, 'city', 300)
+          && optString(p, 'province', 300) && optString(p, 'address', 2000)
+          && optString(p, 'company', 300) && optString(p, 'position', 300)
+          && optString(p, 'education', 300) && optString(p, 'bio', 2000)
+          && optString(p, 'linkedin', 300)
+          && (!('experienceYears' in p) || p.experienceYears == null
+              || (p.experienceYears is int && p.experienceYears >= 0 && p.experienceYears <= 80));
+    }
+
+    // Formulir pendaftaran (application) — batas sama dengan store.js:
+    // pengalaman ≤ 10, dokumen ≤ 12, pas foto ≤ 120 KB (data URL JPEG/PNG/WebP), catatan ≤ 1.000.
+    function validApplication(a) {
+      return a is map
+          && a.keys().hasOnly([
+               'type', 'kategori', 'submittedAt', 'updatedAt', 'pengalaman', 'dokumen',
+               'pasFoto', 'pembayaran', 'pernyataan', 'catatan'
+             ])
+          && (!('type' in a) || a.type in ['baru', 'perpanjangan'])
+          && (!('kategori' in a) || a.kategori in ['', 'Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'])
+          && optString(a, 'submittedAt', 40) && optString(a, 'updatedAt', 40)
+          && (!('pengalaman' in a) || (a.pengalaman is list && a.pengalaman.size() <= 10))
+          && (!('dokumen' in a) || (a.dokumen is list && a.dokumen.size() <= 12))
+          && (!('pasFoto' in a) || a.pasFoto == null || a.pasFoto == ''
+              || (a.pasFoto is string && a.pasFoto.size() <= 164000
+                  && a.pasFoto.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$')))
+          && (!('pembayaran' in a) || (a.pembayaran is map
+              && a.pembayaran.keys().hasOnly(['metode', 'tanggal', 'buktiUrl'])
+              && optString(a.pembayaran, 'metode', 60) && optString(a.pembayaran, 'tanggal', 10)
+              && optString(a.pembayaran, 'buktiUrl', 1000)))
+          && (!('pernyataan' in a) || (a.pernyataan is map
+              && a.pernyataan.keys().hasOnly(['kodeEtik', 'kebenaranData', 'privasi', 'namaTerang', 'tanggal'])
+              && (!('kodeEtik' in a.pernyataan) || a.pernyataan.kodeEtik is bool)
+              && (!('kebenaranData' in a.pernyataan) || a.pernyataan.kebenaranData is bool)
+              && (!('privasi' in a.pernyataan) || a.pernyataan.privasi is bool)
+              && optString(a.pernyataan, 'namaTerang', 120) && optString(a.pernyataan, 'tanggal', 10)))
+          && optString(a, 'catatan', 1000);
+    }
+
+    // Bentuk dokumen anggota (v2). Kolom lama v1 tetap sah.
+    function validMember(d, uid) {
+      return d.keys().hasOnly([
+               'uid', 'name', 'email', 'phone', 'photoURL', 'kta', 'memberType', 'status',
+               'joinedAt', 'validUntil', 'approvedAt', 'approvedBy', 'profile', 'competencies',
+               'certificates', 'application', 'review', 'contoh', 'createdAt', 'updatedAt'
+             ])
+          && d.uid == uid
+          && (!('kta' in d) || (d.kta is string && d.kta.size() <= 40))
+          && d.memberType in ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan']
+          && d.status in ['Draf', 'Menunggu Verifikasi', 'Perlu Perbaikan', 'Aktif', 'Ditolak', 'Nonaktif']
+          && optString(d, 'name', 120)
+          && optString(d, 'email', 200)
+          && optString(d, 'phone', 24)
+          && optString(d, 'photoURL', 1000)
+          && optString(d, 'joinedAt', 32)
+          && optString(d, 'validUntil', 10)
+          && optString(d, 'approvedAt', 40)
+          && optString(d, 'approvedBy', 128)
+          && optString(d, 'createdAt', 40)
+          && optString(d, 'updatedAt', 40)
+          && (!('profile' in d) || validProfile(d.profile))
+          && (!('competencies' in d) || (d.competencies is list && d.competencies.size() <= 50))
+          && (!('certificates' in d) || (d.certificates is list && d.certificates.size() <= 50))
+          && (!('application' in d) || validApplication(d.application))
+          && (!('review' in d) || d.review is map)
+          && (!('contoh' in d) || d.contoh is bool);
+    }
+
+    // Email/nomor HP pada data anggota baru harus sama dengan milik akun yang masuk
+    // (atau kosong), sehingga sekretariat melihat kontak yang benar-benar terverifikasi.
+    function contactMatchesAccount(d) {
+      return (!('email' in d) || d.email == null || d.email == ''
+                || ('email' in request.auth.token && d.email == request.auth.token.email))
+          && (!('phone' in d) || d.phone == null || d.phone == ''
+                || ('phone_number' in request.auth.token && d.phone == request.auth.token.phone_number));
+    }
+
+    // Formulir sudah diajukan (application.submittedAt terisi).
+    function submitted(d) {
+      return 'application' in d && d.application is map
+          && 'submittedAt' in d.application && d.application.submittedAt is string
+          && d.application.submittedAt.size() > 0;
+    }
+
+    // Boleh mengajukan perpanjangan: Nonaktif, atau Aktif dengan masa berlaku yang
+    // telah habis / berakhir dalam ±60 hari.
+    function renewable(m) {
+      return m.status == 'Nonaktif'
+          || (m.status == 'Aktif' && 'validUntil' in m && isoDate(m.validUntil)
+              && dateTs(m.validUntil) <= request.time + duration.value(61, 'd'));
+    }
+
+    // Perubahan status yang boleh dilakukan ANGGOTA sendiri:
+    //   Draf | Perlu Perbaikan | Ditolak  → Menunggu Verifikasi   (mengajukan formulir)
+    //   Aktif (habis/≤60 hari) | Nonaktif → Menunggu Verifikasi   (perpanjangan)
+    //   Menunggu Verifikasi              → Draf                   (menarik pengajuan)
+    function ownerTransition(before, after) {
+      return (before.status in ['Draf', 'Perlu Perbaikan', 'Ditolak']
+                && after.status == 'Menunggu Verifikasi' && submitted(after))
+          || (renewable(before) && after.status == 'Menunggu Verifikasi' && submitted(after)
+                && after.application.type == 'perpanjangan')
+          || (before.status == 'Menunggu Verifikasi' && after.status == 'Draf' && !submitted(after));
+    }
+
+    // Formulir boleh diubah anggota hanya saat belum/tidak sedang diverifikasi.
+    function applicationEditable(before, after) {
+      return before.status in ['Draf', 'Perlu Perbaikan', 'Ditolak']
+          || renewable(before)
+          || (before.status == 'Menunggu Verifikasi' && (after.status == 'Draf' || !submitted(before)));
+    }
+
+    // Email pada data anggota = email akun Firebase Authentication yang sedang masuk
+    // (request.auth.token.email) atau kosong. Konsol Admin menambahkan admin berdasarkan
+    // email, sehingga anggota tidak boleh mencantumkan email orang lain pada datanya.
+    function ownEmailOk(after, before) {
+      return !after.diff(before).affectedKeys().hasAny(['email'])
+          || !('email' in after) || after.email == null || after.email == ''
+          || ('email' in request.auth.token && after.email == request.auth.token.email);
+    }
+
+    // Pembaruan oleh anggota: hanya kolom yang diizinkan; kolom sekretariat tetap.
+    function ownerUpdate(after, before, uid) {
+      return validMember(after, uid)
+          && after.diff(before).affectedKeys().hasOnly([
+               'name', 'email', 'phone', 'photoURL', 'profile', 'competencies',
+               'certificates', 'application', 'status', 'updatedAt'
+             ])
+          && ownEmailOk(after, before)
+          && (!after.diff(before).affectedKeys().hasAny(['status']) || ownerTransition(before, after))
+          && (!after.diff(before).affectedKeys().hasAny(['application']) || applicationEditable(before, after));
+    }
+
+    match /members/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // Akun baru: status "Draf", kategori awal "Praktisi", tanpa nomor KTA, tanpa
+      // masa berlaku/persetujuan/catatan sekretariat, formulir belum diajukan.
+      allow create: if (isOwner(uid)
+                          && validMember(request.resource.data, uid)
+                          && contactMatchesAccount(request.resource.data)
+                          && request.resource.data.status == 'Draf'
+                          && request.resource.data.memberType == 'Praktisi'
+                          && emptyOrMissing(request.resource.data, 'kta')
+                          && emptyOrMissing(request.resource.data, 'validUntil')
+                          && emptyOrMissing(request.resource.data, 'approvedAt')
+                          && emptyOrMissing(request.resource.data, 'approvedBy')
+                          && !('contoh' in request.resource.data)
+                          && (!('review' in request.resource.data)
+                              || (request.resource.data.review.keys().hasOnly(['note', 'history'])
+                                  && (!('note' in request.resource.data.review) || request.resource.data.review.note == '')
+                                  && (!('history' in request.resource.data.review)
+                                      || (request.resource.data.review.history is list
+                                          && request.resource.data.review.history.size() == 0))))
+                          && !submitted(request.resource.data)
+                          && isoDate(request.resource.data.joinedAt))
+                    || (isAdmin() && validMember(request.resource.data, uid));
+
+      allow update: if (isOwner(uid) && ownerUpdate(request.resource.data, resource.data, uid))
+                    || (isAdmin() && validMember(request.resource.data, uid));
+
+      // Data anggota tidak dihapus dari situs (penghapusan atas permintaan pemilik data
+      // dilakukan sekretariat melalui Firebase Console).
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // admins/{uid} — peran admin (sekretariat)
+    // ---------------------------------------------------------------------
+    match /admins/{uid} {
+      // Pengguna boleh memeriksa dokumen admin miliknya sendiri (untuk mengetahui perannya).
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'addedAt', 'addedBy'])
+                            && request.resource.data.uid == uid
+                            && request.resource.data.addedBy == request.auth.uid;
+      // Konsol Admin mencegah penghapusan admin terakhir.
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // registry/{kta} — verifikasi publik (data terbatas saja)
+    // ---------------------------------------------------------------------
+    match /registry/{kta} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly([
+                                 'kta', 'nama', 'kategori', 'kompetensi', 'kota', 'berlakuHingga',
+                                 'status', 'namaCari', 'updatedAt', 'contoh'
+                               ])
+                            && request.resource.data.kta == kta;
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // Konten yang dikelola admin (digabung dengan berkas assets/data/*.js)
+    // ---------------------------------------------------------------------
+    match /content_berita/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /content_pengumuman/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /content_agenda/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /content_pustaka/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /content_regulasi/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // pustaka_files/{id} — tautan berkas Produk Pengetahuan KHUSUS ANGGOTA
+    // ---------------------------------------------------------------------
+    match /pustaka_files/{id} {
+      allow read: if isAdmin() || isActiveMember();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['url', 'updatedAt', 'updatedBy'])
+                            && request.resource.data.url is string
+                            && request.resource.data.url.size() <= 1000;
+      allow delete: if isAdmin();
+    }
+
+    // ---------------------------------------------------------------------
+    // feedback/{id} — umpan balik pengunjung
+    // ---------------------------------------------------------------------
+    function validFeedback(d) {
+      return d.keys().hasOnly([
+               'kategori', 'nama', 'email', 'phone', 'subjek', 'pesan',
+               'rating', 'anonim', 'uid', 'halaman', 'createdAt'
+             ])
+          && d.kategori in ['Kritik', 'Saran', 'Pertanyaan', 'Pengaduan', 'Apresiasi']
+          && d.pesan is string && d.pesan.size() >= 10 && d.pesan.size() <= 4000
+          && optString(d, 'nama', 120)
+          && optString(d, 'email', 200)
+          && optString(d, 'phone', 24)
+          && optString(d, 'subjek', 200)
+          && optString(d, 'halaman', 200)
+          && (!('rating' in d) || d.rating == null || (d.rating is int && d.rating >= 1 && d.rating <= 5))
+          && (!('anonim' in d) || d.anonim is bool)
+          && (!('uid' in d) || d.uid == null || (signedIn() && d.uid == request.auth.uid))
+          && d.createdAt == request.time;
+    }
+
+    match /feedback/{id} {
+      allow create: if validFeedback(request.resource.data);
+      allow read: if isAdmin();
+      // Admin hanya mengubah status tindak lanjut dan catatan internal.
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status', 'catatanAdmin', 'updatedAt', 'updatedBy'])
+                    && (!('status' in request.resource.data)
+                        || request.resource.data.status in ['Baru', 'Diproses', 'Selesai'])
+                    && optString(request.resource.data, 'catatanAdmin', 2000)
+                    && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // counters/{id} — penghitung nomor KTA (mis. counters/kta-2026)
+    // ---------------------------------------------------------------------
+    match /counters/{id} {
+      allow read: if isAdmin();
+      allow write: if isAdmin()
+                   && request.resource.data.keys().hasOnly(['value', 'updatedAt'])
+                   && request.resource.data.value is int && request.resource.data.value >= 0;
+    }
+
+    // ---------------------------------------------------------------------
+    // audit_log/{id} — log aktivitas admin (hanya ditambah, tidak diubah)
+    // ---------------------------------------------------------------------
+    match /audit_log/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+                    && request.resource.data.keys().hasOnly([
+                         'at', 'by', 'byName', 'action', 'label', 'targetType', 'targetId', 'targetName', 'note'
+                       ])
+                    && request.resource.data.by == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // Selain yang tercantum di atas: ditolak.
+    // ---------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

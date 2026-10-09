@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* --------------------------------------------------------------------
+       AKAR SITUS UNTUK HALAMAN 404
+       GitHub Pages menampilkan 404.html untuk alamat apa pun yang tidak ada,
+       termasuk alamat bertingkat (mis. /nama-repo/a/b/c). Skrip ini memasang
+       <base href> ke akar situs SEBELUM stylesheet & skrip dimuat, sehingga
+       semua aset dan tautan relatif tetap benar.
+       • Otomatis: domain sendiri, localhost, alamat satu tingkat → '/'
+                   <user>.github.io/<a>/<b>… → dua kemungkinan:
+                     situs proyek  (<user>.github.io/<repo>/) → '/<a>/'
+                     situs pengguna/organisasi (repositori <user>.github.io) → '/'
+                   '/<a>/' dicoba lebih dulu; bila main.css tidak ada di sana,
+                   skrip berikutnya beralih ke '/' sebelum isi halaman ditampilkan.
+       • SITE_ROOT (opsional) menetapkan akar secara pasti, mis. '/' atau '/ppapi/',
+         sehingga tidak perlu ada percobaan.
+       Stylesheet lokal & skrip halaman ini sengaja DITULIS oleh skrip (bukan
+       ditulis langsung di HTML) agar peramban tidak memuatnya lebih dulu dari
+       alamat yang salah sebelum <base> terpasang.
+       -------------------------------------------------------------------- */
+    (function (d, l) {
+      var SITE_ROOT = '';
+      var roots;
+      if (SITE_ROOT) {
+        roots = [SITE_ROOT];
+      } else if (l.protocol === 'file:') {
+        roots = [l.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '')];
+      } else {
+        var segs = l.pathname.split('/').filter(Boolean);
+        roots = (/\.github\.io$/i.test(l.hostname) && segs.length > 1) ? ['/' + segs[0] + '/', '/'] : ['/'];
+      }
+      var b = d.createElement('base');
+      b.href = roots[0];
+      if (roots[1]) b.setAttribute('data-root-fallback', roots[1]);
+      d.head.appendChild(b);
+      d.documentElement.classList.replace('no-js', 'js');
+      /* Bila ada akar alternatif, main.css menjadi satu-satunya percobaan; 404.css ditulis setelah akar pasti. */
+      d.write('<link rel="stylesheet" href="assets/css/main.css" data-site-css>' +
+        (roots[1] ? '' : '<link rel="stylesheet" href="assets/css/pages/404.css">'));
+    })(document, location);
+  </script>
+  <script>
+    /* Verifikasi akar (hanya bila ada alternatif). Skrip ini baru dijalankan setelah
+       main.css selesai dimuat atau gagal, karena stylesheet memblokir skrip. Bila
+       token main.css tidak terbaca, aset tidak ada di akar pertama: ganti <base> ke
+       akar alternatif dan tulis ulang main.css. Semua ini terjadi di <head>, sebelum
+       isi halaman ditampilkan dan sebelum skrip lain dimuat. */
+    (function (d) {
+      var b = d.querySelector('base[data-root-fallback]');
+      if (!b) return;
+      var css = '<link rel="stylesheet" href="assets/css/pages/404.css">';
+      if (!getComputedStyle(d.documentElement).getPropertyValue('--c-black').trim()) {
+        var failed = d.querySelector('link[data-site-css]');
+        if (failed) failed.parentNode.removeChild(failed);
+        b.href = b.getAttribute('data-root-fallback');
+        css = '<link rel="stylesheet" href="assets/css/main.css" data-site-css>' + css;
+      }
+      b.removeAttribute('data-root-fallback');
+      d.write(css);
+    })(document);
+  </script>
+  <title>Halaman Tidak Ditemukan — PPAPI</title>
+  <meta name="description" content="Halaman yang Anda cari tidak ditemukan. Kembali ke Beranda PPAPI atau hubungi Sekretariat Perkumpulan Praktisi dan Ahli Perancah Indonesia.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Halaman Tidak Ditemukan — PPAPI">
+  <meta property="og:description" content="Halaman yang Anda cari tidak ditemukan. Kembali ke Beranda PPAPI atau hubungi Sekretariat Perkumpulan Praktisi dan Ahli Perancah Indonesia.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <!-- assets/css/main.css + assets/css/pages/404.css ditulis oleh skrip akar situs di atas -->
+</head>
+<body data-page="404" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+    <section class="nf theme-dark" aria-labelledby="nf-title">
+
+      <!-- Rangka perancah latar (diisi core.js) -->
+      <div class="nf__scaffold" data-scaffold data-cols="8" data-rows="4"></div>
+
+      <div class="container nf__inner">
+        <div class="nf__code" aria-hidden="true">
+          <div class="nf__figure">
+            <!-- Satu bentang perancah di balik angka: pengaku diagonal di bentang tengah "hilang" (garis putus-putus), tepat melintasi angka 0 -->
+            <svg class="scaffold-draw nf__bay" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" focusable="false">
+              <line class="sd-line" x1="0.5%" y1="0" x2="0.5%" y2="100%" pathLength="1" style="--d:0"/>
+              <line class="sd-line" x1="35.4%" y1="0" x2="35.4%" y2="100%" pathLength="1" style="--d:120"/>
+              <line class="sd-line" x1="62.7%" y1="0" x2="62.7%" y2="100%" pathLength="1" style="--d:240"/>
+              <line class="sd-line" x1="99.5%" y1="0" x2="99.5%" y2="100%" pathLength="1" style="--d:360"/>
+              <line class="sd-line" x1="0" y1="10%" x2="100%" y2="10%" pathLength="1" style="--d:420"/>
+              <line class="sd-line" x1="0" y1="50%" x2="100%" y2="50%" pathLength="1" style="--d:560"/>
+              <line class="sd-line" x1="0" y1="90%" x2="100%" y2="90%" pathLength="1" style="--d:700"/>
+              <line class="sd-line sd-brace" x1="0.5%" y1="10%" x2="35.4%" y2="50%" pathLength="1" style="--d:900"/>
+              <line class="sd-line sd-brace" x1="35.4%" y1="50%" x2="0.5%" y2="90%" pathLength="1" style="--d:1020"/>
+              <line class="sd-line sd-brace" x1="99.5%" y1="10%" x2="62.7%" y2="50%" pathLength="1" style="--d:960"/>
+              <line class="sd-line sd-brace" x1="62.7%" y1="50%" x2="99.5%" y2="90%" pathLength="1" style="--d:1080"/>
+              <line class="nf-missing" x1="35.4%" y1="10%" x2="62.7%" y2="90%"/>
+              <rect class="sd-node" x="0.5%" y="10%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:0"/>
+              <rect class="sd-node" x="0.5%" y="50%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:40"/>
+              <rect class="sd-node" x="0.5%" y="90%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:80"/>
+              <rect class="sd-node" x="35.4%" y="50%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:120"/>
+              <rect class="sd-node" x="62.7%" y="50%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:160"/>
+              <rect class="sd-node" x="99.5%" y="10%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:200"/>
+              <rect class="sd-node" x="99.5%" y="50%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:240"/>
+              <rect class="sd-node" x="99.5%" y="90%" width="5" height="5" transform="translate(-2.5 -2.5)" style="--d:280"/>
+              <rect class="nf-missing__node" x="35.4%" y="10%" width="7" height="7" transform="translate(-3.5 -3.5)"/>
+              <rect class="nf-missing__node" x="62.7%" y="90%" width="7" height="7" transform="translate(-3.5 -3.5)"/>
+              <circle class="nf-missing__ring" cx="49%" cy="50%" r="18"/>
+            </svg>
+            <span class="nf__digits metal-text">404</span>
+          </div>
+          <span class="nf__code-rule"></span>
+          <span class="nf__code-meta"><span>Galat 404</span><span>Pengaku tidak ditemukan</span></span>
+        </div>
+
+        <div class="nf__content">
+          <p class="eyebrow">Halaman tidak tersedia</p>
+          <h1 class="display nf__title split-lines" id="nf-title">Halaman<br><em>tidak ditemukan</em>.</h1>
+          <p class="lead nf__lead">Tautan yang Anda buka mungkin telah dipindahkan, diganti namanya, atau memang tidak tersedia — layaknya satu pengaku diagonal yang hilang dari rangka perancah. Mari kembali ke struktur yang kokoh.</p>
+          <p class="nf__path" hidden data-nf-path-row><span>Alamat yang diminta</span><code data-nf-path></code></p>
+          <div class="nf__actions">
+            <a class="btn btn--primary btn--lg" href="index.html"><span>Kembali ke Beranda</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+            <a class="btn btn--ghost btn--lg" href="umpan-balik.html#sekretariat"><span>Hubungi Sekretariat</span></a>
+          </div>
+          <nav class="nf__links" aria-label="Tautan halaman utama">
+            <p class="nf__links-title">Atau kunjungi</p>
+            <ul role="list">
+              <li><a href="profil.html">Profil</a></li>
+              <li><a href="berita.html">Berita</a></li>
+              <li><a href="agenda.html">Agenda</a></li>
+              <li><a href="regulasi.html">Regulasi</a></li>
+              <li><a href="keanggotaan.html">Keanggotaan</a></li>
+              <li><a href="verifikasi.html">Verifikasi Anggota</a></li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script>
+    /* Dengan <base href>, tautan "#id" akan mengarah ke akar situs. Tangani tautan
+       internal halaman (mis. "Lewati ke konten utama") secara lokal. Tampilkan juga
+       alamat yang diminta. */
+    (function (d, l) {
+      d.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+        if (!a) return;
+        var id = a.getAttribute('href').slice(1);
+        var t = id ? d.getElementById(id) : null;
+        e.preventDefault();
+        if (!t) return;
+        if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1');
+        t.focus({ preventScroll: true });
+        t.scrollIntoView({ block: 'start' });
+      });
+      var path = l.pathname;
+      try { path = decodeURIComponent(path); } catch (er) { /* biarkan apa adanya */ }
+      if (path && !/(^|\/)404\.html$/.test(path)) {
+        var code = d.querySelector('[data-nf-path]');
+        var row = d.querySelector('[data-nf-path-row]');
+        if (code && row) { code.textContent = path + l.search; row.hidden = false; }
+      }
+    })(document, location);
+  </script>
+  <script>
+    /* config.js → core.js → auth.js → store.js (defer), relatif terhadap <base> */
+    document.write(['assets/js/config.js', 'assets/js/core.js', 'assets/js/auth.js', 'assets/js/store.js'].map(function (s) {
+      return '<script src="' + s + '" defer><\/script>';
+    }).join(''));
+  </script>
+</body>
+</html>

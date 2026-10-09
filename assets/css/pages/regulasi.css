@@ -1,0 +1,361 @@
+/* ==========================================================================
+   PPAPI — regulasi.html · Pustaka Regulasi & Standar
+   Page-specific styles only; everything is scoped to body[data-page="regulasi"]
+   and uses the design tokens from main.css.
+   ========================================================================== */
+
+/* ---------- Hero ---------- */
+body[data-page="regulasi"] .rg-hero { --hero-pos: center 35%; }
+body[data-page="regulasi"] .rg-hero .lead { max-width: 64ch; }
+
+/* ==========================================================================
+   REGULASI KUNCI — ruled grid of numbered cells with coupler nodes
+   ========================================================================== */
+body[data-page="regulasi"] .rg-keys { position: relative; }
+body[data-page="regulasi"] .rg-key {
+  position: relative; display: flex; flex-direction: column; min-width: 0;
+  padding: clamp(26px, 3vw, 40px) clamp(22px, 2.6vw, 36px) clamp(22px, 2.4vw, 30px);
+  transition: background-color .6s var(--ease);
+}
+body[data-page="regulasi"] .rg-key:hover { background: var(--surface); }
+/* coupler node on the top-left intersection of every cell */
+body[data-page="regulasi"] .rg-key::before {
+  content: ""; position: absolute; left: -4px; top: -4px; z-index: 1; width: 7px; height: 7px;
+  background: var(--bg); border: 1px solid var(--line-strong); pointer-events: none;
+}
+body[data-page="regulasi"] .rg-key__top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: clamp(28px, 3.4vw, 44px);
+}
+body[data-page="regulasi"] .rg-key__jenis {
+  margin-bottom: 12px;
+  font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="regulasi"] .rg-key__head { margin: 0; font: inherit; letter-spacing: 0; }
+body[data-page="regulasi"] .rg-key__abbr {
+  display: block;
+  font: 500 clamp(2rem, 2.5vw, 2.4rem)/1.04 var(--f-cond); letter-spacing: .005em;
+  font-variant-numeric: lining-nums; color: var(--text-strong);
+}
+body[data-page="regulasi"] .rg-key__abbr-pre { color: var(--muted); font-weight: 400; white-space: nowrap; }
+body[data-page="regulasi"] .rg-key__abbr-num { white-space: nowrap; }
+body[data-page="regulasi"] .rg-key__title {
+  display: block; margin-top: 16px; max-width: 30ch;
+  font: 600 clamp(1.2rem, 1.5vw, 1.36rem)/1.28 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--text);
+}
+body[data-page="regulasi"] .rg-key__rel {
+  margin-top: 14px; font-size: .9rem; line-height: 1.6; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+@media (max-width: 767px) { body[data-page="regulasi"] .rg-key__rel { display: none; } }
+body[data-page="regulasi"] .rg-key__inst {
+  margin-top: auto; padding-top: 26px;
+  font-size: .86rem; line-height: 1.55; color: var(--muted);
+}
+body[data-page="regulasi"] .rg-key__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+body[data-page="regulasi"] .rg-key__src { flex: none; }
+
+/* mobile: the six key documents become one swipeable ruled rail (they are all in the library below too) */
+@media (max-width: 767px) {
+  body[data-page="regulasi"] .rg-keys.grid {
+    display: flex; gap: 0; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter);
+    margin-inline: calc(-1 * var(--gutter)); padding: 4px var(--gutter) 12px;
+    border: 0; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+  }
+  body[data-page="regulasi"] .rg-keys > .rg-key {
+    flex: 0 0 min(84%, 340px); scroll-snap-align: start;
+    border: 1px solid var(--line);
+  }
+  body[data-page="regulasi"] .rg-keys > .rg-key + .rg-key { border-left: 0; }
+  body[data-page="regulasi"] .rg-key__top { margin-bottom: 24px; }
+  body[data-page="regulasi"] .rg-key__abbr { font-size: 1.9rem; }
+  /* equal-height rail: long titles are clamped here (full title in "Ringkasan" and in the library) */
+  body[data-page="regulasi"] .rg-key__title {
+    display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  body[data-page="regulasi"] .rg-key__inst { padding-top: 18px; }
+}
+body[data-page="regulasi"] .rg-key__src:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* ==========================================================================
+   PUSTAKA — toolbar
+   ========================================================================== */
+body[data-page="regulasi"] .rg-toolbar {
+  position: relative; display: grid; gap: 22px;
+  padding: clamp(20px, 2.8vw, 32px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="regulasi"] .rg-toolbar::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal);
+}
+body[data-page="regulasi"] .rg-toolbar__row { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 360px) {
+  body[data-page="regulasi"] .rg-toolbar__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-page="regulasi"] .rg-toolbar__search { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  body[data-page="regulasi"] .rg-toolbar__row { grid-template-columns: minmax(0, 1fr) 220px 190px; gap: 20px; }
+  body[data-page="regulasi"] .rg-toolbar__search { grid-column: auto; }
+}
+body[data-page="regulasi"] .rg-toolbar .field { gap: 10px; }
+body[data-page="regulasi"] .rg-toolbar__chips {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px 28px;
+  padding-top: 20px; border-top: 1px solid var(--line);
+}
+body[data-page="regulasi"] .rg-chipset { display: grid; gap: 12px; min-width: 0; }
+body[data-page="regulasi"] .rg-chipset > .field__label { margin: 0; }
+body[data-page="regulasi"] .rg-toolbar .chip { gap: 8px; padding: 0 12px; letter-spacing: .12em; }
+body[data-page="regulasi"] .rg-toolbar .chip > svg { margin-right: -1px; }
+/* a jenis emptied by the current search/status stays selectable, so it is muted (AA) and dashed, not faded */
+body[data-page="regulasi"] .rg-toolbar .chip.is-zero { color: var(--muted); border-style: dashed; }
+body[data-page="regulasi"] .rg-toolbar .chip.is-zero .chip__count { opacity: 1; }
+body[data-page="regulasi"] .rg-toolbar .chip.is-zero:hover { color: var(--text); border-color: var(--text); }
+@media (min-width: 1024px) { body[data-page="regulasi"] .rg-toolbar__chips { column-gap: 36px; } }
+
+/* ---------- summary line ---------- */
+body[data-page="regulasi"] .rg-summary {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 24px;
+  margin: clamp(28px, 4vw, 44px) 0 4px; min-height: 44px;
+}
+body[data-page="regulasi"] .rg-count { font-size: .95rem; color: var(--muted); }
+body[data-page="regulasi"] .rg-count strong {
+  font: 600 1.15rem/1 var(--f-cond); letter-spacing: .02em; color: var(--text); font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   PUSTAKA — table
+   ========================================================================== */
+body[data-page="regulasi"] .rg-table { font-size: .94rem; }
+body[data-page="regulasi"] .rg-col-jenis { width: 128px; }
+body[data-page="regulasi"] .rg-col-nomor { width: 176px; }
+body[data-page="regulasi"] .rg-col-instansi { width: 190px; }
+body[data-page="regulasi"] .rg-col-status { width: 156px; }
+body[data-page="regulasi"] .rg-col-sumber { width: 64px; text-align: right; }
+
+body[data-page="regulasi"] .rg-jenis {
+  display: inline-flex; align-items: flex-start; gap: 7px;
+  font: 600 .74rem/1.4 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="regulasi"] .rg-jenis > svg { margin-top: .05em; color: var(--text); }
+body[data-page="regulasi"] .rg-cite {
+  display: block; font-weight: 600; line-height: 1.4; color: var(--text-strong); overflow-wrap: anywhere;
+}
+body[data-page="regulasi"] .rg-td-nomor .table__muted { font-size: .8rem; overflow-wrap: anywhere; }
+body[data-page="regulasi"] .rg-title {
+  font: 600 1.16rem/1.3 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.003em; color: var(--text);
+}
+body[data-page="regulasi"] .rg-keybadge { margin-left: 6px; vertical-align: .15em; min-height: 20px; padding: 2px 7px; font-size: .6rem; }
+body[data-page="regulasi"] .rg-rel { max-width: 64ch; }
+body[data-page="regulasi"] .rg-td-instansi { color: var(--text); font-size: .9rem; line-height: 1.5; }
+body[data-page="regulasi"] .rg-td-instansi .table__muted { font-size: .8rem; margin-top: 4px; }
+body[data-page="regulasi"] .rg-td-sumber { text-align: right; }
+body[data-page="regulasi"] .rg-table td.rg-td-sumber { padding-right: 0; }
+body[data-page="regulasi"] .rg-hl {
+  color: inherit; background: rgba(185,185,191,.42); border-radius: 1px; padding: 0 1px;
+}
+
+/* tablet / small laptop: drop the Instansi column, show it under the title instead */
+body[data-page="regulasi"] .rg-inst-inline { display: none; }
+@media (min-width: 768px) and (max-width: 1179px) {
+  body[data-page="regulasi"] .rg-col-instansi, body[data-page="regulasi"] .rg-td-instansi { display: none; }
+  body[data-page="regulasi"] .rg-inst-inline {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    font: 600 .7rem/1.4 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  }
+  body[data-page="regulasi"] .rg-inst-inline::before { content: ""; flex: none; width: 14px; height: 1px; background: currentColor; }
+  body[data-page="regulasi"] .rg-col-jenis { width: 104px; }
+  body[data-page="regulasi"] .rg-col-nomor { width: 150px; }
+  body[data-page="regulasi"] .rg-col-status { width: 136px; }
+  body[data-page="regulasi"] .rg-col-sumber { width: 56px; }
+  body[data-page="regulasi"] .rg-table td { padding-inline: 12px; }
+  body[data-page="regulasi"] .rg-table td.rg-td-sumber { padding-right: 12px; }
+}
+
+/* tablet: Jenis moves above the citation, freeing room for the title column */
+body[data-page="regulasi"] .rg-jenis--inline { display: none; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  body[data-page="regulasi"] .rg-col-jenis, body[data-page="regulasi"] .rg-td-jenis { display: none; }
+  body[data-page="regulasi"] .rg-jenis--inline { display: flex; margin-bottom: 8px; font-size: .68rem; }
+  body[data-page="regulasi"] .rg-table th:nth-child(2), body[data-page="regulasi"] .rg-table td.rg-td-nomor { padding-left: 0; }
+  body[data-page="regulasi"] .rg-table .rg-row--intl td.rg-td-nomor { padding-left: 20px; }
+}
+
+/* source link: square icon button on desktop, labelled pill on mobile */
+body[data-page="regulasi"] .rg-src {
+  position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px;
+  color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  transition: background-color .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease);
+}
+body[data-page="regulasi"] .rg-src:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+body[data-page="regulasi"] .rg-src__icon { display: inline-flex; line-height: 0; }
+body[data-page="regulasi"] .rg-src__host { display: none; }
+body[data-page="regulasi"] .rg-src-none { display: inline-grid; place-items: center; width: 44px; color: var(--faint); }
+
+/* group header rows (national / international) */
+body[data-page="regulasi"] .rg-group-row:hover { background: transparent; }
+body[data-page="regulasi"] .rg-group-row th {
+  padding: 30px 0 16px; white-space: normal; text-align: left;
+  font: 400 1rem/1.5 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--text);
+  border-bottom: 1px solid var(--line-strong);
+}
+body[data-page="regulasi"] .rg-group { display: flex; align-items: center; gap: 16px; }
+body[data-page="regulasi"] .rg-group__icon {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px;
+  border: 1px solid var(--line-strong); border-radius: 50%; color: var(--text);
+}
+body[data-page="regulasi"] .rg-group__text { display: grid; gap: 4px; flex: 1; min-width: 0; }
+body[data-page="regulasi"] .rg-group__title { font: 600 1.4rem/1.2 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; }
+body[data-page="regulasi"] .rg-group__note { max-width: 72ch; font-size: .9rem; line-height: 1.55; color: var(--muted); }
+body[data-page="regulasi"] .rg-group__count {
+  flex: none; font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+
+/* international group: dark band header + white panel rows */
+body[data-page="regulasi"] .rg-tbody--intl::before { content: ""; display: table-row; height: 56px; }
+body[data-page="regulasi"] .rg-group-row--intl th {
+  --text: var(--c-bone); --muted: var(--c-gray); --line-strong: rgba(255,255,255,.24);
+  position: relative; padding: 26px 24px; color: var(--text);
+  background: var(--c-graphite); border-bottom: 0;
+}
+body[data-page="regulasi"] .rg-group-row--intl th::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--metal);
+}
+body[data-page="regulasi"] .rg-group-row--intl .rg-group__title { color: var(--c-white); }
+body[data-page="regulasi"] .rg-row--intl td { background: var(--surface); }
+body[data-page="regulasi"] .rg-row--intl:hover td { background: var(--c-white); }
+body[data-page="regulasi"] .rg-row--intl td:first-child { padding-left: 24px; }
+/* the sumber cell is the last VISIBLE cell (the mobile disclosure cell follows it in the DOM) */
+body[data-page="regulasi"] .rg-table .rg-row--intl td.rg-td-sumber { padding-right: 24px; }
+body[data-page="regulasi"] .rg-row--intl:last-child td { border-bottom-color: var(--line-strong); }
+
+/* ---------- empty + disclaimer ---------- */
+body[data-page="regulasi"] .rg-empty { margin-top: 12px; }
+body[data-page="regulasi"] .rg-empty .empty-state { background: var(--surface); }
+body[data-page="regulasi"] .rg-disclaimer { margin-top: clamp(36px, 5vw, 56px); max-width: 760px; }
+
+/* ==========================================================================
+   MOBILE — compact rows: jenis / title / citation + status, with a
+   "Ringkasan" disclosure (shared .accordion) for relevansi, nomor, instansi
+   and the source link. The disclosure cell only exists visually < 768px.
+   ========================================================================== */
+body[data-page="regulasi"] .rg-td-more { display: none; }
+
+@media (max-width: 767px) {
+  body[data-page="regulasi"] .rg-table tr.rg-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px;
+    grid-template-areas: "jenis jenis" "judul judul" "nomor status" "more more";
+    margin-bottom: 10px; padding: 0 18px;
+  }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td { display: block; width: auto; padding: 0; border-bottom: 0; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td::before { display: none; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-jenis { grid-area: jenis; padding-top: 18px; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-judul { grid-area: judul; padding: 8px 0 12px; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-nomor { grid-area: nomor; align-self: center; padding-bottom: 16px; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-status { grid-area: status; align-self: center; padding-bottom: 16px; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-instansi,
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-sumber,
+  body[data-page="regulasi"] .rg-table .rg-rel,
+  body[data-page="regulasi"] .rg-table .rg-td-nomor .table__muted { display: none; }
+  body[data-page="regulasi"] .rg-table tr.rg-row > td.rg-td-more { grid-area: more; display: block; border-top: 1px solid var(--line); }
+
+  body[data-page="regulasi"] .rg-jenis { font-size: .7rem; }
+  body[data-page="regulasi"] .rg-title { font-size: 1.2rem; line-height: 1.28; }
+  body[data-page="regulasi"] .rg-cite { font-size: .9rem; }
+  body[data-page="regulasi"] .rg-td-status .badge { white-space: nowrap; }
+
+  /* disclosure trigger: a quiet full-width ruled line with the shared +/− node */
+  body[data-page="regulasi"] .rg-more__trigger {
+    min-height: 48px; padding: 0; gap: 16px;
+    font: 600 .72rem/1.2 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text);
+  }
+  body[data-page="regulasi"] .rg-more__trigger .accordion__icon { width: 28px; height: 28px; }
+  body[data-page="regulasi"] .rg-more__trigger .accordion__icon::before,
+  body[data-page="regulasi"] .rg-more__trigger .accordion__icon::after { width: 10px; }
+  body[data-page="regulasi"] .rg-more__trigger:focus-visible { outline-offset: 2px; }
+
+  body[data-page="regulasi"] .rg-more { padding: 0 0 18px; max-width: none; color: var(--muted); }
+  body[data-page="regulasi"] .rg-more > * + * { margin-top: 14px; }
+  body[data-page="regulasi"] .rg-more__rel { font-size: .92rem; line-height: 1.6; }
+  body[data-page="regulasi"] .rg-more__kv { margin: 14px 0 0; border-top: 1px solid var(--line); }
+  body[data-page="regulasi"] .rg-more__row {
+    display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: start; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--line);
+  }
+  body[data-page="regulasi"] .rg-more__row:last-child { border-bottom: 0; padding-bottom: 2px; }
+  body[data-page="regulasi"] .rg-more__row dt {
+    padding-top: .2em; font: 600 .66rem/1.45 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+  }
+  body[data-page="regulasi"] .rg-more__row dd { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
+  body[data-page="regulasi"] .rg-more__none { color: var(--muted); }
+
+  /* source link inside the disclosure: labelled pill */
+  body[data-page="regulasi"] .rg-src {
+    display: inline-flex; align-items: center; gap: 10px; width: auto; height: auto; min-height: 44px;
+    margin: -10px 0 -2px; padding: 0 14px 0 12px; max-width: 100%;
+  }
+  body[data-page="regulasi"] .rg-src__icon { flex: none; }
+  body[data-page="regulasi"] .rg-src__host {
+    display: inline; min-width: 0; overflow-wrap: anywhere;
+    font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .1em; text-transform: uppercase;
+  }
+
+  body[data-page="regulasi"] .rg-table tr.rg-group-row {
+    display: block; margin: 0 0 12px; padding: 0; background: transparent; border: 0;
+  }
+  body[data-page="regulasi"] .rg-table .rg-group-row th { display: block; width: 100%; padding: 8px 0 14px; }
+  body[data-page="regulasi"] .rg-tbody--intl::before { display: block; height: 28px; }
+  body[data-page="regulasi"] .rg-group-row--intl th { padding: 20px 18px !important; border-radius: var(--radius-sm); }
+  body[data-page="regulasi"] .rg-group { align-items: flex-start; flex-wrap: wrap; gap: 12px 14px; }
+  body[data-page="regulasi"] .rg-group__icon { width: 40px; height: 40px; }
+  body[data-page="regulasi"] .rg-group__title { font-size: 1.28rem; }
+  body[data-page="regulasi"] .rg-group__count { flex-basis: 100%; padding-left: 54px; margin-top: -4px; }
+  body[data-page="regulasi"] .rg-row--intl td { background: transparent; }
+  body[data-page="regulasi"] .rg-table tr.rg-row--intl { border-left: 2px solid var(--text); }
+}
+
+/* ==========================================================================
+   CTA band
+   ========================================================================== */
+body[data-page="regulasi"] .rg-cta { isolation: isolate; overflow: hidden; }
+body[data-page="regulasi"] .rg-cta > [data-scaffold] { z-index: -1; opacity: .7; }
+@media (max-width: 767px) { body[data-page="regulasi"] .rg-cta > [data-scaffold] { opacity: .4; } }
+body[data-page="regulasi"] .rg-cta__inner {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px 64px;
+}
+body[data-page="regulasi"] .rg-cta__text { max-width: 680px; }
+body[data-page="regulasi"] .rg-cta__text .lead { margin-top: 18px; }
+body[data-page="regulasi"] .rg-cta__actions { display: flex; flex-wrap: wrap; gap: 14px; }
+@media (max-width: 479px) {
+  body[data-page="regulasi"] .rg-cta__actions { flex-direction: column; align-items: stretch; width: 100%; }
+  body[data-page="regulasi"] .rg-cta__actions .btn { width: 100%; }
+}
+
+/* ==========================================================================
+   Detail modal (appended to <body>)
+   ========================================================================== */
+body[data-page="regulasi"] .rg-modal { display: grid; gap: 22px; }
+body[data-page="regulasi"] .rg-modal > * + * { margin-top: 0; }
+body[data-page="regulasi"] .rg-modal__title { font: 600 1.3rem/1.3 var(--f-display); font-variant-numeric: lining-nums; color: var(--text) !important; }
+body[data-page="regulasi"] .rg-modal__kv .kv__row { padding: 11px 0; grid-template-columns: minmax(96px, 30%) minmax(0, 1fr); }
+body[data-page="regulasi"] .rg-modal__kv dd { font-size: .95rem; }
+body[data-page="regulasi"] .rg-modal__label {
+  margin-bottom: 8px; font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text) !important;
+}
+body[data-page="regulasi"] .rg-modal__rel p:last-child { line-height: 1.7; }
+body[data-page="regulasi"] .rg-modal__link { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+body[data-page="regulasi"] .rg-modal__host { font-size: .85rem; color: var(--muted); }
+body[data-page="regulasi"] .rg-modal__note {
+  padding-top: 14px; border-top: 1px solid var(--line); font-size: .85rem; line-height: 1.55;
+}
+
+/* ---------- print: keep the library readable ---------- */
+@media print {
+  body[data-page="regulasi"] .rg-toolbar, body[data-page="regulasi"] .rg-cta,
+  body[data-page="regulasi"] .rg-summary .btn, body[data-page="regulasi"] .rg-key__foot { display: none !important; }
+  body[data-page="regulasi"] .rg-src__host { display: inline; }
+  body[data-page="regulasi"] .rg-group-row--intl th { background: none; color: var(--c-black); }
+}

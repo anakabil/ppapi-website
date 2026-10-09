@@ -1,0 +1,350 @@
+/* ==========================================================================
+   PPAPI — Profil Perkumpulan (profil.html) · page styles
+   Everything is scoped to body[data-page="profil"] and uses design tokens only.
+   ========================================================================== */
+
+/* ---------- Hero ---------- */
+body[data-page="profil"] .profil-hero { --hero-pos: center 32%; }
+body[data-page="profil"] .profil-hero h1 { max-width: none; }
+@media (max-width: 479px) {
+  body[data-page="profil"] .profil-hero h1 { font-size: clamp(2.3rem, 10.4vw, 2.6rem); }
+}
+
+/* ---------- Section index (dark strip under the hero) ----------
+   The strip is in the markup from first paint and its height is reserved here (= link height),
+   so profil.js filling in the links never pushes the page down. Without JS it stays out. */
+body[data-page="profil"] .profil-index {
+  --index-h: 64px;
+  position: relative; background: var(--c-black);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+html.no-js body[data-page="profil"] .profil-index { display: none; }
+body[data-page="profil"] .profil-index .container { position: relative; }
+body[data-page="profil"] .profil-index__list {
+  display: flex; list-style: none; margin: 0; padding: 0; min-height: var(--index-h);
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+body[data-page="profil"] .profil-index__list::-webkit-scrollbar { display: none; }
+body[data-page="profil"] .profil-index__list > li { flex: 1 0 auto; border-left: 1px solid var(--line); }
+body[data-page="profil"] .profil-index__list > li:last-child { border-right: 1px solid var(--line); }
+body[data-page="profil"] .profil-index__link {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  min-height: var(--index-h); padding: 0 clamp(16px, 2vw, 26px);
+  font: 600 .76rem/1 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; white-space: nowrap;
+  color: rgba(236,236,234,.74); transition: color .35s var(--ease), background-color .35s var(--ease);
+}
+body[data-page="profil"] .profil-index__link::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--text);
+  transform: scaleX(0); transform-origin: left; transition: transform .55s var(--ease);
+}
+body[data-page="profil"] .profil-index__link:hover { color: var(--text); background: var(--hover-bg); }
+body[data-page="profil"] .profil-index__link:hover::after { transform: scaleX(1); }
+body[data-page="profil"] .profil-index__link:focus-visible { outline-offset: -3px; }
+body[data-page="profil"] .profil-index__num { font-weight: 500; letter-spacing: .12em; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 767px) {
+  body[data-page="profil"] .profil-index { --index-h: 56px; }
+  body[data-page="profil"] .profil-index .container { padding-inline: 0; }
+  body[data-page="profil"] .profil-index__list > li:first-child { border-left: 0; }
+}
+
+/* ---------- 01 · Tentang ---------- */
+body[data-page="profil"] .profil-about { gap: clamp(44px, 7vw, 112px); }
+body[data-page="profil"] .profil-about .h2 { max-width: 19ch; margin-bottom: clamp(32px, 4vw, 48px); }
+body[data-page="profil"] .profil-quote {
+  position: relative; margin: 0;
+  padding: 2px 0 2px clamp(24px, 3.4vw, 40px);
+  border-left: 1px solid var(--text);
+}
+body[data-page="profil"] .profil-quote__mark {
+  display: block; height: .34em; margin: 0 0 12px -.03em;
+  font: 600 4.6rem/.8 var(--f-display); font-variant-numeric: lining-nums; color: var(--faint);
+}
+body[data-page="profil"] .profil-quote__text { margin: 0; }
+body[data-page="profil"] .profil-quote__text p {
+  font: italic 500 clamp(1.45rem, 2.3vw, 1.95rem)/1.36 var(--f-display); font-variant-numeric: lining-nums;
+  letter-spacing: -.005em; color: var(--text); max-width: 34ch;
+}
+body[data-page="profil"] .profil-about__body {
+  display: grid; gap: 1.1em; margin-top: clamp(28px, 3.4vw, 40px);
+  max-width: 62ch; color: var(--muted); font-size: 1.04rem;
+}
+@media (min-width: 1024px) {
+  body[data-page="profil"] .profil-about__body { padding-left: clamp(24px, 3.4vw, 40px); }
+}
+
+body[data-page="profil"] .profil-facts { align-self: start; }
+body[data-page="profil"] .profil-facts__logo { width: 156px; height: auto; margin-bottom: clamp(28px, 3vw, 40px); }
+body[data-page="profil"] .profil-facts__title {
+  margin-bottom: 14px;
+  font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="profil"] .profil-facts .kv__row { grid-template-columns: minmax(92px, 34%) minmax(0, 1fr); padding: 16px 0; }
+body[data-page="profil"] .profil-facts dd { font: 600 1.22rem/1.3 var(--f-display); font-variant-numeric: lining-nums; color: var(--text); }
+body[data-page="profil"] .profil-facts__note {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 22px;
+  font-size: .86rem; line-height: 1.55; color: var(--muted);
+}
+body[data-page="profil"] .profil-facts__note > [data-icon] { margin-top: 2px; }
+@media (min-width: 1024px) {
+  body[data-page="profil"] .profil-facts { position: sticky; top: calc(var(--header-offset) + 32px); margin-top: 6px; }
+}
+
+/* ---------- 02 · Visi (dark band) ---------- */
+body[data-page="profil"] .profil-visi { overflow: hidden; isolation: isolate; }
+body[data-page="profil"] .profil-visi > [data-scaffold] { z-index: -1; opacity: .7; }
+body[data-page="profil"] .profil-visi::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    var(--noise),
+    radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 60%);
+  opacity: .8;
+}
+body[data-page="profil"] .profil-visi__figure { position: relative; margin: 0; max-width: 1080px; }
+body[data-page="profil"] .profil-visi__mark {
+  display: block; height: .42em; margin: clamp(4px, 1vw, 12px) 0 clamp(10px, 1.6vw, 20px) -.04em;
+  font: 600 clamp(6rem, 12vw, 10rem)/.75 var(--f-display); font-variant-numeric: lining-nums;
+}
+body[data-page="profil"] .profil-visi__statement { margin: 0; }
+body[data-page="profil"] .profil-visi__statement p {
+  max-width: 23ch;
+  font: 500 clamp(2rem, 4.5vw, 4.1rem)/1.12 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.012em;
+  color: var(--text-strong);
+}
+body[data-page="profil"] .profil-visi__caption {
+  display: flex; align-items: center; gap: 18px; margin-top: clamp(32px, 4vw, 52px);
+  font: 600 .74rem/1.5 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="profil"] .profil-visi__caption::before {
+  content: ""; flex: none; width: 64px; height: 1px; background: var(--metal-line);
+}
+
+/* ---------- Misi ---------- */
+body[data-page="profil"] .profil-misi__grid { gap: clamp(36px, 6vw, 96px); }
+body[data-page="profil"] .profil-misi__head .h2 { max-width: 12ch; }
+body[data-page="profil"] .profil-misi__head .lead { margin-top: 20px; max-width: 38ch; }
+@media (min-width: 1024px) {
+  body[data-page="profil"] .profil-misi__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  body[data-page="profil"] .profil-misi__head { position: sticky; top: calc(var(--header-offset) + 40px); }
+}
+body[data-page="profil"] .profil-misi__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+body[data-page="profil"] .profil-misi__item {
+  position: relative; display: grid; grid-template-columns: clamp(56px, 7vw, 92px) minmax(0, 1fr);
+  gap: 18px; align-items: baseline; padding: clamp(24px, 3vw, 34px) 0;
+  border-bottom: 1px solid var(--line);
+}
+body[data-page="profil"] .profil-misi__item::before {
+  content: ""; position: absolute; left: 0; bottom: -1px; width: 40px; height: 1px; background: var(--text);
+  transition: width .9s var(--ease);
+}
+body[data-page="profil"] .profil-misi__item:hover::before { width: 100%; }
+body[data-page="profil"] .profil-misi__num {
+  font: 500 clamp(2rem, 3.2vw, 2.7rem)/1 var(--f-cond); letter-spacing: .01em;
+  font-variant-numeric: tabular-nums; color: var(--faint); transition: color .5s var(--ease);
+}
+body[data-page="profil"] .profil-misi__item:hover .profil-misi__num { color: var(--text); }
+body[data-page="profil"] .profil-misi__text { font-size: clamp(1.05rem, 1.35vw, 1.18rem); line-height: 1.6; color: var(--text); max-width: 52ch; }
+
+/* ---------- 03 · Nilai ---------- */
+@media (min-width: 1024px) {
+  body[data-page="profil"] .profil-nilai--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+body[data-page="profil"] .profil-nilai__card { --card-pad: clamp(24px, 2.4vw, 32px); height: 100%; }
+body[data-page="profil"] .profil-nilai__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: clamp(36px, 5vw, 64px);
+}
+body[data-page="profil"] .profil-nilai__icon {
+  display: grid; place-items: center; flex: none; width: 52px; height: 52px;
+  color: var(--text); border: 1px solid var(--line-strong); border-radius: 50%;
+  transition: background-color .5s var(--ease), color .5s var(--ease), border-color .5s var(--ease);
+}
+body[data-page="profil"] .profil-nilai__card:hover .profil-nilai__icon { background: var(--text); color: var(--surface); border-color: var(--text); }
+@media (max-width: 767px) {
+  body[data-page="profil"] .profil-nilai__head { margin-bottom: 26px; }
+}
+body[data-page="profil"] .profil-nilai__title { margin-bottom: 12px; font: 600 1.65rem/1.15 var(--f-display); font-variant-numeric: lining-nums; }
+body[data-page="profil"] .profil-nilai__text { color: var(--muted); }
+
+/* ---------- Eyebrow chapter numbers ("01 —") ---------- */
+body[data-page="profil"] .eyebrow > [data-num]:empty { display: none; }
+body[data-page="profil"] .eyebrow > [data-num] { margin-right: -4px; color: var(--text); }
+
+/* ---------- 04 · Sejarah ---------- */
+body[data-page="profil"] .profil-timeline { max-width: 1040px; margin-inline: auto; }
+body[data-page="profil"] .profil-timeline .timeline__title { font-size: clamp(1.4rem, 2vw, 1.65rem); }
+body[data-page="profil"] .profil-timeline .timeline__year > span:first-child { color: var(--text); }
+@media (min-width: 1024px) {
+  /* alternate sides interlock so the centre line reads as one continuous standard */
+  body[data-page="profil"] .profil-timeline .timeline__item + .timeline__item { margin-top: -64px; }
+}
+
+/* ---------- 05 · Struktur organisasi ---------- */
+body[data-page="profil"] .profil-pengurus { --grid-gap: 0; }
+body[data-page="profil"] .profil-pengurus--few { max-width: 900px; }
+body[data-page="profil"] .profil-person {
+  position: relative; display: flex; justify-content: center;
+  padding: clamp(36px, 3.6vw, 48px) clamp(12px, 2vw, 24px);
+  transition: background-color .5s var(--ease);
+}
+body[data-page="profil"] .profil-person:hover { background: var(--surface); }
+body[data-page="profil"] .profil-person .person { gap: 12px; }
+body[data-page="profil"] .profil-person .person__avatar {
+  width: 96px; height: 96px; margin-bottom: 6px; background: var(--surface);
+  transition: border-color .5s var(--ease);
+}
+body[data-page="profil"] .profil-person:hover .person__avatar { border-color: var(--text); }
+body[data-page="profil"] .profil-person .person__name { text-wrap: balance; font-variant-numeric: lining-nums; }
+body[data-page="profil"] .profil-person .person__role { max-width: 24ch; }
+/* jabatan whose official name is not yet published: index numeral in the ring, jabatan as the
+   serif title, and a quiet hairline-flanked "Nama menyusul" in place of a sample name */
+body[data-page="profil"] .profil-person__num {
+  margin-right: -.1em; /* optical centre: cancel trailing tracking */
+  font: 500 1.7rem/1 var(--f-cond); letter-spacing: .1em; font-variant-numeric: tabular-nums;
+  color: var(--muted); transition: color .5s var(--ease);
+}
+body[data-page="profil"] .profil-person:hover .profil-person__num { color: var(--text); }
+body[data-page="profil"] .profil-person__title { max-width: 16ch; }
+body[data-page="profil"] .profil-person__pending {
+  display: inline-flex; align-items: center; gap: 10px; max-width: none; white-space: nowrap; font-weight: 500;
+}
+body[data-page="profil"] .profil-person__pending::before,
+body[data-page="profil"] .profil-person__pending::after {
+  content: ""; flex: none; width: 14px; height: 1px; background: var(--line-strong);
+}
+@media (max-width: 479px) {
+  body[data-page="profil"] .profil-person { padding-block: 32px; }
+  body[data-page="profil"] .profil-person .person__avatar { width: 76px; height: 76px; font-size: 1.45rem; }
+  body[data-page="profil"] .profil-person__num { font-size: 1.35rem; }
+  body[data-page="profil"] .profil-person .person__name { font-size: 1.15rem; }
+  body[data-page="profil"] .profil-person .person__role { font-size: .64rem; letter-spacing: .16em; }
+  body[data-page="profil"] .profil-person__pending { gap: 8px; }
+  body[data-page="profil"] .profil-person__pending::before,
+  body[data-page="profil"] .profil-person__pending::after { width: 10px; }
+}
+body[data-page="profil"] .profil-pengurus__note {
+  display: flex; align-items: flex-start; gap: 14px; max-width: 74ch; margin-top: clamp(24px, 3vw, 36px);
+  font: italic 500 clamp(1.08rem, 1.4vw, 1.22rem)/1.5 var(--f-display); font-variant-numeric: lining-nums; color: var(--muted);
+}
+body[data-page="profil"] .profil-pengurus__note-icon {
+  display: grid; place-items: center; flex: none; width: 34px; height: 34px; margin-top: -3px;
+  color: var(--muted); border: 1px solid var(--line-strong); border-radius: 50%;
+}
+
+/* ---------- 06 · Makna logo — drawing sheet with leader lines ---------- */
+body[data-page="profil"] .logo-sheet {
+  --bg: var(--c-paper);
+  position: relative; isolation: isolate;
+  display: flex; flex-direction: column; gap: 32px;
+  padding: clamp(16px, 5vw, 64px);
+  background-color: var(--c-paper);
+  background-image:
+    linear-gradient(rgba(17,17,19,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17,17,19,.035) 1px, transparent 1px);
+  background-size: 32px 32px; background-position: -1px -1px;
+  border: 1px solid var(--line);
+}
+body[data-page="profil"] .logo-sheet::before {
+  content: ""; position: absolute; inset: -3px; pointer-events: none;
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 0 / 5px 5px no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 100% 0 / 5px 5px no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 5px 5px no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 100% 100% / 5px 5px no-repeat;
+}
+body[data-page="profil"] .logo-sheet__figure { order: -1; position: relative; z-index: 1; margin: 0; }
+body[data-page="profil"] .logo-sheet__art { position: relative; }
+body[data-page="profil"] .logo-sheet__art img { width: 100%; height: auto; }
+body[data-page="profil"] .logo-sheet__caption {
+  position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px;
+  margin-top: clamp(30px, 3vw, 36px);
+  font: 600 .7rem/1.4 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="profil"] .logo-sheet__caption > span {
+  padding: 3px 8px; color: var(--text); border: 1px solid var(--line-strong);
+}
+body[data-page="profil"] .logo-pin {
+  position: absolute; left: var(--x); top: var(--y); z-index: 2;
+  display: grid; place-items: center; width: 20px; height: 20px; transform: translate(-50%, -50%);
+  font: 600 .62rem/1 var(--f-cond); letter-spacing: .04em; color: var(--c-white);
+  background: var(--c-ink); border-radius: 50%; box-shadow: 0 0 0 3px rgba(246,246,244,.92);
+}
+body[data-page="profil"] .logo-sheet__row { position: relative; z-index: 1; display: grid; gap: 22px 40px; }
+@media (min-width: 640px) {
+  body[data-page="profil"] .logo-sheet__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body[data-page="profil"] .logo-note {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; align-content: start;
+  padding-top: 20px; border-top: 1px solid var(--line);
+}
+body[data-page="profil"] .logo-note > * { grid-column: 2; }
+body[data-page="profil"] .logo-note__num { grid-column: 1; grid-row: 1 / span 2; }
+body[data-page="profil"] .logo-note__num > span {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  font: 600 .66rem/1 var(--f-cond); letter-spacing: .04em; color: var(--c-white); background: var(--c-ink);
+}
+body[data-page="profil"] .logo-note__title { font: 600 1.3rem/1.2 var(--f-display); font-variant-numeric: lining-nums; margin-bottom: 8px; }
+body[data-page="profil"] .logo-note__text { font-size: .95rem; line-height: 1.65; color: var(--muted); max-width: 46ch; }
+body[data-page="profil"] .logo-sheet__leaders { z-index: 2; color: var(--c-slate); }
+body[data-page="profil"] .logo-sheet__leaders .logo-leader__node { fill: var(--c-paper); stroke: var(--c-ink); }
+
+@media (min-width: 1024px) {
+  body[data-page="profil"] .logo-sheet { gap: 0; padding: clamp(44px, 4.4vw, 64px) clamp(44px, 5vw, 72px); }
+  body[data-page="profil"] .logo-sheet__figure { order: 0; width: min(74%, 820px); margin: clamp(60px, 6vw, 88px) auto; position: static; }
+  body[data-page="profil"] .logo-sheet__art { position: relative; }
+  /* caption becomes the sheet's title block (bottom-right corner), clear of the leader lines */
+  body[data-page="profil"] .logo-sheet__caption { position: absolute; right: 18px; bottom: 16px; margin: 0; justify-content: flex-end; }
+  body[data-page="profil"] .logo-sheet__row { column-gap: clamp(64px, 9vw, 150px); }
+  body[data-page="profil"] .logo-note { display: block; padding: 0; border: 0; }
+  body[data-page="profil"] .logo-note__num {
+    margin-bottom: 12px;
+    font: 500 .9rem/1 var(--f-cond); letter-spacing: .18em; color: var(--muted);
+  }
+  body[data-page="profil"] .logo-note__num > span { display: inline; width: auto; height: auto; color: inherit; background: none; border-radius: 0; font: inherit; }
+  body[data-page="profil"] .logo-sheet__row--top .logo-note { padding-bottom: 24px; border-bottom: 1px solid var(--line-strong); }
+  body[data-page="profil"] .logo-sheet__row--bottom .logo-note { padding-top: 24px; border-top: 1px solid var(--line-strong); }
+  body[data-page="profil"] .logo-pin { opacity: 0; }
+}
+
+/* ---------- Legalitas ---------- */
+body[data-page="profil"] .profil-legal dd { font-weight: 500; }
+
+/* ---------- CTA ---------- */
+body[data-page="profil"] .profil-cta { overflow: hidden; isolation: isolate; text-align: center; }
+body[data-page="profil"] .profil-cta > [data-scaffold] { z-index: -1; opacity: .75; }
+body[data-page="profil"] .profil-cta::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--noise), radial-gradient(70% 90% at 50% 100%, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 70%);
+}
+body[data-page="profil"] .profil-cta__inner { display: flex; flex-direction: column; align-items: center; max-width: 780px; margin-inline: auto; }
+body[data-page="profil"] .profil-cta .h2 { max-width: 22ch; }
+body[data-page="profil"] .profil-cta .lead { max-width: 54ch; margin-top: 20px; }
+body[data-page="profil"] .profil-cta__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: clamp(28px, 3.5vw, 40px); }
+@media (max-width: 479px) {
+  body[data-page="profil"] .profil-cta__actions { flex-direction: column; align-self: stretch; }
+  body[data-page="profil"] .profil-cta__actions .btn { width: 100%; }
+}
+/* status keanggotaan akun yang sedang masuk (profil.js) — satu baris tipis di bawah tombol */
+body[data-page="profil"] .profil-cta__status {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px;
+  margin: 26px 0 0; padding-top: 18px; border-top: 1px solid var(--line);
+  font-size: .9rem; line-height: 1.5; color: var(--muted);
+}
+body[data-page="profil"] .profil-cta__status[hidden] { display: none; }
+body[data-page="profil"] .profil-cta__status-label { font: 600 .74rem/1.2 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; }
+body[data-page="profil"] .profil-cta__status-badges { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Print ---------- */
+@media print {
+  body[data-page="profil"] .profil-index, body[data-page="profil"] .profil-cta, body[data-page="profil"] .logo-sheet__leaders { display: none !important; }
+  body[data-page="profil"] .logo-sheet { background: none; }
+}
+
+/* pins anchored below the artwork (e.g. the wordmark) hang underneath instead of covering it */
+body[data-page="profil"] .logo-pin--below { transform: translate(-50%, -2px); }
+
+/* shared .index-num dims its "/ 04" total to .55 opacity (≈2.4:1); lift it to AA on this page */
+body[data-page="profil"] .index-num > span { opacity: .9; }
+
+/* pre-reveal left/right translations must never create sideways scroll on narrow screens
+   (overflow-x: clip does not create a scroll container, so position: sticky keeps working) */
+body[data-page="profil"] main > section { overflow-x: clip; }

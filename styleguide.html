@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistem Desain — PPAPI</title>
+  <meta name="description" content="Galeri komponen internal situs PPAPI: token, tipografi, tombol, kartu, formulir, navigasi, status keanggotaan, panel konsol, dan motif dalam konteks terang dan gelap.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Sistem Desain — PPAPI">
+  <meta property="og:description" content="Galeri komponen internal situs PPAPI dalam konteks terang dan gelap.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/styleguide.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="styleguide" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/facade-bw.webp" srcset="assets/img/facade-bw-sm.webp 432w, assets/img/facade-bw.webp 1153w" sizes="100vw" alt="" width="1153" height="1920" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Sistem Desain</li></ol>
+        </nav>
+        <p class="eyebrow">Sistem Desain · Internal</p>
+        <h1 class="display split-lines">Bahasa visual<br><em>yang kokoh</em> &amp; tenang.</h1>
+        <p class="lead">Galeri seluruh komponen bersama situs PPAPI — monokrom, presisi, dan berkarakter. Setiap komponen ditampilkan dalam konteks terang dan gelap.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#sg-components"><span>Lihat komponen</span><span data-icon="arrow-down" data-icon-class="btn__icon"></span></a>
+          <button type="button" class="btn btn--ghost" data-sg-toast="success"><span>Uji notifikasi</span></button>
+        </div>
+        <div class="page-hero__meta">
+          <span><span data-icon="layers" data-icon-size="16"></span> main.css</span>
+          <span><span data-icon="settings" data-icon-size="16"></span> core.js · auth.js · store.js</span>
+          <span data-sg-mode></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 01 FONDASI ===================== -->
+    <section class="section" id="sg-foundation">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">01 — Fondasi</p>
+            <h2 class="h2">Warna, tipografi, <em>ritme</em>.</h2>
+            <p class="lead muted">Hitam, grafit, baja, perak, tulang, dan putih. Aksen status yang diredam hanya untuk makna, bukan dekorasi.</p>
+          </div>
+        </header>
+
+        <p class="sg-label">Palet primitif</p>
+        <div class="sg-swatches" data-reveal-stagger>
+          <div class="sg-swatch" style="--sw:var(--c-black)"><span>black</span><code>#0a0a0b</code></div>
+          <div class="sg-swatch" style="--sw:var(--c-ink)"><span>ink</span><code>#111113</code></div>
+          <div class="sg-swatch" style="--sw:var(--c-graphite)"><span>graphite</span><code>#1a1a1d</code></div>
+          <div class="sg-swatch" style="--sw:var(--c-steel)"><span>steel</span><code>#26262a</code></div>
+          <div class="sg-swatch" style="--sw:var(--c-iron)"><span>iron</span><code>#3a3a3f</code></div>
+          <div class="sg-swatch" style="--sw:var(--c-slate)"><span>slate</span><code>#5c5c63</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-gray)"><span>gray</span><code>#8b8b92</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-silver)"><span>silver</span><code>#b9b9bf</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-mist)"><span>mist</span><code>#dcdcdf</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-bone)"><span>bone</span><code>#ececea</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-paper)"><span>paper</span><code>#f6f6f4</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-white)"><span>white</span><code>#ffffff</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--metal)"><span>metal</span><code>--metal</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-ok)"><span>ok</span><code>#7f9a86</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-warn)"><span>warn</span><code>#b39b67</code></div>
+          <div class="sg-swatch sg-swatch--light" style="--sw:var(--c-err)"><span>err</span><code>#b0706a</code></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="sg-label">Skala tipografi</p>
+        <div class="sg-type">
+          <div class="sg-type__row"><code>.display</code><p class="display">Membangun <em>standar</em></p></div>
+          <div class="sg-type__row"><code>.h1</code><p class="h1">Profil Asosiasi</p></div>
+          <div class="sg-type__row"><code>.h2</code><p class="h2">Keselamatan <em>tanpa kompromi</em></p></div>
+          <div class="sg-type__row"><code>.h3</code><p class="h3">Inspeksi berbasis elemen</p></div>
+          <div class="sg-type__row"><code>.h4</code><p class="h4">Kategori Pemeriksaan</p></div>
+          <div class="sg-type__row"><code>.lead</code><p class="lead">Wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia.</p></div>
+          <div class="sg-type__row"><code>body</code><p>Perancah yang direncanakan dan diperiksa dengan benar melindungi setiap orang yang bekerja di atas maupun di sekitarnya. Teks isi memakai Inter 400 dengan tinggi baris 1,7.</p></div>
+          <div class="sg-type__row"><code>.eyebrow</code><p class="eyebrow">Perkumpulan Profesi</p></div>
+          <div class="sg-type__row"><code>.index-num</code><p><span class="index-num">01 <span>/ 06</span></span> &nbsp; <span class="index-num index-num--lg">04</span></p></div>
+        </div>
+      </div>
+    </section>
+
+    <div id="sg-components"></div>
+
+    <!-- ===================== 02 TOMBOL ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">02 — Tombol &amp; kontrol</p>
+            <h2 class="h2">Aksi yang <em>jelas</em></h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="sg-demo">
+          <p class="sg-label">Varian</p>
+          <div class="cluster cluster--lg">
+            <a class="btn btn--primary" href="keanggotaan.html"><span>Bergabung</span><span data-icon="arrow-right" data-icon-class="btn__icon"></span></a>
+            <a class="btn btn--ghost" href="profil.html"><span>Kenali PPAPI</span></a>
+            <a class="btn btn--link" href="berita.html"><span>Selengkapnya</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+            <button type="button" class="btn btn--danger"><span>Hapus</span></button>
+            <a class="btn btn--ghost" href="https://ppapiid.vercel.app/" target="_blank" rel="noopener"><span>Tautan eksternal</span><span data-icon="arrow-up-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          </div>
+        </div>
+        <div class="sg-demo">
+          <p class="sg-label">Ukuran · ikon · status</p>
+          <div class="cluster cluster--lg">
+            <button type="button" class="btn btn--primary btn--sm"><span>Kecil</span></button>
+            <button type="button" class="btn btn--primary"><span>Bawaan</span></button>
+            <button type="button" class="btn btn--primary btn--lg"><span>Besar</span></button>
+            <button type="button" class="icon-btn" aria-label="Cetak"><span data-icon="printer"></span></button>
+            <button type="button" class="icon-btn icon-btn--round" aria-label="Bagikan"><span data-icon="share"></span></button>
+            <button type="button" class="btn btn--ghost" data-sg-loading><span>Simpan</span><span data-icon="check" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+            <button type="button" class="btn btn--primary" disabled><span>Nonaktif</span></button>
+          </div>
+        </div>
+        <div class="sg-demo sg-demo--narrow">
+          <p class="sg-label">Lebar penuh · Google</p>
+          <div class="stack">
+            <button type="button" class="btn btn--primary btn--block"><span>Masuk</span><span data-icon="arrow-right" data-icon-class="btn__icon"></span></button>
+            <button type="button" class="btn-google"><span data-icon="google"></span><span>Lanjutkan dengan Google</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 03 KARTU ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">03 — Kartu &amp; blok konten</p>
+            <h2 class="h2">Struktur yang <em>tertata</em></h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+
+        <div class="grid grid--3">
+          <article class="card card--hover card--link">
+            <div class="card__media"><img class="img-mono" src="assets/img/stair-tower-sm.webp" alt="Menara tangga perancah galvanis" width="720" height="480" loading="lazy" decoding="async"></div>
+            <div class="card__meta"><span class="tag">Edukasi</span><time datetime="2026-09-12">12 Sep 2026</time></div>
+            <h3 class="card__title"><a href="berita.html">Kartu dengan media</a></h3>
+            <div class="card__body"><p>Kartu terangkat 4px saat disorot; foto bergerak dari hitam-putih menuju warna lembut.</p></div>
+            <div class="card__footer"><span class="btn btn--link btn--sm"><span>Baca</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></span></div>
+          </article>
+          <article class="card card--nodes">
+            <div class="card__meta"><span>card--nodes</span></div>
+            <h3 class="card__title">Simpul klem di sudut</h3>
+            <div class="card__body"><p>Empat simpul kecil di sudut kartu menggemakan klem pada persilangan pipa perancah.</p></div>
+            <div class="card__footer card__footer--rule"><span class="badge badge--outline">Rangka</span><span class="index-num">02 <span>/ 03</span></span></div>
+          </article>
+          <article class="card card--dark card--metal">
+            <div class="card__meta"><span>card--dark · card--metal</span></div>
+            <h3 class="card__title">Kartu gelap berlis logam</h3>
+            <div class="card__body"><p>Dipakai hemat untuk elemen penting seperti kartu anggota dan peluncur aplikasi.</p></div>
+            <div class="card__footer"><a class="btn btn--primary btn--sm" href="agenda.html"><span>Buka</span><span data-icon="arrow-up-right" data-icon-class="btn__icon" data-icon-size="16"></span></a></div>
+          </article>
+        </div>
+
+        <div class="divider"></div>
+        <p class="sg-label">.feature — pilar bernomor</p>
+        <div class="grid grid--3" data-reveal-stagger>
+          <article class="feature">
+            <div class="feature__head"><span class="index-num">01 <span>/ 03</span></span><span class="feature__icon" data-icon="award" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Pengembangan Kompetensi</h3>
+            <p class="feature__text">Pelatihan, diskusi teknis, dan sertifikasi jabatan kerja perancah.</p>
+          </article>
+          <article class="feature">
+            <div class="feature__head"><span class="index-num">02 <span>/ 03</span></span><span class="feature__icon" data-icon="shield-check" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Keselamatan &amp; K3</h3>
+            <p class="feature__text">Penerapan K3 dari perencanaan hingga pembongkaran perancah.</p>
+          </article>
+          <article class="feature">
+            <div class="feature__head"><span class="index-num">03 <span>/ 03</span></span><span class="feature__icon" data-icon="scale" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Regulasi &amp; Standar</h3>
+            <p class="feature__text">Pustaka regulasi nasional dan standar internasional yang relevan.</p>
+          </article>
+        </div>
+
+        <div class="divider"></div>
+        <p class="sg-label">.stat — angka dengan penghitung (data-count)</p>
+        <div class="grid grid--4">
+          <div class="stat"><span class="stat__num" data-count="28">28</span><span class="stat__label">Regulasi &amp; standar</span></div>
+          <div class="stat"><span class="stat__num" data-count="16">16</span><span class="stat__label">Kualifikasi kompetensi</span></div>
+          <div class="stat"><span class="stat__num" data-count="1250" data-count-suffix="+">1.250+</span><span class="stat__label">Contoh format ribuan</span></div>
+          <div class="stat stat--card"><span class="stat__num" data-count="92" data-count-suffix="%">92%</span><span class="stat__label">Kelengkapan profil</span><div class="progress progress--metal mt-1" style="--value:92" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="Kelengkapan profil"></div></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="sg-label">.news-card — dirender dari PPAPI.data.berita</p>
+        <div class="grid grid--3" data-sg="news"></div>
+
+        <div class="divider"></div>
+        <div class="split split--top">
+          <div>
+            <p class="sg-label">.event-row + .date-block — dari PPAPI.data.agenda</p>
+            <div data-sg="events"></div>
+          </div>
+          <div>
+            <p class="sg-label">.list-rule · .kv</p>
+            <ul class="list-rule list-rule--nodes">
+              <li><strong>UU 1/1970</strong> — Keselamatan Kerja</li>
+              <li><strong>Permenaker 9/2016</strong> — K3 dalam Pekerjaan pada Ketinggian</li>
+              <li><strong>Permen PUPR 10/2021</strong> — Pedoman SMKK</li>
+            </ul>
+            <dl class="kv mt-4">
+              <div class="kv__row"><dt>Nomor KTA</dt><dd>PPAPI-2026-000123</dd></div>
+              <div class="kv__row"><dt>Kategori</dt><dd>Praktisi</dd></div>
+              <div class="kv__row"><dt>Status</dt><dd><span class="badge badge--ok">Aktif</span></dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="split split--top">
+          <div>
+            <p class="sg-label">.timeline</p>
+            <ol class="timeline">
+              <li class="timeline__item"><p class="timeline__year">Pendirian <span class="badge badge--contoh">Contoh</span></p><h3 class="timeline__title">Berhimpunnya praktisi</h3><p class="timeline__text">Riwayat pendirian resmi akan dilengkapi sekretariat.</p></li>
+              <li class="timeline__item"><p class="timeline__year">2026</p><h3 class="timeline__title">Situs resmi &amp; layanan daring</h3><p class="timeline__text">Dasbor anggota, KTA digital, dan pustaka regulasi.</p></li>
+            </ol>
+          </div>
+          <div>
+            <p class="sg-label">.person</p>
+            <div class="grid grid--2">
+              <div class="person"><span class="person__avatar">NP</span><p class="person__name">Nama Pengurus</p><p class="person__role">Ketua Umum</p></div>
+              <div class="person"><span class="person__avatar">NP</span><p class="person__name">Nama Pengurus</p><p class="person__role">Sekretaris Jenderal</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 04 UMPAN BALIK ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">04 — Umpan balik</p>
+            <h2 class="h2">Status yang <em>tenang</em></h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="sg-demo">
+          <p class="sg-label">.badge · .tag</p>
+          <div class="cluster">
+            <span class="badge">Bawaan</span>
+            <span class="badge badge--ok">Aktif</span>
+            <span class="badge badge--warn">Segera kedaluwarsa</span>
+            <span class="badge badge--err">Kedaluwarsa</span>
+            <span class="badge badge--muted">Muted</span>
+            <span class="badge badge--outline">Outline</span>
+            <span class="badge badge--solid">Solid</span>
+            <span class="badge badge--metal">Metal</span>
+            <span class="badge badge--contoh">Contoh</span>
+            <span class="tag">Pelatihan</span>
+            <span class="tag tag--boxed">Luring</span>
+          </div>
+        </div>
+        <div class="grid grid--2">
+          <div class="alert alert--info" role="note"><span data-icon="info"></span><div><p class="alert__title">Informasi</p><p>Data contoh untuk demonstrasi. Daftar resmi dikelola sekretariat.</p></div></div>
+          <div class="alert alert--ok" role="status"><span data-icon="check-circle"></span><div><p class="alert__title">Berhasil</p><p>Profil Anda telah disimpan.</p></div></div>
+          <div class="alert alert--warn"><span data-icon="alert-triangle"></span><div><p class="alert__title">Perhatian</p><p>Satu sertifikat akan kedaluwarsa dalam 43 hari.</p></div></div>
+          <div class="alert alert--err"><span data-icon="alert-triangle"></span><div><p class="alert__title">Gagal masuk</p><p>Email atau kata sandi tidak sesuai. Silakan periksa kembali.</p></div></div>
+        </div>
+        <div class="sg-demo mt-4">
+          <p class="sg-label">PPAPI.ui — toast · modal · confirm</p>
+          <div class="cluster">
+            <button type="button" class="btn btn--ghost btn--sm" data-sg-toast="info"><span>Toast info</span></button>
+            <button type="button" class="btn btn--ghost btn--sm" data-sg-toast="success"><span>Toast sukses</span></button>
+            <button type="button" class="btn btn--ghost btn--sm" data-sg-toast="warn"><span>Toast peringatan</span></button>
+            <button type="button" class="btn btn--ghost btn--sm" data-sg-toast="error"><span>Toast galat</span></button>
+            <button type="button" class="btn btn--primary btn--sm" data-sg-modal><span>Buka modal</span></button>
+            <button type="button" class="btn btn--primary btn--sm" data-sg-confirm><span>Konfirmasi</span></button>
+            <button type="button" class="btn btn--danger btn--sm" data-sg-confirm="danger"><span>Konfirmasi hapus</span></button>
+          </div>
+        </div>
+        <div class="grid grid--3 mt-4">
+          <div class="sg-demo">
+            <p class="sg-label">.spinner · .progress</p>
+            <div class="cluster"><span class="spinner"></span><span class="spinner spinner--lg"></span></div>
+            <div class="progress mt-3" style="--value:64" role="progressbar" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100" aria-label="Contoh progres"></div>
+            <div class="progress progress--metal mt-2" style="--value:38" role="progressbar" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100" aria-label="Contoh progres logam"></div>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">PPAPI.ui.skeleton(4)</p>
+            <div data-sg="skeleton"></div>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">PPAPI.ui.emptyState()</p>
+            <div data-sg="empty"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 05 FORMULIR ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">05 — Formulir</p>
+            <h2 class="h2">Isian yang <em>presisi</em></h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="split split--top">
+          <form class="form" novalidate data-sg-form>
+            <div class="segmented segmented--block" data-segmented role="group" aria-label="Metode masuk">
+              <button type="button" class="segmented__option" aria-pressed="true" data-value="email"><span data-icon="mail" data-icon-size="16"></span>Email</button>
+              <button type="button" class="segmented__option" aria-pressed="false" data-value="phone"><span data-icon="phone" data-icon-size="16"></span>Nomor HP</button>
+            </div>
+            <div class="form__row form__row--2">
+              <div class="field">
+                <label class="field__label" for="sg-name">Nama lengkap <span class="field__req" aria-hidden="true">*</span></label>
+                <input class="field__control" id="sg-name" name="name" autocomplete="name" placeholder="Nama sesuai identitas" required>
+              </div>
+              <div class="field">
+                <label class="field__label" for="sg-email">Email <span class="opt">(opsional)</span></label>
+                <div class="input-icon"><span data-icon="mail" data-icon-size="18"></span><input class="field__control" id="sg-email" type="email" name="email" placeholder="nama@domain.id" autocomplete="email"></div>
+              </div>
+            </div>
+            <div class="field is-invalid">
+              <label class="field__label" for="sg-phone">Nomor HP</label>
+              <div class="input-group"><span class="input-group__prefix">+62</span><input class="field__control" id="sg-phone" type="tel" inputmode="tel" name="phone" value="12-34" aria-invalid="true" aria-describedby="sg-phone-err"></div>
+              <p class="field__error" id="sg-phone-err">Nomor HP tidak valid. Gunakan format Indonesia, misalnya 0812-3456-7890.</p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="sg-pass">Kata sandi</label>
+              <div class="password-toggle">
+                <input class="field__control" id="sg-pass" type="password" name="password" autocomplete="new-password" aria-describedby="sg-pass-hint">
+                <button type="button" class="password-toggle__btn" aria-label="Tampilkan kata sandi" aria-pressed="false"><span data-icon="eye"></span></button>
+              </div>
+              <div class="strength" data-level="0" data-sg-strength><div class="strength__bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div><span class="strength__label" aria-live="polite"></span></div>
+              <p class="field__hint" id="sg-pass-hint">Minimal 8 karakter dengan kombinasi huruf dan angka.</p>
+            </div>
+            <div class="form__row form__row--2">
+              <div class="field">
+                <label class="field__label" for="sg-prov">Provinsi</label>
+                <select class="field__control" id="sg-prov" name="province"><option value="">Pilih provinsi</option><option>DKI Jakarta</option><option>Jawa Barat</option><option>Kalimantan Timur</option></select>
+              </div>
+              <div class="field">
+                <label class="field__label" for="sg-date">Tanggal terbit</label>
+                <input class="field__control" id="sg-date" type="date" name="date">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="sg-msg">Pesan <span class="field__counter" data-sg-counter>0 / 2.000</span></label>
+              <textarea class="field__control" id="sg-msg" name="message" maxlength="2000" placeholder="Tuliskan kritik atau saran Anda…"></textarea>
+            </div>
+            <div class="cluster cluster--lg">
+              <label class="check"><input type="checkbox" name="remember" checked><span class="check__box"></span><span class="check__label">Ingat saya</span></label>
+              <label class="check"><input type="radio" name="sg-gender" value="L" checked><span class="check__box"></span><span class="check__label">Laki-laki</span></label>
+              <label class="check"><input type="radio" name="sg-gender" value="P"><span class="check__box"></span><span class="check__label">Perempuan</span></label>
+            </div>
+            <label class="check"><input type="checkbox" name="agree"><span class="check__box"></span><span class="check__label">Saya menyetujui <a href="kebijakan-privasi.html">Kebijakan Privasi</a></span></label>
+            <div class="form__actions">
+              <button type="submit" class="btn btn--primary"><span>Kirim</span><span data-icon="send" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+              <button type="reset" class="btn btn--link"><span>Atur ulang</span></button>
+            </div>
+          </form>
+
+          <div class="stack stack--lg">
+            <div class="field">
+              <span class="field__label" id="sg-otp-label">Kode OTP</span>
+              <div class="otp" data-sg-otp aria-labelledby="sg-otp-label"></div>
+              <p class="field__hint">Mode demo: gunakan kode 123456.</p>
+            </div>
+            <fieldset class="rating">
+              <legend class="field__label">Penilaian layanan</legend>
+              <div class="rating__stars">
+                <input type="radio" id="sg-r5" name="sg-rating" value="5"><label for="sg-r5" title="5 dari 5"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">5 bintang</span></label>
+                <input type="radio" id="sg-r4" name="sg-rating" value="4" checked><label for="sg-r4" title="4 dari 5"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">4 bintang</span></label>
+                <input type="radio" id="sg-r3" name="sg-rating" value="3"><label for="sg-r3" title="3 dari 5"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">3 bintang</span></label>
+                <input type="radio" id="sg-r2" name="sg-rating" value="2"><label for="sg-r2" title="2 dari 5"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">2 bintang</span></label>
+                <input type="radio" id="sg-r1" name="sg-rating" value="1"><label for="sg-r1" title="1 dari 5"><span data-icon="star" data-icon-size="26"></span><span class="sr-only">1 bintang</span></label>
+              </div>
+            </fieldset>
+            <div>
+              <p class="field__label mb-1">Segmented (radio)</p>
+              <div class="segmented" role="radiogroup" aria-label="Kategori">
+                <label><input type="radio" name="sg-kat" value="Kritik" checked><span class="segmented__option">Kritik</span></label>
+                <label><input type="radio" name="sg-kat" value="Saran"><span class="segmented__option">Saran</span></label>
+                <label><input type="radio" name="sg-kat" value="Pertanyaan"><span class="segmented__option">Pertanyaan</span></label>
+                <label><input type="radio" name="sg-kat" value="Pengaduan"><span class="segmented__option">Pengaduan</span></label>
+                <label><input type="radio" name="sg-kat" value="Apresiasi"><span class="segmented__option">Apresiasi</span></label>
+              </div>
+            </div>
+            <div class="search-box">
+              <span data-icon="search" data-icon-size="18"></span>
+              <input class="field__control" type="search" placeholder="Cari regulasi, nomor, atau kata kunci…" aria-label="Cari">
+              <button type="button" class="search-box__clear" aria-label="Hapus pencarian"><span data-icon="close" data-icon-size="16"></span></button>
+            </div>
+            <div class="filter-chips" role="group" aria-label="Filter jenis" data-sg-chips>
+              <button type="button" class="chip" aria-pressed="true">Semua <span class="chip__count">28</span></button>
+              <button type="button" class="chip" aria-pressed="false">Undang-Undang <span class="chip__count">4</span></button>
+              <button type="button" class="chip" aria-pressed="false">Peraturan Menteri <span class="chip__count">8</span></button>
+              <button type="button" class="chip" aria-pressed="false">SNI <span class="chip__count">1</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 06 NAVIGASI ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">06 — Navigasi</p>
+            <h2 class="h2">Tab, akordeon, <em>jejak</em></h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="tabs" data-tabs>
+          <div class="tabs__list" role="tablist" aria-label="Contoh tab">
+            <button class="tabs__tab" role="tab" id="sg-tab-1" aria-controls="sg-panel-1" aria-selected="true"><span data-icon="user" data-icon-size="16"></span>Profil Diri</button>
+            <button class="tabs__tab" role="tab" id="sg-tab-2" aria-controls="sg-panel-2" aria-selected="false"><span data-icon="award" data-icon-size="16"></span>Kompetensi</button>
+            <button class="tabs__tab" role="tab" id="sg-tab-3" aria-controls="sg-panel-3" aria-selected="false"><span data-icon="certificate" data-icon-size="16"></span>Sertifikat</button>
+            <button class="tabs__tab" role="tab" id="sg-tab-4" aria-controls="sg-panel-4" aria-selected="false"><span data-icon="id-card" data-icon-size="16"></span>Kartu Anggota</button>
+          </div>
+          <div class="tabs__panel" role="tabpanel" id="sg-panel-1" aria-labelledby="sg-tab-1"><p class="muted">Panel profil — tombol panah kiri/kanan berpindah antartab. Tambahkan <code>data-tab-hash</code> untuk sinkron dengan alamat (#).</p></div>
+          <div class="tabs__panel" role="tabpanel" id="sg-panel-2" aria-labelledby="sg-tab-2" hidden><p class="muted">Panel kompetensi.</p></div>
+          <div class="tabs__panel" role="tabpanel" id="sg-panel-3" aria-labelledby="sg-tab-3" hidden><p class="muted">Panel sertifikat.</p></div>
+          <div class="tabs__panel" role="tabpanel" id="sg-panel-4" aria-labelledby="sg-tab-4" hidden><p class="muted">Panel kartu anggota.</p></div>
+        </div>
+
+        <div class="split split--top mt-6">
+          <div class="accordion" data-accordion="single">
+            <div class="accordion__item">
+              <h3><button class="accordion__trigger" aria-expanded="true">Siapa yang dapat menjadi anggota?</button></h3>
+              <div class="accordion__panel"><p>Teknisi, supervisor, inspektur, perancang, dan ahli perancah, serta badan usaha di bidang perancah.</p></div>
+            </div>
+            <div class="accordion__item">
+              <h3><button class="accordion__trigger" aria-expanded="false">Berapa biaya keanggotaan?</button></h3>
+              <div class="accordion__panel" hidden><p>Informasi iuran keanggotaan dapat diperoleh melalui sekretariat.</p></div>
+            </div>
+            <div class="accordion__item">
+              <h3><button class="accordion__trigger" aria-expanded="false">Bagaimana memverifikasi KTA?</button></h3>
+              <div class="accordion__panel" hidden><p>Melalui halaman Verifikasi Anggota atau dengan memindai kode QR pada KTA digital.</p></div>
+            </div>
+          </div>
+          <div class="stack stack--lg">
+            <div>
+              <p class="sg-label">.breadcrumb</p>
+              <nav class="breadcrumb" aria-label="Breadcrumb contoh"><ol><li><a href="index.html">Beranda</a></li><li><a href="berita.html">Berita</a></li><li aria-current="page">Pelatihan Inspeksi Perancah</li></ol></nav>
+            </div>
+            <div>
+              <p class="sg-label">.pagination</p>
+              <nav class="pagination" aria-label="Halaman">
+                <a class="pagination__item" href="#sg-components" aria-disabled="true" aria-label="Sebelumnya"><span data-icon="chevron-left" data-icon-size="18"></span></a>
+                <a class="pagination__item" href="berita.html" aria-current="page">1</a>
+                <a class="pagination__item" href="berita.html">2</a>
+                <a class="pagination__item" href="berita.html">3</a>
+                <a class="pagination__item" href="berita.html" aria-label="Berikutnya"><span data-icon="chevron-right" data-icon-size="18"></span></a>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 07 TABEL ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">07 — Tabel</p>
+            <h2 class="h2">Data yang <em>terbaca</em></h2>
+            <p class="lead muted">Di bawah 768px setiap baris menjadi kartu bertumpuk (gunakan <code>data-label</code> pada sel).</p>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Jenis</th><th scope="col">Nomor / Tahun</th><th scope="col">Judul &amp; relevansi</th><th scope="col">Status</th><th scope="col">Sumber</th></tr></thead>
+            <tbody data-sg="table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 08 KEANGGOTAAN & KONSOL (v2) ===================== -->
+    <section class="section section--tight" data-sg-pair aria-label="Komponen keanggotaan dan konsol">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">08 — Keanggotaan &amp; konsol</p>
+            <h2 class="h2">Status, langkah, <em>akses</em></h2>
+            <p class="lead muted">Komponen alur keanggotaan: lencana status, jalur status, langkah formulir, panel terkunci, KPI, kartu dokumen, dan panel samping (drawer).</p>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+
+        <div class="sg-demo">
+          <p class="sg-label">PPAPI.util.statusBadge(status)</p>
+          <div class="cluster" data-sg="status-badges"></div>
+        </div>
+
+        <div class="sg-demo">
+          <p class="sg-label">.status-track — horizontal (≥ 640 px)</p>
+          <ol class="status-track" aria-label="Tahapan pendaftaran (contoh)">
+            <li class="status-track__step is-done"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Akun dibuat</span><span class="status-track__meta">28 Sep 2026</span></li>
+            <li class="status-track__step is-done"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Formulir diajukan</span><span class="status-track__meta">6 Okt 2026</span></li>
+            <li class="status-track__step is-current" aria-current="step"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Verifikasi sekretariat</span><span class="status-track__meta">Sedang diperiksa</span></li>
+            <li class="status-track__step"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Aktif &amp; KTA</span><span class="status-track__meta">Menunggu</span></li>
+          </ol>
+        </div>
+
+        <div class="grid grid--2">
+          <div class="sg-demo">
+            <p class="sg-label">.status-track--vertical · is-warn · is-error</p>
+            <ol class="status-track status-track--vertical" aria-label="Riwayat pengajuan (contoh)">
+              <li class="status-track__step is-done"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Diajukan</span><span class="status-track__meta">30 Sep 2026 · Pemohon</span></li>
+              <li class="status-track__step is-warn"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Perlu perbaikan</span><span class="status-track__meta">Lengkapi tautan sertifikat yang masih berlaku.</span></li>
+              <li class="status-track__step is-error"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Ditolak</span><span class="status-track__meta">Riwayat pekerjaan belum dapat diverifikasi.</span></li>
+              <li class="status-track__step"><span class="status-track__node" aria-hidden="true"></span><span class="status-track__label">Ajukan ulang</span></li>
+            </ol>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">.stepper — rel vertikal (desktop) · ringkas (ponsel)</p>
+            <nav class="stepper" aria-label="Langkah formulir (contoh)">
+              <p class="stepper__compact" aria-hidden="true"><span class="stepper__count">Langkah 3 dari 7</span><span class="stepper__current">Data Profesional</span></p>
+              <div class="stepper__bar" style="--value:43" aria-hidden="true"></div>
+              <ol class="stepper__list">
+                <li class="stepper__item is-done"><button type="button" class="stepper__btn"><span class="stepper__num">01</span><span class="stepper__text"><span class="stepper__label">Kategori</span><span class="stepper__hint">Praktisi</span></span></button></li>
+                <li class="stepper__item is-error"><button type="button" class="stepper__btn"><span class="stepper__num">02</span><span class="stepper__text"><span class="stepper__label">Data Diri</span><span class="stepper__hint">Nomor HP belum diisi</span></span></button></li>
+                <li class="stepper__item is-current"><button type="button" class="stepper__btn" aria-current="step"><span class="stepper__num">03</span><span class="stepper__text"><span class="stepper__label">Data Profesional</span><span class="stepper__hint">Sedang diisi</span></span></button></li>
+                <li class="stepper__item"><button type="button" class="stepper__btn"><span class="stepper__num">04</span><span class="stepper__text"><span class="stepper__label">Kompetensi</span></span></button></li>
+                <li class="stepper__item"><button type="button" class="stepper__btn"><span class="stepper__num">05</span><span class="stepper__text"><span class="stepper__label">Dokumen</span></span></button></li>
+                <li class="stepper__item"><button type="button" class="stepper__btn"><span class="stepper__num">06</span><span class="stepper__text"><span class="stepper__label">Pernyataan</span></span></button></li>
+                <li class="stepper__item"><button type="button" class="stepper__btn" disabled><span class="stepper__num">07</span><span class="stepper__text"><span class="stepper__label">Tinjau &amp; Kirim</span></span></button></li>
+              </ol>
+            </nav>
+          </div>
+        </div>
+
+        <p class="sg-label mt-4">.kpi · .kpi--warn · .kpi--ok · .kpi--err · a.kpi</p>
+        <div class="grid grid--4">
+          <a class="kpi kpi--warn" href="#sg-components"><span class="kpi__head"><span class="kpi__label">Menunggu verifikasi</span><span class="kpi__icon"><span data-icon="clock" data-icon-size="16"></span></span></span><span class="kpi__value">4</span><span class="kpi__note">1 diajukan lebih dari 7 hari lalu</span></a>
+          <div class="kpi kpi--accent"><div class="kpi__head"><span class="kpi__label">Perlu perbaikan</span><span class="kpi__icon"><span data-icon="edit" data-icon-size="16"></span></span></div><p class="kpi__value">2</p><p class="kpi__note">Menunggu tanggapan pemohon</p></div>
+          <div class="kpi kpi--ok"><div class="kpi__head"><span class="kpi__label">Anggota aktif</span><span class="kpi__icon"><span data-icon="users" data-icon-size="16"></span></span></div><p class="kpi__value">128</p><p class="kpi__note">+6 bulan ini</p></div>
+          <div class="kpi kpi--err"><div class="kpi__head"><span class="kpi__label">Akan kedaluwarsa</span><span class="kpi__icon"><span data-icon="alert-triangle" data-icon-size="16"></span></span></div><p class="kpi__value">3 <small>≤ 60 hari</small></p><p class="kpi__note">Kirim pengingat perpanjangan</p></div>
+        </div>
+
+        <p class="sg-label mt-5">.doc-card · .doc-card--locked</p>
+        <div class="grid grid--3">
+          <article class="doc-card">
+            <div class="doc-card__top"><span class="doc-card__kind"><span data-icon="shield-check" data-icon-size="16"></span>Code of Practice</span><span class="doc-card__code">PPAPI-CoP-01</span></div>
+            <h3 class="doc-card__title"><button type="button" data-sg-drawer>Code of Practice Pemasangan Perancah Tube &amp; Coupler</button></h3>
+            <p class="doc-card__summary">Pedoman praktik baik pemasangan dan pembongkaran perancah pipa dan klem, dari persiapan tumpuan hingga serah terima.</p>
+            <div class="doc-card__meta"><span>Rancangan</span><span>PDF</span></div>
+            <div class="doc-card__foot"><span class="badge badge--warn">Dalam Penyusunan</span><span class="badge badge--contoh">Contoh</span><span class="doc-card__access"><span data-icon="arrow-up-right" data-icon-size="14"></span>Buka</span></div>
+          </article>
+          <article class="doc-card doc-card--locked">
+            <div class="doc-card__top"><span class="doc-card__kind"><span data-icon="book" data-icon-size="16"></span>Modul Pelatihan</span><span class="doc-card__code">PPAPI-MP-02</span></div>
+            <h3 class="doc-card__title"><a href="#sg-components">Modul Pelatihan Inspektur Perancah</a></h3>
+            <p class="doc-card__summary">Metode inspeksi berbasis elemen, kriteria penerimaan, pencatatan temuan, dan penilaian tiga warna.</p>
+            <div class="doc-card__meta"><span>Rancangan</span><span>PDF</span></div>
+            <div class="doc-card__foot"><span class="badge badge--outline">Khusus anggota</span><span class="badge badge--contoh">Contoh</span><span class="doc-card__access"><span data-icon="lock" data-icon-size="14"></span>Terkunci</span></div>
+          </article>
+          <article class="doc-card">
+            <div class="doc-card__top"><span class="doc-card__kind"><span data-icon="file-text" data-icon-size="16"></span>Standar</span><span class="doc-card__code">PPAPI-STD-01</span></div>
+            <h3 class="doc-card__title"><a href="#sg-components">Standar Kompetensi Praktisi dan Ahli Perancah (Rancangan)</a></h3>
+            <p class="doc-card__summary">Rancangan jenjang kompetensi anggota beserta unit kompetensi dan bukti yang dipersyaratkan.</p>
+            <div class="doc-card__meta"><span>Rancangan</span><span>PDF</span><span>Publik</span></div>
+            <div class="doc-card__foot"><span class="badge badge--warn">Dalam Penyusunan</span><span class="badge badge--contoh">Contoh</span><span class="doc-card__access"><span data-icon="download" data-icon-size="14"></span>Unduh</span></div>
+          </article>
+        </div>
+
+        <p class="sg-label mt-5">.doc-card--feature (aplikasi anggota)</p>
+        <article class="doc-card doc-card--feature">
+          <div class="doc-card__media"><img class="img-mono" src="assets/img/ringlock-pattern-sm.webp" alt="" width="480" height="720" loading="lazy" decoding="async"></div>
+          <div class="doc-card__body">
+            <div class="doc-card__top"><span class="doc-card__kind"><span data-icon="ruler" data-icon-size="16"></span>Aplikasi Anggota</span></div>
+            <h3 class="doc-card__title"><a href="aplikasi/perencanaan/index.html">PPAPI Scaffold — Perencanaan &amp; Analisis Struktur</a></h3>
+            <p class="doc-card__summary">Perencanaan dan inspeksi perancah dalam sembilan tahap, dari beban hidup hingga label perancah.</p>
+            <div class="doc-card__foot"><span class="badge badge--outline">Khusus anggota Aktif</span><span class="doc-card__access"><span data-icon="arrow-right" data-icon-size="14"></span>Buka aplikasi</span></div>
+          </div>
+        </article>
+
+        <div class="grid grid--2 mt-5">
+          <div class="sg-demo">
+            <p class="sg-label">PPAPI.ui.locked() · .locked</p>
+            <div class="locked">
+              <span class="locked__icon"><span data-icon="lock" data-icon-size="22"></span></span>
+              <p class="locked__eyebrow">Khusus Anggota Aktif</p>
+              <p class="locked__title">Produk Pengetahuan PPAPI</p>
+              <p class="locked__text">Standar, Code of Practice, dan modul pelatihan terbuka setelah keanggotaan Anda disetujui sekretariat.</p>
+              <div class="locked__actions"><a class="btn btn--primary" href="keanggotaan.html"><span>Lengkapi Pendaftaran</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a></div>
+            </div>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">.locked-veil (pratinjau buram) · .locked--compact</p>
+            <div class="locked-veil">
+              <div class="locked-veil__content" aria-hidden="true" inert>
+                <div class="grid grid--2">
+                  <div class="kpi"><div class="kpi__head"><span class="kpi__label">Nomor KTA</span></div><p class="kpi__value">PPAPI</p></div>
+                  <div class="kpi"><div class="kpi__head"><span class="kpi__label">Berlaku hingga</span></div><p class="kpi__value">2029</p></div>
+                </div>
+              </div>
+              <div class="locked locked--compact locked--center">
+                <span class="locked__icon"><span data-icon="id-card" data-icon-size="18"></span></span>
+                <p class="locked__eyebrow">Khusus Anggota Aktif</p>
+                <p class="locked__title">Kartu Tanda Anggota digital</p>
+                <div class="locked__actions"><a class="btn btn--primary btn--sm" href="keanggotaan.html"><span>Lihat Status</span></a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-demo mt-4">
+          <p class="sg-label">PPAPI.ui.drawer() — panel samping konsol admin</p>
+          <div class="cluster"><button type="button" class="btn btn--primary btn--sm" data-sg-drawer><span>Buka drawer</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 09 DEKORASI ===================== -->
+    <section class="section section--tight" data-sg-pair>
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">09 — Motif &amp; gerak</p>
+            <h2 class="h2">Garis perancah, <em>logam</em>, cahaya</h2>
+          </div>
+          <span class="sg-context-label">Konteks terang</span>
+        </header>
+        <div class="grid grid--2">
+          <div class="sg-demo">
+            <p class="sg-label">.scaffold-draw — PPAPI.ui.scaffoldSVG()</p>
+            <div class="sg-scaffold-box" data-scaffold data-cols="6" data-rows="3"></div>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">.metal-text · .divider · .metal-rule</p>
+            <p class="sg-metal metal-text">PPAPI</p>
+            <div class="divider"></div>
+            <div class="divider divider--left"></div>
+            <div class="metal-rule"></div>
+          </div>
+        </div>
+        <p class="sg-label mt-5">.img-mono · .img-frame · .offset-frame</p>
+        <div class="grid grid--3">
+          <figure class="offset-frame"><div class="img-frame img-frame--portrait"><img class="img-mono" src="assets/img/tower-heritage-sm.webp" alt="Menara tua yang dibalut perancah" width="540" height="720" loading="lazy" decoding="async"></div></figure>
+          <figure><div class="img-frame img-frame--portrait"><img class="img-mono" src="assets/img/stage-silhouette-sm.webp" alt="Siluet pekerja di atas perancah panggung" width="480" height="720" loading="lazy" decoding="async"></div></figure>
+          <figure><div class="img-frame img-frame--portrait"><img class="img-mono" src="assets/img/ringlock-pattern-sm.webp" alt="Pola perancah sistem ringlock" width="480" height="720" loading="lazy" decoding="async"></div></figure>
+        </div>
+        <p class="sg-label mt-5">.marquee</p>
+        <div class="marquee" aria-label="Nilai-nilai PPAPI">
+          <div class="marquee__track">
+            <span class="marquee__item">Keselamatan</span><span class="marquee__sep" aria-hidden="true">◆</span>
+            <span class="marquee__item marquee__item--serif">kompetensi</span><span class="marquee__sep" aria-hidden="true">◆</span>
+            <span class="marquee__item">Integritas</span><span class="marquee__sep" aria-hidden="true">◆</span>
+            <span class="marquee__item marquee__item--serif">profesionalisme</span><span class="marquee__sep" aria-hidden="true">◆</span>
+            <span class="marquee__item">Standar</span><span class="marquee__sep" aria-hidden="true">◆</span>
+            <span class="marquee__item marquee__item--serif">kolaborasi</span><span class="marquee__sep" aria-hidden="true">◆</span>
+          </div>
+        </div>
+        <div class="grid grid--2 mt-5">
+          <div class="sg-demo grain sg-grain-box">
+            <p class="sg-label">.grain</p>
+            <p class="h3">Tekstur film halus</p>
+          </div>
+          <div class="sg-demo">
+            <p class="sg-label">data-reveal (up · fade · left · right · scale)</p>
+            <div class="cluster">
+              <span class="badge badge--outline" data-reveal>up</span>
+              <span class="badge badge--outline" data-reveal="fade" data-reveal-delay="120">fade</span>
+              <span class="badge badge--outline" data-reveal="left" data-reveal-delay="240">left</span>
+              <span class="badge badge--outline" data-reveal="right" data-reveal-delay="360">right</span>
+              <span class="badge badge--outline" data-reveal="scale" data-reveal-delay="480">scale</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 10 HERO KOMPAK ===================== -->
+    <section class="page-hero page-hero--compact" aria-label="Contoh hero kompak">
+      <div data-scaffold data-cols="10" data-rows="2" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <div class="cluster cluster--between">
+          <div class="cluster cluster--lg">
+            <span class="avatar avatar--lg" aria-hidden="true">RH</span>
+            <div>
+              <p class="eyebrow mb-1">10 — .page-hero--compact</p>
+              <p class="h1">Selamat pagi, <em>Rahmat</em></p>
+              <div class="page-hero__meta"><span>PPAPI-2026-004821</span><span>Praktisi</span><span class="badge badge--ok">Aktif</span></div>
+            </div>
+          </div>
+          <div class="cluster">
+            <a class="btn btn--ghost btn--sm" href="anggota.html"><span>Profil Anggota</span></a>
+            <a class="btn btn--primary btn--sm" href="aplikasi/simulator/index.html"><span>Buka Simulator</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 11 PROSA ===================== -->
+    <section class="section">
+      <div class="container">
+        <div class="split split--top">
+          <header>
+            <p class="eyebrow">11 — Prosa</p>
+            <h2 class="h2">Tipografi <em>artikel</em></h2>
+            <p class="lead muted mt-2">Kelas <code>.prose</code> untuk isi berita dan kebijakan: lebar baris terjaga, jarak lapang, subjudul serif.</p>
+          </header>
+          <div class="prose">
+            <p>Pemeriksaan resmi tetap menjadi tugas personel yang kompeten. Namun, setiap pekerja dapat melakukan pemeriksaan visual sederhana sebelum naik ke perancah.</p>
+            <h2>Pemeriksaan berbasis elemen</h2>
+            <p>Periksa perancah per elemen agar tidak ada bagian yang terlewat:</p>
+            <ul><li>Tumpuan, pelat dasar, dan papan alas.</li><li>Tiang, ledger, transom, dan klem.</li><li>Platform, pagar pengaman, dan akses.</li></ul>
+            <blockquote>Sambungan yang benar adalah kunci keselamatan.</blockquote>
+            <p>Tautan <a href="regulasi.html">ke pustaka regulasi</a> bergaris bawah halus.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 12 IKON ===================== -->
+    <section class="section section--bone section--tight">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow">12 — Ikon</p>
+            <h2 class="h2">Garis <em>1,5</em> pada kisi 24</h2>
+            <p class="lead muted mt-2"><code>PPAPI.icon(nama, {size, cls, label})</code> atau <code>&lt;span data-icon="nama"&gt;</code> di HTML statis.</p>
+          </div>
+        </header>
+        <div class="sg-icons" data-sg="icons"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/berita.js" defer></script>
+  <script src="assets/data/agenda.js" defer></script>
+  <script src="assets/data/regulasi.js" defer></script>
+  <script src="assets/data/organisasi.js" defer></script>
+  <script src="assets/data/kompetensi.js" defer></script>
+  <script src="assets/data/registry.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/styleguide.js" defer></script>
+</body>
+</html>

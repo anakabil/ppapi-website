@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="11" fill="#0a0a0b"/>
+  <ellipse cx="32" cy="34.5" rx="27.5" ry="9" fill="none" stroke="#b9b9bf" stroke-width="1.6" transform="rotate(-13 32 34.5)"/>
+  <path transform="translate(7.2 0) skewX(-12)" fill="#ffffff" fill-rule="evenodd" stroke="#0a0a0b" stroke-width="2.4" paint-order="stroke" stroke-linejoin="round"
+        d="M18 12H37C45 12 50.5 17 50.5 24S45 36 37 36H29.5V52H18ZM29.5 20.5V27.5H36C38.6 27.5 40.2 26.2 40.2 24S38.6 20.5 36 20.5Z"/>
+</svg>

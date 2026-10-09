@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil Anggota — PPAPI</title>
+  <meta name="description" content="Halaman anggota PPAPI (khusus anggota berstatus Aktif): kelola profil, kompetensi, dan sertifikat, tampilkan Kartu Tanda Anggota digital beserta masa berlakunya, serta buka aplikasi perencanaan dan simulator pemasangan perancah.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Profil Anggota — PPAPI">
+  <meta property="og:description" content="Halaman anggota PPAPI (khusus anggota berstatus Aktif): kelola profil, kompetensi, dan sertifikat, tampilkan Kartu Tanda Anggota digital beserta masa berlakunya, serta buka aplikasi perencanaan dan simulator pemasangan perancah.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/anggota.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="anggota" data-auth="active">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== 1. KEPALA PROFIL (pita gelap kompak) ===================== -->
+    <section class="page-hero page-hero--compact agt-hero" aria-labelledby="agt-name">
+      <div data-scaffold data-cols="12" data-rows="3" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb agt-hero__crumbs" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li><a href="dashboard.html">Dasbor</a></li><li aria-current="page">Profil Anggota</li></ol>
+        </nav>
+        <div class="agt-hero__row">
+          <div class="agt-hero__who">
+            <span class="agt-avatar" id="agt-avatar" aria-hidden="true"></span>
+            <div class="agt-hero__text">
+              <p class="eyebrow agt-hero__eyebrow" id="agt-eyebrow">Profil Anggota</p>
+              <h1 class="h1 agt-hero__name" id="agt-name"><span class="sr-only">Memuat profil anggota…</span></h1>
+              <div class="page-hero__meta agt-hero__meta" id="agt-meta" aria-busy="true">
+                <span class="agt-skel" aria-hidden="true"></span>
+                <span class="agt-skel agt-skel--sm" aria-hidden="true"></span>
+              </div>
+              <ul class="agt-chips" id="agt-chips" role="list" aria-label="Kontak akun"></ul>
+            </div>
+          </div>
+          <div class="agt-hero__actions">
+            <a class="btn btn--primary btn--sm" href="#kartu" data-goto-tab="kartu"><span data-icon="id-card" data-icon-size="18"></span><span>Kartu Anggota</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 2. TAB DATA ANGGOTA ===================== -->
+    <section class="section section--tight agt-body" aria-label="Data keanggotaan">
+      <div class="container">
+        <div class="alert alert--err agt-load-error" id="agt-load-error" role="alert" hidden></div>
+
+        <div class="tabs agt-tabs" id="agt-tabs" data-tabs data-tab-hash>
+          <div class="agt-tabs__bar">
+            <div class="tabs__list" role="tablist" aria-label="Bagian halaman anggota">
+              <button class="tabs__tab" role="tab" id="tab-profil" data-tab="profil" aria-controls="panel-profil" aria-selected="true"><span data-icon="user" data-icon-size="16"></span>Profil Diri</button>
+              <button class="tabs__tab" role="tab" id="tab-kompetensi" data-tab="kompetensi" aria-controls="panel-kompetensi" aria-selected="false"><span data-icon="award" data-icon-size="16"></span>Kompetensi<span class="agt-tab-count" id="count-kompetensi"></span></button>
+              <button class="tabs__tab" role="tab" id="tab-sertifikat" data-tab="sertifikat" aria-controls="panel-sertifikat" aria-selected="false"><span data-icon="certificate" data-icon-size="16"></span>Sertifikat<span class="agt-tab-count" id="count-sertifikat"></span></button>
+              <button class="tabs__tab" role="tab" id="tab-kartu" data-tab="kartu" aria-controls="panel-kartu" aria-selected="false"><span data-icon="id-card" data-icon-size="16"></span>Kartu Anggota</button>
+              <button class="tabs__tab" role="tab" id="tab-aplikasi" data-tab="aplikasi" aria-controls="panel-aplikasi" aria-selected="false"><span data-icon="compass" data-icon-size="16"></span>Aplikasi</button>
+            </div>
+          </div>
+
+          <!-- ---------- a) PROFIL DIRI ---------- -->
+          <div class="tabs__panel" role="tabpanel" id="panel-profil" aria-labelledby="tab-profil">
+            <header class="agt-panel-head">
+              <div class="agt-panel-head__text">
+                <p class="eyebrow">Data keanggotaan</p>
+                <h2 class="agt-panel-title">Profil <em>diri</em></h2>
+                <p class="agt-panel-lead">Lengkapi data pribadi dan profesional Anda. Data ini membantu sekretariat memverifikasi keanggotaan serta menyesuaikan informasi kegiatan yang relevan bagi Anda.</p>
+              </div>
+            </header>
+            <div class="agt-layout">
+              <div class="agt-layout__main">
+                <form class="agt-form" id="profil-form" novalidate aria-describedby="profil-required-note">
+                  <p class="agt-form__note" id="profil-required-note">Kolom bertanda <span aria-hidden="true">*</span><span class="sr-only">bintang</span> wajib diisi. Kolom lainnya dapat dilengkapi kapan saja.</p>
+
+                  <!-- 01 Data Pribadi -->
+                  <fieldset class="agt-fieldset" disabled>
+                    <legend class="agt-fieldset__legend"><span class="index-num">01 <span>/ 03</span></span><span class="agt-fieldset__title">Data Pribadi</span></legend>
+                    <div class="agt-fieldset__body">
+                      <div class="field">
+                        <label class="field__label" for="f-name"><span>Nama lengkap <span class="agt-req" aria-hidden="true">*</span></span></label>
+                        <input class="field__control" id="f-name" name="name" type="text" autocomplete="name" maxlength="120" required aria-describedby="f-name-hint">
+                        <p class="field__hint" id="f-name-hint">Tulis sesuai identitas resmi; nama ini menjadi dasar nama pada Kartu Tanda Anggota.</p>
+                      </div>
+                      <div class="form__row form__row--2">
+                        <div class="field">
+                          <label class="field__label" for="f-birthPlace">Tempat lahir</label>
+                          <input class="field__control" id="f-birthPlace" name="birthPlace" type="text" maxlength="100" autocomplete="off">
+                        </div>
+                        <div class="field">
+                          <label class="field__label" for="f-birthDate">Tanggal lahir</label>
+                          <input class="field__control" id="f-birthDate" name="birthDate" type="date" autocomplete="bday">
+                        </div>
+                      </div>
+                      <p class="agt-note" id="f-identity-note" hidden><span data-icon="lock" data-icon-size="16"></span><span class="agt-note__text">Nama lengkap dan tanggal lahir tidak dapat diubah di sini setelah keanggotaan disetujui sekretariat. Untuk perbaikan data, silakan hubungi sekretariat melalui halaman <a class="link" href="umpan-balik.html?kategori=Pertanyaan">Kontak</a>.</span></p>
+                      <fieldset class="agt-radio-group" id="f-gender-group">
+                        <legend class="field__label">Jenis kelamin</legend>
+                        <div class="agt-radio-row">
+                          <label class="check"><input type="radio" name="gender" id="f-gender-l" value="Laki-laki"><span class="check__box"></span><span class="check__label">Laki-laki</span></label>
+                          <label class="check"><input type="radio" name="gender" id="f-gender-p" value="Perempuan"><span class="check__box"></span><span class="check__label">Perempuan</span></label>
+                        </div>
+                      </fieldset>
+                      <div class="form__row form__row--2">
+                        <div class="field">
+                          <label class="field__label" for="f-province">Provinsi</label>
+                          <select class="field__control" id="f-province" name="province" autocomplete="address-level1"><option value="">Pilih provinsi</option></select>
+                        </div>
+                        <div class="field">
+                          <label class="field__label" for="f-city">Kota / kabupaten</label>
+                          <input class="field__control" id="f-city" name="city" type="text" maxlength="100" autocomplete="address-level2">
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="field__label" for="f-address">Alamat</label>
+                        <textarea class="field__control agt-textarea--sm" id="f-address" name="address" rows="3" maxlength="400" autocomplete="street-address"></textarea>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <!-- 02 Data Profesional -->
+                  <fieldset class="agt-fieldset" disabled>
+                    <legend class="agt-fieldset__legend"><span class="index-num">02 <span>/ 03</span></span><span class="agt-fieldset__title">Data Profesional</span></legend>
+                    <div class="agt-fieldset__body">
+                      <div class="form__row form__row--2">
+                        <div class="field">
+                          <label class="field__label" for="f-company">Perusahaan / instansi</label>
+                          <input class="field__control" id="f-company" name="company" type="text" maxlength="150" autocomplete="organization">
+                        </div>
+                        <div class="field">
+                          <label class="field__label" for="f-position">Jabatan</label>
+                          <input class="field__control" id="f-position" name="position" type="text" maxlength="120" autocomplete="organization-title">
+                        </div>
+                      </div>
+                      <div class="form__row form__row--2">
+                        <div class="field">
+                          <label class="field__label" for="f-experienceYears">Pengalaman di bidang perancah</label>
+                          <div class="agt-suffix">
+                            <input class="field__control" id="f-experienceYears" name="experienceYears" type="number" inputmode="numeric" min="0" max="80" step="1" aria-describedby="f-experienceYears-unit">
+                            <span class="agt-suffix__unit" id="f-experienceYears-unit">tahun</span>
+                          </div>
+                        </div>
+                        <div class="field">
+                          <label class="field__label" for="f-education">Pendidikan terakhir</label>
+                          <select class="field__control" id="f-education" name="education"><option value="">Pilih jenjang pendidikan</option></select>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="field__label" for="f-bio">Ringkasan profil <span class="field__counter" id="f-bio-count" aria-hidden="true">0 / 1.000</span></label>
+                        <textarea class="field__control" id="f-bio" name="bio" rows="5" maxlength="1000" aria-describedby="f-bio-hint"></textarea>
+                        <p class="field__hint" id="f-bio-hint">Uraikan singkat pengalaman, jenis perancah yang dikuasai, dan proyek yang pernah ditangani (maksimal 1.000 karakter).</p>
+                      </div>
+                      <div class="field">
+                        <label class="field__label" for="f-linkedin">Tautan LinkedIn</label>
+                        <div class="input-icon"><span data-icon="linkedin" data-icon-size="18"></span><input class="field__control" id="f-linkedin" name="linkedin" type="url" inputmode="url" maxlength="300" placeholder="https://www.linkedin.com/in/nama-anda" autocomplete="url"></div>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <!-- 03 Kontak -->
+                  <fieldset class="agt-fieldset" disabled>
+                    <legend class="agt-fieldset__legend"><span class="index-num">03 <span>/ 03</span></span><span class="agt-fieldset__title">Kontak</span></legend>
+                    <div class="agt-fieldset__body">
+                      <div class="form__row form__row--2">
+                        <div class="field">
+                          <label class="field__label" for="f-email">Email</label>
+                          <div class="input-icon"><span data-icon="mail" data-icon-size="18"></span><input class="field__control" id="f-email" type="email" readonly aria-describedby="f-contact-note"></div>
+                        </div>
+                        <div class="field">
+                          <label class="field__label" for="f-phone">Nomor HP</label>
+                          <div class="input-icon"><span data-icon="phone" data-icon-size="18"></span><input class="field__control" id="f-phone" type="tel" readonly aria-describedby="f-contact-note"></div>
+                        </div>
+                      </div>
+                      <p class="agt-note" id="f-contact-note"><span data-icon="lock" data-icon-size="16"></span><span>Email dan nomor HP mengikuti akun yang Anda gunakan untuk masuk sehingga tidak dapat diubah di sini. Untuk perubahan data kontak, silakan hubungi sekretariat melalui halaman <a class="link" href="umpan-balik.html">Kontak</a>.</span></p>
+                    </div>
+                  </fieldset>
+
+                  <div class="agt-savebar" id="profil-savebar">
+                    <p class="agt-dirty" id="profil-status" role="status" aria-live="polite"></p>
+                    <div class="agt-savebar__actions">
+                      <button type="button" class="btn btn--ghost btn--sm" id="profil-reset" disabled><span>Batalkan</span></button>
+                      <button type="submit" class="btn btn--primary btn--sm" id="profil-save" disabled><span>Simpan perubahan</span><span data-icon="check" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              <section class="agt-layout__aside" aria-labelledby="agt-complete-title">
+                <div class="agt-complete" id="agt-complete">
+                  <h2 class="agt-complete__title" id="agt-complete-title">Kelengkapan profil</h2>
+                  <div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <!-- ---------- b) KOMPETENSI ---------- -->
+          <div class="tabs__panel" role="tabpanel" id="panel-kompetensi" aria-labelledby="tab-kompetensi" hidden>
+            <header class="agt-panel-head">
+              <div class="agt-panel-head__text">
+                <p class="eyebrow">Rekam keahlian</p>
+                <h2 class="agt-panel-title">Kompetensi &amp; <em>keahlian</em></h2>
+                <p class="agt-panel-lead">Catat kualifikasi perancah yang Anda kuasai beserta tingkat penguasaan dan tahun mulai menekuninya. Pilih dari katalog kualifikasi atau tulis sendiri.</p>
+              </div>
+              <div class="agt-panel-head__actions">
+                <button type="button" class="btn btn--primary btn--sm" data-action="add-kompetensi"><span data-icon="plus" data-icon-size="16"></span><span>Tambah Kompetensi</span></button>
+              </div>
+            </header>
+            <div id="kompetensi-list" aria-live="polite">
+              <div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </div>
+
+          <!-- ---------- c) SERTIFIKAT ---------- -->
+          <div class="tabs__panel" role="tabpanel" id="panel-sertifikat" aria-labelledby="tab-sertifikat" hidden>
+            <header class="agt-panel-head">
+              <div class="agt-panel-head__text">
+                <p class="eyebrow">Dokumen sertifikasi</p>
+                <h2 class="agt-panel-title">Sertifikat <em>profesi</em></h2>
+                <p class="agt-panel-lead">Simpan data sertifikat kompetensi dan lisensi K3 Anda. Status masa berlaku dihitung otomatis; sertifikat yang paling dekat masa berakhirnya tampil paling atas.</p>
+              </div>
+              <div class="agt-panel-head__actions">
+                <button type="button" class="btn btn--primary btn--sm" data-action="add-sertifikat"><span data-icon="plus" data-icon-size="16"></span><span>Tambah Sertifikat</span></button>
+              </div>
+            </header>
+            <div id="sertifikat-summary"></div>
+            <div id="sertifikat-alert"></div>
+            <div id="sertifikat-list" aria-live="polite">
+              <div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </div>
+
+          <!-- ---------- d) KARTU ANGGOTA ---------- -->
+          <div class="tabs__panel" role="tabpanel" id="panel-kartu" aria-labelledby="tab-kartu" hidden>
+            <header class="agt-panel-head">
+              <div class="agt-panel-head__text">
+                <p class="eyebrow">KTA digital</p>
+                <h2 class="agt-panel-title">Kartu Tanda <em>Anggota</em></h2>
+                <p class="agt-panel-lead">Tunjukkan kartu ini sebagai bukti keanggotaan. Sisi belakang memuat kode QR yang membuka halaman verifikasi PPAPI untuk memeriksa keabsahan kartu.</p>
+              </div>
+            </header>
+            <div class="agt-kartu" id="kartu-area">
+              <div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </div>
+
+          <!-- ---------- e) APLIKASI ---------- -->
+          <div class="tabs__panel" role="tabpanel" id="panel-aplikasi" aria-labelledby="tab-aplikasi" hidden>
+            <header class="agt-panel-head">
+              <div class="agt-panel-head__text">
+                <p class="eyebrow">Aset aplikasi PPAPI</p>
+                <h2 class="agt-panel-title">Aplikasi <em>anggota</em></h2>
+                <p class="agt-panel-lead">Aplikasi perencanaan dan analisis struktur perancah tubular, serta simulator urutan pemasangan perancah tube &amp; coupler. Keduanya terbuka di situs ini bagi anggota berstatus Aktif.</p>
+              </div>
+            </header>
+            <div id="aplikasi-area"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/kompetensi.js" defer></script>
+  <script src="assets/data/registry.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/anggota.js" defer></script>
+</body>
+</html>

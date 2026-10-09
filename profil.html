@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil Perkumpulan — PPAPI</title>
+  <meta name="description" content="Profil Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI): tentang perkumpulan, visi dan misi, nilai, sejarah, struktur organisasi, serta makna logo.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Profil Perkumpulan — PPAPI">
+  <meta property="og:description" content="Profil Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI): tentang perkumpulan, visi dan misi, nilai, sejarah, struktur organisasi, serta makna logo.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/profil.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="profil" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero profil-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/tower-heritage.webp" srcset="assets/img/tower-heritage-sm.webp 540w, assets/img/tower-heritage.webp 1125w" sizes="100vw" alt="" width="1125" height="1500" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Profil</li></ol>
+        </nav>
+        <p class="eyebrow">Profil Perkumpulan</p>
+        <h1 class="display split-lines">Perkumpulan Praktisi<br>dan Ahli <em>Perancah</em><br>Indonesia</h1>
+        <p class="lead">Wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia — mendorong kompetensi, keselamatan kerja, serta praktik perancah yang sesuai regulasi.</p>
+        <div class="page-hero__meta">
+          <span><span data-icon="users" data-icon-size="16"></span> Perkumpulan profesi</span>
+          <span><span data-icon="layers" data-icon-size="16"></span> Bidang perancah</span>
+          <span><span data-icon="map-pin" data-icon-size="16"></span> Indonesia</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Indeks bagian (diisi profil.js dari bagian yang tampil; tingginya sudah dipesan di profil.css
+         agar isi halaman tidak bergeser saat tautan dimuat — disembunyikan bila kurang dari dua bagian) -->
+    <nav class="profil-index theme-dark" aria-label="Isi halaman profil">
+      <div class="container">
+        <ol class="profil-index__list" data-profil-index></ol>
+      </div>
+    </nav>
+
+    <!-- ===================== TENTANG ===================== -->
+    <section class="section" id="tentang" data-chapter="Tentang">
+      <div class="container">
+        <div class="split split--top split--wide-left profil-about">
+          <div class="profil-about__text">
+            <p class="eyebrow"><span data-num></span>Tentang PPAPI</p>
+            <h2 class="h2">Menghimpun keahlian, menjunjung <em>keselamatan</em>.</h2>
+            <div class="profil-about__content" data-tentang></div>
+          </div>
+
+          <aside class="card card--nodes card--lg profil-facts" aria-labelledby="profil-facts-title" data-reveal="right">
+            <img class="profil-facts__logo" src="assets/img/logo-mono-dark.png" alt="Logo PPAPI" width="1200" height="418" loading="lazy" decoding="async">
+            <h3 class="profil-facts__title" id="profil-facts-title">Ringkasan perkumpulan</h3>
+            <dl class="kv" data-fakta></dl>
+            <p class="profil-facts__note" data-fakta-note hidden>
+              <span data-icon="info" data-icon-size="16"></span>
+              <span>Informasi legalitas dan riwayat pendirian resmi akan dicantumkan setelah diverifikasi oleh sekretariat.</span>
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VISI ===================== -->
+    <section class="section section--dark profil-visi" id="visi-misi" data-chapter="Visi &amp; Misi">
+      <div data-scaffold data-cols="9" data-rows="3"></div>
+      <div class="container">
+        <h2 class="eyebrow profil-visi__label"><span data-num></span>Visi <span data-badge-bagian="visi"></span></h2>
+        <figure class="profil-visi__figure">
+          <span class="profil-visi__mark metal-text" aria-hidden="true">“</span>
+          <div data-visi></div>
+          <figcaption class="profil-visi__caption">Visi Perkumpulan Praktisi dan Ahli Perancah Indonesia</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===================== MISI ===================== -->
+    <section class="section profil-misi" id="misi" aria-labelledby="misi-title">
+      <div class="container">
+        <div class="split split--top profil-misi__grid">
+          <header class="profil-misi__head">
+            <p class="eyebrow">Misi <span data-badge-bagian="misi"></span></p>
+            <h2 class="h2" id="misi-title">Arah <em>gerak</em> perkumpulan</h2>
+            <p class="lead muted">Langkah-langkah yang ditempuh untuk mewujudkan visi — dari ruang pelatihan hingga lapangan kerja.</p>
+          </header>
+          <ol class="profil-misi__list" data-misi data-reveal-stagger></ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== NILAI ===================== -->
+    <section class="section section--bone" id="nilai" data-chapter="Nilai">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow"><span data-num></span>Nilai <span data-badge-bagian="nilai"></span></p>
+            <h2 class="h2">Nilai yang kami <em>pegang</em></h2>
+            <p class="lead muted">Prinsip yang menuntun setiap anggota — di meja perencanaan, saat inspeksi, maupun di atas perancah.</p>
+          </div>
+        </header>
+        <div class="grid grid--2 profil-nilai" data-nilai data-reveal-stagger></div>
+      </div>
+    </section>
+
+    <!-- ===================== SEJARAH (disembunyikan bila data kosong) ===================== -->
+    <section class="section" id="sejarah" data-chapter="Sejarah">
+      <div class="container">
+        <header class="section-head section-head--center">
+          <div class="section-head__text">
+            <p class="eyebrow eyebrow--center"><span data-num></span>Sejarah</p>
+            <h2 class="h2">Jejak <em>perjalanan</em></h2>
+            <p class="lead muted">Tonggak perjalanan perkumpulan. Riwayat pendirian resmi akan dilengkapi oleh sekretariat.</p>
+          </div>
+        </header>
+        <ol class="timeline timeline--center profil-timeline" data-sejarah></ol>
+      </div>
+    </section>
+
+    <!-- ===================== STRUKTUR ORGANISASI ===================== -->
+    <section class="section section--bone" id="struktur" data-chapter="Struktur">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow"><span data-num></span>Struktur Organisasi <span data-badge-pengurus></span></p>
+            <h2 class="h2">Susunan <em>pengurus</em></h2>
+            <p class="lead muted">Pengurus menjalankan program kerja perkumpulan sesuai bidang tugas masing-masing.</p>
+          </div>
+        </header>
+        <div class="grid grid--4 grid--rule profil-pengurus" data-pengurus data-reveal-stagger></div>
+        <p class="profil-pengurus__note" data-pengurus-note hidden>
+          <span class="profil-pengurus__note-icon" data-icon="info" data-icon-size="18"></span>
+          <span>Susunan jabatan pada bagian ini masih berupa contoh. Nama pengurus akan dicantumkan oleh sekretariat setelah kepengurusan resmi ditetapkan.</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== MAKNA LOGO ===================== -->
+    <section class="section section--white" id="makna-logo" data-chapter="Makna Logo">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow"><span data-num></span>Makna Logo <span data-badge-bagian="maknaLogo"></span></p>
+            <h2 class="h2">Makna di balik <em>lambang</em></h2>
+            <p class="lead muted">Logo PPAPI dalam warna aslinya. Setiap unsurnya menyimpan pesan tentang profesi perancah.</p>
+          </div>
+        </header>
+        <div class="logo-sheet" data-logo-sheet data-reveal="fade"></div>
+      </div>
+    </section>
+
+    <!-- ===================== LEGALITAS (hanya bila data resmi tersedia) ===================== -->
+    <section class="section section--bone" id="legalitas" data-chapter="Legalitas" hidden>
+      <div class="container container--narrow">
+        <header class="section-head">
+          <div class="section-head__text">
+            <p class="eyebrow"><span data-num></span>Legalitas</p>
+            <h2 class="h2">Dasar <em>hukum</em> perkumpulan</h2>
+          </div>
+        </header>
+        <dl class="kv profil-legal" data-legalitas></dl>
+      </div>
+    </section>
+
+    <!-- ===================== CTA ===================== -->
+    <section class="section section--dark profil-cta">
+      <div data-scaffold data-cols="8" data-rows="3"></div>
+      <div class="container">
+        <div class="profil-cta__inner" data-reveal>
+          <p class="eyebrow eyebrow--center">Bergabung</p>
+          <h2 class="h2">Menjadi bagian dari <em>barisan</em> profesi perancah.</h2>
+          <p class="lead muted">Kenali kategori, manfaat, dan alur pendaftaran anggota PPAPI — seluruhnya dapat dimulai secara daring.</p>
+          <!-- Tombol mengikuti sesi (profil.js): belum masuk → Lihat keanggotaan + Daftar sekarang;
+               sudah masuk → langkah keanggotaan berikutnya (selaras dengan PPAPI.ui.lockedAction). -->
+          <div class="profil-cta__actions" data-cta-actions>
+            <a class="btn btn--primary" href="keanggotaan.html"><span>Lihat keanggotaan</span><span data-icon="arrow-right" data-icon-class="btn__icon"></span></a>
+            <a class="btn btn--ghost" href="masuk.html?next=pendaftaran.html#daftar"><span>Daftar sekarang</span></a>
+          </div>
+          <p class="profil-cta__status" data-cta-status hidden></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/organisasi.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/profil.js" defer></script>
+</body>
+</html>

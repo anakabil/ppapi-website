@@ -1,0 +1,57 @@
+/* PPAPI — styleguide.css (internal gallery only; tokens only) */
+body[data-page="styleguide"] .sg-label {
+  margin: 0 0 16px;
+  font: 600 .7rem/1.4 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="styleguide"] .sg-context-label {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 600 .7rem/1 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+  padding: 8px 12px; border: 1px solid var(--line);
+}
+body[data-page="styleguide"] .sg-demo { margin-bottom: 36px; }
+body[data-page="styleguide"] .sg-demo--narrow { max-width: 420px; }
+
+body[data-page="styleguide"] .sg-swatches {
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
+}
+body[data-page="styleguide"] .sg-swatch {
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 2px;
+  aspect-ratio: 4 / 3; padding: 12px; background: var(--sw); color: var(--c-bone);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="styleguide"] .sg-swatch--light { color: var(--c-ink); }
+body[data-page="styleguide"] .sg-swatch span { font: 600 .74rem/1.2 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; }
+body[data-page="styleguide"] .sg-swatch code { font-size: .74rem; } /* full strength: AA on every swatch (incl. slate/gray) */
+
+body[data-page="styleguide"] .sg-type { border-top: 1px solid var(--line); }
+body[data-page="styleguide"] .sg-type__row {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; align-items: baseline;
+  padding: 20px 0; border-bottom: 1px solid var(--line);
+}
+@media (min-width: 768px) {
+  body[data-page="styleguide"] .sg-type__row { grid-template-columns: 140px minmax(0, 1fr); gap: 24px; }
+}
+body[data-page="styleguide"] .sg-type__row > code { font-size: .78rem; color: var(--muted); }
+body[data-page="styleguide"] .sg-type__row .eyebrow { margin: 0; }
+
+body[data-page="styleguide"] .sg-scaffold-box {
+  position: relative; height: 260px; border: 1px solid var(--line); background: var(--surface);
+}
+body[data-page="styleguide"] .sg-scaffold-box .scaffold-draw { color: var(--line-strong); }
+body[data-page="styleguide"] .sg-metal { font: 700 clamp(4rem, 10vw, 7rem)/.9 var(--f-cond); letter-spacing: .04em; }
+body[data-page="styleguide"] .sg-grain-box {
+  min-height: 200px; padding: 28px; background: var(--c-graphite); color: var(--c-bone); border-radius: var(--radius-sm);
+}
+body[data-page="styleguide"] .sg-grain-box .sg-label { color: var(--c-gray); }
+body[data-page="styleguide"] .sg-grain-box .h3 { color: var(--c-white); }
+
+body[data-page="styleguide"] .sg-icons {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  border-top: 1px solid var(--line); border-left: 1px solid var(--line);
+}
+body[data-page="styleguide"] .sg-icon {
+  display: grid; justify-items: center; gap: 10px; padding: 20px 8px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--text);
+}
+body[data-page="styleguide"] .sg-icon code { font-size: .68rem; color: var(--muted); text-align: center; word-break: break-word; }
+body[data-page="styleguide"] figure { margin: 0; }

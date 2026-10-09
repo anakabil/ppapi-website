@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Berita &amp; Kegiatan — PPAPI</title>
+  <meta name="description" content="Berita, liputan kegiatan, pengumuman, materi edukasi, dan pembaruan regulasi seputar perancah dari Perkumpulan Praktisi dan Ahli Perancah Indonesia.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Berita &amp; Kegiatan — PPAPI">
+  <meta property="og:description" content="Berita, liputan kegiatan, pengumuman, materi edukasi, dan pembaruan regulasi seputar perancah dari Perkumpulan Praktisi dan Ahli Perancah Indonesia.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/berita.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="berita" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- =========================================================
+         MODE DAFTAR (berita.html tanpa ?id)
+         ========================================================= -->
+    <div id="berita-list" class="berita-list">
+
+      <!-- Hero -->
+      <section class="page-hero berita-hero" aria-labelledby="berita-hero-title">
+        <div class="hero-media" aria-hidden="true">
+          <img src="assets/img/tower-heritage.webp" srcset="assets/img/tower-heritage-sm.webp 540w, assets/img/tower-heritage.webp 1125w" sizes="100vw" alt="" width="1125" height="1500" fetchpriority="high" decoding="async">
+        </div>
+        <div data-scaffold data-cols="7" data-rows="4"></div>
+        <div class="container page-hero__inner">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Berita</li></ol>
+          </nav>
+          <p class="eyebrow">Berita &amp; Kegiatan</p>
+          <h1 class="display split-lines" id="berita-hero-title">Kabar dari lapangan,<br>catatan untuk <em>profesi</em>.</h1>
+          <p class="lead">Liputan kegiatan, pengumuman, materi edukasi, dan pembaruan regulasi seputar perancah — dihimpun oleh sekretariat dan tim redaksi PPAPI.</p>
+          <div class="page-hero__actions">
+            <a class="btn btn--primary" href="#arsip"><span>Jelajahi arsip</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+            <a class="btn btn--ghost" href="agenda.html"><span>Agenda kegiatan</span><span data-icon="calendar" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          </div>
+          <div class="page-hero__meta" id="berita-hero-meta"></div>
+        </div>
+      </section>
+
+      <!-- Sorotan utama.
+           Kartu kerangka memesan ruang sejak awal agar arsip di bawahnya tidak
+           terdorong saat berita.js mengisi sorotan dan pengumuman (CLS); kedua
+           bagian disembunyikan oleh berita.js bila datanya kosong. -->
+      <section class="section berita-featured" id="sorotan" aria-label="Sorotan utama">
+        <div class="container" id="berita-featured" data-reveal>
+          <div class="berita-feature berita-feature--placeholder" aria-hidden="true">
+            <span class="berita-feature__media"></span>
+            <div class="berita-feature__body">
+              <p class="eyebrow berita-feature__eyebrow">Sorotan utama</p>
+              <span class="skeleton__line berita-ph berita-ph--meta"></span>
+              <span class="skeleton__line berita-ph berita-ph--title"></span>
+              <span class="skeleton__line berita-ph berita-ph--title berita-ph--short"></span>
+              <span class="skeleton__line berita-ph berita-ph--text"></span>
+              <span class="skeleton__line berita-ph"></span>
+              <span class="skeleton__line berita-ph berita-ph--short"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pengumuman -->
+      <section class="section section--graphite section--tight berita-notices" id="pengumuman" aria-labelledby="pengumuman-title">
+        <div class="container">
+          <header class="berita-notices__head" data-reveal>
+            <div>
+              <p class="eyebrow">Papan informasi</p>
+              <h2 class="h2" id="pengumuman-title">Pengumuman <em>sekretariat</em></h2>
+            </div>
+            <p class="berita-notices__note" id="berita-notices-note"></p>
+          </header>
+          <ol class="berita-notices__list" id="berita-notices" role="list" data-reveal-stagger></ol>
+        </div>
+      </section>
+
+      <!-- Arsip berita -->
+      <section class="section berita-archive" id="arsip" aria-labelledby="arsip-title">
+        <div class="container">
+          <header class="section-head">
+            <div class="section-head__text" data-reveal>
+              <p class="eyebrow">Arsip</p>
+              <h2 class="h2" id="arsip-title">Semua berita <em>&amp; kegiatan</em></h2>
+              <p class="lead muted">Saring menurut kategori atau cari judul dan ringkasan. Pilihan Anda tersimpan di alamat halaman sehingga mudah dibagikan.</p>
+            </div>
+          </header>
+
+          <div class="berita-toolbar" data-reveal>
+            <div class="filter-chips berita-toolbar__chips" id="berita-chips" role="group" aria-label="Saring menurut kategori"></div>
+            <form class="berita-toolbar__search" role="search" id="berita-search-form" novalidate>
+              <label class="sr-only" for="berita-q">Cari berita</label>
+              <div class="search-box">
+                <span data-icon="search" data-icon-size="18"></span>
+                <input class="field__control" id="berita-q" name="q" type="search" placeholder="Cari judul atau ringkasan…" autocomplete="off" enterkeyhint="search" maxlength="80">
+                <button type="button" class="search-box__clear" aria-label="Hapus pencarian" hidden><span data-icon="close" data-icon-size="16"></span></button>
+              </div>
+            </form>
+          </div>
+
+          <div class="berita-status">
+            <p class="berita-status__text" id="berita-count" aria-live="polite"></p>
+            <button type="button" class="btn btn--link btn--sm berita-status__reset" id="berita-reset" hidden><span>Hapus filter</span><span data-icon="refresh" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+          </div>
+
+          <div class="grid grid--3 berita-grid" id="berita-grid" data-reveal-stagger>
+            <noscript><p class="muted">Aktifkan JavaScript pada peramban Anda untuk menampilkan daftar berita.</p></noscript>
+          </div>
+
+          <div class="berita-more" id="berita-more" hidden>
+            <span class="berita-more__rule" aria-hidden="true"></span>
+            <p class="berita-more__text" id="berita-more-text"></p>
+            <button type="button" class="btn btn--ghost" id="berita-more-btn" aria-controls="berita-grid"><span>Muat lebih banyak</span><span data-icon="plus" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tautan ke agenda -->
+      <section class="section section--bone berita-agenda" aria-labelledby="berita-agenda-title">
+        <div class="container">
+          <div class="split split--wide-right berita-agenda__split">
+            <div class="berita-agenda__intro" data-reveal>
+              <p class="eyebrow">Agenda</p>
+              <h2 class="h2" id="berita-agenda-title">Kegiatan <em>berikutnya</em></h2>
+              <p class="lead muted">Pelatihan, sertifikasi, seminar, dan kunjungan teknis yang dijadwalkan sekretariat — lengkap dengan pengingat kalender.</p>
+              <div class="mt-4">
+                <a class="btn btn--primary" href="agenda.html"><span>Lihat semua agenda</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+              </div>
+            </div>
+            <div class="berita-agenda__list" id="berita-agenda-list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =========================================================
+         MODE DETAIL (berita.html?id=…) — diisi oleh berita.js
+         ========================================================= -->
+    <div id="berita-detail" class="berita-detail" hidden></div>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/berita.js" defer></script>
+  <script src="assets/data/agenda.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/berita.js" defer></script>
+</body>
+</html>

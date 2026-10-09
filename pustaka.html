@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Produk Pengetahuan — PPAPI</title>
+  <meta name="description" content="Produk Pengetahuan PPAPI: standar, Code of Practice, peraturan perundangan, petunjuk teknis, modul pelatihan, dan aplikasi anggota bidang perancah.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Produk Pengetahuan — PPAPI">
+  <meta property="og:description" content="Produk Pengetahuan PPAPI: standar, Code of Practice, peraturan perundangan, petunjuk teknis, modul pelatihan, dan aplikasi anggota bidang perancah.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/pustaka.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="pustaka" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero pk-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/ringlock-pattern.webp" srcset="assets/img/ringlock-pattern-sm.webp 480w, assets/img/ringlock-pattern.webp 1000w" sizes="100vw" alt="" width="1000" height="1500" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Produk Pengetahuan</li></ol>
+        </nav>
+        <p class="eyebrow">Produk Pengetahuan PPAPI</p>
+        <h1 class="display split-lines">Pengetahuan<br>yang <em>menopang</em>.</h1>
+        <p class="lead">Standar, Code of Practice, peraturan perundangan, petunjuk teknis, serta modul dan panduan pelatihan — dihimpun dan disusun bertahap oleh PPAPI sebagai rujukan kerja yang tertata, berikut aplikasi perencanaan dan simulator pemasangan bagi anggota.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#katalog" data-pk="hero-primary"><span>Telusuri katalog</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="#aplikasi" data-pk="hero-apps"><span>Aplikasi anggota</span></a>
+        </div>
+        <div class="page-hero__meta" data-pk="hero-meta"></div>
+      </div>
+    </section>
+
+    <!-- ===================== RUANG KOLEKSI ===================== -->
+    <section class="section section--bone pk-collections" id="koleksi" aria-labelledby="koleksi-title" data-pk-part="public">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Ruang Koleksi</p>
+            <h2 class="h2" id="koleksi-title">Koleksi yang <em>tertata</em> menurut jenisnya</h2>
+            <p class="lead muted">Setiap dokumen ditempatkan pada koleksinya — standar dan peraturan sebagai landasan, pedoman praktik dan petunjuk teknis untuk pelaksanaan, hingga modul pelatihan dan aplikasi untuk pengembangan kompetensi.</p>
+          </div>
+        </header>
+        <ul class="pk-tiles" data-pk="tiles" aria-label="Koleksi Produk Pengetahuan"></ul>
+      </div>
+    </section>
+
+    <!-- ===================== KATALOG ===================== -->
+    <section class="section pk-catalog" id="katalog" aria-labelledby="katalog-title" data-pk-part="public">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Katalog</p>
+            <h2 class="h2" id="katalog-title">Katalog <em>dokumen</em></h2>
+            <p class="lead muted">Cari menurut judul, kode, atau kata kunci, lalu saring menurut koleksi dan status. Dokumen khusus anggota dapat dibuka oleh anggota berstatus Aktif.</p>
+          </div>
+          <a class="btn btn--link" href="regulasi.html"><span>Regulasi &amp; Standar</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+        </header>
+
+        <div class="pk-access" data-pk="access"></div>
+
+        <form class="pk-toolbar" role="search" aria-label="Cari dan saring Produk Pengetahuan" data-pk="toolbar" novalidate>
+          <!-- Satu urutan DOM untuk semua lebar: cari → (Saring: status, urutan, tampilan) → koleksi.
+               Desktop: satu baris kendali + baris koleksi; ponsel: Status/Urutkan/Tampilan dilipat di balik "Saring". -->
+          <div class="pk-toolbar__top">
+            <div class="field pk-toolbar__search">
+              <label class="field__label" for="pk-q">Cari dokumen</label>
+              <div class="search-box">
+                <span data-icon="search" data-icon-size="18"></span>
+                <input class="field__control" id="pk-q" name="q" type="search" autocomplete="off" spellcheck="false" maxlength="120" placeholder="Misalnya inspeksi" data-placeholder-wide="Misalnya: inspeksi, ringlock, PPAPI-CoP-01, UU 1/1970…" aria-describedby="pk-q-hint">
+                <button type="button" class="search-box__clear" aria-label="Hapus pencarian" hidden><span data-icon="close" data-icon-size="16"></span></button>
+              </div>
+              <p class="sr-only" id="pk-q-hint">Pencarian mencakup judul, kode, ringkasan, kata kunci, penyusun, dan instansi. Hasil diperbarui saat Anda mengetik.</p>
+            </div>
+            <button type="button" class="btn btn--ghost pk-toolbar__toggle" data-pk="saring-toggle" aria-expanded="false" aria-controls="pk-saring"><span data-icon="filter" data-icon-size="18"></span><span>Saring</span><span class="pk-toolbar__n" data-pk="saring-n" hidden></span></button>
+          </div>
+          <div class="pk-toolbar__saring" id="pk-saring" data-pk="saring">
+            <div class="field pk-toolbar__select">
+              <label class="field__label" for="pk-status">Status</label>
+              <select class="field__control" id="pk-status" name="status">
+                <option value="">Semua</option>
+              </select>
+            </div>
+            <div class="field pk-toolbar__select">
+              <label class="field__label" for="pk-sort">Urutkan</label>
+              <select class="field__control" id="pk-sort" name="urut">
+                <option value="katalog">Katalog</option>
+                <option value="terbaru">Terbaru</option>
+                <option value="judul">Judul A–Z</option>
+              </select>
+            </div>
+            <div class="pk-viewset">
+              <p class="field__label" id="pk-view-label">Tampilan</p>
+              <div class="segmented pk-view" data-segmented role="group" aria-labelledby="pk-view-label" data-pk="view">
+                <button type="button" class="segmented__option" data-value="kisi" aria-pressed="true"><span data-icon="grid" data-icon-size="16"></span><span>Kartu</span></button>
+                <button type="button" class="segmented__option" data-value="daftar" aria-pressed="false"><span data-icon="menu" data-icon-size="16"></span><span>Daftar</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="pk-chipset">
+            <p class="field__label" id="pk-kat-label">Koleksi</p>
+            <div class="filter-chips" role="group" aria-labelledby="pk-kat-label" data-pk="chips"></div>
+          </div>
+        </form>
+
+        <div class="pk-summary">
+          <p class="pk-count" data-pk="count" role="status" aria-live="polite"></p>
+          <button type="button" class="btn btn--link btn--sm" data-pk="reset" hidden><span>Atur ulang filter</span><span data-icon="refresh" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+        </div>
+        <p class="pk-apphint" data-pk="apphint" hidden></p>
+
+        <div class="pk-results" data-pk="results" aria-busy="true"></div>
+        <div class="pk-empty" data-pk="empty" hidden></div>
+
+        <div class="alert alert--info pk-note" role="note" aria-label="Catatan katalog" data-pk="note" hidden>
+          <span data-icon="info" data-icon-size="20"></span>
+          <div>
+            <p class="alert__title">Tentang dokumen bertanda “Contoh”</p>
+            <p>Dokumen bertanda Contoh adalah ilustrasi rencana koleksi: judul, kode, dan ringkasannya belum merupakan dokumen resmi PPAPI dan akan diganti setelah dokumen resmi terbit. Peraturan perundangan dan standar disusun dari sumber resmi; selalu periksa naskah terbaru pada instansi atau penerbitnya.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== APLIKASI ANGGOTA ===================== -->
+    <section class="section section--dark pk-apps" id="aplikasi" aria-labelledby="aplikasi-title" data-pk-part="public">
+      <div data-scaffold data-cols="8" data-rows="3" data-nodes="false"></div>
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Aplikasi Anggota</p>
+            <h2 class="h2" id="aplikasi-title">Alat kerja <em>digital</em> anggota</h2>
+            <p class="lead muted">Dua aplikasi milik PPAPI untuk merencanakan dan memeriksa perancah, serta melatih urutan pemasangan perancah tube &amp; coupler — terbuka bagi anggota berstatus Aktif.</p>
+          </div>
+        </header>
+        <div class="pk-apps__list" data-pk="apps"></div>
+        <p class="pk-apps__note" data-pk="app-note"></p>
+      </div>
+    </section>
+
+    <!-- ===================== KATALOG TERTUTUP (config.pustaka.katalogPublik = false) ===================== -->
+    <section class="section section--bone pk-closed" data-pk="closed" aria-labelledby="pk-closed-title" hidden></section>
+
+    <!-- ===================== CTA ===================== -->
+    <section class="section section--tight section--graphite pk-cta" data-pk="cta" aria-labelledby="pk-cta-title">
+      <div data-scaffold data-cols="9" data-rows="2" data-nodes="false"></div>
+      <div class="container pk-cta__inner" data-pk="cta-inner"></div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/pustaka.js" defer></script>
+  <script src="assets/data/regulasi.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/pustaka.js" defer></script>
+</body>
+</html>

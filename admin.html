@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konsol Admin — PPAPI</title>
+  <meta name="description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, serta log aktivitas.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Konsol Admin — PPAPI">
+  <meta property="og:description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, serta log aktivitas.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/admin.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="admin" data-auth="admin">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== PITA KONSOL (gelap, kompak) ===================== -->
+    <section class="page-hero page-hero--compact adm-hero" aria-labelledby="adm-title">
+      <div data-scaffold data-cols="14" data-rows="3" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <div class="adm-hero__row">
+          <div class="adm-hero__text">
+            <p class="eyebrow adm-hero__eyebrow">PPAPI · Sekretariat</p>
+            <h1 class="h1 adm-hero__title" id="adm-title">Konsol <em>Admin</em></h1>
+            <div class="page-hero__meta adm-hero__meta" id="adm-meta">
+              <span class="adm-skel" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="adm-hero__actions">
+            <a class="btn btn--ghost btn--sm" href="dashboard.html"><span>Dasbor</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></a>
+            <button class="btn btn--primary btn--sm" type="button" id="adm-refresh"><span data-icon="refresh" data-icon-size="16"></span><span>Muat Ulang Data</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== KERANGKA KONSOL ===================== -->
+    <div class="adm-body">
+      <div class="container adm-shell">
+
+        <!-- ---------- Navigasi bagian (vertikal di desktop, tab di ponsel) ---------- -->
+        <nav class="adm-nav" aria-label="Bagian konsol admin">
+          <p class="adm-nav__label" aria-hidden="true">Menu Konsol</p>
+          <ul class="adm-nav__list" role="list">
+            <li><a class="adm-nav__link" href="#ringkasan" data-section="ringkasan"><span class="adm-nav__num" aria-hidden="true">01</span><span data-icon="grid" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Ringkasan</span></a></li>
+            <li><a class="adm-nav__link" href="#permohonan" data-section="permohonan"><span class="adm-nav__num" aria-hidden="true">02</span><span data-icon="user-plus" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Permohonan</span><span class="adm-nav__count" data-count-for="permohonan" hidden></span></a></li>
+            <li><a class="adm-nav__link" href="#anggota" data-section="anggota"><span class="adm-nav__num" aria-hidden="true">03</span><span data-icon="users" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Anggota</span></a></li>
+            <li><a class="adm-nav__link" href="#konten" data-section="konten"><span class="adm-nav__num" aria-hidden="true">04</span><span data-icon="file-text" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Konten</span></a></li>
+            <li><a class="adm-nav__link" href="#umpan-balik" data-section="umpan-balik"><span class="adm-nav__num" aria-hidden="true">05</span><span data-icon="message" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Umpan Balik</span><span class="adm-nav__count" data-count-for="umpan-balik" hidden></span></a></li>
+            <li><a class="adm-nav__link" href="#admin" data-section="admin"><span class="adm-nav__num" aria-hidden="true">06</span><span data-icon="shield" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Admin</span></a></li>
+            <li><a class="adm-nav__link" href="#log" data-section="log"><span class="adm-nav__num" aria-hidden="true">07</span><span data-icon="activity" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Log Aktivitas</span></a></li>
+          </ul>
+          <div class="adm-nav__foot" id="adm-nav-foot"></div>
+        </nav>
+
+        <!-- ---------- Isi bagian ---------- -->
+        <div class="adm-main">
+          <p class="sr-only" aria-live="polite" id="adm-announce"></p>
+
+          <!-- 01 RINGKASAN -->
+          <section class="adm-section" id="sec-ringkasan" data-section="ringkasan" aria-labelledby="h-ringkasan">
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">01 — Ringkasan</p>
+                <h2 class="adm-head__title" id="h-ringkasan" tabindex="-1">Ikhtisar <em>sekretariat</em></h2>
+                <p class="adm-head__lead" id="ringkasan-lead">Gambaran keanggotaan, permohonan yang perlu ditindaklanjuti, dan aktivitas terbaru.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="ringkasan-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat ringkasan…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 02 PERMOHONAN -->
+          <section class="adm-section" id="sec-permohonan" data-section="permohonan" aria-labelledby="h-permohonan" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">02 — Permohonan</p>
+                <h2 class="adm-head__title" id="h-permohonan" tabindex="-1">Antrean <em>verifikasi</em></h2>
+                <p class="adm-head__lead">Tinjau formulir pendaftaran dan perpanjangan, lalu setujui, minta perbaikan, atau tolak.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="permohonan-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat permohonan…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 03 ANGGOTA -->
+          <section class="adm-section" id="sec-anggota" data-section="anggota" aria-labelledby="h-anggota" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">03 — Anggota</p>
+                <h2 class="adm-head__title" id="h-anggota" tabindex="-1">Direktori <em>anggota</em></h2>
+                <p class="adm-head__lead">Seluruh akun terdaftar. Kategori, masa berlaku, dan status diubah dari panel detail.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="anggota-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat data anggota…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 04 KONTEN -->
+          <section class="adm-section" id="sec-konten" data-section="konten" aria-labelledby="h-konten" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">04 — Konten</p>
+                <h2 class="adm-head__title" id="h-konten" tabindex="-1">Kelola <em>konten</em></h2>
+                <p class="adm-head__lead">Berita, pengumuman, agenda, produk pengetahuan, dan regulasi yang tampil di situs.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="konten-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat konten…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 05 UMPAN BALIK -->
+          <section class="adm-section" id="sec-umpan-balik" data-section="umpan-balik" aria-labelledby="h-umpan-balik" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">05 — Umpan Balik</p>
+                <h2 class="adm-head__title" id="h-umpan-balik" tabindex="-1">Kritik &amp; <em>saran</em></h2>
+                <p class="adm-head__lead">Pesan dari formulir Kontak: tandai prosesnya, simpan catatan internal, lalu balas melalui email.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="umpan-balik-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat umpan balik…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 06 ADMIN -->
+          <section class="adm-section" id="sec-admin" data-section="admin" aria-labelledby="h-admin" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">06 — Admin</p>
+                <h2 class="adm-head__title" id="h-admin" tabindex="-1">Akses <em>sekretariat</em></h2>
+                <p class="adm-head__lead">Akun yang dapat membuka konsol ini; admin baru dipilih dari akun yang sudah terdaftar.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="admin-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat daftar admin…</span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 07 LOG AKTIVITAS -->
+          <section class="adm-section" id="sec-log" data-section="log" aria-labelledby="h-log" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">07 — Log Aktivitas</p>
+                <h2 class="adm-head__title" id="h-log" tabindex="-1">Jejak <em>tindakan</em></h2>
+                <p class="adm-head__lead">Setiap keputusan dan perubahan oleh admin, terbaru di atas.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="log-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat log aktivitas…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/berita.js" defer></script>
+  <script src="assets/data/agenda.js" defer></script>
+  <script src="assets/data/regulasi.js" defer></script>
+  <script src="assets/data/pustaka.js" defer></script>
+  <script src="assets/data/organisasi.js" defer></script>
+  <script src="assets/data/registry.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/admin.js" defer></script>
+  <script src="assets/js/pages/admin-anggota.js" defer></script>
+  <script src="assets/js/pages/admin-konten.js" defer></script>
+</body>
+</html>

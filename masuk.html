@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk &amp; Daftar — PPAPI</title>
+  <meta name="description" content="Masuk atau daftar akun PPAPI dengan email, nomor HP, atau akun Google, lalu ajukan keanggotaan dan akses layanan anggota setelah diverifikasi.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Masuk &amp; Daftar — PPAPI">
+  <meta property="og:description" content="Masuk atau daftar akun PPAPI dengan email, nomor HP, atau akun Google, lalu ajukan keanggotaan dan akses layanan anggota setelah diverifikasi.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/masuk.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="masuk" data-auth="guest" data-header="solid">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+    <div class="auth-shell" data-auth-root>
+
+      <!-- ===================== PANEL VISUAL (gelap) ===================== -->
+      <section class="auth-visual theme-dark" aria-labelledby="auth-title">
+        <div class="auth-visual__frame">
+          <div class="hero-media auth-visual__media" aria-hidden="true">
+            <img src="assets/img/stair-tower.webp" srcset="assets/img/stair-tower-sm.webp 720w, assets/img/stair-tower.webp 1920w" sizes="(min-width: 1024px) 150vh, 100vw" alt="" width="1920" height="1280" fetchpriority="high" decoding="async">
+          </div>
+          <div class="auth-visual__scaffold" data-scaffold data-cols="4" data-rows="6"></div>
+
+          <div class="auth-visual__inner">
+            <div class="auth-visual__body">
+              <p class="eyebrow auth-visual__eyebrow" data-reveal="fade" data-reveal-delay="80">Satu pintu layanan anggota</p>
+              <h1 class="auth-visual__title split-lines" id="auth-title">Satu akun untuk<br>seluruh <em>layanan</em><br>anggota PPAPI.</h1>
+
+              <p class="auth-benefits__caption" data-reveal="fade" data-reveal-delay="160"><span data-icon="lock" data-icon-size="14"></span>Terbuka bagi anggota berstatus Aktif</p>
+              <ul class="auth-benefits" role="list" data-reveal-stagger data-reveal-delay="200">
+                <li class="auth-benefit">
+                  <span class="auth-benefit__icon" data-icon="id-card" data-icon-size="20"></span>
+                  <span class="auth-benefit__text"><strong class="auth-benefit__title">KTA digital</strong><span class="auth-benefit__desc">Kartu tanda anggota elektronik dengan kode QR yang dapat diverifikasi publik.</span></span>
+                </li>
+                <li class="auth-benefit">
+                  <span class="auth-benefit__icon" data-icon="compass" data-icon-size="20"></span>
+                  <span class="auth-benefit__text"><strong class="auth-benefit__title">Aplikasi anggota</strong><span class="auth-benefit__desc">PPAPI Scaffold untuk perencanaan &amp; analisis struktur, serta simulator pemasangan perancah tube &amp; coupler.</span></span>
+                </li>
+                <li class="auth-benefit">
+                  <span class="auth-benefit__icon" data-icon="book" data-icon-size="20"></span>
+                  <span class="auth-benefit__text"><strong class="auth-benefit__title">Produk pengetahuan</strong><span class="auth-benefit__desc">Standar, Code of Practice, petunjuk teknis, dan modul pelatihan perancah.</span></span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="auth-visual__foot" data-reveal="fade">
+              <img class="auth-visual__logo" src="assets/img/logo-light.png" alt="PPAPI" width="1200" height="418" decoding="async">
+              <span class="auth-visual__foot-rule" aria-hidden="true"></span>
+              <p class="auth-visual__org">Perkumpulan Praktisi dan<br>Ahli Perancah Indonesia</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PANEL FORMULIR (terang) ===================== -->
+      <section class="auth-panel" aria-label="Formulir masuk dan pendaftaran">
+        <div class="auth-panel__inner">
+
+          <div class="card card--metal card--nodes auth-card" data-reveal>
+            <noscript><p class="alert alert--warn auth-noscript">Aktifkan JavaScript pada peramban Anda untuk masuk atau mendaftar.</p></noscript>
+
+            <div class="tabs auth-tabs" data-tabs data-tab-hash data-auth-tabs>
+              <div class="tabs__list" role="tablist" aria-label="Pilih masuk atau daftar">
+                <button class="tabs__tab" type="button" role="tab" id="tab-masuk" data-tab="masuk" aria-controls="panel-masuk" aria-selected="true">Masuk</button>
+                <button class="tabs__tab" type="button" role="tab" id="tab-daftar" data-tab="daftar" aria-controls="panel-daftar" aria-selected="false">Daftar</button>
+              </div>
+
+              <div class="auth-next" data-next-note hidden>
+                <span data-icon="lock" data-icon-size="16"></span>
+                <p data-next-text>Silakan masuk untuk melanjutkan ke halaman yang Anda tuju.</p>
+              </div>
+
+              <!-- ============ TAB: MASUK ============ -->
+              <div class="tabs__panel auth-pane" role="tabpanel" id="panel-masuk" aria-labelledby="tab-masuk" data-panel="masuk">
+                <header class="auth-head">
+                  <h2 class="auth-head__title">Selamat datang <em>kembali</em></h2>
+                  <p class="auth-head__text">Masuk untuk membuka dasbor, memantau status pendaftaran, dan menggunakan layanan anggota PPAPI.</p>
+                </header>
+
+                <div class="segmented segmented--block auth-method" data-segmented data-method-switch role="group" aria-label="Metode masuk">
+                  <button type="button" class="segmented__option" aria-pressed="true" data-value="email" aria-controls="masuk-email-pane"><span data-icon="mail" data-icon-size="16"></span>Email</button>
+                  <button type="button" class="segmented__option" aria-pressed="false" data-value="phone" aria-controls="masuk-phone-pane"><span data-icon="phone" data-icon-size="16"></span>Nomor HP</button>
+                </div>
+
+                <div class="auth-alert-slot" data-alert aria-live="assertive" aria-atomic="true"></div>
+
+                <!-- Masuk · Email -->
+                <div class="auth-method-pane" id="masuk-email-pane" data-method-pane="email">
+                  <form class="form auth-form" data-form="masuk-email" method="post" novalidate>
+                    <div class="field">
+                      <label class="field__label" for="m-email">Email</label>
+                      <div class="input-icon">
+                        <span data-icon="mail" data-icon-size="18"></span>
+                        <input class="field__control" id="m-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nama@domain.id" required data-rule="email">
+                      </div>
+                      <p class="field__error" id="m-email-err"></p>
+                    </div>
+                    <div class="field">
+                      <label class="field__label" for="m-pass">Kata sandi</label>
+                      <div class="password-toggle">
+                        <input class="field__control" id="m-pass" name="password" type="password" autocomplete="current-password" required data-rule="password">
+                        <button type="button" class="password-toggle__btn" aria-label="Tampilkan kata sandi" aria-pressed="false" aria-controls="m-pass"><span data-icon="eye"></span></button>
+                      </div>
+                      <p class="field__error" id="m-pass-err"></p>
+                    </div>
+                    <div class="auth-form__row">
+                      <label class="check"><input type="checkbox" id="m-remember" name="remember" checked><span class="check__box"></span><span class="check__label">Ingat saya</span></label>
+                      <button type="button" class="auth-link" data-forgot>Lupa kata sandi?</button>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--block"><span>Masuk</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                  </form>
+                </div>
+
+                <!-- Masuk · Nomor HP -->
+                <div class="auth-method-pane" id="masuk-phone-pane" data-method-pane="phone" hidden>
+                  <div class="auth-phone" data-phone-flow="masuk">
+                    <form class="form auth-form" data-phone-step="1" method="post" novalidate>
+                      <div class="field">
+                        <label class="field__label" for="mp-phone">Nomor HP <span class="sr-only">(kode negara +62)</span></label>
+                        <div class="input-group">
+                          <span class="input-group__prefix" aria-hidden="true">+62</span>
+                          <input class="field__control" id="mp-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="812-3456-7890" required data-rule="phone" aria-describedby="mp-phone-hint">
+                        </div>
+                        <p class="field__hint" id="mp-phone-hint">Nomor seluler Indonesia; awalan 0 juga diterima, misalnya 0812-3456-7890.</p>
+                        <p class="field__error" id="mp-phone-err"></p>
+                      </div>
+                      <button type="submit" class="btn btn--primary btn--block" data-send-otp><span>Kirim Kode OTP</span><span data-icon="send" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                    </form>
+
+                    <form class="form auth-form" data-phone-step="2" method="post" novalidate hidden>
+                      <div class="auth-sent-to">
+                        <div class="auth-sent-to__text">
+                          <span class="auth-sent-to__label">Kode dikirim ke</span>
+                          <strong class="auth-sent-to__number" data-otp-target></strong>
+                        </div>
+                        <button type="button" class="auth-link" data-change-number>Ubah nomor</button>
+                      </div>
+                      <div class="field">
+                        <span class="field__label" id="mp-otp-label">Kode OTP</span>
+                        <div class="otp auth-otp" data-otp role="group" aria-labelledby="mp-otp-label" aria-describedby="mp-otp-hint"></div>
+                        <p class="field__hint" id="mp-otp-hint"><span data-otp-hint-sms>Masukkan 6 digit kode yang kami kirim melalui SMS.</span> <span data-demo-only hidden>Mode Demo: gunakan kode <strong>123456</strong>.</span></p>
+                        <p class="field__error" id="mp-otp-err"></p>
+                      </div>
+                      <button type="submit" class="btn btn--primary btn--block" data-verify><span>Verifikasi</span><span data-icon="shield-check" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                      <p class="auth-resend"><span>Tidak menerima kode?</span> <button type="button" class="auth-link" data-resend disabled>Kirim ulang kode</button></p>
+                    </form>
+                  </div>
+                </div>
+
+                <p class="auth-or"><span>atau</span></p>
+                <button type="button" class="btn-google" data-google><span data-icon="google" data-icon-size="20"></span><span>Lanjutkan dengan Google</span></button>
+
+                <p class="auth-switch">Belum memiliki akun? <button type="button" class="auth-link auth-link--strong" data-switch="daftar">Daftar sekarang</button></p>
+              </div>
+
+              <!-- ============ TAB: DAFTAR ============ -->
+              <div class="tabs__panel auth-pane" role="tabpanel" id="panel-daftar" aria-labelledby="tab-daftar" data-panel="daftar" hidden>
+                <header class="auth-head">
+                  <h2 class="auth-head__title">Bergabung bersama <em>PPAPI</em></h2>
+                  <p class="auth-head__text">Buat akun, lalu isi formulir pendaftaran anggota. Fitur anggota terbuka setelah pengajuan Anda diverifikasi Sekretariat PPAPI.</p>
+                  <ol class="auth-steps" aria-label="Tahapan pendaftaran anggota">
+                    <li class="auth-steps__item is-current" aria-current="step"><span class="auth-steps__num" aria-hidden="true">01</span><span class="auth-steps__label">Buat akun</span></li>
+                    <li class="auth-steps__item"><span class="auth-steps__num" aria-hidden="true">02</span><span class="auth-steps__label">Isi formulir</span></li>
+                    <li class="auth-steps__item"><span class="auth-steps__num" aria-hidden="true">03</span><span class="auth-steps__label">Verifikasi</span></li>
+                  </ol>
+                </header>
+
+                <div class="segmented segmented--block auth-method" data-segmented data-method-switch role="group" aria-label="Metode pendaftaran">
+                  <button type="button" class="segmented__option" aria-pressed="true" data-value="email" aria-controls="daftar-email-pane"><span data-icon="mail" data-icon-size="16"></span>Email</button>
+                  <button type="button" class="segmented__option" aria-pressed="false" data-value="phone" aria-controls="daftar-phone-pane"><span data-icon="phone" data-icon-size="16"></span>Nomor HP</button>
+                </div>
+
+                <div class="auth-alert-slot" data-alert aria-live="assertive" aria-atomic="true"></div>
+
+                <!-- Daftar · Email -->
+                <div class="auth-method-pane" id="daftar-email-pane" data-method-pane="email">
+                  <form class="form auth-form" data-form="daftar-email" method="post" novalidate>
+                    <div class="field">
+                      <label class="field__label" for="d-name">Nama lengkap</label>
+                      <div class="input-icon">
+                        <span data-icon="user" data-icon-size="18"></span>
+                        <input class="field__control" id="d-name" name="name" type="text" autocomplete="name" autocapitalize="words" placeholder="Nama sesuai identitas" maxlength="120" required data-rule="name">
+                      </div>
+                      <p class="field__error" id="d-name-err"></p>
+                    </div>
+                    <div class="field">
+                      <label class="field__label" for="d-email">Email</label>
+                      <div class="input-icon">
+                        <span data-icon="mail" data-icon-size="18"></span>
+                        <input class="field__control" id="d-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nama@domain.id" required data-rule="email">
+                      </div>
+                      <p class="field__error" id="d-email-err"></p>
+                    </div>
+                    <div class="field">
+                      <label class="field__label" for="d-pass">Kata sandi</label>
+                      <div class="password-toggle">
+                        <input class="field__control" id="d-pass" name="password" type="password" autocomplete="new-password" required data-rule="password-new" aria-describedby="d-pass-strength-label d-pass-hint">
+                        <button type="button" class="password-toggle__btn" aria-label="Tampilkan kata sandi" aria-pressed="false" aria-controls="d-pass"><span data-icon="eye"></span></button>
+                      </div>
+                      <div class="strength" data-level="0" data-strength>
+                        <div class="strength__bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                        <span class="strength__label" id="d-pass-strength-label" aria-live="polite"></span>
+                      </div>
+                      <p class="field__hint" id="d-pass-hint">Minimal 8 karakter dengan kombinasi huruf dan angka.</p>
+                      <p class="field__error" id="d-pass-err"></p>
+                    </div>
+                    <div class="field">
+                      <label class="field__label" for="d-pass2">Konfirmasi kata sandi</label>
+                      <div class="password-toggle">
+                        <input class="field__control" id="d-pass2" name="password_confirm" type="password" autocomplete="new-password" required data-rule="password-confirm" data-match="d-pass">
+                        <button type="button" class="password-toggle__btn" aria-label="Tampilkan kata sandi" aria-pressed="false" aria-controls="d-pass2"><span data-icon="eye"></span></button>
+                      </div>
+                      <p class="field__error" id="d-pass2-err"></p>
+                    </div>
+                    <div class="field auth-agree">
+                      <label class="check"><input type="checkbox" id="d-agree" name="agree" required data-rule="agree"><span class="check__box"></span><span class="check__label">Saya menyetujui <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a> PPAPI.</span></label>
+                      <p class="field__error" id="d-agree-err"></p>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--block"><span>Buat Akun</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                  </form>
+                </div>
+
+                <!-- Daftar · Nomor HP -->
+                <div class="auth-method-pane" id="daftar-phone-pane" data-method-pane="phone" hidden>
+                  <div class="auth-phone" data-phone-flow="daftar">
+                    <form class="form auth-form" data-phone-step="1" method="post" novalidate>
+                      <div class="field">
+                        <label class="field__label" for="dp-name">Nama lengkap</label>
+                        <div class="input-icon">
+                          <span data-icon="user" data-icon-size="18"></span>
+                          <input class="field__control" id="dp-name" name="name" type="text" autocomplete="name" autocapitalize="words" placeholder="Nama sesuai identitas" maxlength="120" required data-rule="name">
+                        </div>
+                        <p class="field__error" id="dp-name-err"></p>
+                      </div>
+                      <div class="field">
+                        <label class="field__label" for="dp-phone">Nomor HP <span class="sr-only">(kode negara +62)</span></label>
+                        <div class="input-group">
+                          <span class="input-group__prefix" aria-hidden="true">+62</span>
+                          <input class="field__control" id="dp-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="812-3456-7890" required data-rule="phone" aria-describedby="dp-phone-hint">
+                        </div>
+                        <p class="field__hint" id="dp-phone-hint">Nomor seluler Indonesia; awalan 0 juga diterima, misalnya 0812-3456-7890.</p>
+                        <p class="field__error" id="dp-phone-err"></p>
+                      </div>
+                      <div class="field auth-agree">
+                        <label class="check"><input type="checkbox" id="dp-agree" name="agree" required data-rule="agree"><span class="check__box"></span><span class="check__label">Saya menyetujui <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a> PPAPI.</span></label>
+                        <p class="field__error" id="dp-agree-err"></p>
+                      </div>
+                      <button type="submit" class="btn btn--primary btn--block" data-send-otp><span>Kirim Kode OTP</span><span data-icon="send" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                    </form>
+
+                    <form class="form auth-form" data-phone-step="2" method="post" novalidate hidden>
+                      <div class="auth-sent-to">
+                        <div class="auth-sent-to__text">
+                          <span class="auth-sent-to__label">Kode dikirim ke</span>
+                          <strong class="auth-sent-to__number" data-otp-target></strong>
+                        </div>
+                        <button type="button" class="auth-link" data-change-number>Ubah nomor</button>
+                      </div>
+                      <div class="field">
+                        <span class="field__label" id="dp-otp-label">Kode OTP</span>
+                        <div class="otp auth-otp" data-otp role="group" aria-labelledby="dp-otp-label" aria-describedby="dp-otp-hint"></div>
+                        <p class="field__hint" id="dp-otp-hint"><span data-otp-hint-sms>Masukkan 6 digit kode yang kami kirim melalui SMS.</span> <span data-demo-only hidden>Mode Demo: gunakan kode <strong>123456</strong>.</span></p>
+                        <p class="field__error" id="dp-otp-err"></p>
+                      </div>
+                      <button type="submit" class="btn btn--primary btn--block" data-verify><span>Verifikasi &amp; Daftar</span><span data-icon="shield-check" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+                      <p class="auth-resend"><span>Tidak menerima kode?</span> <button type="button" class="auth-link" data-resend disabled>Kirim ulang kode</button></p>
+                    </form>
+                  </div>
+                </div>
+
+                <p class="auth-or"><span>atau</span></p>
+                <button type="button" class="btn-google" data-google><span data-icon="google" data-icon-size="20"></span><span>Lanjutkan dengan Google</span></button>
+                <p class="auth-legal">Dengan mendaftar menggunakan Google, Anda menyetujui <a class="link" href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a> PPAPI.</p>
+
+                <p class="auth-switch">Sudah memiliki akun? <button type="button" class="auth-link auth-link--strong" data-switch="masuk">Masuk</button></p>
+              </div>
+            </div>
+
+            <!-- ============ LENGKAPI PROFIL (akun baru dari tab Masuk: nomor HP / Google) ============ -->
+            <div class="auth-pane auth-complete" data-complete hidden>
+              <header class="auth-head">
+                <p class="eyebrow auth-complete__eyebrow">Langkah terakhir</p>
+                <h2 class="auth-head__title" id="complete-title" tabindex="-1">Lengkapi <em>profil</em> Anda</h2>
+                <p class="auth-head__text" id="complete-text" data-complete-text>Lengkapi nama lengkap Anda untuk melanjutkan.</p>
+              </header>
+
+              <div class="auth-sent-to auth-complete__who">
+                <div class="auth-sent-to__text">
+                  <span class="auth-sent-to__label" data-complete-label>Akun</span>
+                  <strong class="auth-sent-to__number auth-complete__id" data-complete-id></strong>
+                </div>
+              </div>
+
+              <div class="auth-alert-slot" data-alert aria-live="assertive" aria-atomic="true"></div>
+
+              <form class="form auth-form" data-form="complete" method="post" novalidate aria-labelledby="complete-title">
+                <div class="field">
+                  <label class="field__label" for="c-name">Nama lengkap</label>
+                  <div class="input-icon">
+                    <span data-icon="user" data-icon-size="18"></span>
+                    <input class="field__control" id="c-name" name="name" type="text" autocomplete="name" autocapitalize="words" placeholder="Nama sesuai identitas" maxlength="120" required data-rule="name" aria-describedby="c-name-hint">
+                  </div>
+                  <p class="field__hint" id="c-name-hint">Nama ini tampil pada profil dan KTA digital Anda.</p>
+                  <p class="field__error" id="c-name-err"></p>
+                </div>
+                <div class="field auth-agree" data-complete-agree>
+                  <label class="check"><input type="checkbox" id="c-agree" name="agree" required data-rule="agree"><span class="check__box"></span><span class="check__label">Saya menyetujui <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a> PPAPI.</span></label>
+                  <p class="field__error" id="c-agree-err"></p>
+                </div>
+                <button type="submit" class="btn btn--primary btn--block"><span>Simpan &amp; Lanjutkan</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+              </form>
+
+              <p class="auth-switch">Bukan akun yang Anda maksud? <button type="button" class="auth-link auth-link--strong" data-complete-cancel>Keluar</button></p>
+            </div>
+          </div>
+
+          <div class="auth-demo" data-demo-note role="note" aria-labelledby="auth-demo-title" hidden>
+            <div class="auth-demo__intro">
+              <span class="auth-demo__icon" data-icon="info" data-icon-size="18"></span>
+              <div>
+                <p class="auth-demo__title" id="auth-demo-title">Mode Demo</p>
+                <p>Akun dan data hanya tersimpan di peramban ini. Untuk verifikasi nomor HP, gunakan kode OTP <strong>123456</strong>; masuk dengan Google disimulasikan tanpa menghubungi Google.</p>
+              </div>
+            </div>
+
+            <!-- Akun admin demo (diisi dari PPAPI.auth.demoAdmin; hanya Mode Demo) -->
+            <div class="auth-demo__admin" data-demo-admin role="group" aria-labelledby="auth-demo-admin-title" hidden>
+              <header class="auth-demo__admin-head">
+                <span class="auth-demo__admin-icon" data-icon="shield" data-icon-size="18"></span>
+                <div>
+                  <p class="auth-demo__admin-title" id="auth-demo-admin-title">Akun admin demo</p>
+                  <p class="auth-demo__admin-text">Masuk sebagai sekretariat untuk mencoba Konsol Admin: memverifikasi pendaftaran, mengelola anggota, konten, dan umpan balik.</p>
+                </div>
+              </header>
+              <dl class="auth-cred">
+                <div class="auth-cred__row">
+                  <dt>Email</dt>
+                  <dd><kbd class="auth-cred__value" data-demo-admin-email translate="no"></kbd><button type="button" class="icon-btn icon-btn--ghost auth-cred__copy" data-demo-copy="email" aria-label="Salin email admin demo"><span data-icon="copy" data-icon-size="16"></span></button></dd>
+                </div>
+                <div class="auth-cred__row">
+                  <dt>Kata sandi</dt>
+                  <dd><kbd class="auth-cred__value" data-demo-admin-pass translate="no"></kbd><button type="button" class="icon-btn icon-btn--ghost auth-cred__copy" data-demo-copy="password" aria-label="Salin kata sandi admin demo"><span data-icon="copy" data-icon-size="16"></span></button></dd>
+                </div>
+              </dl>
+              <button type="button" class="btn btn--ghost btn--sm btn--block auth-demo__fill" data-demo-admin-fill><span>Isi formulir masuk dengan akun admin</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/pages/masuk.js" defer></script>
+</body>
+</html>
