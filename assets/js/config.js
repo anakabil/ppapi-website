@@ -108,12 +108,12 @@ window.PPAPI_CONFIG = {
   // Nilai-nilai ini bukan rahasia; keamanan data diatur oleh firestore.rules.
   firebaseSdkVersion: '12.4.0',
   firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: ''
+    apiKey: 'AIzaSyA9LlK2NpjQyBdzDRR5teuytGx1AntZ8yI',
+    authDomain: 'ppapi-web.firebaseapp.com',
+    projectId: 'ppapi-web',
+    storageBucket: 'ppapi-web.firebasestorage.app',
+    messagingSenderId: '388518323652',
+    appId: '1:388518323652:web:d8d1941b3aca203f1f3091'
   },
   // (Opsional, Mode Firebase) Kunci situs reCAPTCHA v3 untuk Firebase App Check, agar
   // kiriman otomatis (bot) ditolak. Kosong = tidak dipakai. Lihat README.md bagian 7.

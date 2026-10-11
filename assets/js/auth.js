@@ -669,7 +669,7 @@
       var auth = fb.auth();
       auth.languageCode = 'id';
       var db = fb.firestore();
-      try { db.settings({ ignoreUndefinedProperties: true }); } catch (e) { /* settings already applied */ }
+      try { db.settings({ ignoreUndefinedProperties: true, merge: true }); } catch (e) { /* settings already applied */ }
       FB = { fb: fb, app: app, auth: auth, db: db };
       return new Promise(function (resolve) {
         var first = true;
