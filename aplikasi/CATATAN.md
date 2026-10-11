@@ -143,7 +143,7 @@ Judul PDF kini "LAPORAN PERENCANAAN & INSPEKSI PERANCAH" (isinya mencakup perenc
 
 ### 4.6 Tampilan & aksesibilitas
 
-- Identitas visual aplikasi (kuning hazard, huruf Oswald) **dipertahankan**; warna verdict HIJAU/KUNING/MERAH adalah semantik keselamatan (konvensi scafftag).
+- Identitas visual aplikasi (kuning hazard, huruf Oswald) **dipertahankan** pada v2.2.0–v2.4.0; **sejak 11 Oktober 2026 diganti** dengan tema situs PPAPI (lihat bagian 4.8). Warna verdict HIJAU/KUNING/MERAH tetap: semantik keselamatan (konvensi scafftag).
 - **Integrasi portal (v2.4.0).** Di dalam portal (`html.app-gate-ok`), baris merek aplikasi (logo, "PPAPI Scaffold", subjudul) disembunyikan secara visual karena judul sudah ada di bilah portal; `h1` tetap tersedia bagi pembaca layar. "Tersimpan HH.MM" dan chip status pindah ke bilah menu. Pita hazard dimulai setelah garis `--pp-metal-line` 1 px. Bilah menu berlatar grafit dan sejajar dengan tepi kartu. Chrome di atas kartu pertama: **108 px** di desktop 1440 (sebelumnya ±180 px) dan **99 px** di ponsel 390 (sebelumnya ±210 px). Chip status di bilah menu menunjukkan status akhir (checklist + analisis), sama dengan tag; chip progres di Checklist tetap hasil checklist saja.
 - Tombol mengambang **Simulator 3D** berada di dalam `<aside aria-label="Pintasan aplikasi">` (axe `region`: 0 pelanggaran).
 - Kontras disesuaikan agar memenuhi WCAG AA tanpa mengubah makna: hijau status `#1f9d57 → #17824a`, teks abu `#697079 → #5b636c`, judul kecil kuning di atas putih menjadi kuning tua `#8a6a00`, teks di atas latar KUNING berwarna gelap. Warna di dalam PDF tidak diubah.
@@ -173,6 +173,25 @@ Rincian teknis, sumber, dan contoh numerik ada di `KOREKSI-PERHITUNGAN.md` §19.
 | Perancah berikat | Isian **Perancah diikat ke bangunan** (Tahap 3); H ≤ 3B diganti INFO tie wajib didesain | `analisisData()` |
 
 Data tersimpan v2.4.0 memakai `v:4`; data v1–v3 tetap dapat dimuat.
+
+### 4.8 Penyelarasan tampilan dengan tema situs (11 Oktober 2026)
+
+Arahan klien: *"ubah user interface aplikasi (simulator pemasangan dan perhitungan beban) agar selaras dengan tema website."* Aplikasi perencanaan kini memakai bahasa visual situs PPAPI (`SPEC.md` §1): monokrom hitam–grafit–baja–perak–tulang–putih, **Cormorant Garamond** untuk judul (dengan kata penekanan miring, mis. "Inspeksi *Keandalan*"), **Barlow Condensed** untuk label/eyebrow/tombol kapital berjarak, **Inter** untuk teks; garis rambut 1 px, sudut 2–4 px, simpul coupler pada eyebrow, bidang gelap (hero, spanduk status, pita menu, footer) bergantian dengan kartu putih di atas kertas. Rumus, konstanta, data, isi checklist, kunci penyimpanan, dan penandaan Beta **tidak diubah**.
+
+**Yang diubah**
+
+- `perencanaan/app.css` ditulis ulang. Nama kelas lama (`.card`, `.btn-pri`, `.ab`, `.find`, `.tag-*`, …) dipertahankan karena dirujuk `app.js`; hanya tampilannya yang baru. Token lama yang masih dirujuk (`--ink`, `--steel`, `--mute`, `--line`, `--grey-bg`, `--green`, `--amber`, `--red`) didefinisikan ulang dengan nilai tema situs. Aplikasi tetap **tidak memuat** `assets/css/main.css` (selektor umum lama akan bentrok); token dan pola komponen situs disalin ke `app.css`.
+- Pita hazard kuning (atas, hero, bawah), aksen kuning, dan huruf Oswald dihapus. Tombol utama: tinta di atas terang / tulang di atas gelap (pola `.btn--primary`), tombol sekunder: garis rambut (`.btn--ghost`) dengan isian geser saat hover. Tombol mengambang **Simulator 3D** menjadi pil gelap bergaris rambut tanpa animasi pendar.
+- **Warna hanya untuk status keselamatan** dan diredam agar AA: HIJAU `#3d7a52`, KUNING `#c99a2e` (teks tinta), MERAH `#b5443a`, belum lengkap `#5c5c63`. Dipakai pada lencana/chip status, tombol jawaban terpilih, garis kiri baris checklist dan kartu temuan, indikator skor, serta **pita scaffold tag yang tetap berwarna penuh** (sinyal keselamatan, ikut tercetak). Spanduk status (`.verdict-banner`) dan kotak status analisis (`.abox`) kini bidang grafit/putih dengan ikon, garis atas, dan label berwarna status; warnanya dikirim `app.js` lewat variabel CSS `--vc`/`--vi` (bukan `background` inline). Kelompok pemeriksaan analisis (STR/STA/RIG) dan kotak "Info" editor gambar menjadi monokrom karena bukan status.
+- `index.html`: tautan Google Fonts disamakan dengan situs; `<em>` pada judul; chip model, keterangan kolom, dan log admin memakai kelas (bukan gaya inline); logo kartu "Tentang PPAPI" memakai `logo-mono-dark-sm.webp`; penyempurnaan istilah pada teks statis yang disentuh ("verdict" → "hasil penilaian", "item" → "butir"); kunci status/kategori dan teks yang dihasilkan `app.js` tidak diubah.
+- Scaffold tag (pratinjau & cetak) dan kepala PDF memakai logo monokrom situs `logo-light.png`/`-sm.webp` (cadangan: logo base64 lama bila berkas tidak dapat dimuat). PDF: kepala hitam dengan garis perak (pita hazard dihapus), warna teks/garis mengikuti palet situs, warna status diredam sama seperti di layar.
+- Editor gambar: titik kuning pada klem menjadi perak, bracing diagonal abu baja (tetap terbedakan dari pipa lurus); warna teknis gambar lainnya (tangga, dimensi, papan) tidak diubah.
+- Bilah portal (`gate.css`/`gate.js`) tidak diubah — sudah bergaya header situs dan dipakai bersama simulator.
+
+**Pengujian**
+
+- `node devtools/flows/aplikasi-perencanaan-retheme.mjs` (cwd `devtools`): membuka beranda, menu tahap, sembilan tahap, Tentang, Admin, modal konteks editor gambar, daftar periksa terjawab, laporan + pratinjau tag di desktop 1440 dan ponsel 390; memeriksa tidak ada hazard/Oswald/kuning, keluarga huruf, kontras chip status, chrome ≤ 110/100 px, fokus keyboard, overflow mendatar, dan tombol simulator. Tangkapan: `devtools/shots/retheme-pr-*.png`.
+- `aplikasi-flow.mjs` (C8) dan `aplikasi-perencanaan-temuan.mjs` (F2, F4) diperbarui: pita hazard tidak ada lagi, pita menu berlatar tinta dengan garis rambut, pembungkus `<aside>` tombol simulator yang `position: fixed`. Asersi perhitungan tidak disentuh.
 
 ## 5. Simulator Pemasangan Perancah Tube & Coupler
 

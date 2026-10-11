@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&amp;family=Inter:wght@400;500;600;700&amp;family=Oswald:wght@500;600;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap">
 <link rel="stylesheet" href="../gate.css">
 <link rel="stylesheet" href="app.css">
 </head>
@@ -24,7 +24,6 @@
   <p class="app-gate__msg" id="app-gate-msg">Memverifikasi status keanggotaan…</p>
   <noscript><p class="app-gate__msg">Aplikasi ini memerlukan JavaScript. Aktifkan JavaScript pada peramban Anda.</p></noscript>
 </div>
-<div class="hazard hazard--top"></div>
 <header>
   <div class="head-in">
     <div class="logo"><img id="brand-logo" alt="PPAPI" width="103" height="36"></div>
@@ -72,12 +71,11 @@
   <!-- BERANDA -->
   <section class="view active" id="v-beranda">
     <div class="hero">
-      <div class="hazard"></div>
       <div class="hero-body">
-        <div class="eyebrow" style="color:var(--hz)">PPAPI · Perkumpulan Praktisi &amp; Ahli Perancah Indonesia</div>
-        <h2>Inspeksi <span>Keandalan</span><br>Perancah Tubular</h2>
+        <div class="eyebrow">PPAPI · Perkumpulan Praktisi &amp; Ahli Perancah Indonesia</div>
+        <h2>Inspeksi <em>Keandalan</em><br>Perancah Tubular</h2>
         <p class="hero-beta"><span class="beta-pill beta-pill--dark">Versi Beta</span> Metode perhitungan telah dikoreksi dan sedang ditinjau Komite Teknis PPAPI.</p>
-        <p>Perencanaan, analisis struktur indikatif, dan lembar periksa terstruktur berbasis elemen untuk perancah tube &amp; coupler. Metode perhitungan mengacu BS EN 12811-1, EN 1993-1-1, BS EN 74-1, NASC TG20:21, dan kelas beban AS/NZS 1576.1:2019; rujukan pada butir checklist masih historis dan menunggu pemetaan ulang Komite Teknis PPAPI. Verdict otomatis tiga warna menentukan kelayakan pakai.</p>
+        <p>Perencanaan, analisis struktur indikatif, dan lembar periksa terstruktur berbasis elemen untuk perancah tube &amp; coupler. Metode perhitungan mengacu BS EN 12811-1, EN 1993-1-1, BS EN 74-1, NASC TG20:21, dan kelas beban AS/NZS 1576.1:2019; rujukan pada butir checklist masih historis dan menunggu pemetaan ulang Komite Teknis PPAPI. Hasil penilaian otomatis tiga warna menentukan kelayakan pakai.</p>
         <div class="btn-row">
           <button type="button" class="btn btn-pri" onclick="go('proyek')">Mulai Perencanaan →</button>
           <button type="button" class="btn btn-ghost" onclick="go('checklist')">Langsung ke Checklist</button>
@@ -86,25 +84,25 @@
       </div>
     </div>
     <div class="card">
-      <div class="eyebrow">Sistem Verdict</div>
-      <h2 class="sec">Tiga Warna Kelayakan</h2>
+      <div class="eyebrow">Sistem Hasil Penilaian</div>
+      <h2 class="sec">Tiga Warna <em>Kelayakan</em></h2>
       <div class="legend">
-        <div class="lg g"><b>HIJAU — Aman</b><p>Seluruh item sesuai. Perancah layak dan aman digunakan.</p></div>
-        <div class="lg y"><b>KUNING — Bersyarat</b><p>Item kritis lolos, namun ada temuan non-kritis. Perbaiki dulu sebelum dipakai penuh.</p></div>
-        <div class="lg r"><b>MERAH — Tidak Aman</b><p>Ada item <b>kritis</b> gagal. Dilarang digunakan sampai diperbaiki &amp; diperiksa ulang.</p></div>
+        <div class="lg g"><b>HIJAU — Aman</b><p>Seluruh butir sesuai. Perancah layak dan aman digunakan.</p></div>
+        <div class="lg y"><b>KUNING — Bersyarat</b><p>Butir kritis lolos, namun ada temuan non-kritis. Perbaiki dulu sebelum dipakai penuh.</p></div>
+        <div class="lg r"><b>MERAH — Tidak Aman</b><p>Ada butir <b>kritis</b> gagal. Dilarang digunakan sampai diperbaiki &amp; diperiksa ulang.</p></div>
       </div>
-      <p class="note">Logika: <b>1 item kritis gagal → MERAH</b>. Semua kritis lolos tapi ada non-kritis gagal → KUNING. Semua item sesuai → HIJAU.</p>
+      <p class="note">Logika: <b>1 butir kritis gagal → MERAH</b>. Semua butir kritis lolos tetapi ada butir non-kritis gagal → KUNING. Semua butir sesuai → HIJAU.</p>
     </div>
     <div class="card">
       <div class="eyebrow">Cakupan</div>
-      <h2 class="sec">10 Kategori Pemeriksaan</h2>
-      <p class="lead">Disusun berbasis elemen (bukan zona) sehingga tidak ada item ganda. Pemeriksaan klem kini menjadi kategori tersendiri: <b>Coupler / Sambungan Klem</b>.</p>
+      <h2 class="sec">10 Kategori <em>Pemeriksaan</em></h2>
+      <p class="lead">Disusun berbasis elemen (bukan zona) sehingga tidak ada butir ganda. Pemeriksaan klem kini menjadi kategori tersendiri: <b>Coupler / Sambungan Klem</b>.</p>
       <div class="chips" id="cat-chips"></div>
       <p class="note" id="cat-summary"></p>
     </div>
     <div class="card">
       <div class="eyebrow">Alur Kerja</div>
-      <h2 class="sec">9 Tahap Perencanaan Perancah</h2>
+      <h2 class="sec">9 Tahap <em>Perencanaan</em> Perancah</h2>
       <p class="lead">Ikuti alur perencanaan dari kiri ke kanan. Klik tahap untuk langsung menuju halamannya.</p>
       <div class="steps8">
         <button type="button" onclick="go('proyek')"><b>1</b>Data Proyek</button>
@@ -122,7 +120,7 @@
       <div class="eyebrow">Organisasi</div>
       <h2 class="sec">Tentang PPAPI</h2>
       <div class="about-grid">
-        <div style="flex:0 0 auto"><img id="about-logo" alt="Logo PPAPI" width="201" height="70" style="height:70px;width:auto;display:block"></div>
+        <div style="flex:0 0 auto"><img id="about-logo" src="../../assets/img/logo-mono-dark-sm.webp" alt="Logo PPAPI" width="201" height="70" style="height:70px;width:auto;display:block"></div>
         <div style="flex:1;min-width:240px">
           <p class="lead" style="margin-bottom:8px"><b>Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)</b> adalah wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia.</p>
           <p class="lead">PPAPI mendorong peningkatan kompetensi tenaga kerja perancah, penerapan keselamatan kerja (K3), serta praktik pemasangan dan inspeksi yang sesuai regulasi nasional (antara lain Permenakertrans PER.01/MEN/1980, Permenaker 9/2016, dan Kepmenaker 46/2022) maupun pedoman internasional (BS EN 12811-1, BS EN 74-1, AS/NZS 1576, NASC TG20). Aplikasi inspeksi ini bagian dari upaya tersebut: menstandarkan penilaian keandalan perancah sehingga setiap struktur dinyatakan AMAN, BERSYARAT, atau TIDAK AMAN berdasarkan kriteria yang jelas dan terdokumentasi.</p>
@@ -132,7 +130,7 @@
     </div>
     <div class="card">
       <div class="eyebrow">Edukasi</div>
-      <h2 class="sec">Jenis Perancah &amp; Perbandingannya</h2>
+      <h2 class="sec">Jenis Perancah &amp; <em>Perbandingannya</em></h2>
       <p class="lead">Tiga jenis perancah yang umum dipakai, beserta fungsi serta kelebihan dan kekurangannya. <b>Aplikasi ini saat ini berfokus pada perancah tubular</b>; frame dan modular memiliki standarisasi dan teknik perhitungan yang berbeda sehingga akan ditangani terpisah.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:10px">
         <div class="tcard">
@@ -162,12 +160,12 @@
     <div id="banner-proyek"></div>
     <div class="card">
       <div class="eyebrow">Identitas</div>
-      <h2 class="sec">Data Proyek &amp; Perancah</h2>
+      <h2 class="sec">Data Proyek &amp; <em>Perancah</em></h2>
       <div class="grid2">
         <div class="field"><label for="f-proyek">Nama Proyek</label><input id="f-proyek" placeholder="mis. Pemeliharaan Tangki T-101"></div>
         <div class="field"><label for="f-lokasi">Lokasi / Area</label><input id="f-lokasi" placeholder="mis. Area Utilitas, Plant 2"></div>
         <div class="field"><label for="f-kontraktor">Kontraktor / Perusahaan</label><input id="f-kontraktor" placeholder="PT ..."></div>
-        <div class="field"><label for="f-jenis">Jenis Perancah</label><select id="f-jenis"><option>Tubular (Tube &amp; Coupler)</option></select><span style="font-size:10.5px;color:var(--mute)">Fokus aplikasi saat ini: tubular. Perancah frame dan modular memakai standar &amp; teknik perhitungan berbeda.</span></div>
+        <div class="field"><label for="f-jenis">Jenis Perancah</label><select id="f-jenis"><option>Tubular (Tube &amp; Coupler)</option></select><span class="field-help">Fokus aplikasi saat ini: tubular. Perancah frame dan modular memakai standar &amp; teknik perhitungan berbeda.</span></div>
         <div class="field"><label for="f-tinggi">Tinggi Perancah (m)</label><input id="f-tinggi" type="number" min="0" step="0.1" placeholder="mis. 12" aria-describedby="h-tinggi"><span class="field-help" id="h-tinggi">Tinggi platform kerja teratas dari landasan.</span></div>
         <div class="field"><label for="f-lift">Jumlah Lift</label><input id="f-lift" type="number" min="0" step="1" placeholder="mis. 6" aria-describedby="h-lift"><span class="field-help" id="h-lift">Dipakai analisis. Bila kosong, dihitung dari tinggi ÷ tinggi lift.</span></div>
         <div class="field"><label for="f-tag">Nomor Scaff Tag</label><input id="f-tag" placeholder="mis. SC-2026-014"></div>
@@ -176,7 +174,7 @@
         <div class="field"><label for="f-model">Model Perancah</label><select id="f-model"><option value="independent">Independent / Tower (berdiri di tanah)</option><option value="suspended">Suspended (hanging / spurs / needle)</option><option value="mobile">Mobile Scaffold (beroda castor)</option></select></div>
         <div class="field"><label for="f-tipe">Jenis Pemeriksaan</label><select id="f-tipe"><option>Pra-penggunaan (baru)</option><option>Berkala / mingguan</option><option>Setelah modifikasi</option><option>Setelah cuaca ekstrem</option></select></div>
       </div>
-      <h3 style="margin-top:16px">Dimensi Perancah <span style="font-weight:400;font-size:12px;color:var(--mute)">(dasar gambar rencana &amp; analisis)</span></h3>
+      <h3 style="margin-top:16px">Dimensi Perancah <span class="h-sub">(dasar gambar rencana &amp; analisis)</span></h3>
       <div class="grid2">
         <div class="field"><label for="f-nbay">Jumlah Bay (memanjang)</label><input id="f-nbay" type="number" min="1" step="1" value="3"></div>
         <div class="field"><label for="f-lbay">Panjang Bay (m)</label><input id="f-lbay" type="number" min="0.5" step="0.1" value="2.4"></div>
@@ -224,7 +222,7 @@
   <section class="view" id="v-laporan">
     <div class="card">
       <div class="eyebrow">Tahap 9</div>
-      <h2 class="sec">Laporan &amp; Tagging</h2>
+      <h2 class="sec">Laporan &amp; <em>Tagging</em></h2>
       <p class="lead">Ringkasan hasil, kesimpulan, scaffold tag, dan laporan PDF lengkap dalam satu halaman.</p>
     </div>
     <div id="ringkasan-root"></div>
@@ -236,8 +234,8 @@
     </div>
     <div class="card">
       <h2 class="sec">Scaffold Tag</h2>
-      <p class="lead">Tag dua sisi dibuat otomatis: warna dan status mengikuti verdict checklist, kelas beban dari analisis, identitas dari data proyek.</p>
-      <div class="btn-row"><button type="button" class="btn btn-pri" onclick="printTag()">⎙ Cetak Scaffold Tag</button></div>
+      <p class="lead">Tag dua sisi dibuat otomatis: warna dan status mengikuti hasil penilaian checklist, kelas beban dari analisis, identitas dari data proyek.</p>
+      <div class="btn-row"><button type="button" class="btn btn-pri" onclick="printTag()">Cetak Scaffold Tag</button></div>
       <div id="tag-preview"></div>
     </div>
     <div class="card">
@@ -245,10 +243,10 @@
       <h2 class="sec">Laporan Perancah</h2>
       <p class="lead">Laporan PDF lengkap: data proyek, beban hidup, duty &amp; stabilitas, material, analisis struktur, JSA, kesimpulan, gambar rencana, dan foto bukti.</p>
       <div class="btn-row">
-        <button type="button" class="btn btn-dark" data-pdf-btn onclick="buildPDF()">↓ Buat Laporan PDF</button>
-        <button type="button" class="btn btn-dark" onclick="exportJSON()">↓ Ekspor Data (.json)</button>
-        <button type="button" class="btn btn-ghost" onclick="document.getElementById('imp').click()">↑ Muat Data</button>
-        <button type="button" class="btn btn-ghost" onclick="resetAll()">↻ Proyek Baru</button>
+        <button type="button" class="btn btn-dark" data-pdf-btn onclick="buildPDF()">Buat Laporan PDF</button>
+        <button type="button" class="btn btn-ghost" onclick="exportJSON()">Ekspor Data (.json)</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('imp').click()">Muat Data</button>
+        <button type="button" class="btn btn-ghost" onclick="resetAll()">Proyek Baru</button>
         <input type="file" id="imp" accept="application/json,.json" style="display:none" aria-label="Pilih berkas data (.json)" onchange="importJSON(this)">
       </div>
     </div>
@@ -259,12 +257,12 @@
   <section class="view" id="v-duty">
     <div class="card">
       <div class="eyebrow">Tahap 3</div>
-      <h2 class="sec">Penetapan Kapasitas (Duty) &amp; Stabilitas</h2>
+      <h2 class="sec">Penetapan Kapasitas (Duty) &amp; <em>Stabilitas</em></h2>
       <p class="lead">Berdasarkan beban hidup Tahap 2, tetapkan kelas duty perancah lalu periksa aspek kestabilan sesuai model perancah (tiang bebas berdiri, rig gantung, atau menara beroda).</p>
       <div class="stats" id="duty-stats"></div>
     </div>
     <div class="card">
-      <h3>Model Perancah <span id="an-modelchip" style="font-family:Oswald;font-size:12px;background:var(--ink);color:var(--hz);border-radius:12px;padding:3px 12px;margin-left:8px;letter-spacing:.5px"></span></h3>
+      <h3>Model Perancah <span id="an-modelchip" class="model-chip"></span></h3>
       <p class="note" style="margin-top:4px">Model diatur pada Data Proyek. Parameter analisis menyesuaikan model: independent memeriksa tiang &amp; pondasi, suspended memeriksa tali &amp; counterweight, mobile memeriksa castor &amp; rasio H:B. Seluruh pemeriksaan memakai beban kerja tanpa faktor (dasar tegangan izin).</p>
       <div id="an-sus" style="display:none">
         <h3 style="margin-top:12px">Parameter Suspended (Rig Gantung)</h3>
@@ -323,7 +321,7 @@
   <section class="view" id="v-analisis">
     <div class="card">
       <div class="eyebrow">Tahap 6</div>
-      <h2 class="sec">Analisis Struktur Lainnya</h2>
+      <h2 class="sec">Analisis Struktur <em>Lainnya</em></h2>
       <p class="lead">Beban kerja setiap posisi tiang dihitung dari geometri proyek, lalu dibandingkan dengan kapasitas tekuk tiang (Perry–Robertson), daya dukung pondasi, dan kapasitas gelincir klem siku. Mengacu BS EN 12811-1:2003, EN 1993-1-1, BS EN 74-1, NASC TG20:21, dan AS/NZS 1576.1:2019.</p>
       <p class="basis-line"><b>Dasar keamanan tunggal (tegangan izin):</b> beban kerja tanpa faktor ≤ kapasitas izin = tahanan karakteristik ÷ (γ<sub>M</sub> 1,1 × γ<sub>F</sub> 1,5).</p>
       <div class="stats" id="an-dead"></div>
@@ -373,7 +371,7 @@
   <section class="view" id="v-beban">
     <div class="card">
       <div class="eyebrow">Tahap 2</div>
-      <h2 class="sec">Menetapkan Beban Hidup Perancah</h2>
+      <h2 class="sec">Menetapkan Beban <em>Hidup</em> Perancah</h2>
       <p class="lead">Beban hidup (live load) perancah mencakup <b>manpower</b>, <b>equipment &amp; machinery</b>, <b>material &amp; debris</b>, dan <b>impact force</b>. Isi estimasi untuk <b>satu bay yang paling berat dibebani</b> pada satu platform. Kelas duty dipilih dari bay terberat — bukan dari rata-rata seluruh bay — karena batas kelas duty berlaku per bay.</p>
       <div style="overflow-x:auto"><table class="an"><thead><tr><th style="width:22%">Sumber Beban</th><th style="width:40%">Keterangan</th><th>Input</th></tr></thead><tbody>
         <tr><td><b>Manpower</b></td><td class="tj2">Jumlah pekerja yang dapat berada bersamaan pada bay terberat. Berat rata-rata pekerja + APD + hand tools ringan sekitar 90 kg/orang.</td>
@@ -399,7 +397,7 @@
   <section class="view" id="v-material">
     <div class="card">
       <div class="eyebrow">Tahap 5</div>
-      <h2 class="sec">Kebutuhan Material, Gross Load &amp; Self Weight</h2>
+      <h2 class="sec">Kebutuhan Material, Gross Load &amp; <em>Self Weight</em></h2>
       <p class="lead">Estimasi otomatis dihitung dari geometri Data Proyek (bay, lift, lift berpapan, transom antara) dan jenis pipa yang dipilih (48,3 × 4,0 mm ≈ 4,37 kg/m atau 48,3 × 3,2 mm ≈ 3,56 kg/m), dan diperbarui sendiri saat geometri berubah. Sesuaikan jumlah dan berat dengan kondisi aktual. Rekap ini dipakai untuk gross load, tali (suspended), dan castor (mobile); untuk tali dan castor dipakai beban mati terbesar dari rincian ini dan estimasi geometri. Beban tiang model independent dihitung per posisi tiang di Tahap 6.</p>
       <div class="btn-row"><button type="button" class="btn btn-pri" onclick="autoMaterial()">Estimasi Otomatis dari Dimensi</button><button type="button" class="btn btn-ghost" onclick="go('proyek')">Ubah Dimensi</button></div>
       <div class="stats" id="mat-stats" style="margin:10px 0 4px"></div>
@@ -439,7 +437,7 @@
   <section class="view" id="v-gambar">
     <div class="card">
       <div class="eyebrow">Tahap 4</div>
-      <h2 class="sec">Editor Gambar Rencana (Drag &amp; Drop)</h2>
+      <h2 class="sec">Editor Gambar <em>Rencana</em></h2>
       <p class="lead">Susun sendiri gambar rencana perancah: pilih komponen pada panel kanan, klik kanvas untuk meletakkan, seret untuk memindah, dan putar sesuai kebutuhan. Sistem memeriksa kaidah pemasangan secara otomatis saat menggambar.</p>
       <div class="dwg-sheettabs" id="dwg-sheettabs">
         <button type="button" class="sheet-btn active" data-sheet="depan">Tampak Depan</button>
@@ -470,7 +468,7 @@
           </div>
         </div>
         <div class="dwg-palette" id="dwg-palette-box">
-          <button type="button" class="btn btn-dark" style="width:100%;margin-bottom:9px" onclick="dwgToggleFS()">⛶ Layar Penuh / Keluar (F)</button>
+          <button type="button" class="btn btn-dark" onclick="dwgToggleFS()">Layar Penuh / Keluar (F)</button>
           <div class="pal-t">Pipa</div>
           <div class="pal-row" id="pal-pipa"></div>
           <div class="pal-t">Coupler</div>
@@ -501,7 +499,7 @@
         </div>
       </div>
       <div id="dwg-warn" style="margin:12px 0"></div>
-      <div class="btn-row"><button type="button" class="btn btn-dark" onclick="dwgToggleFS()">⛶ Mode Layar Penuh (F)</button><button type="button" class="btn btn-pri" onclick="go('material')">Lanjut ke Material →</button></div>
+      <div class="btn-row"><button type="button" class="btn btn-ghost" onclick="dwgToggleFS()">Mode Layar Penuh (F)</button><button type="button" class="btn btn-pri" onclick="go('material')">Lanjut ke Material →</button></div>
       <p class="note">Area kerja 96 x 50 m (mendukung perancah hingga 45 m ke atas). Grid adaptif: 25 cm saat diperbesar, 1 m / 5 m saat diperkecil. Garis tebal bawah adalah tanah/landasan (tampak depan dan samping). Overhang ujung pipa minimal 15 cm dari tumpuan terluar. Gambar tersimpan otomatis per akun dan ikut saat Simpan Proyek.</p>
     </div>
     <div class="card">
@@ -582,14 +580,13 @@
     <div class="card">
       <div class="eyebrow">Aktivitas</div>
       <h2 class="sec">Log Aktivitas Terakhir</h2>
-      <div id="adm-log" style="font-size:12.5px;color:var(--steel)"></div>
+      <div id="adm-log" class="adm-log"></div>
     </div>
   </section>
 
   <!-- LAPORAN & TAG -->
 
 </main>
-<div class="hazard"></div>
 <footer>PPAPI Scaffold v2.4 (Beta) · Aplikasi anggota PPAPI · Dikembangkan oleh mrezahuzain@2026 · Metode perhitungan mengacu BS EN 12811-1 / EN 1993-1-1 / BS EN 74-1 / NASC TG20:21 / AS/NZS 1576.1 · Hasil perhitungan bersifat indikatif dan wajib diverifikasi ahli perancah yang kompeten</footer>
 <div id="print-tag-area"></div>
 <aside class="fab-wrap" aria-label="Pintasan aplikasi">

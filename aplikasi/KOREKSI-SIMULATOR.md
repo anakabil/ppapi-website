@@ -293,6 +293,8 @@ Butir B1–B13 dari analisis sudah diperbaiki saat porting (`CATATAN.md` §5.2) 
 | Notifikasi | di tengah jendela (menimpa panel pada tablet/lanskap) | di tengah area adegan |
 | Label "Bongkar 1 tahap" | terbungkus dua baris | "↶ Bongkar" (label aksesibel: "Bongkar satu tahap") |
 | Cara pemeriksaan (revisi 2) | panel menyiratkan semua butir "diukur" | setiap butir menampilkan cara pemeriksaannya; catatan panel menyebut jumlah butir yang diukur dan yang diperiksa |
+| Tema antarmuka (11 Oktober 2026) | kerangka terang terpisah dari tema situs | kerangka diselaraskan dengan tema situs PPAPI: adegan 3D berlatar grafit/baja (lantai, kisi, dan lampu studio netral), panel kertas, tipografi dan tombol situs. **Hanya tampilan**: geometri, urutan 20 tahap, warna fungsional di adegan (pita klem, tag merah/hijau, garis alat ukur, sorotan komponen berikutnya), dan mesin inspeksi tidak berubah — `aplikasi-simulator-flow` 98/98 dan `fix-sim-verify` 69/69 lulus ulang |
+| Pesan cadangan | tombol "Muat ulang halaman" ikut tampil pada pesan tanpa WebGL walau `hidden` (gaya `.btn` menimpa atribut) | tombol hanya tampil bila berguna (pustaka gagal dimuat / gagal mulai); pesan bergaya `.alert` situs |
 
 ---
 

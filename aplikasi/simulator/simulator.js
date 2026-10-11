@@ -214,15 +214,17 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.shadowMap.autoUpdate = false;               /* bayangan hanya dihitung ulang saat isi adegan berubah */
 container.insertBefore(renderer.domElement, container.firstChild);
 
+/* Latar studio grafit/baja (selaras dengan hero gelap situs; nilai = --sim-stage di simulator.css).
+   Warna fungsional di dalam adegan (pita klem, tag, alat ukur, sorotan) tidak diubah. */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xEDEDEB);
-scene.fog = new THREE.Fog(0xEDEDEB, 16, 38);
+scene.background = new THREE.Color(0x202024);
+scene.fog = new THREE.Fog(0x202024, 12, 36);        /* tepi cakram lantai lebur ke latar */
 
 const camera = new THREE.PerspectiveCamera(45, Math.max(1,container.clientWidth)/Math.max(1,container.clientHeight), 0.1, 200);
 
-/* ---------- lights ---------- */
-scene.add(new THREE.HemisphereLight(0xf2f6f8, 0x93a0a9, 0.85));
-const key = new THREE.DirectionalLight(0xfff4e0, 1.15);
+/* ---------- lights: cahaya studio netral (langit tulang, pantulan lantai baja) ---------- */
+scene.add(new THREE.HemisphereLight(0xf4f4f2, 0x5c5c63, 0.95));
+const key = new THREE.DirectionalLight(0xfff8ee, 1.25);
 key.position.set(6, 11, 5);
 key.castShadow = true;
 key.shadow.mapSize.set(IS_PHONE?1024:2048, IS_PHONE?1024:2048);
@@ -231,26 +233,26 @@ key.shadow.camera.left=-9; key.shadow.camera.right=9;
 key.shadow.camera.top=9; key.shadow.camera.bottom=-9;
 key.shadow.bias=-0.0004; key.shadow.normalBias=0.02;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0x9fc0e0, 0.45); fill.position.set(-7,5,-4); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(-3,6,-9); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xc8ccd4, 0.5); fill.position.set(-7,5,-4); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.55); rim.position.set(-3,6,-9); scene.add(rim);
 
-/* ---------- ground + grid ---------- */
+/* ---------- ground + grid: cakram lantai baja gelap dengan kisi perak samar ---------- */
 const ground = new THREE.Group(); scene.add(ground);
-const floorMat = new THREE.MeshStandardMaterial({color:0xD3D3D0, roughness:.97, metalness:0});
-const floor = new THREE.Mesh(new THREE.CircleGeometry(22,64), floorMat);
+const floorMat = new THREE.MeshStandardMaterial({color:0x2c2c31, roughness:.96, metalness:.05});
+const floor = new THREE.Mesh(new THREE.CircleGeometry(36,72), floorMat);
 floor.rotation.x = -Math.PI/2; floor.position.y = -0.05; floor.receiveShadow = true;
 ground.add(floor);
-const grid = new THREE.GridHelper(30, 60, 0x8B8B92, 0xB9B9BF);
-grid.position.y = -0.04; grid.material.opacity = .5; grid.material.transparent = true;
+const grid = new THREE.GridHelper(40, 80, 0x8B8B92, 0x5C5C63);
+grid.position.y = -0.04; grid.material.opacity = .32; grid.material.transparent = true;
 ground.add(grid);
 
 /* pedestal for coupler library */
 const pedestal = new THREE.Group(); scene.add(pedestal);
 const pedDisc = new THREE.Mesh(new THREE.CylinderGeometry(1.55,1.7,0.12,64),
-  new THREE.MeshStandardMaterial({color:0xDCDCDF, roughness:.85, metalness:.1}));
+  new THREE.MeshStandardMaterial({color:0x050506, roughness:.95, metalness:0}));   /* warna material tidak dilinierkan (r128) dan dicerahkan output sRGB: tampak ±#4a4a50 di bawah lampu */
 pedDisc.position.y=-0.06; pedDisc.receiveShadow=true; pedestal.add(pedDisc);
 const pedRing = new THREE.Mesh(new THREE.TorusGeometry(1.5,0.02,8,80),
-  new THREE.MeshStandardMaterial({color:0x5C5C63, emissive:0x26262A, emissiveIntensity:.3, metalness:.3, roughness:.5}));
+  new THREE.MeshStandardMaterial({color:0xb9b9bf, emissive:0x8b8b92, emissiveIntensity:.35, metalness:.6, roughness:.4}));
 pedRing.rotation.x=Math.PI/2; pedRing.position.y=0.01; pedestal.add(pedRing);
 pedestal.visible=false;
 
