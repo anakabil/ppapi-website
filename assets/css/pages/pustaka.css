@@ -41,18 +41,19 @@ body[data-page="pustaka"] .pk-tile__icon {
 }
 body[data-page="pustaka"] .pk-tile:hover .pk-tile__icon { background: var(--text); color: var(--bg); border-color: var(--text); }
 body[data-page="pustaka"] .pk-tile__num {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 4px; margin-top: clamp(22px, 3vw, 36px);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-top: clamp(22px, 3vw, 36px);
   font: 500 clamp(2.6rem, 4vw, 3.5rem)/1 var(--f-cond); letter-spacing: -.01em;
   font-variant-numeric: tabular-nums lining-nums; color: var(--text-strong);
 }
 body[data-page="pustaka"] .pk-tile__num small {
-  margin-left: 4px; font: 600 .7rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+  font: 600 .7rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
 }
 /* all items in the drawer are samples → the same Contoh mark the cards carry */
-body[data-page="pustaka"] .pk-tile__num .badge { align-self: center; margin-left: 8px; min-height: 20px; padding: 1px 7px; letter-spacing: .18em; }
-/* mixed drawer (Standar): what the count is made of */
+/* spacing comes from the flex gap only, so a badge that wraps on a narrow tile starts flush left */
+body[data-page="pustaka"] .pk-tile__num .badge { align-self: baseline; min-height: 20px; padding: 1px 7px; letter-spacing: .18em; }
+/* mixed drawer (Standar): what the count is made of — under the name, so the names stay level across a row */
 body[data-page="pustaka"] .pk-tile__split {
-  display: block; margin-top: 10px;
+  display: block; margin-top: 6px;
   font: 600 .66rem/1.45 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
 }
 body[data-page="pustaka"] .pk-tile__name {
@@ -170,13 +171,16 @@ body[data-page="pustaka"] .pk-view .segmented__option { flex: 1 1 0; padding: 0 
   body[data-page="pustaka"] .pk-toolbar { gap: 18px; padding: 20px; }
   body[data-page="pustaka"] .pk-toolbar__top { display: flex; align-items: flex-end; gap: 10px; }
   body[data-page="pustaka"] .pk-toolbar__search { flex: 1 1 auto; min-width: 0; }
-  body[data-page="pustaka"] .pk-toolbar__toggle { flex: none; gap: 8px; padding: 0 14px; letter-spacing: .14em; border-color: var(--field-border); background: var(--field-bg); }
+  body[data-page="pustaka"] .pk-toolbar__toggle { flex: none; gap: 8px; padding: 0 20px 0 14px; letter-spacing: .14em; border-color: var(--field-border); background: var(--field-bg); }
   body[data-page="pustaka"] .pk-toolbar__toggle[aria-expanded="true"] { border-color: var(--text); }
+  /* active-settings count sits in the button's corner, so the search field keeps its width */
   body[data-page="pustaka"] .pk-toolbar__n {
-    display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-left: -2px;
-    font: 600 .7rem/1 var(--f-cond); letter-spacing: 0; color: var(--bg); background: var(--text); border-radius: 10px;
+    position: absolute; top: 3px; right: 3px;
+    display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px;
+    font: 600 .62rem/1 var(--f-cond); letter-spacing: 0; color: var(--bg); background: var(--text); border-radius: 8px;
   }
   body[data-page="pustaka"] .pk-toolbar__n[hidden] { display: none; }
+  body[data-page="pustaka"] .pk-toolbar__toggle:hover .pk-toolbar__n { color: var(--text); background: var(--bg); }
   body[data-page="pustaka"] .pk-toolbar__saring { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body[data-page="pustaka"] .pk-toolbar__saring > .pk-viewset { grid-column: 1 / -1; }
   body[data-page="pustaka"] .pk-toolbar:not(.is-saring-open) .pk-toolbar__saring { display: none; }
@@ -190,6 +194,14 @@ body[data-page="pustaka"] .pk-view .segmented__option { flex: 1 1 0; padding: 0 
 }
 @media (max-width: 479px) {
   body[data-page="pustaka"] .pk-toolbar__saring { grid-template-columns: minmax(0, 1fr); }
+}
+/* < 400px: "Saring" becomes a 48 px icon button (name kept for screen readers) so the search field keeps room
+   for its placeholder ("Kata kunci") and the typed query */
+@media (max-width: 399px) {
+  body[data-page="pustaka"] .pk-toolbar__toggle { width: 48px; padding: 0; justify-content: center; }
+  body[data-page="pustaka"] .pk-toolbar__label {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
 }
 
 /* ---------- summary line ---------- */
@@ -401,6 +413,9 @@ body[data-page="pustaka"] .pk-cta__actions { display: flex; flex-wrap: wrap; ali
 /* ==========================================================================
    Detail modal (appended to <body>)
    ========================================================================== */
+/* the dialog opens with focus on its title (reading starts there, not on "Tutup"); the title is not a
+   control, so like main:focus it shows no ring — the next Tab lands on the first action with the full ring */
+body[data-page="pustaka"] .pk-modal-root .modal__title[tabindex="-1"]:focus { outline: none; }
 body[data-page="pustaka"] .pk-modal { display: grid; gap: 22px; }
 body[data-page="pustaka"] .pk-modal > * + * { margin-top: 0; }
 body[data-page="pustaka"] .pk-modal__badges { display: flex; flex-wrap: wrap; gap: 8px; }

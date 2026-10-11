@@ -74,7 +74,7 @@ PPAPI_DATA.organisasi = {
     { ikon: 'award', judul: 'Pengembangan Kompetensi', teks: 'Mendorong peningkatan kompetensi tenaga kerja perancah, dari teknisi dan supervisor hingga ahli perancah.' },
     { ikon: 'shield-check', judul: 'Keselamatan & K3', teks: 'Mendorong penerapan keselamatan dan kesehatan kerja (K3) pada setiap tahap pekerjaan perancah, dari perencanaan hingga pembongkaran.' },
     { ikon: 'scale', judul: 'Regulasi & Standar', teks: 'Pustaka peraturan perundang-undangan, SNI, dan standar internasional yang relevan, ringkas dan bertaut ke naskah resmi.' },
-    { ikon: 'compass', judul: 'Simulator & Analisis', teks: 'Aplikasi PPAPI Scaffold untuk simulasi 3D, perhitungan beban, analisis struktur, dan checklist inspeksi perancah.' },
+    { ikon: 'compass', judul: 'Aplikasi Anggota', teks: 'PPAPI Scaffold untuk perencanaan, analisis struktur, dan daftar periksa inspeksi, serta simulator pemasangan perancah tube & coupler bagi anggota berstatus Aktif.' },
     { ikon: 'id-card', judul: 'KTA Digital & Verifikasi', teks: 'Kartu Tanda Anggota digital dengan kode QR yang keabsahannya dapat diperiksa publik melalui situs ini.' },
     { ikon: 'users', judul: 'Jejaring Profesi', teks: 'Wadah profesi yang menghimpun teknisi, supervisor, dan ahli perancah di Indonesia.' }
   ],
@@ -128,7 +128,7 @@ PPAPI_DATA.organisasi = {
     { kelompok: 'keanggotaan', q: 'Kapan status keanggotaan saya menjadi Aktif?', a: 'Setelah formulir pendaftaran diajukan dan disetujui sekretariat. Selama diperiksa, status tercatat sebagai “Menunggu Verifikasi”; bila ada data yang perlu dilengkapi, status menjadi “Perlu Perbaikan” beserta catatan dari sekretariat. Setelah disetujui, status menjadi “Aktif” dan KTA digital terbit.' },
     { kelompok: 'keanggotaan', q: 'Fitur apa saja yang terbuka setelah keanggotaan Aktif?', a: 'Kartu Tanda Anggota (KTA) digital, Produk Pengetahuan (standar, Code of Practice, petunjuk teknis, modul pelatihan), serta aplikasi perencanaan dan simulator. Sebelum keanggotaan Aktif, akun dapat dipakai untuk mengisi formulir pendaftaran dan memantau statusnya.' },
     { kelompok: 'keanggotaan', q: 'Bagaimana pihak lain memeriksa keanggotaan saya?', a: 'Melalui halaman Verifikasi Anggota dengan memasukkan nomor KTA, atau dengan memindai kode QR pada KTA digital Anda.' },
-    { kelompok: 'keanggotaan', q: 'Bagaimana cara mengakses aplikasi perencanaan dan simulator?', a: 'Aplikasi PPAPI Scaffold (perencanaan & analisis struktur) dan Simulator Pemasangan Perancah Tube & Coupler tersedia di Dasbor dan Halaman Anggota bagi anggota berstatus Aktif. Cukup masuk dengan akun situs ini — tidak diperlukan akun terpisah.' },
+    { kelompok: 'keanggotaan', q: 'Bagaimana cara mengakses aplikasi perencanaan dan simulator?', a: 'Aplikasi PPAPI Scaffold (perencanaan & analisis struktur) dan Simulator Pemasangan Perancah Tube & Coupler tersedia di Dasbor dan Profil Anggota bagi anggota berstatus Aktif. Cukup masuk dengan akun situs ini — tidak diperlukan akun terpisah.' },
     { kelompok: 'keanggotaan', q: 'Apakah berkas sertifikat perlu diunggah?', a: 'Tidak. Situs ini menyimpan data sertifikat (judul, nomor, penerbit, masa berlaku) beserta tautan dokumen yang bersifat opsional, misalnya dari Google Drive.' }
   ],
 

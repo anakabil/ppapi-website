@@ -13,13 +13,22 @@ rules_version = '2';
 //                      pengajuan, atau mengajukan perpanjangan. Kolom yang
 //                      ditetapkan sekretariat (kta, kategori, masa berlaku,
 //                      persetujuan, catatan sekretariat, tanggal bergabung)
-//                      tidak dapat diubah anggota. Kolom email hanya boleh
-//                      berisi email akun yang sedang masuk (atau kosong).
+//                      tidak dapat diubah anggota. Selama pengajuan "Menunggu
+//                      Verifikasi", data yang diperiksa sekretariat (nama, HP,
+//                      foto, profil, kompetensi, sertifikat, formulir) terkunci.
+//                      Kolom email hanya boleh berisi email akun yang sedang
+//                      masuk DAN sudah terverifikasi (atau kosong). Waktu
+//                      pengajuan/pembaruan ditetapkan server (request.time).
 //                      Admin membaca/menulis semua.
+// • member_photos/{uid} Pas foto pemohon (data URL JPEG), terpisah dari data
+//                      anggota agar daftar anggota tetap ringan. Dibaca pemilik
+//                      dan admin; diubah pemilik hanya saat formulir boleh diubah.
 // • admins/{uid}       Daftar admin (sekretariat). Seseorang adalah admin bila
 //                      dokumen admins/{uid}-nya ada. Admin PERTAMA dibuat manual
 //                      di Firebase Console (README); berikutnya lewat Konsol Admin.
-// • registry/{kta}     Daftar verifikasi publik: dibaca siapa pun, ditulis admin.
+// • registry/{kta}     Daftar verifikasi publik: satu nomor KTA dibaca siapa pun;
+//                      pencarian dibatasi maksimal 20 hasil per permintaan
+//                      (tidak dapat diunduh sekaligus); ditulis admin.
 // • content_*/{id}     Berita, pengumuman, agenda, produk pengetahuan, regulasi
 //                      yang dikelola admin: dibaca siapa pun, ditulis admin.
 // • pustaka_files/{id} Tautan berkas KHUSUS ANGGOTA: dibaca admin atau anggota
@@ -57,6 +66,26 @@ service cloud.firestore {
 
     function optString(d, key, max) {
       return !(key in d) || d[key] == null || (d[key] is string && d[key].size() <= max);
+    }
+
+    // Teks (data lama) atau stempel waktu server (serverTimestamp).
+    function optStringOrTime(d, key, max) {
+      return optString(d, key, max) || d[key] is timestamp;
+    }
+
+    // Email akun yang sedang masuk dan sudah dibuktikan pemiliknya (tautan verifikasi
+    // email, atau akun Google). Email yang belum diverifikasi tidak dianggap milik akun.
+    function verifiedEmail(email) {
+      return signedIn()
+          && request.auth.token.get('email', '') != ''
+          && request.auth.token.get('email_verified', false) == true
+          && email == request.auth.token.email;
+    }
+
+    // Pas foto: data URL JPEG, maksimal ±120 KB.
+    function jpegDataUrl(s) {
+      return s is string && s.size() <= 164000
+          && s.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$');
     }
 
     function emptyOrMissing(d, key) {
@@ -108,21 +137,22 @@ service cloud.firestore {
     }
 
     // Formulir pendaftaran (application) — batas sama dengan store.js:
-    // pengalaman ≤ 10, dokumen ≤ 12, pas foto ≤ 120 KB (data URL JPEG/PNG/WebP), catatan ≤ 1.000.
+    // pengalaman ≤ 10, dokumen ≤ 12, catatan ≤ 1.000. Pas foto disimpan di
+    // member_photos/{uid} (pasFotoAda = ada/tidak); pasFoto di sini hanya untuk data lama
+    // (data URL JPEG ≤ 120 KB).
     function validApplication(a) {
       return a is map
           && a.keys().hasOnly([
                'type', 'kategori', 'submittedAt', 'updatedAt', 'pengalaman', 'dokumen',
-               'pasFoto', 'pembayaran', 'pernyataan', 'catatan'
+               'pasFoto', 'pasFotoAda', 'pembayaran', 'pernyataan', 'catatan'
              ])
           && (!('type' in a) || a.type in ['baru', 'perpanjangan'])
           && (!('kategori' in a) || a.kategori in ['', 'Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'])
-          && optString(a, 'submittedAt', 40) && optString(a, 'updatedAt', 40)
+          && optStringOrTime(a, 'submittedAt', 40) && optStringOrTime(a, 'updatedAt', 40)
           && (!('pengalaman' in a) || (a.pengalaman is list && a.pengalaman.size() <= 10))
           && (!('dokumen' in a) || (a.dokumen is list && a.dokumen.size() <= 12))
-          && (!('pasFoto' in a) || a.pasFoto == null || a.pasFoto == ''
-              || (a.pasFoto is string && a.pasFoto.size() <= 164000
-                  && a.pasFoto.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$')))
+          && (!('pasFoto' in a) || a.pasFoto == null || a.pasFoto == '' || jpegDataUrl(a.pasFoto))
+          && (!('pasFotoAda' in a) || a.pasFotoAda is bool)
           && (!('pembayaran' in a) || (a.pembayaran is map
               && a.pembayaran.keys().hasOnly(['metode', 'tanggal', 'buktiUrl'])
               && optString(a.pembayaran, 'metode', 60) && optString(a.pembayaran, 'tanggal', 10)
@@ -155,8 +185,8 @@ service cloud.firestore {
           && optString(d, 'validUntil', 10)
           && optString(d, 'approvedAt', 40)
           && optString(d, 'approvedBy', 128)
-          && optString(d, 'createdAt', 40)
-          && optString(d, 'updatedAt', 40)
+          && optStringOrTime(d, 'createdAt', 40)
+          && optStringOrTime(d, 'updatedAt', 40)
           && (!('profile' in d) || validProfile(d.profile))
           && (!('competencies' in d) || (d.competencies is list && d.competencies.size() <= 50))
           && (!('certificates' in d) || (d.certificates is list && d.certificates.size() <= 50))
@@ -167,18 +197,20 @@ service cloud.firestore {
 
     // Email/nomor HP pada data anggota baru harus sama dengan milik akun yang masuk
     // (atau kosong), sehingga sekretariat melihat kontak yang benar-benar terverifikasi.
+    // Email hanya diterima bila sudah diverifikasi pemiliknya: Konsol Admin menambahkan
+    // admin berdasarkan email, jadi alamat yang belum dibuktikan tidak boleh tercatat.
     function contactMatchesAccount(d) {
-      return (!('email' in d) || d.email == null || d.email == ''
-                || ('email' in request.auth.token && d.email == request.auth.token.email))
+      return (!('email' in d) || d.email == null || d.email == '' || verifiedEmail(d.email))
           && (!('phone' in d) || d.phone == null || d.phone == ''
                 || ('phone_number' in request.auth.token && d.phone == request.auth.token.phone_number));
     }
 
-    // Formulir sudah diajukan (application.submittedAt terisi).
+    // Formulir sudah diajukan (application.submittedAt terisi: waktu server, atau teks data lama).
     function submitted(d) {
       return 'application' in d && d.application is map
-          && 'submittedAt' in d.application && d.application.submittedAt is string
-          && d.application.submittedAt.size() > 0;
+          && 'submittedAt' in d.application
+          && (d.application.submittedAt is timestamp
+              || (d.application.submittedAt is string && d.application.submittedAt.size() > 0));
     }
 
     // Boleh mengajukan perpanjangan: Nonaktif, atau Aktif dengan masa berlaku yang
@@ -189,15 +221,33 @@ service cloud.firestore {
               && dateTs(m.validUntil) <= request.time + duration.value(61, 'd'));
     }
 
+    // Pengajuan lengkap (sama dengan store.applicationMissing untuk bagian yang dapat
+    // diperiksa aturan): kategori yang boleh diajukan (Kehormatan ditetapkan sekretariat,
+    // kecuali perpanjangan oleh pemegangnya), nama, ketiga pernyataan, dan nama terang.
+    function completeSubmission(before, after) {
+      let a = after.application;
+      let p = a.get('pernyataan', {});
+      let kategori = a.get('kategori', '');
+      return (kategori in ['Praktisi', 'Ahli', 'Mitra Korporat']
+                || (kategori != '' && kategori == before.get('memberType', '')
+                    && before.get('approvedAt', '') != ''))
+          && after.get('name', '') is string && after.get('name', '').size() >= 3
+          && p.get('kodeEtik', false) == true
+          && p.get('kebenaranData', false) == true
+          && p.get('privasi', false) == true
+          && p.get('namaTerang', '') is string && p.get('namaTerang', '').size() >= 3;
+    }
+
     // Perubahan status yang boleh dilakukan ANGGOTA sendiri:
-    //   Draf | Perlu Perbaikan | Ditolak  → Menunggu Verifikasi   (mengajukan formulir)
-    //   Aktif (habis/≤60 hari) | Nonaktif → Menunggu Verifikasi   (perpanjangan)
+    //   Draf | Perlu Perbaikan | Ditolak  → Menunggu Verifikasi   (mengajukan formulir lengkap)
+    //   Aktif (habis/≤60 hari) | Nonaktif → Menunggu Verifikasi   (perpanjangan, lengkap)
     //   Menunggu Verifikasi              → Draf                   (menarik pengajuan)
     function ownerTransition(before, after) {
       return (before.status in ['Draf', 'Perlu Perbaikan', 'Ditolak']
-                && after.status == 'Menunggu Verifikasi' && submitted(after))
+                && after.status == 'Menunggu Verifikasi' && submitted(after)
+                && completeSubmission(before, after))
           || (renewable(before) && after.status == 'Menunggu Verifikasi' && submitted(after)
-                && after.application.type == 'perpanjangan')
+                && after.application.type == 'perpanjangan' && completeSubmission(before, after))
           || (before.status == 'Menunggu Verifikasi' && after.status == 'Draf' && !submitted(after));
     }
 
@@ -208,13 +258,59 @@ service cloud.firestore {
           || (before.status == 'Menunggu Verifikasi' && (after.status == 'Draf' || !submitted(before)));
     }
 
-    // Email pada data anggota = email akun Firebase Authentication yang sedang masuk
-    // (request.auth.token.email) atau kosong. Konsol Admin menambahkan admin berdasarkan
-    // email, sehingga anggota tidak boleh mencantumkan email orang lain pada datanya.
+    // Email pada data anggota = email akun Firebase Authentication yang sedang masuk dan
+    // sudah terverifikasi, atau kosong. Konsol Admin menambahkan admin berdasarkan email,
+    // sehingga anggota tidak boleh mencantumkan email orang lain atau email yang belum
+    // dibuktikan kepemilikannya.
     function ownEmailOk(after, before) {
       return !after.diff(before).affectedKeys().hasAny(['email'])
           || !('email' in after) || after.email == null || after.email == ''
-          || ('email' in request.auth.token && after.email == request.auth.token.email);
+          || verifiedEmail(after.email);
+    }
+
+    // Selama "Menunggu Verifikasi", data yang sedang diperiksa sekretariat tidak berubah:
+    // nama, HP, foto profil, profil, kompetensi, dan sertifikat (formulir: applicationEditable).
+    // Menarik pengajuan (→ Draf) membuka kembali semuanya.
+    function reviewedDataKept(after, before) {
+      return before.status != 'Menunggu Verifikasi' || !submitted(before) || after.status == 'Draf'
+          || !after.diff(before).affectedKeys().hasAny([
+               'name', 'phone', 'photoURL', 'profile', 'competencies', 'certificates'
+             ]);
+    }
+
+    // Setelah keanggotaan pernah disetujui (approvedAt terisi), nama lengkap yang telah
+    // ditinjau sekretariat — dan tercantum pada KTA serta daftar verifikasi — tidak diubah
+    // oleh anggota sendiri; koreksi nama dilakukan sekretariat. Nama yang masih kosong
+    // (kurang dari 3 karakter) tetap boleh dilengkapi.
+    function identityKept(after, before) {
+      return before.get('approvedAt', '') == '' || before.get('approvedAt', '') == null
+          || !(before.get('name', '') is string) || before.get('name', '').size() < 3
+          || after.get('name', '') == before.get('name', '');
+    }
+
+    // Kategori yang diajukan anggota: Praktisi, Ahli, atau Mitra Korporat. Kategori lain
+    // (Kehormatan) hanya boleh tercantum bila sama dengan kategori resmi anggota
+    // (perpanjangan) atau tidak berubah dari data sebelumnya.
+    function kategoriAllowed(after, before) {
+      let k = after.get('application', {}).get('kategori', '');
+      return k in ['', 'Praktisi', 'Ahli', 'Mitra Korporat']
+          || k == before.get('memberType', '')
+          || k == before.get('application', {}).get('kategori', '');
+    }
+
+    // Waktu yang ditulis anggota = waktu server (FieldValue.serverTimestamp()): updatedAt,
+    // application.updatedAt, application.submittedAt (atau dikosongkan saat menarik
+    // pengajuan). Antrean verifikasi diurutkan menurut submittedAt, jadi nilainya tidak
+    // boleh dipilih sendiri.
+    function ownerTimesOk(after, before) {
+      let changed = after.diff(before).affectedKeys();
+      let a = after.get('application', {});
+      let b = before.get('application', {});
+      return (!changed.hasAny(['updatedAt']) || after.updatedAt == request.time)
+          && (!changed.hasAny(['application'])
+              || ((a.get('updatedAt', '') == b.get('updatedAt', '') || a.get('updatedAt', '') == request.time)
+                  && (a.get('submittedAt', '') == b.get('submittedAt', '') || a.get('submittedAt', '') == ''
+                      || a.get('submittedAt', '') == request.time)));
     }
 
     // Pembaruan oleh anggota: hanya kolom yang diizinkan; kolom sekretariat tetap.
@@ -225,6 +321,10 @@ service cloud.firestore {
                'certificates', 'application', 'status', 'updatedAt'
              ])
           && ownEmailOk(after, before)
+          && reviewedDataKept(after, before)
+          && identityKept(after, before)
+          && kategoriAllowed(after, before)
+          && ownerTimesOk(after, before)
           && (!after.diff(before).affectedKeys().hasAny(['status']) || ownerTransition(before, after))
           && (!after.diff(before).affectedKeys().hasAny(['application']) || applicationEditable(before, after));
     }
@@ -252,6 +352,8 @@ service cloud.firestore {
                                       || (request.resource.data.review.history is list
                                           && request.resource.data.review.history.size() == 0))))
                           && !submitted(request.resource.data)
+                          && request.resource.data.get('application', {}).get('kategori', '')
+                               in ['', 'Praktisi', 'Ahli', 'Mitra Korporat']
                           && isoDate(request.resource.data.joinedAt))
                     || (isAdmin() && validMember(request.resource.data, uid));
 
@@ -261,6 +363,30 @@ service cloud.firestore {
       // Data anggota tidak dihapus dari situs (penghapusan atas permintaan pemilik data
       // dilakukan sekretariat melalui Firebase Console).
       allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // member_photos/{uid} — pas foto pemohon { uid, data, updatedAt }
+    // Terpisah dari members/{uid} sehingga daftar anggota di Konsol Admin tidak ikut
+    // mengunduh foto setiap anggota. Pemilik hanya dapat mengubahnya selama formulir
+    // boleh diubah (tidak saat "Menunggu Verifikasi").
+    // ---------------------------------------------------------------------
+    function photoEditable(uid) {
+      let m = get(/databases/$(database)/documents/members/$(uid)).data;
+      return m.status in ['Draf', 'Perlu Perbaikan', 'Ditolak']
+          || renewable(m)
+          || (m.status == 'Menunggu Verifikasi' && !submitted(m));
+    }
+
+    match /member_photos/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if false;
+      allow create, update: if ((isOwner(uid) && photoEditable(uid)) || isAdmin())
+                            && request.resource.data.keys().hasOnly(['uid', 'data', 'updatedAt'])
+                            && request.resource.data.uid == uid
+                            && jpegDataUrl(request.resource.data.data)
+                            && request.resource.data.updatedAt == request.time;
+      allow delete: if (isOwner(uid) && photoEditable(uid)) || isAdmin();
     }
 
     // ---------------------------------------------------------------------
@@ -280,13 +406,17 @@ service cloud.firestore {
 
     // ---------------------------------------------------------------------
     // registry/{kta} — verifikasi publik (data terbatas saja)
+    // Satu nomor KTA dapat dibaca siapa pun. Pencarian (nama, awal nomor) hanya boleh
+    // meminta paling banyak 20 dokumen sekali jalan, sehingga daftar anggota tidak dapat
+    // diunduh sekaligus (sesuai kebijakan privasi: publik hanya memeriksa data terbatas).
     // ---------------------------------------------------------------------
     match /registry/{kta} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if request.query.limit <= 20;
       allow create, update: if isAdmin()
                             && request.resource.data.keys().hasOnly([
                                  'kta', 'nama', 'kategori', 'kompetensi', 'kota', 'berlakuHingga',
-                                 'status', 'namaCari', 'updatedAt', 'contoh'
+                                 'status', 'namaCari', 'namaKata', 'ktaNomor', 'updatedAt', 'contoh'
                                ])
                             && request.resource.data.kta == kta;
       allow delete: if isAdmin();

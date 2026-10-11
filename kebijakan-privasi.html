@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Kebijakan Privasi — PPAPI</title>
   <meta name="description" content="Kebijakan Privasi PPAPI: data yang dikumpulkan, dasar dan tujuan pemrosesan, penyimpanan, keamanan, serta hak Anda sesuai UU No. 27 Tahun 2022 tentang PDP.">
   <meta name="theme-color" content="#0a0a0b">
@@ -36,7 +37,7 @@
         <h1 class="h1 split-lines">Kebijakan <em>Privasi</em></h1>
         <p class="lead">Bagaimana PPAPI mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi Anda — mengacu pada Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
         <div class="page-hero__meta">
-          <span><span data-icon="calendar" data-icon-size="16"></span>Terakhir diperbarui: <time datetime="2026-10-08">8 Oktober 2026</time></span>
+          <span><span data-icon="calendar" data-icon-size="16"></span>Terakhir diperbarui: <time datetime="2026-10-09">9 Oktober 2026</time></span>
           <span><span data-icon="scale" data-icon-size="16"></span>UU No. 27 Tahun 2022</span>
           <span><span data-icon="file-text" data-icon-size="16"></span>13 bagian</span>
         </div>
@@ -75,6 +76,12 @@
           </div>
 
           <article class="kp-article" aria-label="Isi Kebijakan Privasi">
+            <!-- Revisi 9 Oktober 2026 (situs v2): mencakup Formulir Pendaftaran Anggota, Konsol Admin,
+                 Produk Pengetahuan, dan aplikasi anggota. Isi disusun dari perilaku situs (store.js,
+                 firestore.rules, aplikasi/). Rumusan hukumnya PERLU DIKONFIRMASI oleh pengurus PPAPI
+                 atau penelaah hukum sebelum dianggap final. Setiap perubahan alur data pada situs
+                 (kolom baru, kunci penyimpanan baru, layanan pihak ketiga baru) wajib diikuti
+                 pembaruan halaman ini beserta tanggal "Terakhir diperbarui". -->
 
             <!-- Ringkasan -->
             <div class="kp-summary">
@@ -98,7 +105,17 @@
                 <li class="kp-sum">
                   <span class="kp-sum__icon" data-icon="lock" data-icon-size="20"></span>
                   <p class="kp-sum__title">Akses dibatasi</p>
-                  <p class="kp-sum__text">Data profil hanya dapat dibaca oleh pemilik akun dan pengelola yang berwenang.</p>
+                  <p class="kp-sum__text">Data profil dan pengajuan keanggotaan hanya dapat dibaca oleh pemilik akun dan admin sekretariat yang berwenang.</p>
+                </li>
+                <li class="kp-sum">
+                  <span class="kp-sum__icon" data-icon="link" data-icon-size="20"></span>
+                  <p class="kp-sum__title">Dokumen tetap milik Anda</p>
+                  <p class="kp-sum__text">Berkas dokumen pendukung tetap tersimpan di penyimpanan awan Anda; situs hanya menyimpan tautannya.</p>
+                </li>
+                <li class="kp-sum">
+                  <span class="kp-sum__icon" data-icon="ruler" data-icon-size="20"></span>
+                  <p class="kp-sum__title">Data aplikasi di perangkat Anda</p>
+                  <p class="kp-sum__text">Data proyek dan kemajuan latihan pada aplikasi anggota tersimpan di peramban Anda dan tidak dikirim ke server PPAPI.</p>
                 </li>
               </ul>
             </div>
@@ -126,9 +143,19 @@
             <!-- 01 -->
             <section class="prose kp-section" id="ruang-lingkup" aria-labelledby="h-ruang-lingkup">
               <h2 id="h-ruang-lingkup"><span class="kp-num">01</span>Ruang lingkup</h2>
-              <p>Kebijakan Privasi ini menjelaskan cara Perkumpulan Praktisi dan Ahli Perancah Indonesia (<strong>“PPAPI”</strong> atau <strong>“kami”</strong>) mengumpulkan, menggunakan, menyimpan, membagikan, dan melindungi data pribadi Anda ketika menggunakan situs web PPAPI beserta layanan anggota di dalamnya, yaitu pendaftaran dan masuk akun, dasbor anggota, halaman anggota, verifikasi anggota, serta formulir umpan balik.</p>
+              <p>Kebijakan Privasi ini menjelaskan cara Perkumpulan Praktisi dan Ahli Perancah Indonesia (<strong>“PPAPI”</strong> atau <strong>“kami”</strong>) mengumpulkan, menggunakan, menyimpan, membagikan, dan melindungi data pribadi Anda ketika menggunakan situs web PPAPI beserta seluruh layanan di dalamnya, yaitu:</p>
+              <ul>
+                <li>pendaftaran dan masuk akun;</li>
+                <li>Formulir Pendaftaran Anggota, baik untuk pengajuan keanggotaan baru maupun perpanjangan;</li>
+                <li>Dasbor Anggota dan Profil Anggota, termasuk Kartu Tanda Anggota (KTA) digital;</li>
+                <li>Produk Pengetahuan;</li>
+                <li>aplikasi anggota yang berjalan di dalam situs ini, yaitu <em>PPAPI Scaffold — Perencanaan &amp; Analisis Struktur</em> dan <em>Simulator Pemasangan Perancah Tube &amp; Coupler</em>;</li>
+                <li>Verifikasi Anggota;</li>
+                <li>formulir umpan balik; serta</li>
+                <li>Konsol Admin, yang digunakan admin sekretariat untuk menelaah pengajuan, mengelola keanggotaan, menindaklanjuti umpan balik, dan mengelola konten situs.</li>
+              </ul>
               <p>Kebijakan ini disusun dengan mengacu pada <a href="https://peraturan.bpk.go.id/Details/229798" target="_blank" rel="noopener">Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi<span class="sr-only"> (tab baru)</span></a> (<strong>“UU PDP”</strong>). Atas data yang Anda serahkan melalui situs ini, PPAPI berkedudukan sebagai Pengendali Data Pribadi, sedangkan Anda berkedudukan sebagai Subjek Data Pribadi.</p>
-              <p>Kebijakan ini tidak berlaku bagi situs atau aplikasi lain yang ditautkan dari situs ini, termasuk aplikasi PPAPI Scaffold dan laman JDIH instansi pemerintah. Pemrosesan data pada layanan tersebut mengikuti ketentuan yang berlaku pada layanan masing-masing.</p>
+              <p>Kebijakan ini tidak berlaku bagi situs atau layanan lain yang ditautkan dari situs ini, seperti laman JDIH instansi pemerintah, laman penerbit standar, dan layanan penyimpanan awan (misalnya Google Drive atau OneDrive) yang Anda gunakan untuk menyimpan dokumen pendukung. Pemrosesan data pada layanan tersebut mengikuti ketentuan yang berlaku pada layanan masing-masing.</p>
             </section>
 
             <!-- 02 -->
@@ -143,18 +170,48 @@
               </ul>
               <h3>b. Profil dan data keanggotaan</h3>
               <ul>
-                <li>Data diri yang Anda isi secara sukarela: tempat dan tanggal lahir, jenis kelamin, kota dan provinsi, alamat, perusahaan, jabatan, lama pengalaman, pendidikan, ringkasan profil, dan tautan LinkedIn.</li>
+                <li>Data diri yang Anda isi: tempat dan tanggal lahir, jenis kelamin, kota dan provinsi, alamat, perusahaan atau instansi, jabatan, lama pengalaman, pendidikan, ringkasan profil, dan tautan LinkedIn. Sebagian data tersebut wajib dilengkapi untuk mengajukan keanggotaan; selebihnya bersifat opsional.</li>
                 <li>Kompetensi (kode, nama, tingkat, dan tahun) serta sertifikat (judul, nomor, penerbit, tanggal terbit, masa berlaku, dan tautan dokumen yang bersifat opsional). Situs ini tidak menyimpan berkas sertifikat.</li>
-                <li>Data keanggotaan yang ditetapkan sekretariat: nomor Kartu Tanda Anggota (KTA), kategori keanggotaan, status, dan tanggal bergabung.</li>
+                <li>Data keanggotaan yang ditetapkan sekretariat: nomor Kartu Tanda Anggota (KTA), kategori keanggotaan, status, tanggal bergabung, tanggal persetujuan, dan masa berlaku keanggotaan.</li>
               </ul>
-              <h3>c. Umpan balik</h3>
+              <h3>c. Formulir Pendaftaran Anggota</h3>
+              <p>Saat Anda mengisi dan mengajukan Formulir Pendaftaran Anggota, data berikut disimpan bersama data keanggotaan Anda:</p>
+              <ul>
+                <li>Kategori keanggotaan yang diajukan, jenis pengajuan (baru atau perpanjangan), serta waktu pengajuan dan pembaruan formulir.</li>
+                <li>Pas foto (opsional). Foto diperkecil di perangkat Anda menjadi gambar JPEG berukuran paling besar 120 KB, lalu disimpan sebagai bagian dari data keanggotaan, bukan sebagai berkas terpisah.</li>
+                <li>Riwayat proyek: nama proyek, peran, tahun, dan lokasi (paling banyak 10 entri).</li>
+                <li>Tautan dokumen pendukung, seperti CV, ijazah, sertifikat, surat rekomendasi, dan dokumen lain (paling banyak 12 tautan).</li>
+                <li>Data pembayaran iuran — hanya apabila langkah pembayaran diaktifkan sekretariat: metode, tanggal, dan tautan bukti pembayaran.</li>
+                <li>Pernyataan pemohon: persetujuan atas Kode Etik dan AD/ART PPAPI, pernyataan kebenaran data, persetujuan atas Kebijakan Privasi ini, nama terang yang Anda ketik sebagai tanda tangan elektronik, serta tanggal pernyataan.</li>
+                <li>Catatan pemohon untuk sekretariat (opsional).</li>
+              </ul>
+              <div class="kp-callout">
+                <span class="kp-callout__icon" data-icon="link" data-icon-size="20"></span>
+                <p>Berkas dokumen pendukung <strong>tidak diunggah ke situs ini</strong>. Berkas tetap tersimpan di layanan penyimpanan awan milik Anda, dan situs hanya menyimpan tautannya. Karena tautan dibagikan dengan akses “siapa saja yang memiliki link dapat melihat”, mohon tidak menyebarkan tautan tersebut kepada pihak lain. Anda dapat mencabut akses berbagi kapan saja; namun, setelah akses dicabut, sekretariat tidak lagi dapat memeriksa dokumen tersebut. Karena itu, sebaiknya akses dipertahankan hingga pengajuan Anda diputuskan.</p>
+              </div>
+              <h3>d. Data penelaahan oleh sekretariat</h3>
+              <ul>
+                <li>Catatan sekretariat untuk pemohon, misalnya permintaan perbaikan atau alasan penolakan.</li>
+                <li>Riwayat pengajuan: waktu, tindakan (diajukan, ditarik, diminta perbaikan, disetujui, ditolak, dinonaktifkan, diaktifkan kembali, diperpanjang, atau kategori diubah), nama pihak yang melakukan tindakan, dan catatannya.</li>
+                <li>Log aktivitas admin, yang mencatat setiap tindakan admin beserta nama admin dan nama anggota atau konten yang terkait.</li>
+                <li>Data admin sekretariat: nama, alamat email, serta waktu pemberian peran admin dan admin yang memberikannya.</li>
+              </ul>
+              <h3>e. Umpan balik</h3>
               <ul>
                 <li>Kategori, subjek, isi pesan, dan penilaian layanan (opsional).</li>
                 <li>Nama, email, dan nomor HP (opsional) — tidak dikirim apabila Anda memilih <em>Kirim sebagai anonim</em>.</li>
                 <li>Halaman asal dan waktu pengiriman, serta penanda akun apabila Anda sedang masuk dan tidak memilih anonim.</li>
+                <li>Status tindak lanjut (Baru, Diproses, atau Selesai) dan catatan internal yang ditambahkan admin sekretariat.</li>
               </ul>
-              <h3>d. Data teknis</h3>
-              <p>Situs ini tidak memasang alat analitik maupun cookie iklan. Namun, untuk menampilkan halaman dan menjalankan fitur tertentu, peramban Anda terhubung ke layanan pihak ketiga, seperti Google Fonts (huruf), Firebase (autentikasi dan basis data), reCAPTCHA (verifikasi nomor HP), dan Google Maps (bila peta ditampilkan). Layanan tersebut dapat menerima data teknis seperti alamat IP, jenis peramban, dan waktu akses sesuai kebijakan privasi penyedianya.</p>
+              <h3>f. Data pada aplikasi anggota</h3>
+              <p>Data yang Anda masukkan ke aplikasi anggota disimpan <strong>hanya di peramban perangkat yang Anda gunakan</strong>, terpisah untuk setiap anggota, dan tidak dikirim ke server PPAPI:</p>
+              <ul>
+                <li><em>PPAPI Scaffold — Perencanaan &amp; Analisis Struktur</em>: data proyek (antara lain nama proyek, lokasi, kontraktor, nama inspektur atau supervisor, dan nomor tag), jawaban daftar periksa, isian perhitungan, foto bukti yang Anda ambil atau unggah, gambar rencana, berkas unggahan, <em>Job Safety Analysis</em> (JSA), dan arsip proyek. Bila masih kosong, kolom inspektur atau supervisor diisi otomatis dengan nama dan nomor KTA Anda. Aplikasi juga mencatat daftar anggota yang pernah memakainya di perangkat tersebut (nama, peran, dan waktu terakhir memakai) serta log aktivitas singkat.</li>
+                <li><em>Simulator Pemasangan Perancah Tube &amp; Coupler</em>: kemajuan latihan, yaitu tahap perakitan terakhir, komponen dan alat ukur yang telah dicoba, serta waktu pembaruan dan penyelesaian latihan.</li>
+              </ul>
+              <p>Aplikasi memakai identitas akun portal Anda (nama, nomor KTA, dan peran) tanpa proses masuk terpisah. Laporan PDF dan label perancah dibuat di perangkat Anda.</p>
+              <h3>g. Data teknis</h3>
+              <p>Situs ini tidak memasang alat analitik maupun cookie iklan. Namun, untuk menampilkan halaman dan menjalankan fitur tertentu, peramban Anda terhubung ke layanan pihak ketiga, yaitu Google Fonts (huruf), Firebase (autentikasi dan basis data), reCAPTCHA (verifikasi nomor HP), Google Maps (bila peta ditampilkan), serta cdnjs dari Cloudflare (pustaka jsPDF untuk laporan PDF dan three.js untuk tampilan 3D pada aplikasi anggota). Layanan tersebut dapat menerima data teknis seperti alamat IP, jenis peramban, dan waktu akses sesuai kebijakan privasi penyedianya.</p>
               <div class="kp-callout">
                 <span class="kp-callout__icon" data-icon="alert-triangle" data-icon-size="20"></span>
                 <p>Mohon tidak mencantumkan data pribadi yang bersifat spesifik — seperti data kesehatan, data biometrik, catatan kejahatan, atau data keuangan pribadi — pada kolom isian bebas. Data tersebut tidak diperlukan untuk layanan kami.</p>
@@ -166,10 +223,10 @@
               <h2 id="h-dasar"><span class="kp-num">03</span>Dasar pemrosesan</h2>
               <p>Kami memproses data pribadi berdasarkan dasar pemrosesan yang diakui dalam UU PDP, yaitu:</p>
               <ul>
-                <li><strong>Persetujuan yang sah secara eksplisit</strong> — misalnya saat Anda mendaftar akun dan menyetujui Kebijakan Privasi, atau saat mengirim umpan balik dengan mencentang persetujuan.</li>
-                <li><strong>Pemenuhan kewajiban perjanjian</strong> — untuk menyelenggarakan akun dan keanggotaan yang Anda ajukan.</li>
+                <li><strong>Persetujuan yang sah secara eksplisit</strong> — misalnya saat Anda mendaftar akun dan menyetujui Kebijakan Privasi, saat mengajukan Formulir Pendaftaran Anggota dengan mencentang persetujuan pada langkah Pernyataan, atau saat mengirim umpan balik dengan mencentang persetujuan.</li>
+                <li><strong>Pemenuhan kewajiban perjanjian</strong> — untuk menelaah pengajuan yang Anda kirim serta menyelenggarakan akun dan keanggotaan Anda.</li>
                 <li><strong>Pemenuhan kewajiban hukum</strong> — apabila peraturan perundang-undangan mewajibkan kami memproses atau menyerahkan data tertentu.</li>
-                <li><strong>Kepentingan yang sah</strong> — untuk menjaga keamanan sistem dan mencegah penyalahgunaan layanan, dengan tetap memperhatikan hak Anda.</li>
+                <li><strong>Kepentingan yang sah</strong> — untuk menjaga keamanan sistem, mencegah penyalahgunaan layanan, dan mencatat tindakan admin sebagai bentuk akuntabilitas pengelolaan, dengan tetap memperhatikan hak Anda.</li>
               </ul>
             </section>
 
@@ -179,23 +236,27 @@
               <p>Data pribadi Anda kami gunakan untuk:</p>
               <ol>
                 <li>membuat, mengamankan, dan mengelola akun Anda;</li>
-                <li>mencatat dan memverifikasi keanggotaan, serta menerbitkan KTA digital;</li>
-                <li>menampilkan dasbor, profil, kompetensi, dan pengingat masa berlaku sertifikat;</li>
+                <li>menerima, menelaah, dan memutuskan pengajuan keanggotaan baru maupun perpanjangan, termasuk memeriksa dokumen pendukung dan menyampaikan permintaan perbaikan;</li>
+                <li>mencatat dan memverifikasi keanggotaan, menetapkan masa berlakunya, serta menerbitkan KTA digital;</li>
+                <li>menampilkan dasbor, profil, kompetensi, serta pengingat masa berlaku sertifikat dan keanggotaan;</li>
+                <li>memberikan akses Produk Pengetahuan dan aplikasi anggota kepada anggota berstatus Aktif;</li>
                 <li>menyediakan layanan verifikasi keanggotaan bagi pihak yang berkepentingan;</li>
                 <li>menerima, menelaah, dan menanggapi kritik, saran, pertanyaan, pengaduan, maupun apresiasi;</li>
-                <li>menyampaikan informasi yang berkaitan dengan keanggotaan dan kegiatan perkumpulan; serta</li>
+                <li>menyampaikan informasi yang berkaitan dengan keanggotaan dan kegiatan perkumpulan;</li>
+                <li>menjaga akuntabilitas pengelolaan melalui riwayat pengajuan dan log aktivitas admin; serta</li>
                 <li>memenuhi kewajiban hukum yang berlaku.</li>
               </ol>
-              <p>Kami tidak menggunakan data pribadi Anda untuk pemasaran pihak ketiga, dan tidak melakukan pengambilan keputusan yang semata-mata didasarkan pada pemrosesan otomatis yang menimbulkan akibat hukum bagi Anda.</p>
+              <p>Kami tidak menggunakan data pribadi Anda untuk pemasaran pihak ketiga. Keputusan atas pengajuan keanggotaan diambil oleh admin sekretariat, bukan oleh sistem otomatis; sistem hanya menandai keanggotaan sebagai kedaluwarsa setelah masa berlaku yang ditetapkan sekretariat berakhir.</p>
             </section>
 
             <!-- 05 -->
             <section class="prose kp-section" id="penyimpanan" aria-labelledby="h-simpan">
               <h2 id="h-simpan"><span class="kp-num">05</span>Penyimpanan data</h2>
               <h3>Mode operasional</h3>
-              <p>Data akun dikelola oleh <strong>Firebase Authentication</strong>, sedangkan profil anggota dan umpan balik disimpan di <strong>Cloud Firestore</strong> — keduanya merupakan layanan Google Firebase. Lokasi pusat data mengikuti pengaturan proyek Firebase yang dipilih pengelola situs dan dapat berada di luar wilayah Indonesia. Dalam hal terjadi transfer data pribadi ke luar wilayah hukum Indonesia, PPAPI berupaya memastikan tingkat pelindungan yang setara sesuai ketentuan UU PDP.</p>
+              <p>Data akun dikelola oleh <strong>Firebase Authentication</strong>. Data anggota — profil, kompetensi, sertifikat, formulir pendaftaran beserta pas foto dan tautan dokumen, serta catatan dan riwayat penelaahan — bersama umpan balik, daftar verifikasi publik, dan log aktivitas admin disimpan di <strong>Cloud Firestore</strong>. Keduanya merupakan layanan Google Firebase. Lokasi pusat data mengikuti pengaturan proyek Firebase yang dipilih pengelola situs dan dapat berada di luar wilayah Indonesia. Dalam hal terjadi transfer data pribadi ke luar wilayah hukum Indonesia, PPAPI berupaya memastikan tingkat pelindungan yang setara sesuai ketentuan UU PDP.</p>
+              <p>Berkas dokumen pendukung tetap berada di layanan penyimpanan awan milik Anda; situs hanya menyimpan tautannya. Data aplikasi anggota tidak disimpan di Firebase, melainkan di peramban perangkat yang Anda gunakan (lihat bagian 10).</p>
               <h3>Mode Demo</h3>
-              <p>Selama situs belum terhubung ke Firebase, situs berjalan dalam <strong>Mode Demo</strong> yang ditandai pemberitahuan pada halaman masuk dan halaman anggota. Pada mode ini, akun, profil, dan umpan balik hanya disimpan di penyimpanan lokal peramban (<em>localStorage</em>) pada perangkat Anda dan <strong>tidak dikirim ke server PPAPI</strong>. Data tersebut dapat dilihat oleh siapa pun yang menggunakan peramban yang sama dan akan hilang apabila data situs dihapus dari peramban.</p>
+              <p>Selama situs belum terhubung ke Firebase, situs berjalan dalam <strong>Mode Demo</strong> yang ditandai pemberitahuan pada halaman masuk dan halaman khusus akun. Pada mode ini, akun, data anggota, pengajuan, umpan balik, dan data Konsol Admin hanya disimpan di penyimpanan lokal peramban (<em>localStorage</em>) pada perangkat Anda dan <strong>tidak dikirim ke server PPAPI</strong>. Data tersebut dapat dilihat oleh siapa pun yang menggunakan peramban yang sama — termasuk melalui akun admin demo yang kata sandinya ditampilkan pada halaman masuk — dan akan hilang apabila data situs dihapus dari peramban. Karena itu, mohon tidak memasukkan data pribadi yang sebenarnya selama situs berjalan dalam Mode Demo.</p>
             </section>
 
             <!-- 06 -->
@@ -205,10 +266,13 @@
               <ul>
                 <li>koneksi terenkripsi (HTTPS) antara peramban Anda dan server;</li>
                 <li>autentikasi yang dikelola Firebase Authentication, sehingga kata sandi tidak disimpan oleh PPAPI dalam bentuk yang dapat dibaca;</li>
-                <li>aturan keamanan basis data yang membatasi akses: data profil hanya dapat dibaca dan diubah oleh pemilik akun, sedangkan umpan balik hanya dapat dikirim dan tidak dapat dibaca melalui situs;</li>
-                <li>nomor KTA, kategori, dan status keanggotaan hanya dapat diubah oleh sekretariat; serta</li>
-                <li>pembatasan akses pengelola terhadap basis data hanya bagi personel yang berwenang.</li>
+                <li>aturan keamanan basis data dengan prinsip akses seminimal mungkin: data anggota — termasuk formulir pendaftaran, pas foto, dan tautan dokumen — hanya dapat dibaca oleh pemilik akun dan admin sekretariat yang berwenang;</li>
+                <li>anggota hanya dapat mengubah kolom tertentu pada datanya sendiri, yaitu nama, kontak, profil, kompetensi, sertifikat, dan formulir pendaftaran; formulir terkunci selama ditelaah sekretariat;</li>
+                <li>nomor KTA, kategori, masa berlaku, data persetujuan, catatan, dan riwayat penelaahan hanya dapat diubah oleh admin sekretariat, sedangkan status keanggotaan hanya berubah melalui pengajuan atau penarikan pengajuan oleh Anda, atau melalui keputusan admin;</li>
+                <li>umpan balik dapat dikirim oleh siapa pun, tetapi hanya dapat dibaca dan ditindaklanjuti oleh admin sekretariat, dan tidak dapat dihapus melalui situs; serta</li>
+                <li>peran admin hanya diberikan kepada personel sekretariat yang ditunjuk, dan setiap tindakan admin tercatat dalam log aktivitas yang tidak dapat diubah atau dihapus melalui situs.</li>
               </ul>
+              <p>Melalui Konsol Admin, admin sekretariat dapat membuka seluruh data pengajuan dan keanggotaan, memutuskan pengajuan, mengubah status, kategori, dan masa berlaku keanggotaan, menindaklanjuti umpan balik, serta mengunduh daftar anggota dalam format CSV untuk keperluan administrasi keanggotaan. Akses tersebut hanya digunakan untuk tujuan yang dijelaskan pada bagian 04.</p>
               <p>Tidak ada sistem elektronik yang sepenuhnya bebas risiko. Apabila terjadi kegagalan pelindungan data pribadi, PPAPI akan menyampaikan pemberitahuan kepada Anda dan pihak terkait sesuai ketentuan UU PDP. Anda dapat turut menjaga keamanan akun dengan merahasiakan kata sandi dan keluar dari akun setelah menggunakan perangkat bersama.</p>
             </section>
 
@@ -217,8 +281,9 @@
               <h2 id="h-berbagi"><span class="kp-num">07</span>Berbagi dan pengungkapan data</h2>
               <ul>
                 <li><strong>Tidak dijual.</strong> PPAPI tidak menjual, menyewakan, atau memperdagangkan data pribadi Anda.</li>
-                <li><strong>Verifikasi publik terbatas.</strong> Untuk menjaga kepercayaan terhadap keanggotaan, halaman Verifikasi Anggota menampilkan data terbatas atas anggota yang terdaftar dalam daftar resmi sekretariat, yaitu nama, nomor KTA, kategori, kompetensi utama, kota, status, dan masa berlaku keanggotaan. Alamat lengkap, nomor HP, email, dan tanggal lahir tidak ditampilkan.</li>
-                <li><strong>Penyedia layanan.</strong> Google (Firebase) menyediakan infrastruktur autentikasi dan basis data serta memproses data semata-mata untuk menjalankan layanan tersebut.</li>
+                <li><strong>Di lingkungan PPAPI.</strong> Data pengajuan dan keanggotaan hanya diakses oleh admin sekretariat yang berwenang untuk penelaahan dan administrasi keanggotaan.</li>
+                <li><strong>Verifikasi publik terbatas.</strong> Untuk menjaga kepercayaan terhadap keanggotaan, halaman Verifikasi Anggota menampilkan data terbatas atas anggota yang pengajuannya telah disetujui dan tercatat dalam daftar resmi sekretariat, yaitu nama, nomor KTA, kategori, kompetensi utama, kota, status, dan masa berlaku keanggotaan. Alamat lengkap, nomor HP, email, tanggal lahir, pas foto, dan dokumen pendukung tidak ditampilkan.</li>
+                <li><strong>Penyedia layanan.</strong> Google (Firebase) menyediakan infrastruktur autentikasi dan basis data serta memproses data semata-mata untuk menjalankan layanan tersebut. Penyedia lain yang disebut pada bagian 02 huruf g hanya menerima data teknis yang diperlukan untuk mengirimkan berkas atau fitur yang diminta peramban Anda.</li>
                 <li><strong>Kewajiban hukum.</strong> Data dapat diungkapkan apabila diwajibkan oleh peraturan perundang-undangan atau atas permintaan instansi yang berwenang sesuai prosedur hukum.</li>
               </ul>
             </section>
@@ -230,12 +295,13 @@
               <ul class="kp-rights">
                 <li><strong>Memperoleh informasi</strong> mengenai identitas pengendali, dasar, tujuan, dan penggunaan data pribadi Anda, sebagaimana dijelaskan dalam kebijakan ini.</li>
                 <li><strong>Mengakses</strong> dan memperoleh salinan data pribadi Anda.</li>
-                <li><strong>Memperbaiki</strong> dan memperbarui data yang tidak akurat. Sebagian besar data profil dapat Anda perbarui sendiri melalui Halaman Anggota.</li>
+                <li><strong>Memperbaiki</strong> dan memperbarui data yang tidak akurat. Sebagian besar data dapat Anda perbarui sendiri melalui Profil Anggota (bagi anggota berstatus Aktif) atau Formulir Pendaftaran Anggota (selama formulir dapat diubah, yaitu sebelum diajukan, setelah ditarik kembali, atau ketika diminta perbaikan maupun ditolak).</li>
                 <li><strong>Meminta penghapusan</strong> dan/atau pemusnahan data pribadi Anda.</li>
                 <li><strong>Menarik kembali persetujuan</strong> pemrosesan yang telah Anda berikan.</li>
                 <li><strong>Mengajukan keberatan</strong> atas pemrosesan data pribadi Anda, serta hak lain yang diatur dalam UU PDP.</li>
               </ul>
               <p>Permintaan dapat diajukan melalui formulir pada <a href="umpan-balik.html?kategori=pertanyaan#formulir">halaman Kontak</a> atau melalui kontak resmi sekretariat yang tercantum di halaman tersebut. Untuk melindungi Anda, kami dapat meminta verifikasi identitas sebelum memproses permintaan dan akan menanggapinya dalam jangka waktu sesuai ketentuan UU PDP.</p>
+              <p>Data anggota tidak dapat dihapus langsung melalui situs; penghapusan dilaksanakan sekretariat atas permintaan Anda. Pas foto dan tautan dokumen dapat Anda hapus sendiri selama formulir dapat diubah. Data aplikasi anggota dapat Anda hapus melalui tombol <em>Hapus data saya di perangkat ini</em> pada aplikasi perencanaan atau dengan menghapus data situs melalui pengaturan peramban.</p>
               <p>Perlu diketahui bahwa penarikan persetujuan atau penghapusan data dapat menyebabkan sebagian layanan, termasuk KTA digital, tidak lagi dapat diberikan. Umpan balik yang dikirim secara anonim tidak dapat kami kaitkan dengan identitas Anda.</p>
             </section>
 
@@ -244,8 +310,12 @@
               <h2 id="h-retensi"><span class="kp-num">09</span>Masa retensi</h2>
               <ul>
                 <li>Data akun dan profil disimpan selama akun Anda aktif atau selama diperlukan untuk penyelenggaraan keanggotaan.</li>
-                <li>Setelah akun dihapus atau keanggotaan berakhir, data dihapus atau dianonimkan dalam jangka waktu yang wajar, kecuali penyimpanan lebih lama diwajibkan oleh peraturan perundang-undangan.</li>
+                <li>Pengajuan yang ditolak tetap tersimpan bersama akun Anda — termasuk pas foto, tautan dokumen, dan catatan sekretariat — agar Anda dapat memperbaikinya dan mengajukan kembali, serta sebagai catatan keputusan sekretariat. Pengajuan yang Anda tarik kembali menjadi draf dan tetap tersimpan hingga Anda mengubah atau menghapus isinya.</li>
+                <li>Apabila Anda tidak ingin melanjutkan pengajuan yang ditolak atau ditarik, Anda dapat menghapus sendiri pas foto dan tautan dokumen melalui Formulir Pendaftaran Anggota, atau meminta sekretariat menghapus seluruh data pengajuan beserta akun Anda.</li>
+                <li>Setelah akun dihapus atau keanggotaan berakhir, data dihapus atau dianonimkan dalam jangka waktu yang wajar, kecuali penyimpanan lebih lama diwajibkan oleh peraturan perundang-undangan. Ketentuan yang sama berlaku bagi riwayat penelaahan dan entri log aktivitas admin yang memuat nama Anda.</li>
+                <li>Berkas dokumen di layanan penyimpanan awan Anda sepenuhnya berada dalam kendali Anda dan tidak terhapus bersama data di situs ini.</li>
                 <li>Umpan balik disimpan selama diperlukan untuk penanganan dan evaluasi layanan.</li>
+                <li>Data aplikasi anggota tersimpan di peramban perangkat Anda hingga Anda menghapusnya. Berakhirnya status Aktif tidak menghapus data tersebut secara otomatis.</li>
                 <li>Pada Mode Demo, data tersimpan di peramban hingga Anda menghapus data situs melalui pengaturan peramban.</li>
               </ul>
             </section>
@@ -253,18 +323,22 @@
             <!-- 10 -->
             <section class="prose kp-section" id="cookie" aria-labelledby="h-cookie">
               <h2 id="h-cookie"><span class="kp-num">10</span>Cookie dan penyimpanan lokal</h2>
-              <p>Situs ini tidak menggunakan cookie iklan atau pelacakan. Penyimpanan peramban hanya kami gunakan untuk keperluan fungsional berikut:</p>
+              <p>Situs ini tidak menggunakan cookie iklan atau pelacakan. Penyimpanan peramban hanya kami gunakan untuk keperluan fungsional berikut. Nama kunci penyimpanan dicantumkan agar Anda dapat memeriksa atau menghapusnya melalui alat pengembang peramban.</p>
               <div class="table-wrap kp-table">
                 <table class="table">
                   <thead><tr><th scope="col">Kegunaan</th><th scope="col">Penyimpanan</th><th scope="col">Masa simpan</th></tr></thead>
                   <tbody>
-                    <tr><td data-label="Kegunaan">Sesi masuk akun</td><td data-label="Penyimpanan">Penyimpanan peramban oleh Firebase Authentication; hanya selama sesi bila <em>Ingat saya</em> tidak dipilih</td><td data-label="Masa simpan">Hingga Anda keluar</td></tr>
-                    <tr><td data-label="Kegunaan">Akun, profil, dan umpan balik pada Mode Demo</td><td data-label="Penyimpanan"><em>localStorage</em></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
-                    <tr><td data-label="Kegunaan">Preferensi tampilan, misalnya pemberitahuan Mode Demo yang telah ditutup</td><td data-label="Penyimpanan"><em>localStorage</em></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
-                    <tr><td data-label="Kegunaan">Pesan notifikasi sementara antarhalaman</td><td data-label="Penyimpanan"><em>sessionStorage</em></td><td data-label="Masa simpan">Hingga tab ditutup</td></tr>
+                    <tr><td data-label="Kegunaan">Sesi masuk akun</td><td data-label="Penyimpanan">Penyimpanan peramban oleh Firebase Authentication; hanya selama sesi bila <em>Ingat saya</em> tidak dipilih. Pada Mode Demo:<span class="kp-keys"><code>ppapi_demo_session</code></span></td><td data-label="Masa simpan">Hingga Anda keluar</td></tr>
+                    <tr><td data-label="Kegunaan">Akun, data anggota, pengajuan, umpan balik, konten, dan data Konsol Admin pada Mode Demo</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_demo_*</code> <code>ppapi_member_*</code> <code>ppapi_feedback</code> <code>ppapi_registry</code> <code>ppapi_counters</code> <code>ppapi_audit_log</code> <code>ppapi_content_*</code> <code>ppapi_pustaka_files</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
+                    <tr><td data-label="Kegunaan">Data aplikasi <em>PPAPI Scaffold — Perencanaan &amp; Analisis Struktur</em>, terpisah per anggota</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_app_perencanaan_*</code></span></td><td data-label="Masa simpan">Hingga Anda menghapusnya</td></tr>
+                    <tr><td data-label="Kegunaan">Kemajuan latihan <em>Simulator Pemasangan Perancah Tube &amp; Coupler</em>, terpisah per anggota</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_progress_*_simulator</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
+                    <tr><td data-label="Kegunaan">Preferensi tampilan: pemberitahuan Mode Demo yang telah ditutup dan tampilan katalog Produk Pengetahuan (kisi atau daftar)</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_demo_ribbon_dismissed</code> <code>ppapi_pustaka_tampilan</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
+                    <tr><td data-label="Kegunaan">Penanda langkah <em>Lengkapi profil</em> yang belum selesai setelah pendaftaran akun</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_profile_pending</code></span></td><td data-label="Masa simpan">Hingga langkah selesai</td></tr>
+                    <tr><td data-label="Kegunaan">Pesan notifikasi sementara antarhalaman</td><td data-label="Penyimpanan"><em>sessionStorage</em><span class="kp-keys"><code>ppapi_flash</code></span></td><td data-label="Masa simpan">Hingga tab ditutup</td></tr>
                   </tbody>
                 </table>
               </div>
+              <p>Data aplikasi anggota dan data Mode Demo dapat dilihat oleh siapa pun yang memakai peramban yang sama. Apabila Anda menggunakan perangkat bersama, keluarlah dari akun setelah selesai dan hapus data aplikasi Anda bila tidak lagi diperlukan.</p>
               <p>Layanan pihak ketiga yang disebutkan pada bagian 02 dapat menggunakan cookie atau teknologi serupa sesuai kebijakannya masing-masing. Anda dapat menghapus atau memblokir penyimpanan tersebut melalui pengaturan peramban; namun, beberapa fitur — seperti tetap dalam keadaan masuk — mungkin tidak berfungsi.</p>
             </section>
 
@@ -278,6 +352,7 @@
             <section class="prose kp-section" id="perubahan" aria-labelledby="h-ubah">
               <h2 id="h-ubah"><span class="kp-num">12</span>Perubahan kebijakan</h2>
               <p>Kami dapat memperbarui kebijakan ini dari waktu ke waktu untuk menyesuaikan dengan perubahan layanan atau peraturan perundang-undangan. Versi terbaru selalu tersedia di halaman ini dengan tanggal <em>Terakhir diperbarui</em> yang baru. Perubahan yang berdampak signifikan akan kami informasikan melalui situs.</p>
+              <p>Pembaruan 9 Oktober 2026: kebijakan ini diperluas untuk mencakup Formulir Pendaftaran Anggota, penelaahan pengajuan oleh admin sekretariat melalui Konsol Admin, Produk Pengetahuan, dan aplikasi anggota di dalam situs ini.</p>
             </section>
 
             <!-- 13 -->
@@ -298,7 +373,7 @@
               </div>
             </div>
 
-            <p class="kp-updated"><span data-icon="calendar" data-icon-size="16"></span>Terakhir diperbarui: <time datetime="2026-10-08">8 Oktober 2026</time></p>
+            <p class="kp-updated"><span data-icon="calendar" data-icon-size="16"></span>Terakhir diperbarui: <time datetime="2026-10-09">9 Oktober 2026</time></p>
           </article>
         </div>
       </div>

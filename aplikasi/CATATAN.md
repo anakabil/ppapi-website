@@ -12,6 +12,10 @@ Dasar keputusan: `SPEC-v2.md` §4.4 serta analisis `devtools/legacy/ANALISIS_PER
 > **Prinsip porting (v2.2.0):** rumus, konstanta, dan urutan teknis tidak diubah. Yang diubah hanya integrasi portal, keamanan, bug yang pasti, aksesibilitas, dan tampilan.
 >
 > **v2.3.0 (Beta, 9 Oktober 2026):** atas persetujuan pemilik aplikasi (**"Koreksi + tandai Beta"**), metode perhitungan aplikasi perencanaan **dikoreksi** (temuan E1–E14) dan aplikasi ditandai **Beta**. Status ini berlaku sampai Komite Teknis PPAPI selesai meninjau. Rincian setiap koreksi (masalah, rumus sebelum/sesudah dengan rujukan baris, alasan, sumber, contoh numerik, asumsi, dan pertanyaan terbuka) ada di **`aplikasi/KOREKSI-PERHITUNGAN.md`**. Ringkasannya di bagian 4.5.
+>
+> **v2.4.0 (Beta, 9 Oktober 2026):** revisi hasil tinjauan independen atas v2.3.0: lentur transom/ledger, 50 % beban layan pada lift berpapan berikutnya, pagar ujung, migrasi data v2.2.0, penegakan kelas Tahap 2, status tag yang mengikuti analisis, dan integrasi tampilan portal. Rinciannya di `KOREKSI-PERHITUNGAN.md` §19 dan bagian 4.7 di bawah.
+>
+> **Simulator:** geometri dan urutan perakitan dikoreksi (9 Oktober 2026) dan didokumentasikan di **`aplikasi/KOREKSI-SIMULATOR.md`**; bagian 5 dan 6 berkas ini merujuk ke sana.
 
 ---
 
@@ -22,7 +26,8 @@ aplikasi/
   gate.js                 gerbang bersama: memuat skrip inti situs, memeriksa status, memasang bilah portal
   gate.css                gaya layar gerbang, bilah portal, dan notifikasi (token warna situs, awalan --pp-)
   CATATAN.md              berkas ini
-  KOREKSI-PERHITUNGAN.md  koreksi metode perhitungan v2.3.0 (Beta) untuk tinjauan Komite Teknis PPAPI
+  KOREKSI-PERHITUNGAN.md  koreksi metode perhitungan v2.3.0–v2.4.0 (Beta) untuk tinjauan Komite Teknis PPAPI
+  KOREKSI-SIMULATOR.md    koreksi geometri & urutan simulator untuk tinjauan Komite Teknis PPAPI
   perencanaan/
     index.html            markup aplikasi (dari index.html lama)
     app.css               gaya aplikasi lama + bagian "INTEGRASI PORTAL PPAPI" di akhir
@@ -39,7 +44,7 @@ Tidak disalin dari paket lama: `sw.js`, `manifest.webmanifest`, ikon PWA, `404.h
 
 Urutan kerja di setiap halaman aplikasi:
 
-1. Halaman dibuka dengan kelas `html.app-gate-pending`: seluruh isi disembunyikan, yang tampil hanya layar "Memverifikasi status keanggotaan…" (`#app-gate`). Tidak ada kilasan isi aplikasi.
+1. Halaman dibuka dengan kelas `html.app-gate-pending`: seluruh isi disembunyikan, yang tampil hanya layar "Memverifikasi status keanggotaan…" (`#app-gate`). Tidak ada kilasan isi aplikasi. Logo layar ini memakai `assets/img/logo-light-mark.webp` (13 KB); master PNG 1200 px (132 KB) hanya untuk cetak.
 2. `gate.js` memuat `assets/js/config.js`, `core.js`, `auth.js`, dan `store.js` secara berurutan (alamat dihitung dari lokasi `gate.js`), lalu menunggu `PPAPI.session`.
 3. Keputusan:
    - **belum masuk** → `masuk.html?next=aplikasi/<nama>/index.html`; setelah masuk, anggota kembali ke aplikasi;
@@ -53,7 +58,7 @@ Tidak ada `data-auth` pada `<body>` halaman aplikasi, karena pengalihan bawaan `
 
 ## 3. Bilah portal
 
-Bilah hitam tipis di atas setiap aplikasi: **← Portal Anggota** (ke `dashboard.html`) · judul aplikasi (dari `config.apps`) · nama anggota dengan lencana *Aktif* atau *Admin* (tautan ke Profil Anggota) · **Keluar**. Di Mode Demo ada penanda "Mode Demo".
+Bilah hitam tipis di atas setiap aplikasi: **← Portal Anggota** (ke `dashboard.html`) · judul aplikasi (dari `config.apps`) · nama anggota dengan lencana *Aktif* atau *Admin* (tautan ke Profil Anggota) · **Keluar**. Di Mode Demo ada penanda "Mode Demo" berwarna perak (monokrom, sejak v2.4.0; sebelumnya kuning peringatan).
 
 - Berupa `<nav aria-label="Portal Anggota PPAPI">`, diawali tautan lompat "Lewati ke aplikasi"; semua kontrol dapat dipakai dengan keyboard dan memiliki cincin fokus.
 - Tinggi 48 px (44 px di ponsel). Bilah menempel di atas; tata letak aplikasi digeser sebesar `--pbar-h` sehingga bilah tidak menutupi apa pun.
@@ -76,7 +81,7 @@ Saat aplikasi dimulai, kunci lama yang sensitif dibersihkan dari peramban: `ppap
 
 | Kunci `localStorage` | Isi |
 |---|---|
-| `ppapi_app_perencanaan_v1_u_<uid>` | jawaban checklist, **alasan N/A butir kritis** (`naNote`, v2.3.0), data proyek (termasuk `f-papan` dan `f-pipa`), **isian Tahap 2/3/5/6 dan rincian material** |
+| `ppapi_app_perencanaan_v1_u_<uid>` | `v:4`: jawaban checklist, **alasan N/A butir kritis** (`naNote`, v2.3.0), data proyek (termasuk `f-papan`, `f-pipa`, dan `f-transom` v2.4.0), **isian Tahap 2/3/5/6** (v2.4.0 menambah `an-sdpt`, `an-tie`, `an-kurva-why`), dan **rincian material beserta asalnya** (`matSrc`: auto/user/legacy; `matGeom`: kunci geometri; v2.4.0) |
 | `…_photos`, `…_plans`, `…_dwg`, `…_jsa` | foto bukti, unggahan, gambar rencana, JSA |
 | `ppapi_app_perencanaan_projects_u_<uid>` | arsip proyek |
 | `ppapi_app_perencanaan_users`, `ppapi_app_perencanaan_log` | daftar pengguna di perangkat ini (nama, peran, waktu) dan log aktivitas (maks. 40) |
@@ -110,11 +115,11 @@ Dua anggota yang memakai peramban yang sama tidak saling melihat data. Tombol **
 | B10 / E13 | Teks pemeriksaan selalu memakai "≤" walaupun gagal ("q = 17595 kg/m² ≤ 10000 kg/m²" berlabel CEK) | simbol tetap | Simbol mengikuti hasil (`cmpSym`): "≤/≥" bila lolos, ">/<" bila gagal. Kondisi dan angka tidak berubah. | `analisisData()` |
 | B11 | Judul "8 Tahap Perencanaan" berisi 9 tahap | "8 Tahap" | "9 Tahap" | `index.html` |
 | B12 | Gagal simpan (penyimpanan penuh) diam-diam | `catch(e){}` | Peringatan satu kali (notifikasi) | `lsSet()` |
-| B15 | jsPDF dimuat sinkron di `<head>` setiap kunjungan | memblokir render | Dimuat saat tombol **Buat Laporan PDF** ditekan | `ensureJsPDF()` |
+| B15 | jsPDF dimuat sinkron di `<head>` setiap kunjungan | memblokir render | Dimuat saat tombol **Buat Laporan PDF** ditekan; sejak v2.4.0 dengan Subresource Integrity, `crossorigin="anonymous"`, dan tanpa referrer (lihat bagian 7) | `ensureJsPDF()` |
 
 Judul PDF kini "LAPORAN PERENCANAAN & INSPEKSI PERANCAH" (isinya mencakup perencanaan), dan nama berkas `Laporan_Perancah_<tag>.pdf`.
 
-**Nilai acuan regresi.** v2.2.0 memakai nilai `ANALISIS_PERENCANAAN.md` §2.8: 645 kg → Light; W* 2609 kg; 435 kg per tiang; klem 3,20 kN; estimasi 4 bay 14 komponen / 227 pcs / 1469 kg; 704 kg per tiang; dan seterusnya. **Sejak v2.3.0, nilai tersebut sengaja diganti** oleh koreksi yang disetujui. Rumus lama tetap direproduksi oleh `devtools/flows/aplikasi-perencanaan-ref.mjs` sebagai kolom "sebelum". Nilai acuan baru dihitung oleh modul acuan independen yang sama (tanpa memanggil `app.js`). Kasus acuan: 3 bay × 2,4 × 1,2 m, 4 lift × 2,0 m, 2 lift berpapan, 1 platform kerja, Medium, pipa 48,3 × 4,0. Hasilnya: bay terberat bawaan 430 kg → Medium; beban tiang terbesar 480,8 kg (4,72 kN, tiang tengah sisi luar); N<sub>izin</sub> 29,08 kN; reaksi klem 2,64 kN terhadap 6,06 kN; q 12.020 kg/m². Estimasi material bawaan: 13 komponen, 228 pcs, 1.626 kg. Untuk 4 bay: 13 komponen, 277 pcs, 2.061 kg; 477 kg per tiang. Checklist tetap HIJAU/MERAH/KUNING.
+**Nilai acuan regresi.** v2.2.0 memakai nilai `ANALISIS_PERENCANAAN.md` §2.8: 645 kg → Light; W* 2609 kg; 435 kg per tiang; klem 3,20 kN; estimasi 4 bay 14 komponen / 227 pcs / 1469 kg; 704 kg per tiang; dan seterusnya. **Sejak v2.3.0, nilai tersebut sengaja diganti** oleh koreksi yang disetujui. Rumus lama tetap direproduksi oleh `devtools/flows/aplikasi-perencanaan-ref.mjs` sebagai kolom "sebelum". Nilai acuan baru dihitung oleh modul acuan independen yang sama (tanpa memanggil `app.js`). Kasus acuan: 3 bay × 2,4 × 1,2 m, 4 lift × 2,0 m, 2 lift berpapan, 1 platform kerja, Medium, pipa 48,3 × 4,0. Hasil v2.3.0: bay terberat bawaan 430 kg → Medium; beban tiang terbesar 480,8 kg (4,72 kN, tiang tengah sisi luar); N<sub>izin</sub> 29,08 kN; reaksi klem 2,64 kN terhadap 6,06 kN; q 12.020 kg/m²; estimasi material 13 komponen, 228 pcs, 1.626 kg. **Hasil v2.4.0** (KOREKSI §19): beban tiang terbesar **593,0 kg (5,82 kN)** karena 50 % beban layan pada lift berpapan kedua; N<sub>izin</sub> 29,08 kN (rasio 0,20); reaksi klem 2,64 kN; lentur transom **1,10 kNm terhadap 1,12 kNm** (rasio 0,98); q **14.824 kg/m²**; estimasi material **14 komponen, 248 pcs, 1.704 kg** (set pagar ujung). Untuk 4 bay: 14 komponen, 297 pcs, 2.139 kg; 589,5 kg per tiang. Checklist tetap HIJAU/MERAH/KUNING; status akhir tag dan PDF menggabungkan checklist dan analisis (bagian 4.7).
 
 ### 4.5 Koreksi metode perhitungan v2.3.0 (Beta)
 
@@ -134,16 +139,40 @@ Judul PDF kini "LAPORAN PERENCANAAN & INSPEKSI PERANCAH" (isinya mencakup perenc
 | E14 | Rujukan diperbarui (BS EN 12811-1, BS EN 74-1:2022, BS EN 39, TG20:21, AS/NZS 1576.1:2019, AS 4576:2020, SNI 8987:2021); KEP-74/PPK/XII/2013 dihapus; nomor klausul yang tidak terverifikasi dihapus | `index.html`, PDF, tag |
 | E2 (Tahap 5) | Estimasi material dari geometri yang sama (lift dasar, lift berpapan, pagar per lift berpapan, berat pipa sesuai jenis); material bawaan = estimasi geometri bawaan | `materialRows()` |
 
-**Tanda Beta:** pita "Beta — metode perhitungan telah dikoreksi dan menunggu tinjauan Komite Teknis PPAPI. Hasil bersifat indikatif dan wajib diverifikasi oleh ahli perancah yang kompeten." tampil di atas semua tampilan (`.beta-note`). Tanda Beta juga ada di `<title>`, judul bilah portal (`data-app-title`), lencana di header, beranda, menu Tentang (v2.3.0), kesimpulan otomatis, dan kaki **setiap halaman PDF** (`BETA_TEXT`). Pita tidak ikut tercetak pada scaffold tag. Judul aplikasi di `config.apps` (dasbor) tidak diubah karena berkas itu milik situs; pemiliknya dapat menambahkan "(Beta)" bila diinginkan.
+**Tanda Beta:** pita "Beta — metode perhitungan telah dikoreksi dan menunggu tinjauan Komite Teknis PPAPI. Hasil bersifat indikatif dan wajib diverifikasi oleh ahli perancah yang kompeten." tampil di atas semua tampilan (`.beta-note`). Tanda Beta juga ada di `<title>`, judul bilah portal (`data-app-title`), lencana di header aplikasi (di dalam portal baris ini hanya untuk pembaca layar; tanda Beta tampil pada judul bilah portal), beranda, menu Tentang (v2.3.0), kesimpulan otomatis, dan kaki **setiap halaman PDF** (`BETA_TEXT`). Pita tidak ikut tercetak pada scaffold tag. Judul aplikasi di `config.apps` (dasbor) tidak diubah karena berkas itu milik situs; pemiliknya dapat menambahkan "(Beta)" bila diinginkan.
 
 ### 4.6 Tampilan & aksesibilitas
 
 - Identitas visual aplikasi (kuning hazard, huruf Oswald) **dipertahankan**; warna verdict HIJAU/KUNING/MERAH adalah semantik keselamatan (konvensi scafftag).
+- **Integrasi portal (v2.4.0).** Di dalam portal (`html.app-gate-ok`), baris merek aplikasi (logo, "PPAPI Scaffold", subjudul) disembunyikan secara visual karena judul sudah ada di bilah portal; `h1` tetap tersedia bagi pembaca layar. "Tersimpan HH.MM" dan chip status pindah ke bilah menu. Pita hazard dimulai setelah garis `--pp-metal-line` 1 px. Bilah menu berlatar grafit dan sejajar dengan tepi kartu. Chrome di atas kartu pertama: **108 px** di desktop 1440 (sebelumnya ±180 px) dan **99 px** di ponsel 390 (sebelumnya ±210 px). Chip status di bilah menu menunjukkan status akhir (checklist + analisis), sama dengan tag; chip progres di Checklist tetap hasil checklist saja.
+- Tombol mengambang **Simulator 3D** berada di dalam `<aside aria-label="Pintasan aplikasi">` (axe `region`: 0 pelanggaran).
 - Kontras disesuaikan agar memenuhi WCAG AA tanpa mengubah makna: hijau status `#1f9d57 → #17824a`, teks abu `#697079 → #5b636c`, judul kecil kuning di atas putih menjadi kuning tua `#8a6a00`, teks di atas latar KUNING berwarna gelap. Warna di dalam PDF tidak diubah.
 - Seluruh label formulir dikaitkan dengan isiannya (`for`/`id`), isian tabel diberi `aria-label`, tombol jawaban checklist memakai `aria-pressed`, menu tahap memakai `aria-expanded` (Esc menutup menu), cincin fokus terlihat.
 - Ponsel: header aplikasi tidak lagi menempel (dulu ±259 px menutupi progres checklist); progres checklist menempel tepat di bawah bilah portal; tombol jawaban ≥ 44 px; tabel Beban Hidup, Material, dan JSA bertumpuk menjadi kartu tanpa geser ke samping.
 - Pesan `alert()` informatif diganti notifikasi yang tidak memblokir; konfirmasi tindakan berisiko tetap memakai dialog konfirmasi.
 - Kartu "Tentang PPAPI" di beranda aplikasi menautkan ke `profil.html` (dulu catatan "dapat ditampilkan di sini setelah datanya dilampirkan").
+
+### 4.7 Revisi v2.4.0 (tinjauan independen, 9 Oktober 2026)
+
+Rincian teknis, sumber, dan contoh numerik ada di `KOREKSI-PERHITUNGAN.md` §19. Regresi: `devtools/flows/aplikasi-perencanaan-temuan.mjs`.
+
+| Temuan | Perubahan | Lokasi (`app.js`) |
+|---|---|---|
+| Material v2.2.0 (393 kg) | Rincian bawaan v2.2.0 diganti estimasi geometri saat dimuat (penyimpanan, arsip, impor); rincian otomatis v2.3.0 yang belum disunting diperbarui diam-diam; rincian lama lain ditandai CEK sampai diganti/dikonfirmasi; suspended/mobile memakai W<sub>d</sub> = maks(rincian, estimasi) | `isMatV22()`, `materialRowsV23()`, `applyAnalisis()`, `matStatus()`, `analisisData()` |
+| Lentur transom/ledger | Pemeriksaan baru terhadap W<sub>pl</sub>·f<sub>y</sub>/1,65 (1,12 / 0,93 kNm; TG20:21 Tabel 5.9); isian **Transom Antara** di Data Proyek | `memberBending()`, kartu "2. Lentur Transom & Ledger" |
+| Beban terpusat Special | Isian `an-sdpt`; beban terpusat rencana = maks(kelas, Tahap 2) | `dutyInfo()`, `pointDesign()`, `applyLLtoAnalisis()` |
+| Kelas Tahap 2 | CEK bila kelas dipilih < rekomendasi Tahap 2; tampil di tag dan PDF | `analisisData()` kelompok DAT |
+| EN 12811-1 §6.2.9.2 a)3 | 50 % beban layan pada satu lift berpapan berikutnya (model independent) | `geom().nlive`, `stdLoad()` |
+| Tag & PDF | Status akhir = checklist + analisis; KUNING "menunggu verifikasi desain" bila analisis PERLU REVIEW; tag memuat status analisis dan catatan Beta | `finalView()`, `tagHTML()`, `buildPDFNow()` |
+| Material vs geometri | Rincian otomatis mengikuti geometri; rincian disunting ditandai bila geometri berubah; tombol *Ganti dengan estimasi geometri* / *Rincian ini sudah sesuai* | `syncMaterials()`, `renderMatNote()` |
+| Batas beban terpusat | 100/150/200 kg (bukan 1,0/1,5/2,0 kN) | `llData()` |
+| Kurva a | Selalu CEK; alasan/sertifikat wajib dan tercetak; pembanding kurva c | `analisisData()`, `computeAnalisis()` |
+| Pagar ujung | Set pagar ujung pada tiang ujung dan di estimasi material; label catatan berat sendiri dari posisi yang dipakai | `endSetKg()`, `stdLoad()`, `materialRows()` |
+| Jenis pipa data lama | "Belum dipilih" → dihitung 3,2 mm + CEK | `tubeUnset()`, `applyRecordFields()` |
+| Rujukan di layar | SNI 8987:2021 tidak dikaitkan dengan dimensi/mutu; beranda menyebut acuan metode; "Lingkup" tanpa JIS G3444; tag "Acuan perhitungan" | `index.html`, `tagHTML()` |
+| Perancah berikat | Isian **Perancah diikat ke bangunan** (Tahap 3); H ≤ 3B diganti INFO tie wajib didesain | `analisisData()` |
+
+Data tersimpan v2.4.0 memakai `v:4`; data v1–v3 tetap dapat dimuat.
 
 ## 5. Simulator Pemasangan Perancah Tube & Coupler
 
@@ -152,7 +181,8 @@ Judul PDF kini "LAPORAN PERENCANAAN & INSPEKSI PERANCAH" (isinya mencakup perenc
 - `index.html` memuat `simulator.js` (mendefinisikan `PPAPI_APP_START`) dan `../gate.js`. Sebelum gerbang lolos, **three.js tidak dimuat sama sekali** (diuji: anggota non-Aktif tidak pernah meminta `three.min.js`).
 - three.js **r128** dimuat dari cdnjs dengan Subresource Integrity (`sha512-dLxUelAp…`). Versi tidak dinaikkan karena r128 adalah build UMD terakhir yang dipakai kode lama; peningkatan versi menunggu fase berikutnya (lihat analisis §5.7).
 - Adegan 3D dibuat saat anggota menekan **Mulai Simulasi** (layar pembuka). Tanpa WebGL atau bila pustaka 3D gagal dimuat, tampil pesan yang jelas (B6). Konteks WebGL yang hilang/pulih juga ditangani (B7).
-- **Kemajuan latihan** disimpan per anggota di peramban ini: `localStorage['ppapi_progress_<uid>_simulator']` = `{ current, total, completedAt, updatedAt, tools{vert,horz,dist,square}, libSeen[] }`. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
+- **Kemajuan latihan** disimpan per anggota di peramban ini: `localStorage['ppapi_progress_<uid>_simulator']` = `{ v: 2, seq: 'tc-2026.10-r2', total, current, completedAt, updatedAt, tools{vert,horz,dist,square,edge,stab}, libSeen[] }`. `seq` adalah versi urutan perakitan; kemajuan dari urutan lain (sebelum koreksi Oktober 2026) tidak dapat dipetakan sehingga perakitan dimulai ulang, dengan alat ukur dan katalog yang sudah dilihat tetap tercatat. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
+- Geometri, urutan 20 tahap, dan mode inspeksi yang mengukur model dikoreksi pada 9 Oktober 2026: lihat **`KOREKSI-SIMULATOR.md`** (§2–§5).
 
 ### 5.2 Perbaikan
 
@@ -184,13 +214,30 @@ Aplikasi perencanaan (`ANALISIS_PERENCANAAN.md` §2.7): **E1–E14 telah dikorek
 - FoS tali, faktor stabilitas counterweight, rasio H:B menara beroda, jumlah platform kerja bersamaan, perhitungan tie dan angin;
 - konfirmasi dasar keamanan tunggal R<sub>k</sub>/1,65 (setara TG20) dan kriteria pencabutan label Beta.
 
-Simulator (`ANALISIS_SIMULATOR.md` §2): urutan dan dimensi beberapa tahap (lantai sementara tanpa pagar, top rail ±0,92–0,94 m, tag hijau dipasang sebelum inspeksi, lebar 2,4 m berlabel "AS 4576 light duty", bracing ujung 57°, outrigger setelah lift-2), serta mode uji/penilaian.
+Aplikasi perencanaan v2.4.0: temuan tinjauan independen telah diperbaiki (`KOREKSI-PERHITUNGAN.md` §19). Pertanyaan baru untuk Komite: penggabungan beban terpusat pada transom/ledger (Q14), ledger dengan transom antara (Q15), dan aturan 50 % level berpapan (Q16).
+
+Simulator: temuan geometri dan urutan dari `ANALISIS_SIMULATOR.md` §2 (lantai sementara tanpa pagar, top rail ±0,92–0,94 m, tag hijau sebelum inspeksi, lebar 2,4 m berlabel "AS 4576", bracing ujung 57°, outrigger setelah lift-2) **telah dikoreksi**: lihat `KOREKSI-SIMULATOR.md` §1–§4. Yang masih menunggu Komite (`KOREKSI-SIMULATOR.md` §7):
+- acuan nasional untuk tinggi pagar, bentang papan, dan toleransi; persetujuan konfigurasi ilustrasi (2 bay × 2,0 m × 1,2 m, lift 1,95 m);
+- tinggi top rail 1,0 m atau 950 mm, jumlah mid rail, dan bukti kekuatan pagar 0,9 kN;
+- batas stabilitas menara bebas (4 : 1) dan outrigger atau tie sebagai varian;
+- lantai lift-1, konvensi bracing, sambungan standard, papan, dan spesifikasi pintu tangga;
+- konvensi tag (dua atau tiga warna), kriteria aplikasi bertanda \*, mode tantangan, dan edisi standar yang berlaku.
 
 Atribusi pengembang telah diseragamkan sesuai arahan klien (9 Oktober 2026): seluruh kredit pengembang di situs dan aplikasi anggota menggunakan "mrezahuzain@2026".
 
 ## 7. Pemeliharaan & pengujian
 
-- **Dependensi eksternal:** Google Fonts; jsPDF 2.5.1 (cdnjs, dimuat saat membuat PDF); three.js r128 (cdnjs + SRI). Tanpa internet, PDF dan simulator 3D tidak tersedia; aplikasi perencanaan lainnya tetap berjalan.
-- **Uji otomatis:** `node devtools/flows/aplikasi-flow.mjs` (gerbang, bilah portal, SSO, sembilan tahap, nilai acuan v2.3.0, perbaikan bug, keamanan/XSS, simulator, axe-core); `node devtools/flows/aplikasi-perencanaan-koreksi.mjs` (koreksi metode: kasus acuan, matriks skenario, Tahap 2, dasar keamanan, papan, klem, migrasi data lama, E11/E12, tanda Beta termasuk PDF, ponsel, axe) dengan nilai harapan dari `node devtools/flows/aplikasi-perencanaan-ref.mjs` (perhitungan acuan independen) dan `node devtools/check.mjs aplikasi/perencanaan/index aplikasi/simulator/index --auth` (serta tanpa `--auth`, dengan `--status=…`, dan `--admin`).
+- **Dependensi eksternal:** Google Fonts; jsPDF 2.5.1 (cdnjs, dimuat saat membuat PDF); three.js r128 (cdnjs). Kedua skrip CDN dimuat dengan **Subresource Integrity**, `crossorigin="anonymous"`, dan `referrerpolicy="no-referrer"`, karena halaman aplikasi satu origin dengan portal (sesi Firebase, konsol admin, localStorage):
+  - three.js r128 `three.min.js`: `sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==` (`simulator/simulator.js`);
+  - jsPDF 2.5.1 `jspdf.umd.min.js`: `sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==` (`perencanaan/app.js`, `JSPDF_SRI`; dihitung ulang dari berkas cdnjs pada 9 Oktober 2026).
+
+  Bila versi pustaka dinaikkan, hash wajib diperbarui; berkas yang tidak cocok ditolak peramban dan aplikasi menampilkan pesan "Pustaka PDF tidak dapat dimuat". Tanpa internet, PDF dan simulator 3D tidak tersedia; aplikasi perencanaan lainnya tetap berjalan.
+- **Uji otomatis:**
+  - `node devtools/flows/aplikasi-flow.mjs`: gerbang, bilah portal, SSO, sembilan tahap, nilai acuan, perbaikan bug, keamanan/XSS, simulator, axe-core;
+  - `node devtools/flows/aplikasi-perencanaan-koreksi.mjs`: koreksi metode (kasus acuan, matriks skenario, Tahap 2, dasar keamanan, papan, klem, migrasi data lama, E11/E12, tanda Beta termasuk PDF, ponsel, axe);
+  - `node devtools/flows/aplikasi-perencanaan-temuan.mjs`: setiap temuan tinjauan independen v2.4.0 (SRI, chrome portal, migrasi material v2.2.0, transom/ledger, beban terpusat, kelas Tahap 2, §6.2.9.2, tag/PDF, material vs geometri, batas kg, kurva a, pagar ujung, jenis pipa, teks rujukan, tie, ponsel, axe);
+  - `node devtools/flows/aplikasi-simulator-flow.mjs`: simulator (urutan 20 tahap, ukuran dari adegan, inspeksi, memori, keyboard, axe, ponsel, migrasi kemajuan, tanpa WebGL);
+  - nilai harapan dari `node devtools/flows/aplikasi-perencanaan-ref.mjs` (perhitungan acuan independen);
+  - `node devtools/check.mjs aplikasi/perencanaan/index aplikasi/simulator/index --auth` (serta tanpa `--auth`, dengan `--status=…`, dan `--admin`).
 - **Mengubah rumus:** setiap perubahan rumus atau konstanta wajib disetujui ahli PPAPI, dicatat di daftar perubahan aplikasi (menu *Tentang Aplikasi*, `CHANGELOG` di `app.js`) dan di `KOREKSI-PERHITUNGAN.md`, lalu modul acuan `aplikasi-perencanaan-ref.mjs` diperbarui **secara terpisah** dari `app.js` (jangan menyalin kode aplikasi ke modul acuan).
-- **Versi:** PPAPI Scaffold **2.3.0 (Beta)**, 9 Oktober 2026 — metode perhitungan terkoreksi, menunggu tinjauan Komite Teknis PPAPI. Versi sebelumnya 2.2.0 (porting ke portal).
+- **Versi:** PPAPI Scaffold **2.4.0 (Beta)**, 9 Oktober 2026 — revisi hasil tinjauan independen atas metode terkoreksi 2.3.0, menunggu tinjauan Komite Teknis PPAPI. Versi sebelumnya 2.3.0 (koreksi E1–E14) dan 2.2.0 (porting ke portal).

@@ -78,7 +78,7 @@
     g.classList.add('is-error');
     g.setAttribute('role', 'alert');
     g.innerHTML =
-      '<img class="app-gate__logo" src="' + esc(ROOT + 'assets/img/logo-light.png') + '" width="148" height="52" alt="PPAPI">' +
+      '<img class="app-gate__logo" src="' + esc(ROOT + 'assets/img/logo-light-mark.webp') + '" width="148" height="51" alt="PPAPI">' +   /* WebP 13 KB (master PNG 1200 px hanya untuk cetak) */
       '<p class="app-gate__eyebrow">Aplikasi Anggota</p>' +
       '<p class="app-gate__msg" id="app-gate-msg">' + esc(msg) + '</p>' +
       '<div class="app-gate__actions">' +

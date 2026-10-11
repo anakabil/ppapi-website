@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Kontak &amp; Umpan Balik — PPAPI</title>
   <meta name="description" content="Sampaikan kritik, saran, pertanyaan, pengaduan, atau apresiasi kepada Sekretariat PPAPI, serta temukan informasi sekretariat dan jawaban atas pertanyaan umum.">
   <meta name="theme-color" content="#0a0a0b">
@@ -122,7 +123,7 @@
                 <legend class="ub-legend"><span class="ub-legend__num">03</span>Isi pesan</legend>
                 <div class="field">
                   <label class="field__label" for="ub-subjek">Subjek</label>
-                  <input class="field__control" id="ub-subjek" name="subjek" type="text" maxlength="150" placeholder="Ringkasan singkat pesan Anda" aria-describedby="ub-subjek-err">
+                  <input class="field__control" id="ub-subjek" name="subjek" type="text" maxlength="150" placeholder="Ringkasan pesan Anda" aria-describedby="ub-subjek-err">
                   <p class="field__error" id="ub-subjek-err"></p>
                 </div>
                 <div class="field">
@@ -171,7 +172,7 @@
           <section class="ub-aside" id="sekretariat" aria-labelledby="sekretariat-title" data-ub-aside>
             <div class="card card--dark card--lg ub-office" data-reveal data-reveal-delay="120">
               <div class="ub-office__head">
-                <img class="ub-office__logo" src="assets/img/logo-light.png" alt="PPAPI" width="1200" height="418" loading="lazy" decoding="async">
+                <img class="ub-office__logo" src="assets/img/logo-light-sm.webp" alt="PPAPI" width="480" height="167" loading="lazy" decoding="async">
                 <span class="ub-office__tag">Sekretariat</span>
               </div>
               <h2 class="h3 ub-office__title" id="sekretariat-title">Sekretariat PPAPI</h2>

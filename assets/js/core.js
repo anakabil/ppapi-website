@@ -699,6 +699,50 @@
     }
   };
 
+  /* ---------- Scrollable dialog body ----------
+     A dialog body that overflows must be reachable by keyboard (WCAG 2.1.1; axe scrollable-region-focusable).
+     Chromium/Firefox make such boxes focusable by themselves, Safari does not — so while the body
+     overflows it becomes a labelled, focusable region (Tab reaches it; arrows / Page Down scroll it).
+     Re-checked when the content or the viewport changes; returns stop(). */
+  function watchScrollable(bodyEl, labelId) {
+    var on = false;
+    function check() {
+      if (!bodyEl.isConnected) return;
+      var over = bodyEl.scrollHeight - bodyEl.clientHeight > 2;
+      if (over === on) return;
+      on = over;
+      bodyEl.classList.toggle('is-scrollable', over);
+      if (over) {
+        bodyEl.setAttribute('tabindex', '0');
+        bodyEl.setAttribute('role', 'region');
+        bodyEl.setAttribute('aria-labelledby', labelId);
+      } else {
+        bodyEl.removeAttribute('tabindex');
+        bodyEl.removeAttribute('role');
+        bodyEl.removeAttribute('aria-labelledby');
+      }
+    }
+    var ro = w.ResizeObserver ? new w.ResizeObserver(check) : null;
+    function observeKids() {
+      if (!ro) return;
+      ro.disconnect();
+      ro.observe(bodyEl);
+      Array.prototype.forEach.call(bodyEl.children, function (c) { ro.observe(c); });
+    }
+    var mo = w.MutationObserver ? new w.MutationObserver(function () { observeKids(); check(); }) : null;
+    if (mo) mo.observe(bodyEl, { childList: true, subtree: true, characterData: true });
+    observeKids();
+    w.addEventListener('resize', check);
+    w.requestAnimationFrame(check);
+    var late = setTimeout(check, 600);   /* after the opening animation and late images/fonts */
+    return function stop() {
+      clearTimeout(late);
+      if (ro) ro.disconnect();
+      if (mo) mo.disconnect();
+      w.removeEventListener('resize', check);
+    };
+  }
+
   /* ---------- Modal ---------- */
   var modalStack = [];
   /* Action buttons shared by ui.modal and ui.drawer:
@@ -764,6 +808,7 @@
     var actions = Array.isArray(o.actions) ? o.actions : [];
     if (!actions.length) footer.parentNode.removeChild(footer);
     buildActions(footer, actions, function () { close(); }, root);
+    var stopScrollWatch = watchScrollable(bodyEl, id + '-title');
 
     function onKey(e) {
       if (modalStack[modalStack.length - 1] !== api) return;
@@ -776,6 +821,7 @@
       var i = modalStack.indexOf(api);
       if (i !== -1) modalStack.splice(i, 1);
       d.removeEventListener('keydown', onKey, true);
+      stopScrollWatch();
       root.classList.add('is-closing');
       setTimeout(function () {
         if (root.parentNode) root.parentNode.removeChild(root);
@@ -863,7 +909,7 @@
       footer.hidden = !list.length;
       buildActions(footer, list, function () { close(); }, root);
     }
-    var closed = false, api;
+    var closed = false, api, stopScrollWatch = function () {};
     var prevFocus = d.activeElement;
     function onKey(e) {
       if (modalStack[modalStack.length - 1] !== api) return;
@@ -876,6 +922,7 @@
       var i = modalStack.indexOf(api);
       if (i !== -1) modalStack.splice(i, 1);
       d.removeEventListener('keydown', onKey, true);
+      stopScrollWatch();
       root.classList.add('is-closing');
       setTimeout(function () {
         if (root.parentNode) root.parentNode.removeChild(root);
@@ -893,6 +940,7 @@
     setActions(o.actions);
     d.addEventListener('keydown', onKey, true);
     d.body.appendChild(root);
+    stopScrollWatch = watchScrollable(bodyEl, id + '-title');
     setLockClass('modal-open', true);
     api = {
       el: root, panel: panel, body: bodyEl, footer: footer, close: close,
@@ -919,7 +967,7 @@
       var here = util.fileName() + w.location.search + w.location.hash;
       var nx = util.safeNext(here, '#'), next = nx === '#' ? '' : nx;
       return '<a class="btn btn--primary' + sm + '" href="masuk.html' + (next ? '?next=' + encodeURIComponent(next) : '') + '"><span>Masuk</span>' + arrow + '</a>' +
-        '<a class="btn btn--ghost' + sm + '" href="masuk.html?next=pendaftaran.html#daftar"><span>Daftar Anggota</span></a>';
+        '<a class="btn btn--ghost' + sm + '" href="masuk.html?next=pendaftaran.html#daftar"><span>Daftar Menjadi Anggota</span></a>';
     }
     if (s.isActive) return '';
     var map = {
@@ -1478,8 +1526,10 @@
     return ini || 'A';
   }
   function avatarHtml(user, cls) {
-    var inner = user && user.photoURL
-      ? '<img src="' + h(user.photoURL) + '" alt="" referrerpolicy="no-referrer">'
+    /* only an https photo (Google profile picture); anything else (javascript:, data:, http:) falls back to initials */
+    var photo = user && /^https:\/\/[^\s<>"']+$/i.test(String(user.photoURL || '')) ? String(user.photoURL) : '';
+    var inner = photo
+      ? '<img src="' + h(photo) + '" alt="" referrerpolicy="no-referrer">'
       : h(userInitials(user));
     return '<span class="avatar' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + inner + '</span>';
   }
@@ -1584,7 +1634,11 @@
           '</div>' +
           '<div class="site-footer__wordmark" aria-hidden="true">' + h(c.shortName || 'PPAPI') + '</div>' +
           '<div class="site-footer__bottom">' +
-            '<span>© ' + year + ' ' + h(c.shortName || 'PPAPI') + ' — ' + h(c.fullName || '') + '</span>' +
+            /* Kredit pengembang: satu-satunya bentuk yang disetujui klien (10 Oktober 2026) — jangan diubah. */
+            '<span class="site-footer__legal">' +
+              '<span>© ' + year + ' ' + h(c.shortName || 'PPAPI') + ' — ' + h(c.fullName || '') + '</span>' +
+              '<span class="site-footer__credit">Dikembangkan oleh <span translate="no">mrezahuzain@2026</span></span>' +
+            '</span>' +
             '<span class="site-footer__bottom-links">' +
               '<a href="kebijakan-privasi.html">Kebijakan Privasi</a>' +
               '<a href="verifikasi.html">Verifikasi Anggota</a>' +
@@ -1949,7 +2003,7 @@
     if (!user) return emptySession();
     var member = null, isAdmin = false;
     if (store && typeof store.getMember === 'function') {
-      try { member = await store.getMember(user.uid); }
+      try { member = await store.getMember(user.uid, { pasFoto: false }); }   /* no image on every page */
       catch (e) {
         /* a computation overtaken by a sign-out / account switch is discarded anyway: stay quiet */
         var now = auth && typeof auth.current === 'function' ? auth.current() : null;
@@ -2135,6 +2189,34 @@
     var fns = queue.splice(0, queue.length);
     for (var i = 0; i < fns.length; i++) await runReady(fns[i]);
     try { ui.reveal(d); } catch (e) { /* ignore */ }
+    try { deferredHashScroll(); } catch (e) { /* ignore */ }
+  }
+
+  /* Deferred #fragment jump for content pages whose sections are rendered from data (berita, pustaka,
+     keanggotaan). The browser's own jump lands on the layout BEFORE those sections are rendered, which then
+     push the target away (CLS ≈ 1,0 measured on desktop with reduced motion, release QA 2026-10-09). An inline
+     snippet in the page <head> removes a listed fragment early and keeps it in window.__ppHash; once every
+     onReady script has run and the web fonts are ready (≤ 1 s), the page scrolls to the target — unless the
+     visitor (or a page script) has scrolled meanwhile — and the fragment is put back in the address. */
+  function deferredHashScroll() {
+    var hash = w.__ppHash;
+    if (!hash || typeof hash !== 'string') return;
+    w.__ppHash = '';
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      w.requestAnimationFrame(function () {
+        w.requestAnimationFrame(function () {
+          var el = null;
+          try { el = d.getElementById(decodeURIComponent(hash.slice(1))); } catch (e) { el = null; }
+          if (el && (w.scrollY || 0) < 2) el.scrollIntoView({ block: 'start' });
+          try { if (!w.location.hash) w.history.replaceState(w.history.state, '', w.location.pathname + w.location.search + hash); } catch (e) { /* file:// */ }
+        });
+      });
+    }
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(go, go); else go();
+    setTimeout(go, 1000);
   }
 
   PPAPI.motion = { prefersReduced: prefersReduced, reveal: function (r) { return ui.reveal(r); } };

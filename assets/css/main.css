@@ -511,13 +511,8 @@ small { font-size: .85em; }
 }
 .btn > span { position: relative; }
 .btn .btn__icon, .btn > svg { transition: transform .45s var(--ease); }
-.btn:hover > .btn__icon:last-child, .btn:hover > svg:last-child { transform: translateX(4px); }
-.btn:hover > .icon--arrow-up-right:last-child, .btn:hover > .icon--external:last-child { transform: translate(3px, -3px); }
-.btn:hover > .icon--arrow-left:first-child { transform: translateX(-4px); }
-.btn:hover > .icon--download:last-child { transform: translateY(2px); }
 
 .btn--primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
-.btn--primary:hover { background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); }
 /* metal sheen sweep */
 .btn--primary::after {
   content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
@@ -525,7 +520,6 @@ small { font-size: .85em; }
   transform: translateX(-110%);
   transition: transform .9s var(--ease);
 }
-.btn--primary:hover::after { transform: translateX(110%); }
 
 .btn--ghost { border-color: var(--line-strong); color: var(--text); }
 .btn--ghost::before {
@@ -533,8 +527,6 @@ small { font-size: .85em; }
   background: var(--text); transform: scaleX(0); transform-origin: right center;
   transition: transform .55s var(--ease);
 }
-.btn--ghost:hover { color: var(--bg); border-color: var(--text); }
-.btn--ghost:hover::before { transform: scaleX(1); transform-origin: left center; }
 
 .btn--link {
   --btn-h: 44px; padding: 0; border: 0; overflow: visible; gap: 10px; color: var(--text);
@@ -545,13 +537,30 @@ small { font-size: .85em; }
   background-size: 0% 1px, 100% 1px; background-position: 0 100%, 0 100%; background-repeat: no-repeat;
   transition: background-size .6s var(--ease);
 }
-.btn--link:hover > span { background-size: 100% 1px, 100% 1px; }
-
 .btn--danger { background: transparent; color: var(--err-fg); border-color: var(--err-fg); }
-.btn--danger:hover { background: var(--err-fg); border-color: var(--err-fg); color: var(--bg); }
 
 .btn--light { background: var(--c-white); color: var(--c-ink); border-color: var(--line-strong); }
-.btn--light:hover { border-color: var(--c-ink); }
+
+/* Hover fills only where a pointer can really hover: on touch screens :hover "sticks" after a tap,
+   which would paint a tapped ghost "Batal" solid black — the look of the primary action. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover > .btn__icon:last-child, .btn:hover > svg:last-child { transform: translateX(4px); }
+  .btn:hover > .icon--arrow-up-right:last-child, .btn:hover > .icon--external:last-child { transform: translate(3px, -3px); }
+  .btn:hover > .icon--arrow-left:first-child { transform: translateX(-4px); }
+  .btn:hover > .icon--download:last-child { transform: translateY(2px); }
+  .btn--primary:hover { background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); }
+  .btn--primary:hover::after { transform: translateX(110%); }
+  .btn--ghost:hover { color: var(--bg); border-color: var(--text); }
+  .btn--ghost:hover::before { transform: scaleX(1); transform-origin: left center; }
+  .btn--link:hover > span { background-size: 100% 1px, 100% 1px; }
+  .btn--danger:hover { background: var(--err-fg); border-color: var(--err-fg); color: var(--bg); }
+  .btn--light:hover { border-color: var(--c-ink); }
+}
+/* press feedback for touch and keyboard (outline, not a fill, so the button hierarchy stays) */
+.btn--primary:active { background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); }
+.btn--ghost:active, .btn--light:active { border-color: var(--text); }
+.btn--danger:active { box-shadow: inset 0 0 0 1px var(--err-fg); }
+.btn--link:focus-visible > span { background-size: 100% 1px, 100% 1px; }
 
 .btn--sm { --btn-h: 44px; padding: 0 18px; font-size: .76rem; gap: 10px; }
 .btn--lg { --btn-h: 60px; padding: 0 34px; font-size: .9rem; }
@@ -1291,7 +1300,12 @@ input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webki
 .toast.is-leaving { animation: toast-out .3s var(--ease) forwards; }
 @media (max-width: 479px) {
   .toast-region { right: 16px; left: 16px; width: auto; align-items: stretch; }
+  /* a dialog or drawer is a bottom sheet here: notifications move to the top so they never cover
+     its action buttons (e.g. "Salin Nomor KTA" after an approval, or "Coba lagi" after an error) */
+  html.modal-open .toast-region { top: max(12px, env(safe-area-inset-top)); bottom: auto; flex-direction: column-reverse; }
+  html.modal-open .toast { animation-name: toast-in-top; }
 }
+@keyframes toast-in-top { from { opacity: 0; transform: translate3d(0, -14px, 0); } }
 
 .modal {
   position: fixed; inset: 0; z-index: 250;
@@ -1317,6 +1331,8 @@ input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webki
 .modal__title { font: 600 1.65rem/1.15 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; padding-top: 4px; }
 .modal__close { margin-top: -2px; }
 .modal__body { padding: 16px 28px 8px; overflow-y: auto; overscroll-behavior: contain; }
+/* overflowing bodies are focusable regions (core.js watchScrollable): keyboard users scroll them */
+.modal__body.is-scrollable:focus-visible, .drawer__body.is-scrollable:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .modal__body > * + * { margin-top: 1em; }
 .modal__body p { color: var(--muted); }
 .modal__footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding: 22px 28px 26px; }
@@ -1715,6 +1731,9 @@ html.menu-open .site-header [data-account] { visibility: hidden; opacity: 0; }
   margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.1);
   font-size: .82rem; color: var(--c-gray);
 }
+.site-footer__legal { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* developer credit: small condensed line under the copyright (exact wording fixed by the client) */
+.site-footer__credit { font: 500 .74rem/1.3 var(--f-cond); letter-spacing: .06em; color: var(--c-gray); }
 .site-footer__bottom-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; }
 .site-footer__bottom a { color: var(--c-gray); transition: color .3s; }
 .site-footer__bottom a:hover { color: var(--c-white); }

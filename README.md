@@ -5,6 +5,9 @@ Situs resmi **Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)**. Situs 
 tanpa proses *build*. Login anggota dan penyimpanan data memakai **Firebase** (opsional);
 selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
 
+**Alamat situs saat ini:** <https://anakabil.github.io/ppapi-website/> (repositori publik
+`anakabil/ppapi-website`, GitHub Pages). Cara pembaruannya dijelaskan di bagian 13.
+
 ---
 
 ## 1. Ringkasan fitur
@@ -27,8 +30,9 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
   tolak), direktori anggota (perpanjang, ubah kategori, nonaktifkan/aktifkan, ekspor CSV),
   pengelolaan konten (berita, pengumuman, agenda, produk pengetahuan, regulasi), umpan balik,
   daftar admin, dan log aktivitas.
-- **Aplikasi anggota**: PPAPI Scaffold — Perencanaan & Analisis Struktur, dan Simulator
-  Pemasangan Perancah Tube & Coupler (folder `aplikasi/`).
+- **Aplikasi anggota (Beta)**: PPAPI Scaffold (Beta) — Perencanaan & Analisis Struktur v2.4.0, dan
+  Simulator Pemasangan Perancah Tube & Coupler (folder `aplikasi/`). Metode perhitungan dan
+  urutan simulator telah dikoreksi dan menunggu tinjauan Komite Teknis PPAPI (bagian 8).
 - Desain monokrom yang konsisten; rapi di ponsel dan komputer, dapat dipakai dengan papan
   ketik, dan menghormati pengaturan "kurangi animasi".
 
@@ -106,6 +110,11 @@ Aturan umum untuk semua berkas di `assets/js/config.js` dan `assets/data/*.js`:
 **Gambar**: simpan foto baru di `assets/img/` (format `.webp` atau `.jpg`, lebar ≤ 2000 px),
 lalu tulis alamatnya, misalnya `gambar: 'assets/img/nama-foto.webp'`.
 
+**Kredit pengembang**: baris paling bawah footer setiap halaman memuat teks kecil
+"Dikembangkan oleh mrezahuzain@2026" (disusun oleh `core.js`; aplikasi anggota memuat kredit
+yang sama di footer-nya). Teks ini merupakan ketentuan klien — jangan diubah, dan jangan
+menambahkan kredit, merek, atau nama pihak lain di situs maupun di aplikasi anggota.
+
 **Logo**: berkas induk `logo-color.png`, `logo-light.png`, dan `logo-mono-dark.png` (1200 px)
 memiliki versi ringan `-sm.webp`; `logo-light-mark.webp` adalah logo tanpa tulisan kecil untuk
 header. Bila logo diganti, perbarui juga versi-versi tersebut.
@@ -135,8 +144,10 @@ iuran. Mohon hanya mengisinya dengan data yang dapat dipertanggungjawabkan.
 1. **Buat akun** di halaman Masuk/Daftar → status **Draf**. Akun baru diarahkan ke Formulir
    Pendaftaran.
 2. **Isi formulir** (tersimpan otomatis sebagai draf), lalu **Ajukan** → **Menunggu
-   Verifikasi**. Selama diverifikasi formulir terkunci; pemohon dapat **menarik pengajuan**
-   untuk mengubahnya kembali.
+   Verifikasi**. Selama diverifikasi, formulir **dan data yang diperiksa sekretariat** (nama,
+   nomor HP, foto, profil, kompetensi, sertifikat, pas foto) terkunci, sehingga sekretariat
+   menyetujui persis data yang diajukan. Pemohon dapat **menarik pengajuan** untuk
+   mengubahnya kembali.
 3. **Sekretariat memutuskan** di Konsol Admin: **Setujui** (kategori, masa berlaku, catatan),
    **Minta Perbaikan** (catatan wajib) atau **Tolak** (alasan wajib).
 4. Saat disetujui, **nomor KTA terbit otomatis** berurutan per tahun: `PPAPI-2026-000001`,
@@ -144,14 +155,24 @@ iuran. Mohon hanya mengisinya dengan data yang dapat dipertanggungjawabkan.
    **31 Desember tahun berjalan + `masaBerlakuTahun`** (bawaan 3 tahun) dan anggota
    otomatis tercantum di **Verifikasi Anggota**.
 5. **Fitur anggota terbuka**: KTA digital, Profil Anggota, berkas Produk Pengetahuan, dan
-   aplikasi anggota.
+   aplikasi anggota. **Nama lengkap** (dan tanggal lahir yang sudah terisi) yang telah
+   disetujui tidak dapat diubah lagi oleh anggota — nama itu tercetak pada KTA dan tercantum
+   di daftar Verifikasi Anggota. Koreksi nama dilakukan sekretariat di Firebase Console:
+   ubah `name` pada `members/{uid}` **dan** `nama` pada `registry/{nomor KTA}`. Nama pada
+   kartu langsung mengikuti daftar verifikasi; kunci pencarian nama ikut diperbarui pada
+   tindakan admin berikutnya untuk anggota tersebut (mis. Perpanjang).
 6. **Perpanjangan**: anggota yang masa berlakunya habis, akan habis dalam ≤ 60 hari, atau
    berstatus Nonaktif dapat mengajukan **perpanjangan** melalui formulir yang sama →
    Menunggu Verifikasi → disetujui admin (KTA tetap). Catatan: selama pengajuan
    perpanjangan diperiksa, fitur anggota terkunci; bila pengajuan ditarik, status menjadi
-   **Draf** (bukan kembali Aktif) sampai diajukan dan disetujui lagi. Bagi anggota yang masih
-   Aktif, sekretariat sebaiknya langsung memakai tombol **Perpanjang** di direktori anggota
-   tanpa pengajuan.
+   **Draf** (bukan kembali Aktif) sampai diajukan dan disetujui lagi. Bila sekretariat
+   **menolak** atau **meminta perbaikan** atas pengajuan perpanjangan, keanggotaan kembali ke
+   keadaan sebelum pengajuan — **Aktif** (dengan masa berlaku dan nomor KTA yang sama; tampil
+   *Kedaluwarsa* bila masa berlakunya sudah lewat) atau **Nonaktif** — sehingga masa yang
+   sudah disetujui tidak hilang dan data anggota tetap sesuai dengan daftar Verifikasi
+   Anggota. Alasan/catatan sekretariat tetap tercatat pada riwayat anggota. Bagi anggota yang
+   masih Aktif, sekretariat sebaiknya langsung memakai tombol **Perpanjang** di direktori
+   anggota tanpa pengajuan.
 
 Akun lama (dibuat sebelum versi ini) yang berstatus "Menunggu Verifikasi" tanpa formulir
 otomatis dianggap **Draf** dan diminta mengisi formulir. Anggota lama yang sudah **Aktif**
@@ -168,9 +189,14 @@ Buka **Konsol Admin** dari menu akun (hanya tampil bagi admin) atau `admin.html`
   **Setujui / Minta Perbaikan / Tolak**. Tombol "Kirim email" membuka email ke pemohon.
 - **Anggota**: cari, saring, ubah kategori, perpanjang, nonaktifkan/aktifkan, **ekspor CSV**
   (terbuka rapi di Excel berbahasa Indonesia: pemisah titik koma, UTF-8).
+- **Daftar Verifikasi Anggota (publik)** memuat data yang **disetujui**: saat **Setujui**
+  (pendaftaran baru atau perpanjangan), nama, kompetensi utama, dan kota dari data yang baru
+  diperiksa dicatat ke daftar. Tindakan lain (**Perpanjang**, **Ubah kategori**,
+  **Nonaktifkan**, **Aktifkan kembali**) hanya memperbarui kategori, masa berlaku, dan status,
+  sehingga data yang diubah anggota setelah disetujui tidak ikut terbit tanpa diperiksa.
 - **Konten**, **Umpan Balik** (status Baru/Diproses/Selesai + catatan), **Admin** (tambah
-  dengan email akun yang sudah terdaftar, hapus), dan **Log Aktivitas** (setiap keputusan
-  tercatat: siapa, kapan, apa).
+  dengan email akun yang sudah terdaftar **dan terverifikasi**, hapus), dan **Log Aktivitas**
+  (setiap keputusan tercatat: siapa, kapan, apa).
 
 ### 6.1 Admin pada Mode Demo
 
@@ -184,7 +210,8 @@ memulai ulang.
 
 ### 6.2 Membuat admin PERTAMA pada Mode Firebase (sekali saja)
 
-1. Orang yang akan menjadi admin **mendaftar** di situs (Masuk/Daftar) seperti anggota biasa.
+1. Orang yang akan menjadi admin **mendaftar** di situs (Masuk/Daftar) seperti anggota biasa
+   dan **membuka tautan verifikasi** yang dikirim ke emailnya (akun Google sudah terverifikasi).
 2. Buka <https://console.firebase.google.com> › proyek › **Authentication › Users**, cari
    email tersebut, salin **User UID**.
 3. Buka **Firestore Database › Data** › **Start collection** (atau pilih koleksi
@@ -194,14 +221,21 @@ memulai ulang.
    (mis. `2026-10-09`), `addedBy` = `console`. Klik **Save**.
 5. Admin tersebut keluar lalu masuk kembali di situs — menu akun kini memuat **Konsol Admin**.
 6. Admin berikutnya cukup ditambahkan dari **Konsol Admin › Admin** dengan email akun yang
-   sudah terdaftar. Admin terakhir tidak dapat menghapus dirinya sendiri.
+   sudah terdaftar **dan terverifikasi**. Admin terakhir tidak dapat menghapus dirinya sendiri.
 
-> **Keamanan saat menambah admin.** Kolom email pada data anggota selalu sama dengan email
-> akun yang dipakai masuk (anggota tidak dapat menggantinya), tetapi Firebase **tidak
-> memeriksa kepemilikan email** pada akun email & kata sandi. Karena itu, minta calon admin
-> **mendaftar dan masuk sendiri lebih dulu**, lalu cocokkan nama serta tanggal akunnya di
-> **Konsol Admin › Anggota** sebelum menambahkannya. Bila satu email tercatat pada lebih dari
-> satu data anggota, konsol menolak penambahan — periksa datanya di Firebase Console.
+> **Keamanan saat menambah admin.** Konsol Admin mencari calon admin berdasarkan kolom email
+> pada data anggota. Kolom itu hanya terisi setelah pemilik akun **membuktikan emailnya**
+> (membuka tautan verifikasi yang dikirim otomatis saat mendaftar; akun Google sudah
+> terverifikasi) — aturan Firestore menolak email yang belum diverifikasi. Dengan demikian,
+> orang lain tidak dapat "memesan" alamat email calon staf sekretariat lalu ikut menjadi
+> admin. Tetap minta calon admin **mendaftar, memverifikasi email, dan masuk sendiri lebih
+> dulu**, lalu cocokkan nama serta tanggal akunnya di **Konsol Admin › Anggota** sebelum
+> menambahkannya. Bila satu email tercatat pada lebih dari satu data anggota, konsol menolak
+> penambahan — periksa datanya di Firebase Console.
+>
+> Bila calon admin tidak menerima email verifikasi, minta ia memeriksa folder spam. Bila tetap
+> tidak ada, hapus akun tersebut di Firebase Console › **Authentication › Users** dan minta ia
+> mendaftar ulang.
 
 ## 7. Mengelola konten & Produk Pengetahuan
 
@@ -241,18 +275,37 @@ Anggota Aktif".
   membuka berkas sesuai pengaturan berbagi di Google Drive — untuk dokumen yang sangat
   rahasia, bagikan berkas Drive hanya kepada akun tertentu.
 
-## 8. Aplikasi anggota
+## 8. Aplikasi anggota (Beta)
 
 | Aplikasi | Folder | Isi |
 | --- | --- | --- |
-| PPAPI Scaffold — Perencanaan & Analisis Struktur | `aplikasi/perencanaan/` | Perencanaan dan inspeksi perancah sembilan tahap: data proyek, beban hidup, kelas beban (duty) & stabilitas, gambar rencana, material, analisis struktur, JSA, daftar periksa (10 kategori, 52 butir), laporan & label perancah. |
-| Simulator Pemasangan Perancah Tube & Coupler | `aplikasi/simulator/` | Pelatihan virtual urutan pemasangan perancah tubular langkah demi langkah, pengenalan klem, pemeriksaan kelurusan, jarak, dan kesikuan. |
+| PPAPI Scaffold (Beta) — Perencanaan & Analisis Struktur **v2.4.0** | `aplikasi/perencanaan/` | Perencanaan dan inspeksi perancah sembilan tahap: data proyek, beban hidup, kelas beban (duty) & stabilitas, gambar rencana, material, analisis struktur indikatif, JSA, daftar periksa (10 kategori, 52 butir), laporan PDF & label perancah. |
+| Simulator Pemasangan Perancah Tube & Coupler (Beta) | `aplikasi/simulator/` | Pelatihan virtual 20 tahap pemasangan perancah tubular — dari persiapan dan tag merah, lantai berpagar, tangga dan pintu akses, hingga inspeksi serah terima yang mengukur adegan dan tag hijau — serta pengenalan komponen dan klem. |
 
 Keduanya dibuka dari Dasbor, Profil Anggota (`anggota.html#aplikasi`), dan Produk
 Pengetahuan. Penjaga akses `aplikasi/gate.js` hanya mengizinkan anggota Aktif dan admin
 (pengunjung lain diarahkan ke halaman masuk atau dasbor) dan menampilkan bilah "Portal Anggota
 PPAPI" di bagian atas. Anggota cukup masuk dengan akun situs — tidak perlu akun terpisah.
 Hasil perhitungan bersifat indikatif dan perlu diverifikasi tenaga ahli yang kompeten.
+
+**Status Beta.** Metode perhitungan aplikasi perencanaan dan geometri/urutan simulator telah
+dikoreksi atas persetujuan pemilik aplikasi dan **menunggu tinjauan Komite Teknis PPAPI**. Label
+Beta dicabut setelah Komite menyetujuinya. Dokumen yang perlu ditinjau:
+
+- [`aplikasi/KOREKSI-PERHITUNGAN.md`](aplikasi/KOREKSI-PERHITUNGAN.md) — koreksi metode
+  perhitungan v2.3.0–v2.4.0 (rumus sebelum/sesudah, sumber, contoh numerik, asumsi, dan
+  pertanyaan terbuka di §17 dan §19);
+- [`aplikasi/KOREKSI-SIMULATOR.md`](aplikasi/KOREKSI-SIMULATOR.md) — koreksi geometri dan
+  urutan 20 tahap simulator (pertanyaan terbuka di §7);
+- [`aplikasi/CATATAN.md`](aplikasi/CATATAN.md) — catatan porting, keamanan, data per anggota,
+  dependensi (jsPDF dan three.js dari cdnjs dengan pemeriksaan integritas), dan pengujian.
+
+Data kerja aplikasi (proyek perencanaan, kemajuan simulator) tersimpan **di peramban
+anggota** per akun, tidak dikirim ke PPAPI. Kredit pengembang pada aplikasi mengikuti arahan
+klien ("Dikembangkan oleh mrezahuzain@2026"); isian `penyusun` aplikasi di
+`assets/data/pustaka.js` sengaja dikosongkan sampai klien memutuskan apakah isian itu diisi.
+Nama aplikasi perencanaan di `config.js` (`apps`) dan di katalog memuat tanda **"(Beta)"**;
+hapus tanda itu bersama label Beta di dalam aplikasi setelah tinjauan Komite Teknis selesai.
 
 **Batasan jujur**: pada hosting statis (GitHub Pages) berkas HTML/JavaScript aplikasi tetap
 dapat diunduh siapa saja yang mengetahui alamatnya. Penjaga akses mengatur **pengalaman
@@ -284,8 +337,8 @@ Pada Mode Demo, halaman masuk/anggota/admin menampilkan pita **"Mode Demo"** bag
    aktifkan **Email/Password**.
 4. Pada tab yang sama, aktifkan **Google** dan pilih *project support email*.
 5. Buka **Settings › Authorized domains** › **Add domain**, tambahkan
-   `<username>.github.io` (tanpa `https://` dan tanpa nama repositori), serta domain
-   kustom bila ada. Proyek yang dibuat setelah 28 April 2025 tidak lagi otomatis
+   `<username>.github.io` (tanpa `https://` dan tanpa nama repositori — untuk situs saat ini:
+   `anakabil.github.io`), serta domain kustom bila ada. Proyek yang dibuat setelah 28 April 2025 tidak lagi otomatis
    mengizinkan `localhost`.
 6. *(Opsional — login nomor HP)* Lihat bagian 12 tentang biaya. Aktifkan penyedia **Phone**;
    buka **Settings › SMS region policy**, pilih **Allow**, centang hanya **Indonesia (ID)**.
@@ -297,15 +350,55 @@ Pada Mode Demo, halaman masuk/anggota/admin menampilkan pita **"Mode Demo"** bag
    lalu klik **Publish** (lihat bagian 11). Konsol akan menolak aturan yang salah tulis.
 9. Buat **admin pertama** (bagian 6.2).
 10. **Jangan** mengaktifkan Cloud Storage (kini mewajibkan paket berbayar Blaze). Sertifikat,
-    dokumen pendaftaran, dan dokumen khusus anggota dicatat sebagai tautan (mis. Google Drive);
-    pas foto disimpan sebagai gambar kecil (≤ 120 KB) di data anggota.
+    dokumen pendaftaran, dan dokumen khusus anggota dicatat sebagai tautan `https://`
+    (mis. Google Drive); pas foto disimpan sebagai gambar JPEG kecil (≤ 120 KB) di koleksi
+    terpisah `member_photos/{uid}`, sehingga daftar anggota di Konsol Admin tetap ringan.
 11. Pastikan `firebaseSdkVersion: '12.4.0'` di `config.js`, lalu *commit* dan *push*.
+    Berkas Firebase SDK dimuat dengan pemeriksaan integritas (SRI); lihat "Memperbarui versi
+    Firebase SDK" di bawah sebelum mengganti versinya.
 12. Uji di `https://<username>.github.io/<repo>/masuk.html`: daftar dengan email, isi dan
     ajukan formulir, lalu setujui dari akun admin; periksa dokumen `members/{uid}`,
     `registry/{kta}`, dan `audit_log` di Firestore.
 13. Untuk kembali ke Mode Demo, kosongkan `apiKey` di `config.js`.
 
+Email verifikasi: saat mendaftar dengan email & kata sandi, situs otomatis mengirim tautan
+verifikasi. Templat dan bahasa email dapat diatur di **Authentication › Templates › Email
+address verification**. Selama email belum diverifikasi, Dasbor menampilkan pemberitahuan
+dengan tombol **Kirim Ulang Tautan** dan **Saya Sudah Memverifikasi**; setelah tautan dibuka,
+email tercatat pada data anggota (saat tombol itu ditekan atau ketika pemilik akun membuka
+situs berikutnya). Email yang belum diverifikasi tidak dicatat dan tidak dapat dijadikan admin.
+
+### Kebijakan Keamanan Konten (CSP)
+
+Setiap halaman memuat `<meta http-equiv="Content-Security-Policy">` yang hanya mengizinkan
+skrip dari situs sendiri, Firebase/Google (`www.gstatic.com`, `apis.google.com`,
+`www.google.com` untuk reCAPTCHA), dan — khusus dua halaman aplikasi — `cdnjs.cloudflare.com`
+(jsPDF dan three.js); gaya dan huruf dari Google Fonts; koneksi ke `*.googleapis.com` dan
+`*.firebaseio.com`; bingkai dari `*.firebaseapp.com`/`*.web.app` dan `www.google.com` (login
+Google, reCAPTCHA, peta Google). Bila kelak menambahkan layanan pihak ketiga lain atau memakai
+`authDomain` Firebase selain `<proyek>.firebaseapp.com`, tambahkan alamatnya pada tag tersebut
+di **semua** halaman (teksnya sama di setiap halaman; dua halaman aplikasi menambahkan
+`https://cdnjs.cloudflare.com`). Pelanggaran tampil sebagai galat "Refused to load …" di konsol
+peramban.
+
+### Memperbarui versi Firebase SDK
+
+`assets/js/auth.js` memuat hash SRI (`sha384`) untuk setiap berkas SDK versi yang dipakai
+(`SDK_SRI`). Peramban menolak berkas yang isinya tidak sama dengan hash tersebut. Saat
+menaikkan `firebaseSdkVersion`:
+
+1. Hitung hash keempat berkas versi baru, misalnya di terminal:
+   `curl -s https://www.gstatic.com/firebasejs/<versi>/firebase-app-compat.js | openssl dgst -sha384 -binary | openssl base64 -A`
+   (ulangi untuk `firebase-auth-compat.js`, `firebase-firestore-compat.js`, dan
+   `firebase-app-check-compat.js`).
+2. Tambahkan entri `'<versi>': { … }` berisi keempat hash (diawali `sha384-`) ke `SDK_SRI`.
+3. Ubah `firebaseSdkVersion` di `config.js`, lalu uji masuk/daftar sebelum *push*.
+
+Versi tanpa hash tetap dimuat, dengan peringatan di konsol peramban.
+
 Rujukan: [Memulai Firebase Auth](https://firebase.google.com/docs/auth/web/start),
+[Verifikasi email](https://firebase.google.com/docs/auth/web/manage-users#send_a_user_a_verification_email),
+[Subresource Integrity](https://developer.mozilla.org/docs/Web/Security/Subresource_Integrity),
 [Login nomor HP](https://firebase.google.com/docs/auth/web/phone-auth),
 [Login Google](https://firebase.google.com/docs/auth/web/google-signin),
 [Firestore quickstart](https://firebase.google.com/docs/firestore/quickstart),
@@ -317,9 +410,10 @@ Prinsip: setiap pihak hanya mendapat akses seminimal mungkin.
 
 | Koleksi | Baca | Tulis |
 | --- | --- | --- |
-| `members/{uid}` | pemilik akun, admin | Pemilik: hanya profil (nama, kontak, profil, kompetensi, sertifikat; email hanya boleh email akun yang dipakai masuk) dan formulir pendaftaran, dengan perubahan status terbatas: **Draf/Perlu Perbaikan/Ditolak → Menunggu Verifikasi** (mengajukan), **Menunggu Verifikasi → Draf** (menarik), **Aktif kedaluwarsa (≤ 60 hari)/Nonaktif → Menunggu Verifikasi** (perpanjangan). Formulir terkunci selama diverifikasi. Kolom sekretariat (`kta`, `memberType`, `validUntil`, `approvedAt`, `approvedBy`, `review`, `joinedAt`, `createdAt`) tidak dapat diubah anggota. Akun baru selalu Draf tanpa KTA. Admin: semua. Hapus: ditolak. |
+| `members/{uid}` | pemilik akun, admin | Pemilik: hanya profil (nama, kontak, profil, kompetensi, sertifikat; email hanya boleh email akun yang dipakai masuk **dan sudah terverifikasi**) dan formulir pendaftaran, dengan perubahan status terbatas: **Draf/Perlu Perbaikan/Ditolak → Menunggu Verifikasi** (mengajukan formulir lengkap: kategori, nama, ketiga pernyataan, nama terang), **Menunggu Verifikasi → Draf** (menarik), **Aktif kedaluwarsa (≤ 60 hari)/Nonaktif → Menunggu Verifikasi** (perpanjangan). Selama diverifikasi, formulir dan data yang diperiksa (nama, HP, foto, profil, kompetensi, sertifikat) terkunci. Setelah keanggotaan pernah disetujui, nama lengkap tidak dapat diubah anggota. Kategori yang dapat diajukan sendiri: Praktisi, Ahli, Mitra Korporat (Kehormatan hanya bagi pemegangnya saat perpanjangan). Waktu pengajuan dan pembaruan ditetapkan server (tidak dapat dipilih anggota). Kolom sekretariat (`kta`, `memberType`, `validUntil`, `approvedAt`, `approvedBy`, `review`, `joinedAt`, `createdAt`) tidak dapat diubah anggota. Akun baru selalu Draf tanpa KTA. Admin: semua. Hapus: ditolak. |
+| `member_photos/{uid}` | pemilik akun, admin | pemilik (hanya saat formulir boleh diubah; JPEG ≤ 120 KB), admin |
 | `admins/{uid}` | diri sendiri, admin | admin |
-| `registry/{kta}` | siapa saja | admin (hanya kolom publik terbatas) |
+| `registry/{kta}` | siapa saja: satu nomor KTA, atau pencarian maksimal 20 hasil per permintaan (daftar tidak dapat diunduh sekaligus) | admin (hanya kolom publik terbatas) |
 | `content_*/{id}` | siapa saja | admin |
 | `pustaka_files/{id}` | admin, anggota **Aktif** yang masa berlakunya belum habis | admin |
 | `feedback/{id}` | admin | kirim: siapa saja (isian divalidasi); ubah status & catatan: admin (tercatat atas nama admin tersebut); hapus: ditolak |
@@ -366,6 +460,18 @@ Rujukan: [App Check untuk web](https://firebase.google.com/docs/app-check/web/re
 
 ## 13. Menerbitkan di GitHub Pages
 
+**Situs saat ini** sudah terbit di <https://anakabil.github.io/ppapi-website/> dari repositori
+publik `anakabil/ppapi-website` (branch `main`, folder root). Pengembang memperbaruinya dengan
+skrip `devtools/deploy.sh` di folder kerja pengembang (di luar folder situs). Skrip itu:
+memeriksa bahwa tidak ada label merek/kredit terlarang, menyalin isi folder situs ke salinan
+repositori publik, mengisi `siteUrl` **hanya pada salinan publik** (di sumber `siteUrl` tetap
+`''`), menguji halaman utama di peramban otomatis, lalu melakukan *commit* dan *push*. Riwayat
+repositori publik sengaja terpisah dari riwayat pengembangan. Untuk alamat proyek seperti ini,
+`SITE_ROOT` di `404.html` dapat diisi `'/ppapi-website/'` (tanpa isian pun halaman 404
+mendeteksinya otomatis).
+
+Bila menerbitkan sendiri dari awal (repositori baru):
+
 1. Buat repositori di GitHub (mis. `ppapi`), unggah **seluruh isi folder situs** ke akar
    repositori (termasuk berkas `.nojekyll`).
 2. Buka **Settings › Pages**. Pada *Build and deployment*, pilih **Deploy from a branch**,
@@ -375,16 +481,20 @@ Rujukan: [App Check untuk web](https://firebase.google.com/docs/app-check/web/re
    petunjuk DNS GitHub; tambahkan domain tersebut ke *Authorized domains* Firebase.
 5. Isi `siteUrl` di `config.js` dengan alamat akhir situs, mis. `https://<username>.github.io/<repo>/`
    (dipakai untuk tautan QR KTA, tautan bagikan, dan tautan kanonis). Selama kosong, situs memakai
-   alamat yang sedang dibuka.
+   alamat yang sedang dibuka. (Skrip deploy pengembang mengisinya otomatis pada salinan publik.)
 6. Jika situs diterbitkan dari repositori `<username>.github.io` (alamat tanpa nama repositori),
    halaman 404 mendeteksi akar situs secara otomatis; agar tanpa percobaan, isi
    `SITE_ROOT = '/'` di awal `404.html`. Untuk repositori proyek, `SITE_ROOT` dapat diisi
    `'/<repo>/'`.
 
 Halaman `404.html` otomatis dipakai GitHub Pages untuk alamat yang tidak ditemukan. Berkas
-`robots.txt` mengizinkan perayapan semua halaman; halaman anggota, admin, dan `styleguide.html`
-dijauhkan dari hasil pencarian melalui tanda `noindex` di halamannya. Sitemap dapat ditambahkan
-setelah alamat akhir situs ditetapkan.
+`robots.txt` mengizinkan perayapan semua halaman; halaman anggota (Dasbor, Profil Anggota,
+Formulir Pendaftaran), Konsol Admin, kedua aplikasi anggota, `404.html`, dan `styleguide.html`
+dijauhkan dari hasil pencarian melalui tanda `noindex` di halamannya. Catatan: `robots.txt` hanya
+dibaca mesin pencari di **akar domain**; pada alamat proyek (`…github.io/ppapi-website/`) berkas
+itu tidak berpengaruh, sehingga berkas pendukung (README, `aplikasi/*.md`, `firestore.rules`)
+dapat terindeks — isinya memang tidak rahasia. Bila situs pindah ke domain sendiri, `robots.txt`
+langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapkan.
 
 ## 14. Keamanan & privasi
 
@@ -398,9 +508,17 @@ setelah alamat akhir situs ditetapkan.
   tautan berkas khusus anggota, umpan balik, log). Jangan menaruh dokumen rahasia di folder
   situs.
 - Daftar verifikasi publik hanya memuat nama, nomor KTA, kategori, kompetensi utama, kota,
-  masa berlaku, dan status.
+  masa berlaku, dan status. Pada Mode Firebase, pencarian dilakukan di server (nomor KTA,
+  awal nomor, awal nama, atau satu kata nama) dan dibatasi 20 hasil per permintaan, sesuai
+  Kebijakan Privasi ("publik hanya dapat memeriksa data terbatas").
+- `robots.txt` meminta mesin pencari tidak merayapi berkas pendukung (README, catatan
+  aplikasi `*.md`, `firestore.rules`). Berkas itu tetap dapat dibuka siapa pun yang tahu
+  alamatnya, jadi jangan menaruh data rahasia di dalamnya.
 - Seluruh teks dari data/pengguna ditampilkan dengan pengamanan (*escaping*) untuk mencegah
-  sisipan kode berbahaya; ekspor CSV menetralkan isian yang menyerupai rumus Excel.
+  sisipan kode berbahaya; ekspor CSV menetralkan isian yang menyerupai rumus Excel. Sebagai
+  lapisan tambahan, setiap halaman membatasi sumber skrip, gaya, koneksi, dan bingkai melalui
+  Kebijakan Keamanan Konten (bagian 10), dan pustaka CDN aplikasi dimuat dengan pemeriksaan
+  integritas (SRI).
 - Mode Demo **bukan** sistem login yang aman (data tersimpan di peramban) — gunakan hanya
   untuk demonstrasi.
 - Kebijakan Privasi situs mengacu pada UU Nomor 27 Tahun 2022 tentang Pelindungan Data
@@ -419,6 +537,9 @@ setelah alamat akhir situs ditetapkan.
 | Menu "Konsol Admin" tidak muncul | Dokumen `admins/{UID}` belum ada atau UID salah ketik (bagian 6.2); keluar lalu masuk kembali. |
 | "Fitur ini khusus anggota berstatus Aktif." | Status keanggotaan belum Aktif atau masa berlaku habis — lihat Dasbor. |
 | Perubahan konten di Konsol Admin tidak terlihat di perangkat lain | Situs masih Mode Demo (data hanya di peramban). |
+| "Refused to load …" di konsol peramban / layanan pihak ketiga tidak tampil | Alamat layanan belum diizinkan pada tag Content-Security-Policy (bagian 10). |
+| Anggota Aktif tidak dapat mengubah nama | Disengaja: nama yang disetujui tercantum pada KTA dan daftar verifikasi; koreksi oleh sekretariat (bagian 5). |
+| Calon admin "belum ditemukan" padahal sudah mendaftar | Emailnya belum diverifikasi — minta ia membuka tautan verifikasi (atau "Kirim Ulang Tautan" di Dasbor), lalu masuk kembali. |
 | Perubahan tidak muncul | Muat ulang dengan Ctrl + F5; GitHub Pages butuh 1–2 menit setelah *push*. |
 
 ---

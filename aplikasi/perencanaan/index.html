@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>PPAPI Scaffold (Beta) — Perencanaan &amp; Analisis Struktur · Aplikasi Anggota PPAPI</title>
 <meta name="description" content="Aplikasi anggota PPAPI (versi Beta) untuk perencanaan, analisis struktur indikatif, dan inspeksi perancah tubular (tube &amp; coupler), lengkap dengan laporan PDF dan scaffold tag.">
 <meta name="robots" content="noindex,nofollow">
@@ -17,13 +18,13 @@
 </head>
 <body>
 <div id="app-gate" role="status" aria-live="polite">
-  <img class="app-gate__logo" src="../../assets/img/logo-light.png" width="148" height="52" alt="PPAPI">
+  <img class="app-gate__logo" src="../../assets/img/logo-light-mark.webp" width="148" height="51" alt="PPAPI">
   <span class="app-gate__spin" aria-hidden="true"></span>
   <p class="app-gate__eyebrow">Aplikasi Anggota PPAPI</p>
   <p class="app-gate__msg" id="app-gate-msg">Memverifikasi status keanggotaan…</p>
   <noscript><p class="app-gate__msg">Aplikasi ini memerlukan JavaScript. Aktifkan JavaScript pada peramban Anda.</p></noscript>
 </div>
-<div class="hazard"></div>
+<div class="hazard hazard--top"></div>
 <header>
   <div class="head-in">
     <div class="logo"><img id="brand-logo" alt="PPAPI" width="103" height="36"></div>
@@ -31,12 +32,8 @@
       <h1>PPAPI Scaffold <span class="beta-pill">Beta</span></h1>
       <p>Perencanaan, Analisis &amp; Inspeksi Perancah</p>
     </div>
-    <div class="spacer"></div>
-    <span id="saved-ind" role="status" aria-live="polite" style="font-size:11px;color:#9aa0a6;margin-right:8px"></span>
-
-    <div class="verdict-chip" id="head-verdict" title="Verdict checklist inspeksi">BELUM LENGKAP</div>
   </div>
-  <nav>
+  <nav aria-label="Tahap aplikasi">
     <div class="nav-in">
       <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu-panel" onclick="toggleMenu(event)">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span class="sr-only">Menu tahap: </span>
@@ -60,6 +57,10 @@
         <button type="button" class="tab" data-v="tentang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v6M12 7.6h.01"/></svg><span>Tentang Aplikasi</span></button>
         <button type="button" class="tab" data-v="admin" id="tab-admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg><span>Admin</span></button>
       </div>
+      <div class="nav-status">
+        <span id="saved-ind" class="saved-ind" role="status" aria-live="polite"></span>
+        <div class="verdict-chip" id="head-verdict" title="Status akhir: checklist inspeksi dan analisis struktur indikatif">BELUM LENGKAP</div>
+      </div>
     </div>
   </nav>
 </header>
@@ -76,7 +77,7 @@
         <div class="eyebrow" style="color:var(--hz)">PPAPI · Perkumpulan Praktisi &amp; Ahli Perancah Indonesia</div>
         <h2>Inspeksi <span>Keandalan</span><br>Perancah Tubular</h2>
         <p class="hero-beta"><span class="beta-pill beta-pill--dark">Versi Beta</span> Metode perhitungan telah dikoreksi dan sedang ditinjau Komite Teknis PPAPI.</p>
-        <p>Perencanaan, analisis struktur indikatif, dan lembar periksa terstruktur berbasis elemen untuk perancah tube &amp; coupler. Mengacu BS EN 12811-1, BS EN 39, BS EN 74-1, AS/NZS 1576.1:2019, AS 4576:2020, dan NASC TG20/SG4. Verdict otomatis tiga warna menentukan kelayakan pakai.</p>
+        <p>Perencanaan, analisis struktur indikatif, dan lembar periksa terstruktur berbasis elemen untuk perancah tube &amp; coupler. Metode perhitungan mengacu BS EN 12811-1, EN 1993-1-1, BS EN 74-1, NASC TG20:21, dan kelas beban AS/NZS 1576.1:2019; rujukan pada butir checklist masih historis dan menunggu pemetaan ulang Komite Teknis PPAPI. Verdict otomatis tiga warna menentukan kelayakan pakai.</p>
         <div class="btn-row">
           <button type="button" class="btn btn-pri" onclick="go('proyek')">Mulai Perencanaan →</button>
           <button type="button" class="btn btn-ghost" onclick="go('checklist')">Langsung ke Checklist</button>
@@ -182,7 +183,8 @@
         <div class="field"><label for="f-lebar">Lebar Perancah (m)</label><input id="f-lebar" type="number" min="0.5" step="0.1" value="1.2"></div>
         <div class="field"><label for="f-hlift">Tinggi Lift (m)</label><input id="f-hlift" type="number" min="1" step="0.1" value="2.0"></div>
         <div class="field"><label for="f-papan">Jumlah Lift Berpapan</label><input id="f-papan" type="number" min="1" step="1" value="2" aria-describedby="h-papan"><span class="field-help" id="h-papan">Lift yang dipasangi papan (termasuk platform kerja).</span></div>
-        <div class="field"><label for="f-pipa">Pipa Standard &amp; Ledger</label><select id="f-pipa" aria-describedby="h-pipa"><option value="4.0" selected>48,3 × 4,0 mm (4,37 kg/m)</option><option value="3.2">48,3 × 3,2 mm (3,56 kg/m)</option></select><span class="field-help" id="h-pipa">BS EN 39 / SNI 8987:2021; f<sub>y</sub> minimum 235 N/mm² (BS EN 12811-1).</span></div>
+        <div class="field"><label for="f-pipa">Pipa Standard &amp; Ledger</label><select id="f-pipa" aria-describedby="h-pipa"><option value="">Belum dipilih — dihitung sebagai 48,3 × 3,2 mm</option><option value="4.0" selected>48,3 × 4,0 mm (4,37 kg/m)</option><option value="3.2">48,3 × 3,2 mm (3,56 kg/m)</option></select><span class="field-help" id="h-pipa">Dimensi menurut BS EN 39; f<sub>y</sub> minimum 235 N/mm² untuk pipa lepas Ø48,3 (BS EN 12811-1 §4.2.1.2). SNI 8987:2021 (Pipa baja untuk perancah) adalah standar produk nasional; kesesuaian dimensi dan mutunya belum diverifikasi aplikasi ini.</span></div>
+        <div class="field"><label for="f-transom">Transom Antara (tengah bay)</label><select id="f-transom" aria-describedby="h-transom"><option value="0" selected>Tidak ada — papan logam membentang satu bay</option><option value="1">1 per bay — papan membentang ½ bay (mis. papan kayu)</option></select><span class="field-help" id="h-transom">Menentukan beban transom dan apakah ledger memikul transom di tengah bentang.</span></div>
       </div>
       <div class="field"><label for="f-catatan">Catatan Umum</label><textarea id="f-catatan" rows="2" placeholder="Catatan tambahan inspektor..."></textarea></div>
       <div class="btn-row"><button type="button" class="btn btn-pri" onclick="go('beban')">Lanjut ke Beban Hidup →</button><button type="button" class="btn btn-ghost" onclick="saveProject()">Simpan Proyek</button></div>
@@ -296,9 +298,13 @@
           <option value="sp">Special Duty — sesuai rencana (≥ heavy)</option>
         </select></div>
         <div class="field" id="fld-sduty" style="display:none"><label for="an-sduty">Beban special duty (kN/bay)</label><input id="an-sduty" type="number" min="6.6" step="0.1" value="8.0" oninput="computeAnalisis()"></div>
+        <div class="field" id="fld-sdpt" style="display:none"><label for="an-sdpt">Beban terpusat special duty (kN)</label><input id="an-sdpt" type="number" min="2" step="0.01" value="2.0" oninput="computeAnalisis()" aria-describedby="h-sdpt"><span class="field-help" id="h-sdpt">Benda tunggal terberat; diisi dari Tahap 2 saat "Terapkan Kelas Duty". Minimal 2,0 kN.</span></div>
         <div class="field"><label for="an-lantai">Jumlah platform kerja aktif (bersamaan)</label><input id="an-lantai" type="number" min="1" step="1" value="1" oninput="computeAnalisis()"></div>
         <div class="field"><label for="an-udl">Kapasitas izin papan, beban merata (kg/m²)</label><input id="an-udl" type="number" min="1" step="10" value="250" oninput="computeAnalisis()" aria-describedby="h-udl"><span class="field-help" id="h-udl">Dari data pabrikan papan untuk bentang bay ini. Nilai bawaan 250 kg/m² berasal dari aplikasi lama.</span></div>
         <div class="field"><label for="an-ptpapan">Kapasitas izin papan, beban terpusat (kN)</label><input id="an-ptpapan" type="number" min="0" step="0.1" placeholder="isi dari data pabrikan" oninput="computeAnalisis()" aria-describedby="h-ptpapan"><span class="field-help" id="h-ptpapan">Wajib diisi agar beban terpusat kelas duty dapat diperiksa.</span></div>
+      </div>
+      <div class="grid2">
+        <div class="field" id="fld-tie"><label for="an-tie">Perancah diikat ke bangunan (tie)</label><select id="an-tie" onchange="computeAnalisis()" aria-describedby="h-tie"><option value="tidak" selected>Tidak / belum ditentukan — kaidah perancah tanpa ikatan</option><option value="ya">Ya — diikat ke bangunan sesuai desain tie</option></select><span class="field-help" id="h-tie">Jarak dan kapasitas tie serta beban angin tidak dihitung aplikasi ini dan wajib didesain tersendiri.</span></div>
       </div>
       <p class="note" id="an-dutynote"></p>
       <div id="geom-hint-duty"></div>
@@ -327,7 +333,8 @@
       <p class="geom-line"><span>Geometri dari Data Proyek</span> <b id="an-geom"></b></p>
       <div id="geom-hint-an"></div>
       <div class="grid2">
-        <div class="field" id="fld-kurva"><label for="an-kurva">Kurva tekuk pipa (EN 1993-1-1)</label><select id="an-kurva" onchange="computeAnalisis()"><option value="c" selected>Kurva c, α = 0,49 — bawaan; setara tabel beban aksial aman NASC TG20:21</option><option value="a">Kurva a, α = 0,21 — pipa canai panas bersertifikat (±20% di atas tabel TG20; perlu persetujuan ahli)</option></select></div>
+        <div class="field" id="fld-kurva"><label for="an-kurva">Kurva tekuk pipa (EN 1993-1-1)</label><select id="an-kurva" onchange="computeAnalisis()"><option value="c" selected>Kurva c, α = 0,49 — bawaan; setara tabel beban aksial aman NASC TG20:21</option><option value="a">Kurva a, α = 0,21 — hanya pipa canai panas bersertifikat; 12–23% di atas tabel TG20, selalu ditandai CEK (Q9)</option></select></div>
+        <div class="field" id="fld-kurva-why" style="display:none"><label for="an-kurva-why">Alasan &amp; nomor sertifikat pipa (wajib untuk kurva a)</label><input id="an-kurva-why" maxlength="300" autocomplete="off" placeholder="mis. sertifikat pabrik no. …, pipa canai panas S355" oninput="computeAnalisis()"></div>
         <div class="field" id="fld-kle"><label for="an-kle">Faktor panjang efektif k (L<sub>e</sub> = k × tinggi lift)</label><input id="an-kle" type="number" min="0.5" max="3" step="0.05" value="1.0" oninput="computeAnalisis()" aria-describedby="h-kle"><span class="field-help" id="h-kle">1,0 untuk perancah yang di-bracing dan diikat (tie) pada setiap simpul lift.</span></div>
         <div class="field" id="fld-dukung"><label for="an-dukung">Daya dukung izin tanah/lantai (kg/m²)</label><input id="an-dukung" type="number" min="0" step="100" value="10000" oninput="computeAnalisis()"></div>
         <div class="field" id="fld-plate"><label for="an-plate">Luas bidang dukung per tiang — base plate/sole board (m²)</label><input id="an-plate" type="number" min="0.001" step="0.01" value="0.04" oninput="computeAnalisis()"></div>
@@ -335,7 +342,12 @@
       <div id="fx-cap"></div>
     </div>
     <div class="card">
-      <h3>2. Analisis Klem (Coupler)</h3>
+      <h3>2. Lentur Transom &amp; Ledger</h3>
+      <p class="note" style="margin-top:4px">Papan memikul beban platform dan meneruskannya ke transom; transom yang terlalu lemah melendut atau patah walaupun tiang dan klem memenuhi. Pilihan transom antara diatur di Data Proyek.</p>
+      <div id="fx-bend"></div>
+    </div>
+    <div class="card">
+      <h3>3. Analisis Klem (Coupler)</h3>
       <p class="note" style="margin-top:4px">Beban platform kerja diteruskan dari ledger ke tiang melalui klem siku (right-angle coupler). Yang diperiksa adalah reaksi pada simpul yang paling dibebani, bukan beban total dibagi jumlah klem.</p>
       <div class="grid2">
         <div class="field"><label for="an-klemcls">Kelas klem siku (BS EN 74-1)</label><select id="an-klemcls" onchange="computeAnalisis()">
@@ -372,7 +384,7 @@
           <td><div style="display:flex;gap:6px;align-items:center"><input class="ai num" id="ll-mat" aria-label="Berat material dan puing (kg)" type="number" min="0" step="10" value="150" oninput="computeLL()"> <span style="font-size:11px">kg</span></div></td></tr>
         <tr><td><b>Impact Force</b></td><td class="tj2">Gaya kejut dinamis saat meletakkan/menurunkan beban atau pekerja melompat kecil — diperhitungkan sebagai persentase dari beban alat + material (faktor dinamis, umumnya 25%).</td>
           <td><div style="display:flex;gap:6px;align-items:center"><input class="ai num" id="ll-imp" aria-label="Faktor kejut, persen dari alat dan material" type="number" min="0" step="5" value="25" oninput="computeLL()"> <span style="font-size:11px">% dari (alat+material)</span></div></td></tr>
-        <tr><td><b>Beban Terpusat</b></td><td class="tj2">Benda tunggal terberat yang diletakkan pada satu titik (mis. mesin, tumpukan material, gulungan kabel). Kosongkan bila tidak ada. Batas kelas: 1,0 / 1,5 / 2,0 kN.</td>
+        <tr><td><b>Beban Terpusat</b></td><td class="tj2">Benda tunggal terberat yang diletakkan pada satu titik (mis. mesin, tumpukan material, gulungan kabel). Kosongkan bila tidak ada. Batas kelas: 100 / 150 / 200 kg (≈ 0,98 / 1,47 / 1,96 kN); di atasnya Special Duty. Nilai ini juga dipakai memeriksa papan dan transom bila lebih besar dari nilai kelas.</td>
           <td><div style="display:flex;gap:6px;align-items:center"><input class="ai num" id="ll-pt" aria-label="Beban terpusat terbesar (kg)" type="number" min="0" step="5" placeholder="0" oninput="computeLL()"> <span style="font-size:11px">kg</span></div></td></tr>
       </tbody></table></div>
       <div class="fx"><b>Rumus:</b> W<sub>bay</sub> = (n<sub>org</sub> × w<sub>org</sub>) + W<sub>alat</sub> + W<sub>material</sub> + impact% × (W<sub>alat</sub> + W<sub>material</sub>) ≤ batas kelas per bay per platform (225 / 450 / 675 kg) <span class="fref">AS/NZS 1576.1:2019</span>
@@ -388,9 +400,10 @@
     <div class="card">
       <div class="eyebrow">Tahap 5</div>
       <h2 class="sec">Kebutuhan Material, Gross Load &amp; Self Weight</h2>
-      <p class="lead">Estimasi otomatis dihitung dari geometri Data Proyek (bay, lift, lift berpapan) dan jenis pipa yang dipilih (48,3 × 4,0 mm ≈ 4,37 kg/m atau 48,3 × 3,2 mm ≈ 3,56 kg/m). Sesuaikan jumlah dan berat dengan kondisi aktual. Rekap ini dipakai untuk gross load, tali (suspended), dan castor (mobile); beban tiang model independent dihitung per posisi tiang di Tahap 6.</p>
+      <p class="lead">Estimasi otomatis dihitung dari geometri Data Proyek (bay, lift, lift berpapan, transom antara) dan jenis pipa yang dipilih (48,3 × 4,0 mm ≈ 4,37 kg/m atau 48,3 × 3,2 mm ≈ 3,56 kg/m), dan diperbarui sendiri saat geometri berubah. Sesuaikan jumlah dan berat dengan kondisi aktual. Rekap ini dipakai untuk gross load, tali (suspended), dan castor (mobile); untuk tali dan castor dipakai beban mati terbesar dari rincian ini dan estimasi geometri. Beban tiang model independent dihitung per posisi tiang di Tahap 6.</p>
       <div class="btn-row"><button type="button" class="btn btn-pri" onclick="autoMaterial()">Estimasi Otomatis dari Dimensi</button><button type="button" class="btn btn-ghost" onclick="go('proyek')">Ubah Dimensi</button></div>
       <div class="stats" id="mat-stats" style="margin:10px 0 4px"></div>
+      <div id="mat-note"></div>
       <h3 style="margin-top:8px">1. Beban Mati — Material</h3>
       <div style="overflow-x:auto">
         <table class="an"><thead><tr><th>Komponen</th><th class="num">Jumlah</th><th class="num">Berat satuan (kg)</th><th class="num">Total (kg)</th><th></th></tr></thead><tbody id="mat-body"></tbody></table>
@@ -527,18 +540,19 @@
       <div class="eyebrow">Pendukung</div>
       <h2 class="sec">Tentang Aplikasi <span class="vtag" id="ver-tag"></span></h2>
       <p class="lead"><b>PPAPI Scaffold</b> adalah perangkat bantu perencanaan dan inspeksi perancah <b>tubular (tube &amp; coupler)</b>: dari data proyek, penetapan beban hidup dan kelas duty, gambar rencana drag &amp; drop, kebutuhan material, analisis kekuatan-kestabilan-kekokohan, JSA, checklist inspeksi, hingga laporan PDF dan scaffold tag.</p>
-      <p class="lead"><b>Status: Beta.</b> Pada versi 2.3.0 metode perhitungan dikoreksi atas persetujuan pemilik aplikasi: dasar keamanan tunggal (tegangan izin), kelas duty dari bay terberat, beban tiang dari geometri, kapasitas tekuk tiang Perry–Robertson, dan kapasitas klem siku sesuai BS EN 12811-1/NASC TG20. Koreksi ini menunggu tinjauan Komite Teknis PPAPI; rincian rumus sebelum dan sesudah, sumber, serta contoh perhitungan tersedia bagi Komite dalam dokumen KOREKSI-PERHITUNGAN.</p>
+      <p class="lead"><b>Status: Beta.</b> Pada versi 2.3.0 metode perhitungan dikoreksi atas persetujuan pemilik aplikasi: dasar keamanan tunggal (tegangan izin), kelas duty dari bay terberat, beban tiang dari geometri, kapasitas tekuk tiang Perry–Robertson, dan kapasitas klem siku sesuai BS EN 12811-1/NASC TG20. Versi 2.4.0 menambahkan hasil tinjauan independen: lentur transom dan ledger, 50 % beban layan pada lift berpapan berikutnya, pagar ujung, serta penandaan data yang tidak konsisten. Koreksi ini menunggu tinjauan Komite Teknis PPAPI; rincian rumus sebelum dan sesudah, sumber, serta contoh perhitungan tersedia bagi Komite dalam dokumen KOREKSI-PERHITUNGAN.</p>
       <div class="grid2" style="margin-top:6px">
         <div class="fx"><b>Pengembang</b><span class="tj">mrezahuzain@2026 untuk Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI).</span></div>
-        <div class="fx"><b>Lingkup</b><span class="tj">Khusus perancah tubular. Frame (JIS G3444) dan modular memakai standar serta teknik perhitungan berbeda.</span></div>
+        <div class="fx"><b>Lingkup</b><span class="tj">Khusus perancah tubular. Perancah frame dan modular memakai standar serta teknik perhitungan berbeda.</span></div>
       </div>
       <h3 style="margin-top:16px">Acuan Standar</h3>
       <div class="formula-list">
         <div class="fx">BS EN 12811-1:2003 — Scaffolds: performance requirements and general design (kelas beban, faktor parsial γ<sub>F</sub> 1,5 dan γ<sub>M</sub> 1,1, tahanan karakteristik klem Tabel C.1)</div>
         <div class="fx">EN 1993-1-1 — Desain struktur baja (tekuk lentur §6.3.1.2, kurva tekuk Tabel 6.1–6.2)</div>
         <div class="fx">BS EN 74-1:2022 — Couplers for tubes (kelas A dan B)</div>
-        <div class="fx">BS EN 39:2001 dan SNI 8987:2021 — Pipa baja perancah Ø48,3 mm</div>
-        <div class="fx">NASC TG20:21 dan SG4 — Panduan praktik baik tube &amp; fitting serta keselamatan scaffolder</div>
+        <div class="fx">BS EN 39:2001 — Pipa baja lepas Ø48,3 mm untuk perancah tube &amp; coupler (dimensi dan massa)</div>
+        <div class="fx">SNI 8987:2021 — Pipa baja untuk perancah (standar produk nasional; rincian dimensi dan mutu belum diverifikasi aplikasi ini)</div>
+        <div class="fx">NASC TG20:21 dan SG4 — Panduan praktik baik tube &amp; fitting (beban aksial aman, momen izin pipa, kapasitas klem) serta keselamatan scaffolder</div>
         <div class="fx">AS/NZS 1576.1:2019 — Scaffolding: General requirements (kelas duty Light/Medium/Heavy)</div>
         <div class="fx">AS 4576:2020 — Guidelines for scaffolding</div>
         <div class="fx">BS EN 1004 — Mobile access and working towers</div>
@@ -576,12 +590,14 @@
 
 </main>
 <div class="hazard"></div>
-<footer>PPAPI Scaffold v2.3 (Beta) · Aplikasi anggota PPAPI · Dikembangkan oleh mrezahuzain@2026 · Mengacu BS EN 12811-1 / BS EN 74-1 / BS EN 39 / AS/NZS 1576.1 / AS 4576 / NASC TG20-SG4 · Hasil perhitungan bersifat indikatif dan wajib diverifikasi ahli perancah yang kompeten</footer>
+<footer>PPAPI Scaffold v2.4 (Beta) · Aplikasi anggota PPAPI · Dikembangkan oleh mrezahuzain@2026 · Metode perhitungan mengacu BS EN 12811-1 / EN 1993-1-1 / BS EN 74-1 / NASC TG20:21 / AS/NZS 1576.1 · Hasil perhitungan bersifat indikatif dan wajib diverifikasi ahli perancah yang kompeten</footer>
 <div id="print-tag-area"></div>
-<a class="fab" href="../simulator/index.html" title="Buka Simulator Pemasangan Perancah Tube &amp; Coupler (aplikasi anggota)">
-  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7l9-4.5Z"/><path d="M3 7l9 4.5L21 7M12 11.5v10"/><path d="M7.5 4.75l9 4.5"/></svg>
-  <span>Simulator 3D</span>
-</a>
+<aside class="fab-wrap" aria-label="Pintasan aplikasi">
+  <a class="fab" href="../simulator/index.html" title="Buka Simulator Pemasangan Perancah Tube &amp; Coupler (aplikasi anggota)">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7l9-4.5Z"/><path d="M3 7l9 4.5L21 7M12 11.5v10"/><path d="M7.5 4.75l9 4.5"/></svg>
+    <span>Simulator 3D</span>
+  </a>
+</aside>
 <div class="dwg-ctx" id="dwg-ctx"></div>
 <script src="app.js" defer></script>
 <script src="../gate.js" defer onerror="var m=document.getElementById('app-gate-msg');if(m)m.textContent='Komponen gerbang aplikasi tidak dapat dimuat. Periksa koneksi, lalu muat ulang halaman.'"></script>

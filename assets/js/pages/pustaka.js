@@ -48,10 +48,14 @@
     var STATUS_ORDER = ['Berlaku', 'Berlaku (diubah)', 'Dalam Penyusunan', 'Draf', 'Dicabut'];
     var SORTS = ['katalog', 'terbaru', 'judul'];
     var VIEWS = ['kisi', 'daftar'];
-    /* items per collection in the overview (no filter): two rows of cards from 768px up,
-       two cards on a phone (one column) — "Tampilkan semua" opens the rest of the shelf */
-    var mqCap = window.matchMedia ? [window.matchMedia('(min-width: 1100px)'), window.matchMedia('(min-width: 768px)')] : null;
-    function cap() { return !mqCap ? 6 : (mqCap[0].matches ? 6 : (mqCap[1].matches ? 4 : 2)); }
+    /* items per collection in the overview (no filter): one row of cards (3 from 1100px, 2 below —
+       two stacked cards on a phone), five rows in the compact list view. "Tampilkan semua" opens the
+       rest of the shelf; the tiles above and the chips filter to a whole collection. */
+    var mqCap = window.matchMedia ? window.matchMedia('(min-width: 1100px)') : null;
+    function cap() {
+      if (state.view === 'daftar') return 5;
+      return mqCap && mqCap.matches ? 3 : 2;
+    }
     var VIEW_KEY = 'ppapi_pustaka_tampilan';
     var APP_IMG = { perencanaan: 'assets/img/stair-tower.webp', simulator: 'assets/img/facade-bw.webp' };
 
@@ -412,8 +416,8 @@
         return '<li class="pk-tile-wrap"><a class="pk-tile' + (n ? '' : ' is-empty') + '" href="' + href + '"' + (k.key === 'Aplikasi' ? '' : ' data-pk-kat="' + h(k.key) + '"') + '>' +
           '<span class="pk-tile__top"><span class="index-num">' + U.pad(i + 1) + ' <span>/ ' + total + '</span></span><span class="pk-tile__icon">' + icon(k.icon, { size: 20 }) + '</span></span>' +
           '<span class="pk-tile__num">' + U.formatNumber(n) + ' <small>' + h(unit) + '</small>' + (allContoh(list) ? U.contohBadge({ contoh: true }) : '') + '</span>' +
-          splitHtml(list) +
           '<span class="pk-tile__name">' + h(k.label) + '</span>' +
+          splitHtml(list) +
           '<span class="pk-tile__desc">' + h(k.desc) + '</span>' +
           '<span class="pk-tile__foot"><span class="pk-tile__unit">' + (n ? (k.key === 'Aplikasi' ? 'Lihat aplikasi' : 'Lihat koleksi') : 'Belum ada ' + (k.unit || 'dokumen')) + '</span>' + icon(k.key === 'Aplikasi' ? 'arrow-down' : 'arrow-right', { size: 16, cls: 'pk-tile__arrow' }) + '</span>' +
         '</a></li>';
@@ -559,6 +563,7 @@
       var base = baseFiltered();
       updateChips(base);
       updateView();
+      updateSaring();
       var list = sortList(base.filter(function (r) { return !state.kategori || r.kategori === state.kategori; }));
       var filtered = isFiltered();
 
@@ -822,14 +827,20 @@
     if (el.form) {
       var phShort = el.q.getAttribute('placeholder') || '';
       var phWide = el.q.getAttribute('data-placeholder-wide') || phShort;
-      /* the long example only where the search column is wide enough to show it whole */
+      var phNarrow = el.q.getAttribute('data-placeholder-narrow') || phShort;
+      /* a placeholder is never cut off: the long example only where the search column shows it whole,
+         two words beside the "Saring" button on a phone */
       var mqWide = window.matchMedia ? window.matchMedia('(min-width: 1360px)') : null;
-      var applyPlaceholder = function () { el.q.setAttribute('placeholder', mqWide && mqWide.matches ? phWide : phShort); };
+      var mqNarrow = window.matchMedia ? window.matchMedia('(max-width: 479px)') : null;
+      var applyPlaceholder = function () {
+        el.q.setAttribute('placeholder', mqWide && mqWide.matches ? phWide : (mqNarrow && mqNarrow.matches ? phNarrow : phShort));
+      };
       applyPlaceholder();
-      if (mqWide) {
-        if (mqWide.addEventListener) mqWide.addEventListener('change', applyPlaceholder);
-        else if (mqWide.addListener) mqWide.addListener(applyPlaceholder);
-      }
+      [mqWide, mqNarrow].forEach(function (mq) {
+        if (!mq) return;
+        if (mq.addEventListener) mq.addEventListener('change', applyPlaceholder);
+        else if (mq.addListener) mq.addListener(applyPlaceholder);
+      });
 
       el.q.value = state.q;
       el.status.value = state.status;
@@ -875,10 +886,10 @@
       if (e.target.closest('[data-pk-reset]')) { resetFilters(); el.q.focus(); }
     });
 
-    if (mqCap) mqCap.forEach(function (mq) {
+    if (mqCap) {
       var onMq = function () { if (!isFiltered()) render(); };
-      if (mq.addEventListener) mq.addEventListener('change', onMq); else if (mq.addListener) mq.addListener(onMq);
-    });
+      if (mqCap.addEventListener) mqCap.addEventListener('change', onMq); else if (mqCap.addListener) mqCap.addListener(onMq);
+    }
 
     /* re-render the access-dependent parts when the viewer signs in/out or the status changes */
     PPAPI.session.onChange(function (s) {

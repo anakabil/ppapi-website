@@ -35,6 +35,29 @@ body[data-page="dashboard"] .dash-hero__meta time { display: inline-flex; align-
 body[data-page="dashboard"] .dash-hero__meta svg { color: var(--c-gray); }
 body[data-page="dashboard"] .dash-hero__kta { font-variant-numeric: tabular-nums; letter-spacing: .16em; color: var(--c-bone); }
 body[data-page="dashboard"] .dash-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+/* Pemberitahuan verifikasi email (Mode Firebase) — di dalam pita gelap, di bawah sapaan */
+body[data-page="dashboard"] .dash-verify { margin-top: clamp(22px, 3vw, 32px); }
+body[data-page="dashboard"] .dash-verify__inner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px;
+  padding: 16px 20px; border: 1px solid var(--line-strong); border-left: 2px solid var(--text-strong);
+  border-radius: var(--radius-sm); background: rgba(255,255,255,.035);
+}
+body[data-page="dashboard"] .dash-verify__icon { flex: none; color: var(--text-strong); }
+body[data-page="dashboard"] .dash-verify__text { flex: 1 1 380px; min-width: 0; }
+body[data-page="dashboard"] .dash-verify__text p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.55; }
+body[data-page="dashboard"] .dash-verify__text strong { color: var(--text-strong); font-weight: 600; overflow-wrap: anywhere; }
+body[data-page="dashboard"] .dash-verify__title {
+  margin: 0 0 4px !important; color: var(--text-strong) !important;
+  font: 600 .8rem/1.3 var(--f-cond) !important; letter-spacing: .16em; text-transform: uppercase;
+}
+body[data-page="dashboard"] .dash-verify__status:empty { display: none; }
+body[data-page="dashboard"] .dash-verify__status { margin-top: 8px !important; color: var(--text) !important; }
+body[data-page="dashboard"] .dash-verify__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 599px) {
+  body[data-page="dashboard"] .dash-verify__inner { padding: 14px 16px; }
+  body[data-page="dashboard"] .dash-verify__actions { width: 100%; }
+  body[data-page="dashboard"] .dash-verify__actions .btn { flex: 1 1 100%; }
+}
 body[data-page="dashboard"] .dash-skel {
   display: inline-block; height: 12px; width: 220px; border-radius: var(--radius-sm);
   background: rgba(255,255,255,.08);

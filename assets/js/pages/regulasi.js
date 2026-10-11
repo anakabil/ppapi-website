@@ -39,6 +39,14 @@
     var SORTS = ['terbaru', 'terlama', 'jenis'];
 
     function isIntl(r) { return r.jenis === INTL; }
+    /* Language of a title that is not Indonesian (WCAG 3.1.2 Language of Parts): an explicit
+       `bahasa` on the item wins (BCP 47 tag, e.g. 'en'); international standards are published under
+       their English titles, so they default to 'en'. Returns ' lang="…"' or ''. */
+    function langAttr(r) {
+      var b = String(r.bahasa || '').trim();
+      var tag = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(b) ? (b === 'id' ? '' : b) : (isIntl(r) ? 'en' : '');
+      return tag ? ' lang="' + h(tag) + '"' : '';
+    }
     function tone(status) { return status === 'Dicabut' ? 'err' : (status === 'Berlaku' ? 'ok' : 'warn'); }
     function jenisRank(j) { var i = JENIS_ORDER.indexOf(j); return i === -1 ? JENIS_ORDER.length : i; }
     function year(r) { var y = parseInt(r.tahun, 10); return isNaN(y) ? 0 : y; }
@@ -119,7 +127,7 @@
             '<p class="rg-key__jenis">' + h(r.jenis) + ' · ' + h(r.tahun) + '</p>' +
             '<h3 class="rg-key__head">' +
               '<span class="rg-key__abbr">' + (ab[0] ? '<span class="rg-key__abbr-pre">' + h(ab[0]) + '</span> ' : '') + '<span class="rg-key__abbr-num">' + h(ab[1]) + '</span></span>' +
-              '<span class="rg-key__title">' + h(r.judul) + '</span>' +
+              '<span class="rg-key__title"' + langAttr(r) + '>' + h(r.judul) + '</span>' +
             '</h3>' +
             '<p class="rg-key__rel">' + h(r.relevansi) + '</p>' +
             '<p class="rg-key__inst">' + h(r.instansi) + '</p>' +
@@ -151,7 +159,7 @@
         : 'Ringkasan disusun untuk rujukan; selalu periksa naskah resmi terbaru di JDIH instansi terkait.';
       var body =
         '<div class="rg-modal">' +
-          '<p class="rg-modal__title">' + h(r.judul) + '</p>' +
+          '<p class="rg-modal__title"' + langAttr(r) + '>' + h(r.judul) + '</p>' +
           '<dl class="kv rg-modal__kv">' + kv + '</dl>' +
           '<div class="rg-modal__rel"><p class="rg-modal__label">Relevansi bagi pekerjaan perancah</p><p>' + h(r.relevansi) + '</p></div>' +
           '<div class="rg-modal__link">' + link + '</div>' +
@@ -328,7 +336,7 @@
         '<td class="rg-td-jenis" data-label="Jenis"><span class="rg-jenis">' + (isIntl(r) ? icon('globe', { size: 15 }) : '') + h(r.jenis) + '</span></td>' +
         '<td class="rg-td-nomor" data-label="Nomor / Tahun"><span class="rg-jenis rg-jenis--inline" aria-hidden="true">' + (isIntl(r) ? icon('globe', { size: 14 }) : '') + h(r.jenis) + '</span><span class="rg-cite">' + cite + '</span><span class="table__muted">' + hl(nomorLine(r)) + '</span></td>' +
         '<td class="rg-td-judul" data-label="">' +
-          '<span class="rg-title">' + title + '</span>' +
+          '<span class="rg-title"' + langAttr(r) + '>' + title + '</span>' +
           (r.kunci ? ' <span class="badge badge--outline rg-keybadge" title="Termasuk Regulasi Kunci">Kunci</span>' : '') +
           '<span class="table__muted rg-rel">' + hl(r.relevansi) + '</span>' +
           '<span class="rg-inst-inline" aria-hidden="true">' + h(r.instansi) + '</span>' +

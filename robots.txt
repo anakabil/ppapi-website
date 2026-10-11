@@ -1,12 +1,19 @@
 # PPAPI — Perkumpulan Praktisi dan Ahli Perancah Indonesia
 # Semua halaman boleh dirayapi (crawl).
 #
-# Halaman anggota (dashboard.html, anggota.html) dan galeri komponen internal
-# (styleguide.html) TIDAK diblokir di sini, karena masing-masing sudah memuat
-# <meta name="robots" content="noindex">. Mesin pencari hanya dapat membaca tanda
-# noindex itu bila halamannya boleh dirayapi; jika diblokir dengan "Disallow",
-# alamatnya justru tetap bisa muncul di hasil pencarian tanpa isi.
-# (Pola "Disallow: /*anggota.html" juga ikut memblokir keanggotaan.html.)
+# Halaman yang memuat <meta name="robots" content="noindex"> TIDAK diblokir di sini:
+#   dashboard.html, anggota.html, pendaftaran.html, admin.html,
+#   aplikasi/perencanaan/index.html, aplikasi/simulator/index.html,
+#   halaman 404.html, dan galeri komponen internal styleguide.html.
+# Mesin pencari hanya dapat membaca tanda noindex itu bila halamannya boleh
+# dirayapi; jika diblokir dengan "Disallow", alamatnya justru tetap bisa muncul di
+# hasil pencarian tanpa isi. (Pola "Disallow: /*anggota.html" juga ikut memblokir
+# keanggotaan.html.)
+#
+# Berkas pendukung yang bukan halaman (tidak dapat memuat tanda noindex) diblokir:
+# panduan pengelola (README.md), catatan teknis aplikasi (aplikasi/*.md), dan aturan
+# keamanan Firestore. Berkas ini tetap dapat dibuka siapa pun yang mengetahui
+# alamatnya — robots.txt bukan pengaman, hanya permintaan kepada mesin pencari.
 #
 # Catatan: robots.txt hanya dibaca di akar domain. Bila situs berada di subfolder
 # repositori (https://<user>.github.io/<repo>/), berkas ini tidak berpengaruh;
@@ -18,3 +25,9 @@
 
 User-agent: *
 Allow: /
+Disallow: /README.md
+Disallow: /aplikasi/CATATAN.md
+Disallow: /aplikasi/KOREKSI-PERHITUNGAN.md
+Disallow: /aplikasi/KOREKSI-SIMULATOR.md
+Disallow: /*.md$
+Disallow: /firestore.rules

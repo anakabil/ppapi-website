@@ -52,6 +52,17 @@ body[data-page="pendaftaran"] .daf-hstat__kta { font: 600 .92rem/1.3 var(--f-con
   body[data-page="pendaftaran"] .daf-hero__title { font-size: clamp(2rem, 9vw, 2.5rem); }
   body[data-page="pendaftaran"] .daf-hero__lead { font-size: .96rem; }
   body[data-page="pendaftaran"] .daf-hero__status { flex-basis: 100%; }
+  /* phones, wizard: the form is the task — a slim title band so the first control lands in the first screen.
+     The eyebrow (the breadcrumb already names the page), the lead and the status card go (the stepper card carries the step count and the completeness line,
+     the sticky action bar carries the autosave state; notices above the form explain Perbaikan / Ditolak). */
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] {
+    min-height: 0; padding-top: calc(var(--header-offset) + 24px); padding-bottom: 22px;
+  }
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] .breadcrumb { margin-bottom: 14px; }
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] .daf-hero__eyebrow { display: none; }
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] .daf-hero__title { font-size: clamp(1.85rem, 8vw, 2.2rem); }
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] .daf-hero__lead,
+  body[data-page="pendaftaran"] .daf-hero[data-view="wizard"] .daf-hero__status { display: none; }
 }
 
 
@@ -59,6 +70,11 @@ body[data-page="pendaftaran"] .daf-hstat__kta { font: 600 .92rem/1.3 var(--f-con
    02. LOADING, NOTICES
    ========================================================================== */
 body[data-page="pendaftaran"] .daf-body { padding-top: clamp(28px, 4vw, 52px); }
+@media (max-width: 767px) {
+  body[data-page="pendaftaran"] .daf-body:has(> .container > .daf-root[data-view="wizard"]) { padding-top: 16px; }
+  /* focus scrolling (Tab, the browser's own "next field") keeps fields clear of the sticky action bar */
+  html:has(> body[data-page="pendaftaran"] .daf-root[data-view="wizard"]) { scroll-padding-bottom: 128px; }
+}
 body[data-page="pendaftaran"] .daf-loading {
   display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 260px; color: var(--muted);
 }
@@ -122,10 +138,22 @@ body[data-page="pendaftaran"] .daf-stepper .stepper__btn { text-align: left; }
 @media (min-width: 1024px) {
   body[data-page="pendaftaran"] .daf-stepper .stepper__item.is-error .stepper__hint { color: var(--err-fg); }
 }
+/* completeness line (phones only — from 768px the hero status card shows the meter) */
+body[data-page="pendaftaran"] .daf-railmeta { margin: 10px 0 0; font-size: .82rem; line-height: 1.4; color: var(--muted); }
+body[data-page="pendaftaran"] .daf-railmeta__num { font: 600 .98rem/1 var(--f-cond); font-variant-numeric: tabular-nums lining-nums; color: var(--text); }
+@media (min-width: 768px) {
+  body[data-page="pendaftaran"] .daf-railmeta { display: none; }
+}
+@media (max-width: 767px) {
+  body[data-page="pendaftaran"] .daf-rail { padding: 14px 14px 12px; }
+  body[data-page="pendaftaran"] .daf-rail .stepper__compact { margin-bottom: 10px; }
+  body[data-page="pendaftaran"] .daf-rail .stepper__bar { margin-bottom: 12px; }
+}
 
-/* panel */
+/* panel — padding kept in custom properties so the phone action bar can bleed to the panel edges */
 body[data-page="pendaftaran"] .daf-panel {
-  position: relative; min-width: 0; padding: clamp(22px, 4vw, 52px) clamp(18px, 4vw, 52px) clamp(22px, 3.4vw, 40px);
+  --panel-pt: clamp(20px, 4vw, 52px); --panel-px: clamp(18px, 4vw, 52px); --panel-pb: clamp(22px, 3.4vw, 40px);
+  position: relative; min-width: 0; padding: var(--panel-pt) var(--panel-px) var(--panel-pb);
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
 }
@@ -142,6 +170,15 @@ body[data-page="pendaftaran"] .daf-step-head__title {
 body[data-page="pendaftaran"] .daf-step-head__title:focus { outline: none; }
 body[data-page="pendaftaran"] .daf-step-head__title:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; }
 body[data-page="pendaftaran"] .daf-step-head__lead { margin-top: 12px; max-width: 64ch; color: var(--muted); }
+@media (max-width: 767px) {
+  /* the stepper card right above already reads "Langkah 2 dari 7 · Data Diri": keep this line for screen readers only */
+  body[data-page="pendaftaran"] .daf-step-head__count {
+    position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  body[data-page="pendaftaran"] .daf-step-head { margin-bottom: 18px; padding-bottom: 14px; }
+  body[data-page="pendaftaran"] .daf-step-head__lead { margin-top: 8px; font-size: .9rem; line-height: 1.55; }
+  body[data-page="pendaftaran"] .daf-form { gap: 22px; }
+}
 body[data-page="pendaftaran"] .daf-errsum { margin-bottom: 28px; }
 body[data-page="pendaftaran"] .daf-errsum:focus { outline: none; }
 body[data-page="pendaftaran"] .daf-errsum__list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
@@ -160,14 +197,29 @@ body[data-page="pendaftaran"] .daf-foot {
 body[data-page="pendaftaran"] .daf-foot .daf-save--foot { margin-right: auto; }
 body[data-page="pendaftaran"] .daf-foot__next { margin-left: auto; }
 body[data-page="pendaftaran"] .daf-foot__back > svg { margin-left: -4px; }
-@media (max-width: 599px) {
-  body[data-page="pendaftaran"] .daf-foot { gap: 12px; }
-  body[data-page="pendaftaran"] .daf-foot .daf-save--foot { order: -1; flex-basis: 100%; margin: 0; }
-  body[data-page="pendaftaran"] .daf-foot .btn { flex: 1 1 0; padding-inline: 16px; }
-  body[data-page="pendaftaran"] .daf-foot.is-first .btn { flex-basis: 100%; }
-  /* last step: the (long) submit label gets its own full row above "Kembali" */
-  body[data-page="pendaftaran"] .daf-foot.is-last .btn { flex-basis: 100%; }
-  body[data-page="pendaftaran"] .daf-foot.is-last .daf-foot__next { order: -1; }
+/* phones & small tablets: a sticky action bar. It sticks to the viewport bottom while the panel runs past the
+   screen and settles at the panel's end (sticky inside .daf-panel), so it never covers the help card or footer.
+   The autosave state sits as a small line above "Kembali · Lanjut". */
+@media (max-width: 767px) {
+  body[data-page="pendaftaran"] .daf-foot {
+    position: sticky; bottom: 0; z-index: 6;
+    gap: 6px 10px;
+    margin: 28px calc(-1 * var(--panel-px)) calc(-1 * var(--panel-pb));
+    padding: 8px var(--panel-px) calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface); border-top: 1px solid var(--line-strong);
+    box-shadow: 0 -22px 30px -28px rgba(10,10,11,.45);
+  }
+  body[data-page="pendaftaran"] .daf-foot .daf-save--foot { order: -1; flex-basis: 100%; min-height: 20px; margin: 0; font-size: .78rem; }
+  body[data-page="pendaftaran"] .daf-foot .btn { --btn-h: 48px; flex: 1 1 0; min-width: 0; padding-inline: 14px; }
+  body[data-page="pendaftaran"] .daf-foot.is-first .daf-foot__next { flex-basis: 100%; }
+  /* last step: the long submit label ("Ajukan Perpanjangan") takes the row; "Kembali" shrinks to its arrow
+     (the label stays for screen readers) */
+  body[data-page="pendaftaran"] .daf-foot.is-last .daf-foot__back { flex: 0 0 48px; padding: 0; }
+  body[data-page="pendaftaran"] .daf-foot.is-last .daf-foot__back > svg { margin: 0; }
+  body[data-page="pendaftaran"] .daf-foot.is-last .daf-foot__back > span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  body[data-page="pendaftaran"] .daf-foot.is-last .daf-foot__next { flex: 1 1 auto; padding-inline: 12px; letter-spacing: .12em; }
 }
 
 /* autosave indicator */
@@ -218,54 +270,95 @@ body[data-page="pendaftaran"] .daf-hint-line {
 }
 body[data-page="pendaftaran"] .daf-hint-line > svg { flex: none; margin-top: 3px; }
 body[data-page="pendaftaran"] .daf-hint-line strong { color: var(--text); font-weight: 600; }
+/* nama/tanggal lahir terkunci setelah keanggotaan disetujui (perpanjangan) */
+body[data-page="pendaftaran"] .field__hint.daf-identity-note { display: flex; align-items: flex-start; gap: 8px; }
+body[data-page="pendaftaran"] .field__hint.daf-identity-note > svg { flex: none; margin-top: 3px; color: var(--muted); }
 
-/* — category cards (radio) — */
+/* — category cards (radio): one compact choice each — numeral, name, one-line description and a "Pilih" node.
+     Requirements & benefits sit in a <details> disclosure, open only on the selected card (pendaftaran.js syncCats).
+     The label stretches over the card (one click target); the disclosure sits above that layer. — */
+body[data-page="pendaftaran"] .daf-cat-note { margin: 0; font-size: .86rem; line-height: 1.6; color: var(--muted); }
+body[data-page="pendaftaran"] .daf-cat-note > .badge { min-height: 22px; margin: -2px 10px 0 0; padding-block: 2px; }
 body[data-page="pendaftaran"] .daf-cats { min-width: 0; margin: 0; padding: 0; border: 0; }
-body[data-page="pendaftaran"] .daf-cats__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+body[data-page="pendaftaran"] .daf-cats__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 body[data-page="pendaftaran"] .daf-cat {
-  position: relative; display: grid; align-content: start; gap: 12px; min-width: 0;
-  padding: 20px clamp(18px, 2.4vw, 26px) 22px; background: var(--surface);
+  position: relative; display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; align-items: baseline;
+  column-gap: clamp(12px, 2vw, 20px); row-gap: 4px; min-width: 0;
+  padding: 16px clamp(16px, 2.4vw, 26px) 8px; background: var(--surface);
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
-  transition: border-color .3s var(--ease), box-shadow .3s var(--ease), background-color .3s var(--ease);
+  transition: border-color .3s var(--ease), box-shadow .3s var(--ease);
 }
 body[data-page="pendaftaran"] .daf-cat:hover { border-color: var(--text); }
 body[data-page="pendaftaran"] .daf-cat__input {
   position: absolute; top: 20px; left: 20px; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none;
 }
-body[data-page="pendaftaran"] .daf-cat__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; min-height: 30px; padding-right: 40px; }
-body[data-page="pendaftaran"] .daf-cat__top .index-num { min-width: 1.6em; }
-body[data-page="pendaftaran"] .daf-cat__badges { margin-right: auto; }
-body[data-page="pendaftaran"] .daf-cat__badges:empty { display: none; }
-body[data-page="pendaftaran"] .daf-cat__mark { position: absolute; top: 20px; right: clamp(18px, 2.4vw, 26px); }
-body[data-page="pendaftaran"] .daf-cat__lists { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 36px; margin-top: 4px; }
-body[data-page="pendaftaran"] .daf-cat__col { display: grid; align-content: start; gap: 8px; min-width: 0; padding-top: 12px; border-top: 1px solid var(--line); }
-@media (min-width: 640px) {
-  body[data-page="pendaftaran"] .daf-cat__lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body[data-page="pendaftaran"] .daf-cat__detail { padding-left: calc(1.6em + 14px); }
-}
-body[data-page="pendaftaran"] .daf-cat__mark {
-  display: grid; place-items: center; flex: none; width: 26px; height: 26px; color: transparent;
-  border: 1px solid var(--line-strong); border-radius: 50%; transition: background-color .3s, color .3s, border-color .3s;
-}
+body[data-page="pendaftaran"] .daf-cat__num { grid-column: 1; grid-row: 1; }
 body[data-page="pendaftaran"] .daf-cat__name {
-  font: 600 1.55rem/1.15 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--text); cursor: pointer;
+  grid-column: 2; grid-row: 1; min-width: 0;
+  font: 600 1.5rem/1.15 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.005em; color: var(--text); cursor: pointer;
 }
 /* the label stretches over the whole card → the card is one click target */
 body[data-page="pendaftaran"] .daf-cat__name::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
-body[data-page="pendaftaran"] .daf-cat__detail { display: grid; gap: 8px; }
-body[data-page="pendaftaran"] .daf-cat__desc { font-size: .92rem; line-height: 1.6; color: var(--muted); }
+body[data-page="pendaftaran"] .daf-cat__pick {
+  grid-column: 3; grid-row: 1; align-self: center; display: inline-flex; align-items: center; gap: 10px;
+  font: 600 .7rem/1 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+body[data-page="pendaftaran"] .daf-cat__node {
+  display: grid; place-items: center; flex: none; width: 32px; height: 32px; color: transparent;
+  border: 1px solid var(--line-strong); border-radius: 50%;
+  transition: background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease);
+}
+body[data-page="pendaftaran"] .daf-cat:hover .daf-cat__node { border-color: var(--text); }
+body[data-page="pendaftaran"] .daf-cat__pick-on { display: none; }
+body[data-page="pendaftaran"] .daf-cat__desc { grid-column: 2 / -1; max-width: 72ch; font-size: .92rem; line-height: 1.55; color: var(--muted); }
+body[data-page="pendaftaran"] .daf-cat__more { grid-column: 2 / -1; min-width: 0; margin-top: 2px; }
+body[data-page="pendaftaran"] .daf-cat__summary {
+  position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 4px 0;
+  font: 600 .7rem/1.3 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text);
+  list-style: none; cursor: pointer;
+}
+body[data-page="pendaftaran"] .daf-cat__summary::-webkit-details-marker { display: none; }
+body[data-page="pendaftaran"] .daf-cat__summary::marker { content: ""; }
+body[data-page="pendaftaran"] .daf-cat__summary > svg { color: var(--muted); transition: transform .3s var(--ease); }
+body[data-page="pendaftaran"] .daf-cat__summary:hover > span:first-child { text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 4px; }
+body[data-page="pendaftaran"] .daf-cat__summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+body[data-page="pendaftaran"] .daf-cat__more[open] > .daf-cat__summary > svg { transform: rotate(180deg); }
+body[data-page="pendaftaran"] .daf-cat__lists {
+  position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 36px; padding: 2px 0 10px;
+}
+body[data-page="pendaftaran"] .daf-cat__col { display: grid; align-content: start; gap: 8px; min-width: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+@media (min-width: 640px) {
+  body[data-page="pendaftaran"] .daf-cat__lists { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 body[data-page="pendaftaran"] .daf-cat__list-title {
   font: 600 .66rem/1.3 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
 }
 body[data-page="pendaftaran"] .daf-cat__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .88rem; line-height: 1.5; color: var(--text); }
 body[data-page="pendaftaran"] .daf-cat__list li { position: relative; padding-left: 14px; }
 body[data-page="pendaftaran"] .daf-cat__list li::before { content: ""; position: absolute; left: 0; top: .6em; width: 4px; height: 4px; background: var(--muted); }
+/* selected */
 body[data-page="pendaftaran"] .daf-cat.is-selected,
 body[data-page="pendaftaran"] .daf-cat:has(.daf-cat__input:checked) { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
-body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__mark,
-body[data-page="pendaftaran"] .daf-cat:has(.daf-cat__input:checked) .daf-cat__mark { color: var(--bg); background: var(--text); border-color: var(--text); }
+body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__node,
+body[data-page="pendaftaran"] .daf-cat:has(.daf-cat__input:checked) .daf-cat__node { color: var(--bg); background: var(--text); border-color: var(--text); }
+body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__num { color: var(--text); }
+body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__pick { color: var(--text); }
+body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__pick-off { display: none; }
+body[data-page="pendaftaran"] .daf-cat.is-selected .daf-cat__pick-on { display: inline; }
 body[data-page="pendaftaran"] .daf-cat:has(.daf-cat__input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
 body[data-page="pendaftaran"] .daf-cats.is-invalid .daf-cat { border-color: var(--err-fg); }
+/* phones: description and disclosure take the full card width under the name row */
+@media (max-width: 479px) {
+  body[data-page="pendaftaran"] .daf-cat { grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; padding: 14px 16px 6px; }
+  body[data-page="pendaftaran"] .daf-cat__name { font-size: 1.36rem; }
+  body[data-page="pendaftaran"] .daf-cat__desc,
+  body[data-page="pendaftaran"] .daf-cat__more { grid-column: 1 / -1; }
+  body[data-page="pendaftaran"] .daf-cat__desc { margin-top: 2px; font-size: .9rem; }
+  body[data-page="pendaftaran"] .daf-cat__node { width: 30px; height: 30px; }
+}
+@media (pointer: coarse) {
+  body[data-page="pendaftaran"] .daf-cat__summary { min-height: 44px; }
+}
 
 /* — radios (jenis kelamin) — */
 body[data-page="pendaftaran"] .daf-radios { min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -379,6 +472,12 @@ body[data-page="pendaftaran"] .daf-tip > svg { margin-top: 2px; color: var(--mut
 body[data-page="pendaftaran"] .daf-tip__title { font-weight: 600; }
 body[data-page="pendaftaran"] .daf-tip__list { margin: 8px 0 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: .9rem; line-height: 1.6; color: var(--muted); }
 body[data-page="pendaftaran"] .daf-tip__list strong { color: var(--text); font-weight: 600; }
+/* privacy caution under the steps: what not to attach, who can open a link, revoking access afterwards */
+body[data-page="pendaftaran"] .daf-tip__note {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);
+  font-size: .86rem; line-height: 1.6; color: var(--muted);
+}
+body[data-page="pendaftaran"] .daf-tip__note strong { color: var(--text); font-weight: 600; }
 body[data-page="pendaftaran"] .daf-pay-info { margin-bottom: 6px; }
 
 
@@ -395,6 +494,8 @@ body[data-page="pendaftaran"] .daf-stmt:has(input:checked) { background: var(--s
 body[data-page="pendaftaran"] .daf-stmt.is-invalid { border-color: var(--err-fg); }
 body[data-page="pendaftaran"] .daf-stmt .check { display: flex; width: 100%; padding-block: 0; font-size: .95rem; }
 body[data-page="pendaftaran"] .daf-stmt .field__error { margin-left: 32px; }
+/* where to obtain a document the statement refers to (outside the label, so the link never toggles the box) */
+body[data-page="pendaftaran"] .daf-stmt__hint { margin: 6px 0 0 32px; font-size: .84rem; line-height: 1.55; color: var(--muted); }
 
 body[data-page="pendaftaran"] .daf-sign { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 6px; }
 @media (min-width: 768px) {
@@ -422,14 +523,18 @@ body[data-page="pendaftaran"] .daf-review__top:focus { outline: none; }
 body[data-page="pendaftaran"] .daf-review__top:focus-visible > .alert { outline: 2px solid var(--focus); outline-offset: 3px; }
 body[data-page="pendaftaran"] .daf-missing { list-style: none; margin: 10px 0 0; padding: 0; display: grid; }
 body[data-page="pendaftaran"] .daf-missing li + li { border-top: 1px solid var(--line); }
+/* arrow · label · step — a grid, so a long label wraps beside the arrow instead of pushing it onto its own line */
 body[data-page="pendaftaran"] .daf-missing__btn {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; width: 100%; min-height: 40px; padding: 7px 0;
+  display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; align-items: baseline; gap: 2px 10px; width: 100%; min-height: 40px; padding: 7px 0;
   text-align: left; font-size: .92rem; line-height: 1.4; color: var(--text);
 }
-body[data-page="pendaftaran"] .daf-missing__btn > svg { flex: none; color: var(--muted); transition: translate .3s var(--ease); }
+body[data-page="pendaftaran"] .daf-missing__btn > svg { align-self: start; margin-top: 3px; color: var(--muted); transition: translate .3s var(--ease); }
 body[data-page="pendaftaran"] .daf-missing__btn:hover > span:first-of-type { text-decoration: underline; text-underline-offset: 3px; }
 body[data-page="pendaftaran"] .daf-missing__btn:hover > svg { translate: 3px 0; color: var(--text); }
-body[data-page="pendaftaran"] .daf-missing__step { margin-left: auto; font: 600 .64rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+body[data-page="pendaftaran"] .daf-missing__step { justify-self: end; font: 600 .64rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 479px) {
+  body[data-page="pendaftaran"] .daf-missing__step { grid-column: 2 / -1; }
+}
 
 body[data-page="pendaftaran"] .daf-sums { display: grid; min-width: 0; }
 body[data-page="pendaftaran"] .daf-sum { min-width: 0; padding: 24px 0 8px; border-top: 1px solid var(--line-strong); }

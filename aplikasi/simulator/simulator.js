@@ -11,12 +11,14 @@
      anggota menekan "Mulai Simulasi".
    • Geometri dikoreksi: menara 2 bay × 2,0 m, lebar 1,2 m, lift 1,95 m;
      top rail 1,0 m, mid rail 0,53 m, toe board 150 mm; bentang papan ≤ 1,2 m;
-     outrigger sebelum tinggi > 4 × lebar dasar; pintu akses menutup sendiri.
+     outrigger sebelum tinggi > 4 × lebar dasar; setiap lantai kerja punya tangga 4:1 yang
+     bersandar & diikat pada top rail yang tetap, di samping pintu yang menutup sendiri.
    • Urutan 20 tahap dikoreksi: persiapan & tag merah → dasar → standard →
      ledger/transom → bracing per lift → outrigger → pelindung tepi sebelum
      lantai dinaiki → tangga & pintu → inspeksi serah terima → tag hijau.
    • Mode inspeksi MENGUKUR model (bukan tanda ✓ tetap): tinggi rail, celah,
-     toe board, bentang papan, bracing, rasio stabilitas, akses, dan tag.
+     toe board, bentang papan, bracing, rasio stabilitas (hanya outrigger yang
+     tersambung), tumpuan & ikatan tangga, pintu, akses tiap lantai; tag diperiksa.
    • Ukuran kanvas mengikuti wadah, render hanya saat ada perubahan, bayangan
      dihitung ulang hanya saat isi adegan berubah, geometri & material dipakai
      bersama, objek sementara dibuang (dispose).
@@ -290,7 +292,7 @@ const COUPLER = {
             fungsi:'Papan alas di bawah base plate. Menyebar beban kaki perancah ke tanah agar tidak amblas. Ukurannya ditentukan dari beban kaki dan daya dukung tanah; pijakan harus rata, kokoh, dan tidak bergeser.'},
   baseplate:{hex:0x3d4651, color:'#3d4651', name:'Base Plate / Jack Dasar',
             sudut:'—', beban:'Tumpuan standard', tebal:'Luas ≥ 150 cm², lebar ≥ 120 mm',
-            fungsi:'Pelat dasar penumpu standard (EN 12811-1 butir 5.7.1: luas pelat minimal 150 cm² dan lebar minimal 120 mm). Versi base jack (ulir) dapat disetel tinggi untuk meratakan struktur pada permukaan miring.'},
+            fungsi:'Pelat dasar penumpu standard (BS EN 12811-1:2003 butir 5.7.1: luas pelat minimal 150 cm² dan lebar minimal 120 mm; butir 5.7.2: base plate baja sesuai EN 74). Versi base jack (ulir) dapat disetel tinggi untuk meratakan struktur pada permukaan miring.'},
   fix:     {hex:0xE8503A, color:'#E8503A', name:'Klem Mati / Right-Angle (Fix)',
             sudut:'90° tetap', beban:'Struktural (load-bearing)', tebal:'Double coupler',
             fungsi:'Menyambung dua pipa tegak lurus 90°. Penyambung struktural utama yang memikul beban — menghubungkan standard dengan ledger, serta ledger dengan transom.'},
@@ -311,10 +313,10 @@ const COUPLER = {
             fungsi:'Mengikat papan pijak atau toe board ke pipa agar tidak bergeser atau terjungkit saat dipijak atau tertendang.'},
   ladder:  {hex:0xE0C341, color:'#E0C341', name:'Tangga Akses (Ladder 4:1)',
             sudut:'±75° (rasio 4:1)', beban:'Akses personel', tebal:'Aluminium / baja',
-            fungsi:'Sarana naik-turun perancah. Jarak horizontal kaki tangga ±¼ panjang kerjanya (rasio 4:1, ±75°), ujung atas menonjol minimal 0,9 m (3 ft) di atas lantai pendaratan, dan tangga diikat agar tidak bergeser (OSHA 1926.1053(b)).'},
+            fungsi:'Sarana naik-turun perancah. Jarak horizontal kaki tangga ±¼ panjang kerjanya (rasio 4:1, ±75°), ujung atas menonjol minimal 0,9 m (3 ft) di atas lantai pendaratan (OSHA 1926.1053(b)); NASC SG25:20 menganjurkan minimal 1,0 m. Tangga bersandar pada batang yang tetap terpasang dan kedua kakinya diikat di bagian atas. Celah pelindung tepi di titik akses ditutup pintu yang menutup sendiri dan hanya membuka ke dalam.'},
   plank:   {hex:0xCBA15E, color:'#CBA15E', name:'Papan Pijak / Plank (BS 2482)',
             sudut:'—', beban:'Lantai kerja', tebal:'225 × 38 mm',
-            fungsi:'Papan pijak kayu BS 2482:2009 lebar 225 mm tebal 38 mm, band baja di kedua ujung. Papan 38 mm ditumpu paling jauh tiap 1,2 m (kelas mutu 1,5 m hanya untuk papan yang dipilah dengan mesin). Ujung papan menonjol 50 mm s.d. 4 × tebal dari tumpuan (NASC TG12) dan diikat.'},
+            fungsi:'Papan pijak kayu BS 2482:2009 lebar 225 mm tebal 38 mm, band baja di kedua ujung. Papan 38 mm ditumpu paling jauh tiap 1,2 m (kelas mutu 1,5 m hanya untuk papan yang dipilah dengan mesin). Ujung papan menonjol minimal 50 mm dari muka tumpuan dan tidak lebih dari 4 × tebal, lalu diikat (NASC TG12; NASC SG25:20 butir 4.1).'},
   beamclamp:{hex:0x8FA0AE, color:'#8FA0AE', name:'Beam Clamp (Klem Balok)',
             sudut:'Jepit flens', beban:'Gantung ke balok baja', tebal:'Drop-forged + ulir',
             fungsi:'Menjepit flens balok baja (I/H-beam) dengan rahang berulir, lalu menyediakan kopling pipa. Untuk menggantung/mengikat perancah ke struktur baja existing.'},
@@ -392,19 +394,36 @@ const corners=[[-BAY,-LZ],[BAY,-LZ],[BAY,LZ],[-BAY,LZ]];
 const ON_LEDGER=2*R;                                      // transom/putlog duduk di atas ledger (pusat +48 mm)
 const BOARD={w:0.225, t:0.038, L:3.90, n:5};              // papan BS 2482 225 × 38 mm, panjang 3,9 m, 5 baris
 const DECK_DY=ON_LEDGER+R+BOARD.t;                        // pusat ledger → permukaan lantai = 0,110 m
-const RAIL={top:1.0, mid:0.53};                           // permukaan atas top rail & pusat mid rail di atas lantai
+/* pelindung tepi: permukaan atas top rail 1,0 m & pusat mid rail 0,53 m di atas lantai pada sisi panjang. Rail dipasang di
+   MUKA DALAM standard (sumbu rail 48 mm dari sumbu standard). Rail sisi ujung 75 mm lebih tinggi: di standard sudut rail
+   sisi panjang dan sisi ujung bersilang dan dua klem tidak dapat dipasang setinggi pada satu standard. */
+const RAIL={top:1.0, mid:0.53, endOff:0.075};
+const RAIL_Z=LZ-2*R, RAIL_X=BAY-2*R;                      // sumbu rail sisi panjang (z) dan sisi ujung (x)
 const TOE={h:0.15, t:0.025};                              // toe board 150 mm
 const Y={ kick:0.15, l1:1.95, l2:3.90,                    // ledger dasar dekat base plate; lift 1,95 m (≤ 1,98 m)
           std0:0.04, stdShort:2.20, stdLong:4.15, stdTop:5.10,   // panjang awal standard berselang-seling, lalu diperpanjang
-          outTop:1.85 };                                  // kepala outrigger di bawah simpul lift-1
+          outTop:1.80 };                                  // persilangan outrigger dengan standard sudut (di bawah simpul lift-1)
 Y.deck1=Y.l1+DECK_DY; Y.deck2=Y.l2+DECK_DY;               // permukaan lantai lift-1 (2,06 m) & lantai atas (4,01 m)
-const TRANSOM_X=[-1.88,0.08,1.88];                        // transom dekat standard (≤ 150 mm dari simpul)
+const TRANSOM_X=[-1.86,0.08,1.86];                        // transom dekat standard (≤ 150 mm dari simpul); ujung papan 90 mm dari sumbu, 66 mm dari muka
 const PUTLOG_X=[-0.90,0.98];                              // putlog antara → bentang papan ≤ 0,98 m
-const ACCESS={x0:-BAY, x1:-1.10, z:LZ};                   // bukaan akses: sisi belakang, bay kiri (± 0,9 m)
-const LAD=(function(){                                    // tangga 4:1 bersandar pada top rail lantai atas
-  const xc=(ACCESS.x0+ACCESS.x1)/2, hw=0.20, zRest=LZ+R+0.032, yRest=Y.deck2+RAIL.top-R, yTop=Y.deck2+1.02, run=yRest/4;
-  return {xc:xc, hw:hw, zRest:zRest, yRest:yRest, yTop:yTop, zFoot:zRest+run, zAt:function(y){ return zRest+run*(1-y/yRest); }};
-})();
+const LEDGER_X=BAY+0.20;                                  // ujung ledger 0,20 m di luar standard ujung (klem bracing ujung tetap di dalam pipa)
+/* titik akses tiap lantai kerja (sisi belakang, z = +LZ): celah pelindung tepi di antara dua puncheon ditutup pintu yang
+   menutup sendiri (engsel di puncheon "hinge", menutup ke puncheon "latch"); tangga 4:1 di samping pintu bersandar pada
+   top rail yang tetap utuh dan kedua kakinya diikat pada rail itu (pola NASC SG25:20 Gambar 6, langkah ke samping) */
+const ACC={
+  l1: {id:'l1', T:Y.deck1, ledger:Y.l1, hinge:1.26, latch:0.66, xL:0.12, xR:0.56, tagY:1.25},
+  top:{id:'top', T:Y.deck2, ledger:Y.l2, hinge:-1.78, latch:-1.18, xL:-1.08, xR:-0.64, tagY:1.55}
+};
+/* geometri tangga: sumbu kaki tangga menyinggung top rail (jarak sumbu R + 20 mm) dengan kemiringan 4 : 1 */
+function ladderGeom(acc){
+  const yR=acc.T+RAIL.top-R, k=Math.sqrt(17), off=R+0.02;
+  const py=yR+off/k, pz=RAIL_Z+4*off/k;                  // titik singgung pada sumbu kaki tangga
+  const zAt=function(y){ return pz+(py-y)/4; };
+  return {xL:acc.xL, xR:acc.xR, xc:(acc.xL+acc.xR)/2, T:acc.T, yR:yR, py:py, pz:pz, yTop:acc.T+1.05, zAt:zAt, zFoot:zAt(0)};
+}
+const LAD=ladderGeom(ACC.top);
+const PLAN={decks:[Y.deck1,Y.deck2], levels:[Y.kick,Y.l1,Y.l2]};
+const ACCESS_BAY_L2={s:1, bay:Math.sign((ACC.l1.hinge+ACC.l1.latch)/2)};   // bay akses lantai lift-1 (sisi belakang) di lift-2   // rencana pemasangan: 2 lantai kerja, 3 level ledger
 
 const scaffold=new THREE.Group(); scene.add(scaffold);
 const stepGroups=[];
@@ -421,16 +440,19 @@ function basePlate(x,z){
 }
 function standardTube(x,z,y0,y1){ return rl(tube(V(x,y0,z),V(x,y1,z),R,M.steel),'standard'); }
 /* ledger menerus 2 bay (sumbu X) di kedua baris + klem mati di 6 simpul */
-function ledgerLvl(y){ const g=[]; ROWS.forEach(z=>{ g.push(rl(tube(V(-BAY-0.10,y,z),V(BAY+0.10,y,z),R,M.steel),'ledger')); COLS.forEach(x=>g.push(cpl(x,y,z,'fix'))); }); return g; }
+function ledgerLvl(y){ const g=[]; ROWS.forEach(z=>{ g.push(rl(tube(V(-LEDGER_X,y,z),V(LEDGER_X,y,z),R,M.steel),'ledger')); COLS.forEach(x=>g.push(cpl(x,y,z,'fix'))); }); return g; }
 /* transom/putlog melintang (sumbu Z) duduk DI ATAS ledger, menonjol 0,10 m di luar ledger */
 function bearerLvl(y,xs,role,ctype){ const g=[], yc=y+ON_LEDGER; xs.forEach(x=>{ g.push(rl(tube(V(x,yc,-LZ-0.10),V(x,yc,LZ+0.10),R,M.steelLight),role)); ROWS.forEach(z=>g.push(cpl(x,y+R,z,ctype))); }); return g; }
 /* bracing: fasad (kedua sisi panjang, tiap bay, membentuk "∧" per lift) + silang X di kedua ujung */
-function brace(a,b){ return [rl(tube(a,b,R,M.steel),'brace'), coupler(a,'swivel',true), coupler(b,'swivel',true)]; }
-function liftBrace(y0,y1){
-  const g=[], off=0.06;
+/* pipa bracing menonjol 40 mm melewati klem putar di kedua ujungnya (klem menjepit di dalam panjang pipa) */
+function brace(a,b){ const u=new THREE.Vector3().subVectors(b,a).normalize(); return [rl(tube(a.clone().addScaledVector(u,-0.04),b.clone().addScaledVector(u,0.04),R,M.steel),'brace'), coupler(a,'swivel',true), coupler(b,'swivel',true)]; }
+/* free: bay akses yang dibiarkan tanpa diagonal fasad pada lift ini ({s: sisi ±1, bay: -1 kiri / +1 kanan}) — bukaan
+   pintu lantai di dasar lift ini tidak boleh terhalang bracing (OSHA 1926.451(e)(1); NASC SG25:20 butir 6.4) */
+function liftBrace(y0,y1,free){
+  const g=[], off=0.06, skip=(s,b)=>!!free&&free.s===s&&free.bay===b;
   [-1,1].forEach(s=>{ const z=s*(LZ+off);
-    brace(V(-BAY,y0,z),V(0,y1,z)).forEach(o=>g.push(o));     // bay kiri  ↗
-    brace(V(BAY,y0,z),V(0,y1,z)).forEach(o=>g.push(o));      // bay kanan ↖
+    if(!skip(s,-1)) brace(V(-BAY,y0,z),V(0,y1,z)).forEach(o=>g.push(o));     // bay kiri  ↗
+    if(!skip(s,1)) brace(V(BAY,y0,z),V(0,y1,z)).forEach(o=>g.push(o));       // bay kanan ↖
   });
   [-1,1].forEach(s=>{ const x1=s*(BAY+off), x2=s*(BAY+off+0.05);
     brace(V(x1,y0,-LZ),V(x1,y1,LZ)).forEach(o=>g.push(o));   // ujung: silang X
@@ -438,7 +460,7 @@ function liftBrace(y0,y1){
   });
   return g;
 }
-/* papan lantai: 5 × 225 mm, panjang 3,9 m, ujung menonjol 70 mm dari transom ujung, dikunci klem papan */
+/* papan lantai: 5 × 225 mm, panjang 3,9 m, ujung menonjol 90 mm dari sumbu transom ujung (66 mm dari muka pipa), dikunci klem papan */
 function deckBoards(L){
   const g=[], yb=L+ON_LEDGER+R, yc=yb+BOARD.t/2, half=BOARD.L/2;
   for(let i=0;i<BOARD.n;i++){
@@ -449,48 +471,67 @@ function deckBoards(L){
   }
   return g;
 }
-/* toe board 150 mm berdiri di tepi lantai (keempat sisi); withOpening: potongan di bukaan akses jadi penutup sementara */
-function toeBoards(T,withOpening){
-  const main=[], closure=[], yc=T+TOE.h/2, zc=BOARD.w*BOARD.n/2-TOE.t/2, xe=BOARD.L/2-TOE.t/2, endL=2*(zc-TOE.t/2), xl=-BOARD.L/2, xr=BOARD.L/2;
-  const mk=(wd,dp,x,z)=>{ const b=rl(box(wd,TOE.h,dp,M.woodDark),'toeboard'); b.position.set(x,yc,z); b.castShadow=true; return b; };
-  main.push(mk(BOARD.L,TOE.t,0,-zc));
-  if(withOpening){ const xa=ACCESS.x1; main.push(mk(xr-xa,TOE.t,(xa+xr)/2,zc)); closure.push(mk(xa-xl,TOE.t,(xa+xl)/2,zc)); }
-  else main.push(mk(BOARD.L,TOE.t,0,zc));
-  main.push(mk(TOE.t,endL,-xe,0), mk(TOE.t,endL,xe,0));
-  COLS.forEach(x=>ROWS.forEach(z=>main.push(cpl(x,yc,z,'board',true))));
-  return {main:main, closure:closure};
+/* toe board 150 mm berdiri di tepi lantai (keempat sisi). Toe board sisi panjang melewati standard sudut agar dapat diklem;
+   di titik akses toe board terputus dan celahnya ditutup papan kaki pintu. Klem toe board dipasang PADA papan, di standard/puncheon. */
+function toeBoards(acc){
+  const g=[], T=acc.T, yc=T+TOE.h/2, zc=BOARD.w*BOARD.n/2-TOE.t/2, xe=BOARD.L/2-TOE.t/2, endL=2*(zc-TOE.t/2), xl=BAY+0.03;
+  const lo=Math.min(acc.hinge,acc.latch), hi=Math.max(acc.hinge,acc.latch);
+  const mk=(x0,x1,z)=>{ const b=rl(box(x1-x0,TOE.h,TOE.t,M.woodDark),'toeboard'); b.position.set((x0+x1)/2,yc,z); b.castShadow=true; return b; };
+  g.push(mk(-xl,xl,-zc), mk(-xl,lo+0.03,zc), mk(hi-0.03,xl,zc));
+  [-1,1].forEach(s=>{ const b=rl(box(TOE.t,TOE.h,endL,M.woodDark),'toeboard'); b.position.set(s*xe,yc,0); b.castShadow=true; g.push(b); });
+  const zClip=zc+TOE.t/2+0.007;                           // di antara muka luar toe board dan muka standard
+  COLS.forEach(x=>[-1,1].forEach(s=>g.push(cpl(x,yc,s*zClip,'board',true))));
+  [lo,hi].forEach(x=>g.push(cpl(x,yc,zClip,'board',true)));
+  return g;
 }
-/* pelindung tepi: top rail (permukaan atas 1,0 m di atas lantai) + mid rail (0,53 m) di keempat sisi */
-function railRing(T,withOpening){
-  const main=[], closure=[];
-  [['rail-top',T+RAIL.top-R],['rail-mid',T+RAIL.mid]].forEach(function(p){ const role=p[0], y=p[1];
-    main.push(rl(tube(V(-BAY,y,-LZ),V(BAY,y,-LZ),R,M.steel),role));
-    if(withOpening){ main.push(rl(tube(V(ACCESS.x1,y,LZ),V(BAY,y,LZ),R,M.steel),role)); closure.push(rl(tube(V(-BAY,y,LZ),V(ACCESS.x1,y,LZ),R,M.steel),role)); main.push(cpl(ACCESS.x1,y,LZ,'fix')); }
-    else main.push(rl(tube(V(-BAY,y,LZ),V(BAY,y,LZ),R,M.steel),role));
-    main.push(rl(tube(V(-BAY,y,-LZ),V(-BAY,y,LZ),R,M.steel),role), rl(tube(V(BAY,y,-LZ),V(BAY,y,LZ),R,M.steel),role));
-    COLS.forEach(x=>ROWS.forEach(z=>main.push(cpl(x,y,z,'fix'))));
+/* pelindung tepi di muka dalam standard: top rail (permukaan atas 1,0 m) + mid rail (0,53 m) di sisi panjang; sisi ujung
+   +75 mm (rail bersilang di sudut). Di titik akses (sisi belakang) rail terputus di antara dua puncheon; setiap potongan
+   rail diklem ke standard/puncheon dan menonjol 60 mm melewati klemnya. Celah ditutup pintu yang menutup sendiri. */
+function railRing(acc){
+  const g=[], T=acc.T, ext=0.06, lo=Math.min(acc.hinge,acc.latch), hi=Math.max(acc.hinge,acc.latch);
+  [['rail-top',T+RAIL.top-R],['rail-mid',T+RAIL.mid]].forEach(function(p){ const role=p[0], y=p[1], ye=y+RAIL.endOff;
+    g.push(rl(tube(V(-BAY-ext,y,-RAIL_Z),V(BAY+ext,y,-RAIL_Z),R,M.steel),role));                                   // depan
+    g.push(rl(tube(V(-BAY-ext,y,RAIL_Z),V(lo+ext,y,RAIL_Z),R,M.steel),role), rl(tube(V(hi-ext,y,RAIL_Z),V(BAY+ext,y,RAIL_Z),R,M.steel),role));   // belakang
+    [-1,1].forEach(s=>g.push(rl(tube(V(s*RAIL_X,ye,-LZ-0.05),V(s*RAIL_X,ye,LZ+0.05),R,M.steel),role)));            // kedua ujung
+    COLS.forEach(x=>[-1,1].forEach(s=>g.push(cpl(x,y,s*(LZ-R),'fix'))));                                            // klem rail sisi panjang
+    [-1,1].forEach(sx=>[-1,1].forEach(s=>g.push(cpl(sx*(BAY-R),ye,s*LZ,'fix'))));                                   // klem rail ujung
+    [lo,hi].forEach(x=>g.push(cpl(x,y,LZ-R,'fix')));                                                                 // klem rail ke puncheon
   });
-  return {main:main, closure:closure};
+  return g.concat(accessPosts(acc), [accessGate(acc)]);
 }
-/* puncheon (tiang pintu) di tepi bukaan akses: dari ledger lift-2 sampai di atas top rail */
-function accessPuncheon(){ return [rl(tube(V(ACCESS.x1,Y.l2,LZ),V(ACCESS.x1,Y.deck2+RAIL.top+0.06,LZ),R,M.steel),'puncheon'), cpl(ACCESS.x1,Y.l2,LZ,'fix',true)]; }
-/* pintu akses yang menutup sendiri (engsel pegas): top bar, mid bar, papan kaki — menutup bukaan sejajar pelindung tepi */
-function accessGate(T){
-  const g=new THREE.Group(), r=0.017, x0=ACCESS.x0+0.02, x1=ACCESS.x1-0.02, z=LZ-0.035, yT=T+RAIL.top-r, yB=T+0.03;
+/* puncheon (tiang pintu) di kedua tepi titik akses: dari 0,15 m di bawah ledger sampai 1,08 m di atas lantai (menonjol melewati klem top rail) */
+function accessPosts(acc){
+  const g=[]; [acc.hinge,acc.latch].forEach(x=>{ g.push(rl(tube(V(x,acc.ledger-0.15,LZ),V(x,acc.T+RAIL.top+0.08,LZ),R,M.steel),'puncheon'), cpl(x,acc.ledger,LZ,'fix',true)); });
+  return g;
+}
+/* pintu akses yang menutup sendiri (engsel pegas) di sisi dalam rail: daun pintu menumpang 30 mm pada ujung rail tetap di
+   kedua sisi sehingga hanya dapat membuka ke dalam (NASC SG25:20 butir 6.4); top bar 1,0 m, mid bar, papan kaki 150 mm */
+function accessGate(acc){
+  const g=new THREE.Group(), T=acc.T, r=0.017, lo=Math.min(acc.hinge,acc.latch), hi=Math.max(acc.hinge,acc.latch);
+  const x0=lo+0.03, x1=hi-0.03, z=RAIL_Z-R-r-0.004, yT=T+RAIL.top-r, yB=T+0.03;
   g.add(rl(tube(V(x0,yT,z),V(x1,yT,z),r,GALV),'gate-top'), rl(tube(V(x0,T+RAIL.mid,z),V(x1,T+RAIL.mid,z),r,GALV),'gate-mid'));
   g.add(tube(V(x0,yB,z),V(x0,yT,z),r,GALV), tube(V(x1,yB,z),V(x1,yT,z),r,GALV));
   const kick=rl(box(x1-x0,TOE.h,0.012,GALV2),'gate-kick'); kick.position.set((x0+x1)/2,T+0.002+TOE.h/2,z); kick.castShadow=true; g.add(kick);
-  [0.28,0.78].forEach(h=>{ const sp=new THREE.Mesh(sharedGeo('gateSpring',()=>new THREE.CylinderGeometry(0.03,0.03,0.11,12)),M.spring); sp.position.set(ACCESS.x1-0.005,T+h,z); g.add(sp); });
-  return rl(g,'gate',{closed:true, selfClosing:true});
+  const xh=acc.hinge>acc.latch?(x1+acc.hinge)/2:(x0+acc.hinge)/2;
+  [0.28,0.78].forEach(h=>{ const sp=new THREE.Mesh(sharedGeo('gateSpring',()=>new THREE.CylinderGeometry(0.03,0.03,0.11,12)),M.spring); sp.position.set(xh,T+h,(z+LZ)/2); g.add(sp); });
+  return rl(g,'gate',{selfClosing:true, acc:acc.id});
 }
-/* outrigger (penopang) di keempat sudut: dari simpul lift-1 ke tanah 1,0 m keluar (arah lebar) + pengikat kaki */
+/* outrigger (raker) di keempat sudut. Bidangnya bergeser 75 mm ke dalam bay dari standard sudut sehingga outrigger
+   bersilang dengan standard dan dijepit klem putar pada +1,80 m; pipa menonjol 0,10 m melewati klem. Kaki 1,0 m keluar
+   (arah lebar) di base plate + sole board. Pengikat kaki (kicker) pada +0,30 m bersilang 75 mm dari standard dan dari
+   outrigger, dijepit klem di kedua persilangan, menonjol 0,10 m melewati kedua klem. */
 function outrigger(i){
-  const c=corners[i], sz=Math.sign(c[1]);
-  const top=V(c[0],Y.outTop,c[1]+sz*0.06), foot=V(c[0],0.04,c[1]+sz*1.0), yT=0.30;
-  const zr=top.z+(foot.z-top.z)*((Y.outTop-yT)/(Y.outTop-foot.y));
-  return [rl(tube(top,foot,R,M.steel),'outrigger'), basePlate(foot.x,foot.z), soleBoard(foot.x,foot.z,true),
-    coupler(top,'swivel',true), rl(tube(V(c[0],yT,c[1]),V(c[0],yT,zr),R,M.steelLight),'outrigger-tie'),
-    cpl(c[0],yT,c[1],'fix'), cpl(c[0],yT,zr,'swivel',true)];
+  const c=corners[i], sx=Math.sign(c[0]), sz=Math.sign(c[1]), xo=c[0]-sx*0.075, yH=Y.outTop;
+  const head=V(xo,yH,c[1]), foot=V(xo,0.04,c[1]+sz*1.0), d=new THREE.Vector3().subVectors(head,foot).normalize();
+  const g=[rl(tube(foot,head.clone().addScaledVector(d,0.10),R,M.steel),'outrigger'), basePlate(foot.x,foot.z), soleBoard(foot.x,foot.z,true),
+    coupler(V(c[0]-sx*0.0375,yH,c[1]),'swivel',true)];
+  const yK=0.30, zB=foot.z+(head.z-foot.z)*((yK-foot.y)/(yH-foot.y));
+  const A=new THREE.Vector2(c[0],c[1]), B=new THREE.Vector2(xo,zB), u=B.clone().sub(A).normalize(), n=new THREE.Vector2(-u.y,u.x);
+  if(n.x*sx>0) n.negate();                                  // kicker di sisi dalam bay (menjauhi bracing ujung)
+  const P0=A.clone().addScaledVector(n,0.075).addScaledVector(u,-0.10), P1=B.clone().addScaledVector(n,0.075).addScaledVector(u,0.10);
+  const cA=A.clone().addScaledVector(n,0.0375), cB=B.clone().addScaledVector(n,0.0375);
+  g.push(rl(tube(V(P0.x,yK,P0.y),V(P1.x,yK,P1.y),R,M.steelLight),'outrigger-tie'), cpl(cA.x,yK,cA.y,'fix'), cpl(cB.x,yK,cB.y,'swivel',true));
+  return g;
 }
 /* sleeve coupler di sambungan standard */
 function sleeveAt(x,z,y){const g=new THREE.Group();const sl=rl(new THREE.Mesh(sharedGeo('slv',()=>new THREE.CylinderGeometry(R+0.013,R+0.013,0.22,16)),GALV2),'sleeve');sl.position.set(x,y,z);sl.castShadow=true;g.add(sl);[-0.06,0.06].forEach(dy=>{const b=new THREE.Mesh(sharedGeo('slvBolt',()=>new THREE.CylinderGeometry(0.008,0.008,0.07,8)),BOLT);b.rotation.z=Math.PI/2;b.position.set(x+R+0.012,y+dy,z);g.add(b);});const tg=new THREE.Mesh(sharedGeo('slvTag',()=>new THREE.TorusGeometry(R+0.022,0.008,8,18)),bandMat('sleeve'));tg.rotation.x=Math.PI/2;tg.position.set(x,y+0.12,z);g.add(tg);return g;}
@@ -515,18 +556,18 @@ function barrierRig(){
   return rl(g,'barrier');
 }
 
-/* tangga 4:1 di sisi belakang bay kiri, bersandar & diikat pada top rail, ujung ±1 m di atas lantai atas */
-function ladderRig(){
-  const g=[], r=0.02;
-  [-1,1].forEach(s=>{ const x=LAD.xc+s*LAD.hw; g.push(rl(tube(V(x,0.0,LAD.zAt(0)),V(x,LAD.yTop,LAD.zAt(LAD.yTop)),r,M.steelLight),'ladder-rail')); });
-  for(let y=0.30;y<LAD.yTop-0.05;y+=0.30){ const z=LAD.zAt(y); g.push(rl(tube(V(LAD.xc-LAD.hw,y,z),V(LAD.xc+LAD.hw,y,z),0.013,M.steel),'ladder-rung')); }
-  [-1,1].forEach(s=>{ g.push(rl(cpl(LAD.xc+s*(LAD.hw+0.04),LAD.yRest,LAD.zRest-0.012,'board',true),'ladder-tie')); });   // ikat di top rail
-  const yt=Y.l1, zt=LAD.zAt(yt);
-  [-1,1].forEach(s=>{ const x=LAD.xc+s*(LAD.hw+0.045);
-    g.push(rl(tube(V(x,yt,LZ),V(x,yt,zt+0.03),R,M.steelLight),'ladder-tie'), cpl(x,yt,LZ,'putlog'), cpl(x,yt,zt,'board',true)); });     // ikat di ledger lift-1
-  const pad=box(0.62,BOARD.t,0.30,M.woodDark); pad.position.set(LAD.xc,-BOARD.t/2,LAD.zAt(0)); pad.receiveShadow=true; g.push(pad);
+/* tangga 4:1 di samping pintu akses: bersandar pada top rail yang tetap utuh, kedua kaki tangga diikat klem tangga pada
+   rail itu (pusat klem di antara sumbu rail dan sumbu kaki tangga), ujung atas 1,05 m di atas lantai, anak tangga sejajar
+   lantai pendaratan (NASC SG25:20 butir 6.6), kaki tangga di alas papan */
+function ladderRig(acc){
+  const L=ladderGeom(acc), g=[], r=0.02, n=Math.round(L.T/0.29), s=L.T/n;
+  [L.xL,L.xR].forEach(x=>g.push(rl(tube(V(x,0,L.zFoot),V(x,L.yTop,L.zAt(L.yTop)),r,M.steelLight),'ladder-rail')));
+  for(let i=1;i*s<L.yTop-0.08;i++){ const y=i*s, z=L.zAt(y); g.push(rl(tube(V(L.xL,y,z),V(L.xR,y,z),0.013,M.steel),'ladder-rung')); }
+  [L.xL,L.xR].forEach(x=>g.push(rl(coupler(V(x,(L.yR+L.py)/2,(RAIL_Z+L.pz)/2),'ladder',false),'ladder-tie')));
+  const pad=box(0.62,BOARD.t,0.30,M.woodDark); pad.position.set(L.xc,-BOARD.t/2,L.zFoot); pad.receiveShadow=true; g.push(pad);
   return g;
 }
+function ladderTag(acc,green){ const L=ladderGeom(acc); return scaffTag(V(L.xc,acc.tagY,L.zAt(acc.tagY)+0.06),green); }
 
 /* alat bantu / hint transien */
 function waterpass(pos,axis){const g=new THREE.Group();const body=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.07,0.06),new THREE.MeshStandardMaterial({color:0xF5C518,metalness:.3,roughness:.5,emissive:0x6b5500,emissiveIntensity:.18}));const vial=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.1,12),new THREE.MeshStandardMaterial({color:0x2ECC71,emissive:0x2ECC71,emissiveIntensity:.6}));vial.rotation.z=Math.PI/2;g.add(body,vial);if(axis==='z')g.rotation.y=Math.PI/2;else if(axis==='y')g.rotation.z=Math.PI/2;g.position.copy(pos);return g;}
@@ -574,9 +615,9 @@ function buildWorkers(){const grp=new THREE.Group();
 const isShortStd=(i)=>((Math.floor(i/2)+(i%2))%2)===0;   // panjang awal berselang-seling antar-standard bertetangga
 const STEPS = [
   { id:'persiapan', title:'Persiapan: rencana, material, zona eksklusi, tag merah', coupler:'redtag',
-    desc:'Sebelum perakitan dimulai, pastikan ada <b>rencana pemasangan</b> dan perakitan <b>diawasi personel kompeten</b>. Periksa setiap komponen — pipa lurus dan tidak retak/berkarat parah, klem utuh, papan tidak pecah — dan pisahkan yang rusak. Siapkan tanah yang <b>rata, padat, dan kokoh</b>, pasang <b>barikade zona eksklusi</b>, lalu gantungkan <b>tag merah "JANGAN DIGUNAKAN"</b> di jalur akses. Tag merah tetap terpasang selama perakitan.',
+    desc:'Sebelum perakitan dimulai, pastikan ada <b>rencana pemasangan</b> dan perakitan <b>diawasi personel kompeten</b>. Periksa setiap komponen — pipa lurus dan tidak retak/berkarat parah, klem utuh, papan tidak pecah — dan pisahkan yang rusak. Siapkan tanah yang <b>rata, padat, dan kokoh</b>, pasang <b>barikade zona eksklusi</b> agar orang yang tidak berkepentingan tidak masuk dan tidak ada yang berada di bawah benda yang mungkin jatuh, lalu gantungkan <b>tag merah "JANGAN DIGUNAKAN"</b> di jalur akses. Tag merah tetap terpasang selama perakitan.',
     checks:['Rencana pemasangan & pengawas kompeten','Komponen rusak dipisahkan, tidak dipakai','Tanah rata, padat, mampu menahan beban','Zona eksklusi + tag merah di jalur akses'],
-    ref:'OSHA 1926.451(f)(7), (f)(4), (c)(2) · Permenaker 9/2016 Pasal 31–32 · PER.01/MEN/1980 Pasal 7 & 21',
+    ref:'OSHA 1926.451(f)(7), (f)(4), (c)(2) · Permenaker 9/2016 Pasal 31–32 · PER.01/MEN/1980 Pasal 7, 10 & 21',
     build(){ return [keyed(barrierRig(),'barrier'), keyed(scaffTag(V(LAD.xc,0.78,2.82),false),'redtag-barrier')]; } },
 
   { id:'alas', title:'Sole board dan base plate', coupler:'baseplate',
@@ -623,13 +664,13 @@ const STEPS = [
   { id:'bracing-l1', title:'Bracing lift-1: fasad dan silang ujung', coupler:'swivel',
     desc:'Bracing dipasang <b>segera setelah lift selesai</b>, sebelum naik ke lift berikutnya: <b>diagonal fasad</b> di kedua sisi panjang pada setiap bay (dua arah, ±42°) dengan <b>klem putar</b> di dekat simpul, serta <b>bracing silang (X)</b> di kedua ujung menara.',
     checks:['Fasad: kedua sisi, setiap bay, dua arah','Sudut ±45° (40–50°)','Ujung: bracing silang X','Klem putar dekat simpul'],
-    ref:'OSHA 1926.452(b)(2)–(4) · OSHA 1926 Subpart L App. A (45° ± 5°)',
+    ref:'OSHA 1926.452(b)(2)–(3) · OSHA 1926 Subpart L App. A (45° ± 5°) · pola per lift: kriteria aplikasi',
     build(){ return liftBrace(Y.kick,Y.l1); },
     hint(){ return [braceArc(V(-BAY,Y.kick,-LZ-0.07))]; } },
 
   { id:'outrigger', title:'Outrigger sebelum tinggi melewati 4 × lebar dasar', coupler:'swivel',
-    desc:'Lebar dasar menara hanya <b>1,2 m</b>, sedangkan tingginya nanti ±5,1 m (rasio ±4,25 : 1). Karena itu <b>outrigger dipasang sekarang</b> — sebelum standard diperpanjang melewati 4 × 1,2 = 4,8 m dan sebelum ada pekerjaan di lift berikutnya. Empat penopang dari simpul lift-1 ke tanah (1,0 m keluar), lengkap dengan base plate dan sole board, memperlebar dasar menjadi ±3,2 m. Bila menara berdiri di samping bangunan, pengikatan (tie) ke struktur sesuai desain menjadi alternatif.',
-    checks:['Terpasang sebelum tinggi > 4 × lebar dasar','Kaki di base plate + sole board','Klem putar di simpul lift-1','Pengikat kaki ke standard'],
+    desc:'Lebar dasar menara hanya <b>1,2 m</b>, sedangkan tingginya nanti ±5,1 m (rasio ±4,25 : 1). Karena itu <b>outrigger dipasang sekarang</b> — sebelum standard diperpanjang melewati 4 × 1,2 = 4,8 m dan sebelum ada pekerjaan di lift berikutnya. Empat penopang dijepit <b>klem putar</b> pada standard sudut tepat di bawah simpul lift-1 (+1,80 m) dan turun ke tanah 1,0 m keluar, lengkap dengan base plate, sole board, dan <b>pengikat kaki</b> ke standard, sehingga dasar melebar menjadi ±3,2 m. Bila menara berdiri di samping bangunan, pengikatan (tie) ke struktur sesuai desain menjadi alternatif.',
+    checks:['Terpasang sebelum tinggi > 4 × lebar dasar','Kaki di base plate + sole board','Dijepit klem putar pada standard sudut','Pengikat kaki ke standard'],
     ref:'OSHA 1926.451(c)(1)',
     build(){ const g=[]; for(let i=0;i<4;i++) outrigger(i).forEach(o=>g.push(o)); return g; } },
 
@@ -640,20 +681,20 @@ const STEPS = [
     build(){ const g=[]; NODES.forEach((c,i)=>{ const y=isShortStd(i)?Y.stdShort:Y.stdLong; g.push(sleeveAt(c[0],c[1],y), standardTube(c[0],c[1],y,Y.stdTop)); }); return g; } },
 
   { id:'pagar-l1', title:'Pelindung tepi lift-1 dari posisi terlindungi', coupler:'fix',
-    desc:'Sebelum siapa pun berdiri di lift-1, pasang <b>top rail</b> (permukaan atas <b>1,0 m</b> di atas lantai) dan <b>mid rail</b> (0,53 m) di keempat sisi — dari posisi terlindungi, misalnya dengan <b>sistem advance guardrail</b> dari bawah. Bila perlindungan kolektif belum ada, pekerja wajib memakai <b>full body harness</b> dengan tali pembatas gerak atau penahan jatuh pada angkur yang memadai.',
-    checks:['Top rail ≥ 950 mm (model 1,0 m)','Celah vertikal ≤ 470 mm','Menerus di keempat sisi','Terpasang sebelum lantai dinaiki'],
-    ref:'Permenaker 9/2016 Pasal 24–25 · PER.01/MEN/1980 Pasal 13(2) · EN 12811-1 butir 5.5 · NASC SG4:22',
-    build(){ return railRing(Y.deck1,false).main; },
+    desc:'Sebelum siapa pun berdiri di lift-1, pasang <b>top rail</b> (permukaan atas <b>1,0 m</b> di atas lantai) dan <b>mid rail</b> (0,53 m) di muka dalam standard pada keempat sisi — dari posisi terlindungi, misalnya dengan <b>sistem advance guardrail</b> dari bawah. Rail sisi ujung dipasang 75 mm lebih tinggi karena bersilang dengan rail sisi panjang di standard sudut. Di sisi belakang bay kanan dipasang dua <b>puncheon</b> dan <b>pintu yang menutup sendiri</b> sebagai titik akses lantai ini. Bila perlindungan kolektif belum ada, pekerja wajib memakai <b>full body harness</b> dengan <b>tali pembatas gerak</b> (<i>work restraint</i>) pada angkur yang memadai.',
+    checks:['Top rail ≥ 950 mm (model 1,0 m)','Celah vertikal ≤ 470 mm','Menerus di keempat sisi; pintu akses tertutup','Terpasang sebelum lantai dinaiki'],
+    ref:'Permenaker 9/2016 Pasal 24–25 · PER.01/MEN/1980 Pasal 13(2) · EN 12811-1 butir 5.5 · NASC SG4:22 · NASC SG25:20',
+    build(){ return railRing(ACC.l1); },
     hint(){ return [heightGuide(0.6,-LZ-0.06,Y.deck1)]; } },
 
-  { id:'lantai-l1', title:'Lantai lift-1: putlog, papan, toe board', coupler:'plank',
-    desc:'Pasang <b>putlog antara</b> di tengah tiap bay agar bentang papan 38 mm <b>≤ 1,2 m</b> (model: maks. 0,98 m). Gelar <b>5 papan</b> 225 × 38 mm sepanjang 3,9 m secara rapat (celah ≤ 25 mm); ujung papan menonjol <b>50–152 mm</b> dari tumpuan dan dikunci klem papan. Pasang <b>toe board 150 mm</b> di keempat sisi. Lantai ini dipakai untuk merakit lift-2 dan nanti untuk membongkar.',
-    checks:['Bentang papan ≤ 1,2 m','Lantai penuh, celah ≤ 25 mm','Ujung papan 50–152 mm, dikunci','Toe board ≥ 150 mm, keempat sisi'],
-    ref:'BS 2482:2009 · NASC TG12 · OSHA 1926.451(b)(1), (b)(4), (h)(4) · EN 12811-1 butir 5.5.4',
-    build(){ return bearerLvl(Y.l1,PUTLOG_X,'putlog','putlog').concat(deckBoards(Y.l1), toeBoards(Y.deck1,false).main); } },
+  { id:'lantai-l1', title:'Lantai lift-1 dan tangga aksesnya', coupler:'plank',
+    desc:'Pasang <b>putlog antara</b> di tengah tiap bay agar bentang papan 38 mm <b>≤ 1,2 m</b> (model: maks. 0,98 m). Gelar <b>5 papan</b> 225 × 38 mm sepanjang 3,9 m secara rapat (celah ≤ 25 mm); ujung papan menonjol <b>≥ 50 mm dari muka tumpuan</b> dan tidak lebih dari 4 × tebal, lalu dikunci klem papan. Pasang <b>toe board 150 mm</b> di keempat sisi. Lantai ini dipakai untuk merakit lift-2 dan nanti untuk membongkar, sehingga <b>tangga aksesnya dipasang sekarang</b>: di samping pintu, kemiringan 4 : 1, anak tangga sejajar lantai, ujung atas 1,05 m di atas lantai, dan kedua kaki tangga diikat pada top rail. Pasang <b>tag merah</b> di kaki tangga.',
+    checks:['Bentang papan ≤ 1,2 m; lantai rapat','Ujung papan ≥ 50 mm dari muka tumpuan, dikunci','Toe board ≥ 150 mm, keempat sisi','Tangga 4 : 1 diikat di top rail + tag merah'],
+    ref:'BS 2482:2009 · NASC TG12 · OSHA 1926.451(b)(1), (b)(4), (e)(1), (e)(9), (h)(4) · OSHA 1926.1053(b) · NASC SG25:20',
+    build(){ return bearerLvl(Y.l1,PUTLOG_X,'putlog','putlog').concat(deckBoards(Y.l1), toeBoards(ACC.l1), ladderRig(ACC.l1), [keyed(ladderTag(ACC.l1,false),'redtag-access1')]); } },
 
   { id:'ledger-l2', title:'Ledger lift-2 (+3,90 m)', coupler:'fix',
-    desc:'Dari lantai lift-1 yang sudah terlindungi, pasang <b>ledger lift-2</b> pada <b>+3,90 m</b> (klem mati), menerus, datar, dan tegak lurus standard.',
+    desc:'Dari lantai lift-1 yang sudah terlindungi — dicapai lewat tangga dan pintu di bay kanan — pasang <b>ledger lift-2</b> pada <b>+3,90 m</b> (klem mati), menerus, datar, dan tegak lurus standard.',
     checks:['Jarak vertikal antar-ledger ≤ 1,98 m','Datar & tegak lurus standard','Dikerjakan dari lantai terlindungi'],
     ref:'OSHA 1926 Subpart L App. A · 1926.452(b)(7)–(8)',
     build(){ return ledgerLvl(Y.l2); },
@@ -667,30 +708,30 @@ const STEPS = [
     hint(){ return [waterpass(V(TRANSOM_X[2],Y.l2+ON_LEDGER+0.07,0.25),'z')]; } },
 
   { id:'bracing-l2', title:'Bracing lift-2', coupler:'swivel',
-    desc:'Lanjutkan bracing pada lift-2 sebelum lantai atas dipasang: <b>diagonal fasad</b> di kedua sisi panjang pada setiap bay (±44°) dan <b>bracing silang (X)</b> di kedua ujung.',
-    checks:['Fasad: kedua sisi, setiap bay','Sudut ±45° (40–50°)','Ujung: bracing silang X'],
-    ref:'OSHA 1926.452(b)(2)–(3) · OSHA 1926 Subpart L App. A',
-    build(){ return liftBrace(Y.l1,Y.l2); },
+    desc:'Lanjutkan bracing pada lift-2 sebelum lantai atas dipasang: <b>diagonal fasad</b> di kedua sisi panjang pada setiap bay (±44°) dan <b>bracing silang (X)</b> di kedua ujung. <b>Kecuali</b> bay kanan sisi belakang: bay itu adalah titik akses lantai lift-1, sehingga diagonalnya akan melintang di depan pintu setinggi 0,6–1,2 m di atas lantai. Bay itu dibiarkan bebas dan tetap dibracing di sisi depan.',
+    checks:['Fasad: kedua sisi, setiap bay (kecuali bay akses)','Sudut ±45° (40–50°)','Ujung: bracing silang X','Bukaan pintu lift-1 tidak terhalang'],
+    ref:'OSHA 1926.452(b)(2)–(3) · OSHA 1926 Subpart L App. A · OSHA 1926.451(e)(1) · NASC SG25:20 butir 6.4',
+    build(){ return liftBrace(Y.l1,Y.l2,ACCESS_BAY_L2); },
     hint(){ return [braceArc(V(-BAY,Y.l1,-LZ-0.07))]; } },
 
   { id:'pagar-atas', title:'Pelindung tepi lantai atas (advance guardrail)', coupler:'fix',
-    desc:'Dari lantai lift-1, pasang <b>top rail 1,0 m</b> dan <b>mid rail 0,53 m</b> di keempat sisi lantai atas dengan <b>sistem advance guardrail</b> — sebelum ada yang naik ke lantai atas. Di sisi belakang bay kiri dipasang <b>puncheon</b> sebagai tiang pintu; bukaan akses ditutup <b>rail penutup sementara</b> sampai pintu tangga terpasang.',
-    checks:['Terpasang sebelum lantai atas dinaiki','Top rail 1,0 m · mid rail 0,53 m','Bukaan akses ditutup sementara'],
-    ref:'NASC SG4:22 · Permenaker 9/2016 Pasal 24 · OSHA 1926.451(g)(4)(i), (ii), (iv)',
-    build(){ const r=railRing(Y.deck2,true); return r.main.concat(r.closure.map(o=>keyed(o,'closure')), accessPuncheon()); },
+    desc:'Dari lantai lift-1, pasang <b>top rail 1,0 m</b> dan <b>mid rail 0,53 m</b> di keempat sisi lantai atas dengan <b>sistem advance guardrail</b> — sebelum ada yang naik ke lantai atas. Di sisi belakang bay kiri dipasang dua <b>puncheon</b> dan <b>pintu yang menutup sendiri</b>. Rail di samping pintu tetap utuh karena nanti menjadi tumpuan dan tempat mengikat tangga.',
+    checks:['Terpasang sebelum lantai atas dinaiki','Top rail 1,0 m · mid rail 0,53 m','Pintu akses tertutup, membuka ke dalam'],
+    ref:'NASC SG4:22 · NASC SG25:20 · Permenaker 9/2016 Pasal 24 · OSHA 1926.451(g)(4)(i), (ii), (iv)',
+    build(){ return railRing(ACC.top); },
     hint(){ return [heightGuide(0.6,-LZ-0.06,Y.deck2)]; } },
 
   { id:'lantai-atas', title:'Lantai kerja atas: putlog, papan, toe board', coupler:'plank',
     desc:'Pasang <b>putlog antara</b> (bentang papan ≤ 1,2 m), gelar <b>5 papan</b> rapat dari lantai lift-1, kunci ujungnya dengan klem papan, lalu pasang <b>toe board 150 mm</b> di keempat sisi dari dalam perlindungan rail yang sudah terpasang.',
-    checks:['Bentang papan ≤ 1,2 m','Lantai penuh, celah ≤ 25 mm','Ujung papan 50–152 mm, dikunci','Toe board ≥ 150 mm'],
+    checks:['Bentang papan ≤ 1,2 m','Lantai penuh, celah ≤ 25 mm','Ujung papan ≥ 50 mm dari muka tumpuan, dikunci','Toe board ≥ 150 mm'],
     ref:'BS 2482:2009 · NASC TG12 · OSHA 1926.451(b)(1), (b)(4), (h)(4) · EN 12811-1 butir 5.5.4',
-    build(){ const t=toeBoards(Y.deck2,true); return bearerLvl(Y.l2,PUTLOG_X,'putlog','putlog').concat(deckBoards(Y.l2), t.main, t.closure.map(o=>keyed(o,'closure'))); } },
+    build(){ return bearerLvl(Y.l2,PUTLOG_X,'putlog','putlog').concat(deckBoards(Y.l2), toeBoards(ACC.top)); } },
 
-  { id:'tangga', title:'Tangga akses dan pintu yang menutup sendiri', coupler:'ladder', hides:['closure'],
-    desc:'Pasang <b>tangga</b> di sisi belakang bay kiri dengan kemiringan <b>4 : 1</b> (±76°), ujung atas menonjol <b>±1 m</b> di atas lantai atas, dan <b>diikat</b> pada top rail serta ledger lift-1. Lepas rail penutup sementara lalu pasang <b>pintu yang menutup sendiri</b> (top bar, mid bar, papan kaki) sehingga pelindung tepi tetap menerus. Pasang <b>tag merah</b> di kaki tangga — perancah belum boleh digunakan.',
-    checks:['Kemiringan 4 : 1, kaki di alas yang rata','Menonjol ≥ 0,9 m di atas lantai, diikat','Pintu menutup sendiri, tertutup rapat','Tag merah di kaki tangga'],
-    ref:'OSHA 1926.1053(b)(1), (b)(5)(i), (b)(6) · PER.01/MEN/1980 Pasal 25 · Permenaker 9/2016 Pasal 24 · NASC SG25:20',
-    build(){ return ladderRig().concat([accessGate(Y.deck2), keyed(scaffTag(V(LAD.xc,1.55,LAD.zAt(1.55)+0.06),false),'redtag-access')]); } },
+  { id:'tangga', title:'Tangga akses lantai atas', coupler:'ladder',
+    desc:'Pasang <b>tangga</b> di sisi belakang bay kiri, tepat di samping pintu, dengan kemiringan <b>4 : 1</b> (±76°). Tangga <b>bersandar pada top rail yang tetap terpasang</b>, <b>kedua kakinya diikat</b> klem tangga pada rail itu, ujung atasnya <b>1,05 m</b> di atas lantai atas, dan anak tangga sejajar lantai pendaratan. Pengguna melangkah ke samping melalui pintu yang menutup sendiri dan hanya membuka ke dalam. Pasang <b>tag merah</b> di kaki tangga — perancah belum boleh digunakan.',
+    checks:['Kemiringan 4 : 1, kaki di alas yang rata','Menonjol ≥ 1,0 m di atas lantai','Kedua kaki tangga diikat pada top rail','Tag merah di kaki tangga'],
+    ref:'OSHA 1926.1053(b)(1), (b)(5)(i), (b)(6) · NASC SG25:20 butir 5, 6.4, 6.6 · PER.01/MEN/1980 Pasal 25',
+    build(){ return ladderRig(ACC.top).concat([keyed(ladderTag(ACC.top,false),'redtag-access')]); } },
 
   { id:'inspeksi', title:'Inspeksi serah terima oleh personel kompeten', coupler:'levelmeter', action:'Catat Hasil Inspeksi →',
     desc:'Personel kompeten memeriksa perancah yang telah lengkap <b>sebelum digunakan</b>: dasar, kelurusan, bracing, stabilitas, lantai kerja, pelindung tepi, akses, dan tag. Simulator menjalankan pemeriksaan yang sama dengan <b>mengukur model</b>; hasilnya dicatat hanya bila semua butir memenuhi.',
@@ -698,11 +739,11 @@ const STEPS = [
     ref:'OSHA 1926.451(f)(3) · WAHR 2005 reg. 12 · Permenaker 9/2016 Pasal 31–32',
     build(){ const f=workerFigure('inspect'); f.position.set(-0.35,0,2.30); f.rotation.y=Math.PI; return [keyed(rl(f,'inspector'),'inspector')]; } },
 
-  { id:'tag-hijau', title:'Ganti tag merah dengan tag hijau', coupler:'greentag', action:'Pasang Tag Hijau →', hides:['barrier','redtag-barrier','redtag-access','inspector'],
-    desc:'Setelah inspeksi serah terima memenuhi, <b>ganti tag merah dengan tag hijau "BOLEH DIGUNAKAN"</b> yang mencantumkan tanggal, nama pemeriksa, dan batas beban, lalu lepas barikade zona eksklusi. Inspeksi diulang sebelum setiap giliran kerja dan setelah kejadian yang dapat memengaruhi kekuatan perancah.',
-    checks:['Tag hijau hanya setelah inspeksi memenuhi','Tag merah dilepas','Barikade zona eksklusi dilepas'],
+  { id:'tag-hijau', title:'Ganti tag merah dengan tag hijau', coupler:'greentag', action:'Pasang Tag Hijau →', hides:['barrier','redtag-barrier','redtag-access','redtag-access1','inspector'],
+    desc:'Setelah inspeksi serah terima memenuhi, <b>ganti tag merah dengan tag hijau "BOLEH DIGUNAKAN"</b> di kedua titik akses. Tag mencantumkan tanggal, nama pemeriksa, dan batas beban; lalu lepas barikade zona eksklusi. Inspeksi diulang sebelum setiap giliran kerja dan setelah kejadian yang dapat memengaruhi kekuatan perancah.',
+    checks:['Tag hijau hanya setelah inspeksi memenuhi','Tag merah dilepas di kedua titik akses','Barikade zona eksklusi dilepas'],
     ref:'OSHA 1926.451(f)(3) · WAHR 2005 reg. 12',
-    build(){ return [scaffTag(V(LAD.xc,1.55,LAD.zAt(1.55)+0.06),true)]; } },
+    build(){ return [ladderTag(ACC.top,true), ladderTag(ACC.l1,true)]; } },
 ];
 if(STEPS.length!==TOTAL || STEPS.some((s,i)=>s.id!==STEP_IDS[i])) throw new Error('Daftar tahap tidak sinkron');
 const INSP_IDX = STEPS.findIndex(s=>s.id==='inspeksi');
@@ -1203,11 +1244,30 @@ function collect(){
 function uniqSorted(arr,tol){ const s=arr.slice().sort((a,b)=>a-b), out=[]; s.forEach(v=>{ if(!out.length||Math.abs(v-out[out.length-1])>tol) out.push(v); }); return out; }
 /* panjang gabungan interval yang menutupi [lo,hi] (toleransi celah kecil di simpul/klem) */
 function covers(iv,lo,hi,tol){ const s=iv.slice().sort((a,b)=>a[0]-b[0]); let reach=lo; for(const [a,b] of s){ if(a>reach+tol) break; reach=Math.max(reach,b); } return reach>=hi-tol; }
+/* jarak titik ke ruas pipa: d (m) dan s = posisi sepanjang pipa dari ujung a (m) */
+function segPt(p,a,b){ const ab=b.clone().sub(a), L2=ab.lengthSq(), t=L2>1e-12?Math.max(0,Math.min(1,p.clone().sub(a).dot(ab)/L2)):0; return {d:a.clone().addScaledVector(ab,t).distanceTo(p), s:t*Math.sqrt(L2)}; }
+/* jarak terdekat antara dua ruas (sumbu pipa); pa/pb titik terdekat, sa/sb posisinya sepanjang masing-masing ruas (m) */
+function segSeg(p1,q1,p2,q2){
+  const d1=q1.clone().sub(p1), d2=q2.clone().sub(p2), r=p1.clone().sub(p2), a=d1.dot(d1), e=d2.dot(d2), f=d2.dot(r);
+  let s=0, t=0;
+  if(a>1e-12||e>1e-12){
+    if(a<=1e-12){ t=Math.min(1,Math.max(0,f/e)); }
+    else { const c=d1.dot(r); if(e<=1e-12){ s=Math.min(1,Math.max(0,-c/a)); }
+      else { const b=d1.dot(d2), den=a*e-b*b; s=den>1e-12?Math.min(1,Math.max(0,(b*f-c*e)/den)):0; t=(b*s+f)/e;
+        if(t<0){ t=0; s=Math.min(1,Math.max(0,-c/a)); } else if(t>1){ t=1; s=Math.min(1,Math.max(0,(b-c)/a)); } } }
+  }
+  const pa=p1.clone().addScaledVector(d1,s), pb=p2.clone().addScaledVector(d2,t);
+  return {d:pa.distanceTo(pb), pa:pa, pb:pb, sa:s*Math.sqrt(a), sb:t*Math.sqrt(e)};
+}
+/* klem benar-benar menjepit pipa: pusat klem ≤ (r + 30 mm) dari sumbu pipa dan ≥ 36 mm di dalam kedua ujung pipa */
+function grips(p,t){ const q=segPt(p,t.a,t.b); return q.d<=t.r+0.03&&q.s>=0.036&&q.s<=t.len-0.036; }
 function evaluate(){
   const E=collect(), items=[], m={};
-  const add=(id,grp,label,ok,value,limit,ref)=>items.push({id:id,grp:grp,label:label,ok:!!ok,value:value,limit:limit,ref:ref});
+  /* how: 'ukur' = diukur dari geometri model; 'cek' = diperiksa dari keberadaan/jenis komponen; 'ukur+cek' = keduanya */
+  const add=(id,grp,label,ok,value,limit,ref,how)=>items.push({id:id,grp:grp,label:label,ok:!!ok,value:value,limit:limit,ref:ref,how:how||'ukur'});
   const tubes=(k)=>(E[k]||[]).map(tubeEnds);
   const boxes=(k)=>(E[k]||[]).map(boxOf);
+  const cplPos=(E.coupler||[]).concat(E['ladder-tie']||[]).map(o=>{ const p=new THREE.Vector3(); o.getWorldPosition(p); return p; });
 
   /* ---- dasar & rangka ---- */
   const colMap=new Map();
@@ -1278,15 +1338,21 @@ function evaluate(){
   /* ---- bracing & stabilitas ---- */
   const brs=tubes('brace');
   let faceOK=lifts.length>0, endOK=lifts.length>0; const faceTxt=[], endTxt=[], angles=[];
+  /* bay akses: ada pintu pada lantai di dasar lift ini, di sisi dan bay yang sama (diukur dari posisi top bar pintu) */
+  const gateTops=tubes('gate-top');
+  const accessBay=(L,s,x0,x1)=>gateTops.some(g=>Math.abs((g.a.y+g.r-RAIL.top)-(L.y0+DECK_DY))<0.02&&Math.sign(g.a.z)===s&&Math.min(g.a.x,g.b.x)>=x0-0.01&&Math.max(g.a.x,g.b.x)<=x1+0.01);
   lifts.forEach((L,li)=>{
     const inLift=brs.filter(t=>t.a.y>=L.y0-0.05&&t.b.y<=L.y1+0.05);
-    let fc=0, need=0;
-    [-1,1].forEach(s=>{ for(let i=1;i<xs.length;i++){ need++;
+    let fc=0, need=0, free=0; const freeSide={};
+    [-1,1].forEach(s=>{ for(let i=1;i<xs.length;i++){
       const hit=inLift.find(t=>Math.abs(t.a.z-t.b.z)<0.01&&Math.sign(t.a.z)===s&&Math.min(t.a.x,t.b.x)<=xs[i-1]+0.05&&Math.max(t.a.x,t.b.x)>=xs[i]-0.05);
-      if(hit){ fc++; angles.push(Math.atan2(hit.b.y-hit.a.y,Math.hypot(hit.b.x-hit.a.x,hit.b.z-hit.a.z))*180/Math.PI); } } });
-    const dirs=new Set(inLift.filter(t=>Math.abs(t.a.z-t.b.z)<0.01).map(t=>Math.sign(t.b.x-t.a.x)));
-    if(fc<need||dirs.size<2) faceOK=false;
-    faceTxt.push('lift '+(li+1)+': '+fc+'/'+need);
+      if(hit) angles.push(Math.atan2(hit.b.y-hit.a.y,Math.hypot(hit.b.x-hit.a.x,hit.b.z-hit.a.z))*180/Math.PI);
+      if(accessBay(L,s,xs[i-1],xs[i])){ free++; freeSide[s]=true; continue; }   // bay akses: dibiarkan bebas (bukaan diperiksa di butir akses)
+      need++; if(hit) fc++; } });
+    /* dua arah pada setiap sisi panjang; sisi yang memiliki bay akses cukup satu arah (sisi lain tetap dua arah) */
+    const dirOK=[-1,1].every(s=>{ const d=new Set(inLift.filter(t=>Math.abs(t.a.z-t.b.z)<0.01&&Math.sign(t.a.z)===s).map(t=>Math.sign(t.b.x-t.a.x))); return d.size>=2||(freeSide[s]&&d.size>=1); });
+    if(fc<need||!dirOK) faceOK=false;
+    faceTxt.push('lift '+(li+1)+': '+fc+'/'+need+(free?' (+'+free+' bay akses dibiarkan bebas)':''));
     let ec=0;
     [-1,1].forEach(s=>{ const ends=inLift.filter(t=>Math.abs(t.a.x-t.b.x)<0.01&&Math.sign(t.a.x)===s&&Math.abs(t.a.x)>=BAY-0.01&&Math.abs(t.b.z-t.a.z)>0.5);
       const sl=new Set(ends.map(t=>Math.sign(t.b.z-t.a.z))); if(sl.size===2) ec++; });
@@ -1295,20 +1361,28 @@ function evaluate(){
   });
   m.braceAngles=angles;
   add('brace-face','Bracing & stabilitas','Bracing fasad setiap lift, kedua sisi', faceOK,
-    lifts.length?faceTxt.join(' · ')+' bay-sisi':'belum ada lift','setiap lift: kedua sisi panjang, setiap bay, dua arah','OSHA 1926.452(b)(3)–(4)');
+    lifts.length?faceTxt.join(' · ')+' bay-sisi':'belum ada lift','kriteria aplikasi*: setiap lift, kedua sisi panjang, setiap bay, dua arah (dipasang bertahap per lift); bay akses lantai di dasar lift dibiarkan bebas dan tetap dibracing di sisi seberang','OSHA 1926.452(b)(3): dua arah, dekat simpul · pola per lift: kriteria aplikasi');
   const aMin=angles.length?Math.min(...angles):0, aMax=angles.length?Math.max(...angles):0;
   add('brace-angle','Bracing & stabilitas','Sudut bracing fasad', angles.length>0&&aMin>=40&&aMax<=50,
     angles.length?fmt(aMin,1)+'°–'+fmt(aMax,1)+'°':'belum ada bracing','45° ± 5°','OSHA 1926 Subpart L App. A (pedoman)');
   add('brace-end','Bracing & stabilitas','Bracing silang (X) di kedua ujung', endOK,
-    lifts.length?endTxt.join(' · '):'belum ada lift','X melintang di kedua ujung setiap lift','OSHA 1926.452(b)(2)');
-  const feet=plates.map(b=>{ const c=new THREE.Vector3(); b.getCenter(c); return c; });
+    lifts.length?endTxt.join(' · '):'belum ada lift','X melintang di kedua ujung; model: setiap lift (OSHA: minimal setiap runner keempat)','OSHA 1926.452(b)(2)');
+  /* lebar dasar: kaki standard + kaki outrigger yang BENAR-BENAR tersambung (pipa outrigger berujung di base plate itu dan
+     dijepit klem yang juga menjepit standard). Base plate tanpa outrigger yang tersambung tidak dihitung. */
+  const stdT=tubes('standard'), outs=tubes('outrigger'), outFeet=[]; let outLoose=0;
+  outs.forEach(o=>{
+    const plate=plates.find(b=>{ if(b.max.y>0.1) return false; const c=new THREE.Vector3(); b.getCenter(c); return Math.hypot(c.x-o.a.x,c.z-o.a.z)<=0.10; });
+    const head=cplPos.some(p=>grips(p,o)&&stdT.some(s=>grips(p,s)));
+    if(plate&&head){ const c=new THREE.Vector3(); plate.getCenter(c); outFeet.push(c); } else outLoose++;
+  });
+  const feet=columns.map(c=>c.base).concat(outFeet);
   const H=Math.max(maxTop,...tubes('puncheon').map(t=>t.b.y),0);
   let stab=null;
-  if(feet.length&&H>0){ const fx=feet.map(p=>p.x), fz=feet.map(p=>p.z); const x0=Math.min(...fx),x1=Math.max(...fx),z0=Math.min(...fz),z1=Math.max(...fz); const Bm=Math.max(0.01,Math.min(x1-x0,z1-z0)); stab={H:H,B:Bm,ratio:H/Bm,x0:x0,x1:x1,z0:z0,z1:z1}; }
+  if(feet.length&&H>0){ const fx=feet.map(p=>p.x), fz=feet.map(p=>p.z); const x0=Math.min(...fx),x1=Math.max(...fx),z0=Math.min(...fz),z1=Math.max(...fz); const Bm=Math.max(0.01,Math.min(x1-x0,z1-z0)); stab={H:H,B:Bm,ratio:H/Bm,x0:x0,x1:x1,z0:z0,z1:z1,outriggers:outFeet.length,loose:outLoose}; }
   m.stab=stab;
   add('stab','Bracing & stabilitas','Rasio tinggi : lebar dasar', !!stab&&columns.length>0&&stab.ratio<=4,
-    stab&&columns.length?fmt(stab.H,2)+' m : '+fmt(stab.B,2)+' m = '+fmt(stab.ratio,2)+' : 1'+((E.outrigger||[]).length?' (dengan outrigger)':''):'belum ada standard',
-    '≤ 4 : 1 (lebar dasar termasuk outrigger)','OSHA 1926.451(c)(1)');
+    stab&&columns.length?fmt(stab.H,2)+' m : '+fmt(stab.B,2)+' m = '+fmt(stab.ratio,2)+' : 1'+(outFeet.length?' (dengan '+outFeet.length+' outrigger tersambung)':'')+(outLoose?' · '+outLoose+' outrigger tidak tersambung, tidak dihitung':''):'belum ada standard',
+    '≤ 4 : 1 (lebar dasar termasuk outrigger yang tersambung ke standard)','OSHA 1926.451(c)(1)');
 
   /* ---- lantai kerja ---- */
   const boards=boxes('board'), clips=boxes('boardclip');
@@ -1328,14 +1402,16 @@ function evaluate(){
     fullTxt.push(dk.name+': celah '+fmt(gap*1000,0)+' mm, ke tiang '+fmt(eg*1000,0)+' mm');
     dk.boards.forEach(b=>{
       const zc=(b.min.z+b.max.z)/2, t=b.max.y-b.min.y;
-      const sx=bearers.filter(s=>Math.abs((s.a.y+s.r)-b.min.y)<0.006&&Math.min(s.a.z,s.b.z)<=b.min.z+0.01&&Math.max(s.a.z,s.b.z)>=b.max.z-0.01&&s.a.x>=b.min.x-0.001&&s.a.x<=b.max.x+0.001).map(s=>s.a.x).sort((p,q)=>p-q);
+      const sp=bearers.filter(s=>Math.abs((s.a.y+s.r)-b.min.y)<0.006&&Math.min(s.a.z,s.b.z)<=b.min.z+0.01&&Math.max(s.a.z,s.b.z)>=b.max.z-0.01&&s.a.x>=b.min.x-0.001&&s.a.x<=b.max.x+0.001).sort((p,q)=>p.a.x-q.a.x);
+      const sx=sp.map(s=>s.a.x);
       if(sx.length<2){ spanOK=false; endBoardOK=false; return; }
       for(let i=1;i<sx.length;i++) maxSpan=Math.max(maxSpan,sx[i]-sx[i-1]);
-      const o1=sx[0]-b.min.x, o2=b.max.x-sx[sx.length-1];
-      ovMin=Math.min(ovMin,o1,o2); ovMax=Math.max(ovMax,o1,o2);
+      /* ujung papan diukur dari sumbu tumpuan (o) dan dari MUKA pipa tumpuan (f = o − jari-jari pipa) */
+      const o1=sx[0]-b.min.x, o2=b.max.x-sx[sx.length-1], f1=o1-sp[0].r, f2=o2-sp[sp.length-1].r;
+      ovMin=Math.min(ovMin,f1,f2); ovMax=Math.max(ovMax,o1,o2);
       const clipAt=(x)=>clips.some(c=>c.min.z<=zc&&c.max.z>=zc&&Math.abs((c.min.x+c.max.x)/2-x)<=0.2&&c.min.y>=b.max.y-0.005&&c.min.y<=b.max.y+0.01);
       if(!(clipAt(b.min.x)&&clipAt(b.max.x))) allClip=false;
-      if(o1<0.05||o2<0.05||o1>4*t+0.0005||o2>4*t+0.0005) endBoardOK=false;
+      if(f1<0.05||f2<0.05||o1>4*t+0.0005||o2>4*t+0.0005) endBoardOK=false;
     });
   });
   if(maxSpan>1.2) spanOK=false;
@@ -1343,21 +1419,23 @@ function evaluate(){
   m.deckSpan=maxSpan; m.overhang=[ovMin,ovMax];
   add('deck-full','Lantai kerja','Lantai penuh dan rapat', fullOK, decks.length?fullTxt.join(' · '):'belum ada lantai kerja','celah antar-papan & ke tiang ≤ 25 mm (1 in)','OSHA 1926.451(b)(1) · PER.01/MEN/1980 Pasal 13(1)');
   add('deck-span','Lantai kerja','Bentang papan 38 mm', spanOK, decks.length?'maks. '+fmt(maxSpan,2)+' m':'belum ada lantai kerja','≤ 1,2 m antartumpuan','BS 2482:2009 · OSHA App. A');
-  add('deck-end','Lantai kerja','Ujung papan di atas tumpuan', endBoardOK, decks.length?fmt(ovMin*1000,0)+'–'+fmt(ovMax*1000,0)+' mm'+(allClip?', dikunci klem papan':', belum dikunci'):'belum ada lantai kerja','50 mm s.d. 4 × tebal (152 mm); papan diikat','NASC TG12 · OSHA 1926.451(b)(4)');
+  add('deck-end','Lantai kerja','Ujung papan di atas tumpuan', endBoardOK, decks.length?'min. '+fmt(ovMin*1000,0)+' mm dari muka tumpuan · maks. '+fmt(ovMax*1000,0)+' mm dari sumbu tumpuan'+(allClip?', dikunci klem papan':', belum dikunci'):'belum ada lantai kerja','≥ 50 mm dari muka tumpuan; ≤ 4 × tebal (152 mm); papan diikat','NASC TG12 · NASC SG25:20 butir 4.1 · OSHA 1926.451(b)(4)');
 
   /* ---- pelindung tepi (setiap lantai) ---- */
   const tops=tubes('rail-top').concat(tubes('gate-top')), mids=tubes('rail-mid').concat(tubes('gate-mid'));
   const toes=boxes('toeboard').concat(boxes('gate-kick'));
   const sides=[{n:'depan',ax:'x',c:-LZ,lo:-BAY,hi:BAY},{n:'belakang',ax:'x',c:LZ,lo:-BAY,hi:BAY},{n:'kiri',ax:'z',c:-BAY,lo:-LZ,hi:LZ},{n:'kanan',ax:'z',c:BAY,lo:-LZ,hi:LZ}];
-  const onSide=(t,sd)=>sd.ax==='x' ? (Math.abs(t.a.z-sd.c)<0.06&&Math.abs(t.b.z-sd.c)<0.06&&Math.abs(t.b.x-t.a.x)>0.2) : (Math.abs(t.a.x-sd.c)<0.06&&Math.abs(t.b.x-sd.c)<0.06&&Math.abs(t.b.z-t.a.z)>0.2);
+  /* sisi sebuah pipa/kotak: dalam 0,12 m dari garis standard (rail di muka dalam standard: 48 mm; daun pintu: 93 mm) */
+  const onSide=(t,sd)=>sd.ax==='x' ? (Math.abs(t.a.z-sd.c)<0.12&&Math.abs(t.b.z-sd.c)<0.12&&Math.abs(t.b.x-t.a.x)>0.2) : (Math.abs(t.a.x-sd.c)<0.12&&Math.abs(t.b.x-sd.c)<0.12&&Math.abs(t.b.z-t.a.z)>0.2);
   const tIv=(t,sd)=>sd.ax==='x'?[Math.min(t.a.x,t.b.x),Math.max(t.a.x,t.b.x)]:[Math.min(t.a.z,t.b.z),Math.max(t.a.z,t.b.z)];
-  const boxSide=(b,sd)=>{ if(sd.ax==='x'){ const zc=(b.min.z+b.max.z)/2; return (b.max.x-b.min.x)>0.2&&Math.abs(zc-sd.c)<0.1; } const xc=(b.min.x+b.max.x)/2; return (b.max.z-b.min.z)>0.2&&Math.abs(xc-sd.c)<0.1; };
+  const boxSide=(b,sd)=>{ if(sd.ax==='x'){ const zc=(b.min.z+b.max.z)/2; return (b.max.x-b.min.x)>0.2&&Math.abs(zc-sd.c)<0.12; } const xc=(b.min.x+b.max.x)/2; return (b.max.z-b.min.z)>0.2&&Math.abs(xc-sd.c)<0.12; };
+  const outw=(sd,v)=>sd.c>0?v:-v;                          // koordinat ke arah luar sisi
   let topOK=decks.length>0, gapOK=decks.length>0, toeOK=decks.length>0, perimOK=decks.length>0, toeGapOK=decks.length>0;
   const topTxt=[], gapTxt=[], toeTxt=[], perimTxt=[]; let maxToeGap=0;
   decks.forEach(dk=>{
     const T=dk.top, inBand=(t)=>Math.abs(t.a.y-t.b.y)<0.01&&t.a.y>T&&t.a.y<T+1.3;
     const dT=tops.filter(inBand), dM=mids.filter(inBand), dToe=toes.filter(b=>Math.abs(b.min.y-T)<0.01);
-    let full=0, dkTop=Infinity, dkTopMax=0, dkGap=0, dkToe=Infinity;
+    let full=0, dkTop=Infinity, dkTopMax=0, dkGap=0, dkToe=Infinity; const gapBy={x:0,z:0};
     sides.forEach(sd=>{
       const st=dT.filter(t=>onSide(t,sd)), sm=dM.filter(t=>onSide(t,sd)), so=dToe.filter(b=>boxSide(b,sd));
       const cov=(list,isBox)=>covers(list.map(x=>isBox?(sd.ax==='x'?[x.min.x,x.max.x]:[x.min.z,x.max.z]):tIv(x,sd)),sd.lo+0.06,sd.hi-0.06,0.05);
@@ -1365,62 +1443,120 @@ function evaluate(){
       st.forEach(t=>{ const h=t.a.y+t.r-T; dkTop=Math.min(dkTop,h); dkTopMax=Math.max(dkTopMax,h); });
       const toeTop=so.length?Math.min(...so.map(b=>b.max.y)):T;
       if(so.length) dkToe=Math.min(dkToe,toeTop-T); else dkToe=Math.min(dkToe,0);
+      let sg=9;
       if(st.length){ const topUnder=Math.min(...st.map(t=>t.a.y-t.r));
-        if(sm.length){ dkGap=Math.max(dkGap,Math.min(...sm.map(t=>t.a.y-t.r))-toeTop, topUnder-Math.max(...sm.map(t=>t.a.y+t.r))); }
-        else dkGap=Math.max(dkGap,topUnder-toeTop);
-        if(so.length){ const ri=sd.ax==='x'?Math.abs(sd.c)-R:Math.abs(sd.c)-R; so.forEach(b=>{ const outer=sd.ax==='x'?(sd.c>0?b.max.z:-b.min.z):(sd.c>0?b.max.x:-b.min.x); maxToeGap=Math.max(maxToeGap,Math.max(0,ri-outer)); }); }
-      } else dkGap=Math.max(dkGap,9);
+        sg=sm.length?Math.max(Math.min(...sm.map(t=>t.a.y-t.r))-toeTop, topUnder-Math.max(...sm.map(t=>t.a.y+t.r))):topUnder-toeTop;
+        /* EN 12811-1 5.5.6: jarak horizontal muka luar toe board → muka dalam rail & komponen tengah (diukur dari posisi nyata) */
+        if(so.length){ const toeOut=Math.min(...so.map(b=>sd.ax==='x'?outw(sd,sd.c>0?b.max.z:b.min.z):outw(sd,sd.c>0?b.max.x:b.min.x)));
+          st.concat(sm).forEach(t=>{ const inner=outw(sd,sd.ax==='x'?t.a.z:t.a.x)-t.r; maxToeGap=Math.max(maxToeGap,Math.max(0,inner-toeOut)); }); }
+      }
+      dkGap=Math.max(dkGap,sg); gapBy[sd.ax]=Math.max(gapBy[sd.ax],sg);
     });
     if(!isFinite(dkTop)) dkTop=0;
-    dk.topRail=dkTop; dk.gapMax=dkGap; dk.toe=dkToe; dk.sidesOK=full;
+    dk.topRail=dkTop; dk.topRailMax=dkTopMax; dk.gapMax=dkGap; dk.gapLong=gapBy.x; dk.gapEnd=gapBy.z; dk.toe=dkToe; dk.sidesOK=full;
     if(!(dkTop>=1.0-0.0005&&dkTopMax<=1.143)) topOK=false;
     if(!(dkGap<=0.47)) gapOK=false;
     if(!(dkToe>=0.15-0.0005)) toeOK=false;
     if(full<4) perimOK=false;
-    topTxt.push(dk.name+': '+(dkTop?fmt(dkTop,3)+' m':'belum ada'));
-    gapTxt.push(dk.name+': '+(dkGap<9?fmt(dkGap,3)+' m':'tanpa rail'));
+    topTxt.push(dk.name+': '+(dkTop?fmt(dkTop,3)+(dkTopMax-dkTop>0.001?'–'+fmt(dkTopMax,3):'')+' m':'belum ada'));
+    gapTxt.push(dk.name+': '+(dkGap<9?fmt(gapBy.x,3)+' m sisi panjang, '+fmt(gapBy.z,3)+' m sisi ujung':'tanpa rail'));
     toeTxt.push(dk.name+': '+fmt(Math.max(0,dkToe)*1000,0)+' mm');
     perimTxt.push(dk.name+': '+full+'/4 sisi');
   });
   if(maxToeGap>0.08) toeGapOK=false;
   m.toeGap=maxToeGap;
   const noDeck='belum ada lantai kerja';
-  add('rail-top','Pelindung tepi','Tinggi top rail di atas lantai', topOK, decks.length?topTxt.join(' · '):noDeck,'≥ 950 mm (Permenaker) · ≥ 1,0 m (EN 12811-1) · 0,97–1,14 m (OSHA)','Permenaker 9/2016 Pasal 24a · EN 12811-1 5.5.2 · OSHA 1926.451(g)(4)(ii)');
+  add('rail-top','Pelindung tepi','Tinggi top rail di atas lantai', topOK, decks.length?topTxt.join(' · ')+' (sisi ujung +75 mm: rail bersilang di sudut)':noDeck,'≥ 950 mm (Permenaker) · ≥ 1,0 m (EN 12811-1) · 0,97–1,14 m (OSHA)','Permenaker 9/2016 Pasal 24a · EN 12811-1 5.5.2 · OSHA 1926.451(g)(4)(ii)');
   add('rail-gap','Pelindung tepi','Celah vertikal pelindung tepi', gapOK, decks.length?'celah terbesar — '+gapTxt.join(' · '):noDeck,'≤ 470 mm','Permenaker 9/2016 Pasal 24c · EN 12811-1 5.5.3 · WAHR 2005 Sch. 2');
   add('toe','Pelindung tepi','Tinggi toe board', toeOK, decks.length?toeTxt.join(' · '):noDeck,'≥ 150 mm','EN 12811-1 5.5.4 · Permenaker 9/2016 Pasal 24d · OSHA 1926.451(h)(4)(ii)');
-  add('perimeter','Pelindung tepi','Pelindung tepi menerus di semua sisi', perimOK, decks.length?perimTxt.join(' · ')+((E.gate||[]).length?' (pintu tertutup dihitung)':''):noDeck,'top rail, mid rail, toe board di keempat sisi','OSHA 1926.451(g)(4)(i) · EN 12811-1 5.5.1 · PER.01/MEN/1980 Pasal 13(2)');
-  add('toe-gap','Pelindung tepi','Jarak toe board ke pagar', toeGapOK&&decks.length>0, decks.length?'maks. '+fmt(maxToeGap*1000,0)+' mm':noDeck,'≤ 80 mm','EN 12811-1 butir 5.5.6');
+  add('perimeter','Pelindung tepi','Pelindung tepi menerus di semua sisi', perimOK, decks.length?perimTxt.join(' · ')+((E.gate||[]).length?' (daun pintu yang tertutup dihitung)':''):noDeck,'top rail, mid rail, toe board di keempat sisi','OSHA 1926.451(g)(4)(i) · EN 12811-1 5.5.1 · PER.01/MEN/1980 Pasal 13(2)');
+  add('toe-gap','Pelindung tepi','Jarak toe board ke pagar', toeGapOK&&decks.length>0, decks.length?'maks. '+fmt(maxToeGap*1000,0)+' mm':noDeck,'≤ 80 mm (muka luar toe board → muka dalam rail)','EN 12811-1 butir 5.5.6');
 
-  /* ---- akses & status ---- */
-  const lad=tubes('ladder-rail'), ties=(E['ladder-tie']||[]);
-  const topDeck=decks.length?decks[decks.length-1]:null;
-  let ladOK=false, ladTxt='belum ada tangga';
-  if(lad.length===2&&topDeck){
-    const tiesY=ties.map(o=>{ const p=new THREE.Vector3(); o.getWorldPosition(p); return p.y; });
-    const ys=tiesY.length?Math.max(...tiesY):topDeck.top;
-    const t=lad[0], k=(ys-t.a.y)/(t.b.y-t.a.y), S=t.a.clone().lerp(t.b,k);
-    const run=Math.hypot(S.x-t.a.x,S.z-t.a.z), wl=S.distanceTo(t.a), ratio=run/wl, ext=t.b.y-topDeck.top;
-    ladOK=ratio>=0.22&&ratio<=0.28&&ext>=0.914;
-    ladTxt='jarak kaki '+fmt(ratio*100,1)+'% panjang kerja (±'+fmt(Math.atan2(ys-t.a.y,run)*180/Math.PI,0)+'°) · menonjol '+fmt(ext,2)+' m di atas lantai';
-    m.ladder={ratio:ratio,ext:ext};
-  }
-  add('ladder','Akses & status','Tangga akses', ladOK, ladTxt,'kaki ±¼ panjang kerja (4 : 1); ≥ 0,9 m (3 ft) di atas lantai','OSHA 1926.1053(b)(5)(i), (b)(1)');
-  add('ladder-tie','Akses & status','Tangga diikat', lad.length===2&&ties.length>=2, lad.length?ties.length+' titik ikat':'belum ada tangga','diikat agar tidak bergeser','OSHA 1926.1053(b)(6)');
-  const gates=(E.gate||[]);
-  let gateOK=false, gateTxt='belum ada pintu akses';
-  if(gates.length&&topDeck){
-    const gt=tubes('gate-top'), gk=boxes('gate-kick'); const g0=gates[0].userData;
-    const hTop=gt.length?gt[0].a.y+gt[0].r-topDeck.top:0, hKick=gk.length?gk[0].max.y-topDeck.top:0;
-    gateOK=!!(g0.closed&&g0.selfClosing&&hTop>=1.0-0.0005&&hKick>=0.15-0.0005);
-    gateTxt=(g0.selfClosing?'engsel pegas, ':'')+(g0.closed?'tertutup':'terbuka')+' · tinggi '+fmt(hTop,2)+' m · papan kaki '+fmt(hKick*1000,0)+' mm';
-  }
-  add('gate','Akses & status','Pintu akses menutup sendiri', gateOK, gateTxt,'bukaan akses ditutup pintu yang menutup sendiri; pelindung tepi tetap menerus','Permenaker 9/2016 Pasal 24 · EN 12811-1 5.5 · NASC SG25:20');
+  /* ---- akses & status: setiap pintu dan setiap tangga DIUKUR dari geometri ---- */
+  const roleName={'rail-top':'top rail','rail-mid':'mid rail',ledger:'ledger',transom:'transom',putlog:'putlog',standard:'standard',puncheon:'puncheon'};
+  /* pintu: menutup celah dan menumpang pada rail tetap di kedua sisi, seluruh daun di sisi dalam rail (tidak dapat membuka
+     ke luar), top bar & papan kaki diukur; "menutup sendiri" diperiksa dari jenis komponen (engsel pegas) */
+  const railTops=tubes('rail-top'), gateGroups=(E.gate||[]).map(o=>({o:o,b:boxOf(o)})), gatesM=[];
+  decks.forEach(dk=>{ const T=dk.top, band=(t)=>Math.abs(t.a.y-t.b.y)<0.01&&t.a.y>T&&t.a.y<T+1.3;
+    tubes('gate-top').filter(band).forEach(gt=>{
+      const sd=sides.find(s=>onSide(gt,s)); if(!sd) return;
+      const iv=tIv(gt,sd), g0=iv[0], g1=iv[1];
+      const rs=railTops.filter(t=>band(t)&&onSide(t,sd)).map(t=>({t:t,iv:tIv(t,sd)}));
+      const left=rs.filter(q=>q.iv[0]<g0&&q.iv[1]>g0), right=rs.filter(q=>q.iv[0]<g1&&q.iv[1]>g1);
+      const ovL=left.length?Math.max(...left.map(q=>q.iv[1]-g0)):0, ovR=right.length?Math.max(...right.map(q=>g1-q.iv[0])):0;
+      const axis=(t)=>sd.ax==='x'?t.a.z:t.a.x, gOut=outw(sd,axis(gt))+gt.r, adj=left.concat(right);
+      const inward=adj.length>0&&adj.every(q=>gOut<=outw(sd,axis(q.t))-q.t.r+0.001);
+      const kk=boxes('gate-kick').filter(b=>Math.abs(b.min.y-T)<0.01&&boxSide(b,sd)&&(sd.ax==='x'?(b.min.x<g1&&b.max.x>g0):(b.min.z<g1&&b.max.z>g0)));
+      const hKick=kk.length?Math.min(...kk.map(b=>b.max.y))-T:0, hTop=gt.a.y+gt.r-T;
+      const mid=gt.a.clone().lerp(gt.b,0.5), grp=gateGroups.find(q=>q.b.containsPoint(mid)), selfC=!!(grp&&grp.o.userData.selfClosing);
+      const closed=ovL>=0.02&&ovR>=0.02;
+      gatesM.push({deck:dk, sd:sd, z:axis(gt), x0:g0, x1:g1, ovL:ovL, ovR:ovR, inward:inward, closed:closed, hTop:hTop, hKick:hKick, selfClosing:selfC,
+        ok:closed&&inward&&selfC&&hTop>=1.0-0.0005&&hKick>=0.15-0.0005});
+    });
+  });
+  /* tangga: dua kaki tangga sejajar; tumpuan atas = kontak tertinggi kaki tangga dengan batang struktural yang terpasang;
+     ikatan = klem yang menjepit kaki tangga DAN batang tumpuan itu; kemiringan dihitung dari tumpuan atas; langkah ke lantai
+     dari sumbu anak tangga setinggi lantai ke tepi lantai di celah pintu */
+  const structural=[]; Object.keys(roleName).forEach(k=>tubes(k).forEach(t=>{ t.role=k; structural.push(t); }));
+  const ladders=[];
+  tubes('ladder-rail').forEach(t=>{ const L=ladders.find(l=>l.s.length<2&&Math.abs(l.s[0].a.y-t.a.y)<0.01&&Math.abs(l.s[0].a.z-t.a.z)<0.02&&Math.abs(l.s[0].a.x-t.a.x)<0.8); if(L) L.s.push(t); else ladders.push({s:[t]}); });
+  ladders.forEach(L=>{
+    L.s.sort((p,q)=>p.a.x-q.a.x);
+    L.xc=L.s.reduce((a,t)=>a+t.a.x,0)/L.s.length;
+    L.sup=L.s.map(st=>{ let best=null; structural.forEach(mb=>{ const q=segSeg(st.a,st.b,mb.a,mb.b); if(q.d<=st.r+mb.r+0.006&&q.sb>=0.02&&q.sb<=mb.len-0.02&&q.sa>0.5&&(!best||q.pa.y>best.p.y)) best={p:q.pa,m:mb}; }); return best; });
+    L.S=null; L.sup.forEach(q=>{ if(q&&(!L.S||q.p.y>L.S.y)) L.S=q.p; });
+    L.deck=L.S?(decks.filter(d=>d.top<L.S.y&&L.S.y-d.top<=1.3).sort((a,b)=>b.top-a.top)[0]||null):null;
+    L.ties=L.s.map((st,i)=>{ const q=L.sup[i]; return q?cplPos.filter(p=>grips(p,st)&&grips(p,q.m)).length:0; });
+    const st=L.s[0];
+    if(L.S&&L.deck){
+      const T=L.deck.top, k=(L.S.y-st.a.y)/(st.b.y-st.a.y), S=st.a.clone().lerp(st.b,k);
+      L.run=Math.hypot(S.x-st.a.x,S.z-st.a.z); L.wl=S.distanceTo(st.a); L.ratio=L.run/L.wl; L.angle=Math.atan2(S.y-st.a.y,L.run)*180/Math.PI;
+      L.ext=Math.min(...L.s.map(t=>t.b.y))-T;
+      const kT=(T-st.a.y)/(st.b.y-st.a.y), zT=st.a.z+(st.b.z-st.a.z)*kT;
+      const sd=sides.find(s=>s.ax==='x'&&Math.sign(s.c)===Math.sign(st.a.z));
+      const edge=sd.c>0?Math.max(...L.deck.boards.map(b=>b.max.z)):Math.min(...L.deck.boards.map(b=>b.min.z));
+      L.gate=gatesM.filter(g=>g.deck===L.deck&&g.sd===sd&&Math.min(Math.abs(g.x0-L.xc),Math.abs(g.x1-L.xc))<0.8).sort((a,b)=>Math.abs((a.x0+a.x1)/2-L.xc)-Math.abs((b.x0+b.x1)/2-L.xc))[0]||null;
+      if(L.gate){ const dx=Math.max(0,L.gate.x0-L.xc,L.xc-L.gate.x1); L.step=Math.hypot(dx,Math.abs(zT-edge)); L.side=dx>0; }
+    }
+  });
+  m.ladders=ladders;
+  const topL=ladders.filter(l=>l.deck&&l.ratio!==undefined).sort((a,b)=>b.deck.top-a.deck.top)[0];
+  if(topL) m.ladder={ratio:topL.ratio, ext:topL.ext, step:topL.step};
+  const lname=(L)=>L.deck?L.deck.name:'tangga';
+  const stepOK=(L)=>L.step!==undefined&&(L.side?(L.step>=0.38&&L.step<=0.51):(L.step>=0.18&&L.step<=0.30));
+  const ladOK=ladders.length>0&&ladders.every(L=>L.s.length===2&&L.ratio!==undefined&&L.ratio>=0.22&&L.ratio<=0.28&&L.ext>=0.914&&stepOK(L));
+  const ladTxt=ladders.length?ladders.map(L=>L.ratio!==undefined?lname(L)+': kaki '+fmt(L.ratio*100,1)+'% panjang kerja (±'+fmt(L.angle,0)+'°) · menonjol '+fmt(L.ext,2)+' m'+(L.step!==undefined?' · langkah '+(L.side?'ke samping ':'')+fmt(L.step,2)+' m':' · tanpa pintu di dekatnya'):'tangga tanpa tumpuan atas di lantai kerja').join(' · '):'belum ada tangga';
+  add('ladder','Akses & status','Tangga akses', ladOK, ladTxt,'kaki ±¼ panjang kerja (4 : 1)*; menonjol ≥ 0,9 m di atas lantai (anjuran NASC ≥ 1,0 m); langkah ke lantai 0,38–0,51 m bila ke samping, 0,18–0,30 m bila lurus*','OSHA 1926.1053(b)(1), (b)(5)(i) · NASC SG25:20 butir 6.4 · OSHA 1910.23(d)(12) (analogi)');
+  const tieOK=ladders.length>0&&ladders.every(L=>L.s.length===2&&L.sup.every(Boolean)&&L.ties.every(n=>n>=1));
+  const tieTxt=ladders.length?ladders.map(L=>{ const q=L.sup.find(Boolean);
+    return lname(L)+': '+(q?'bertumpu pada '+roleName[q.m.role]+' +'+fmt(L.S.y,2)+' m':'tanpa tumpuan atas')+' · '+L.ties.filter(n=>n>=1).length+'/'+L.s.length+' kaki diikat'; }).join(' · '):'belum ada tangga';
+  add('ladder-tie','Akses & status','Tangga bertumpu dan diikat di atas', tieOK, tieTxt,'bertumpu pada batang yang tetap terpasang; kedua kaki tangga diikat klem pada batang itu','OSHA 1926.1053(b)(6) · NASC SG25:20 butir 6.6');
+  /* bukaan pintu harus bebas dari bracing/batang lain dari 0,10 m sampai 1,75 m di atas lantai (ruang bebas minimum ke transom kelas H1,
+     EN 12811-1 butir 5.3), di depan daun pintu sampai 0,30 m di luar garis standard */
+  const obstrT=['brace','ledger','transom','putlog','standard','outrigger','outrigger-tie'].reduce((a,k)=>a.concat(tubes(k)),[]);
+  const blocked=(g)=>{ const T=g.deck.top, x0=g.x0+0.04, x1=g.x1-0.04, o=(v)=>outw(g.sd,v), zIn=o(g.z)-0.03, zOut=LZ+0.30;
+    return obstrT.some(t=>{ for(let k=0;k<=80;k++){ const p=t.a.clone().lerp(t.b,k/80), u=o(g.sd.ax==='x'?p.z:p.x), w=g.sd.ax==='x'?p.x:p.z;
+      if(w>=x0-t.r&&w<=x1+t.r&&p.y>=T+0.10-t.r&&p.y<=T+1.75+t.r&&u>=zIn-t.r&&u<=zOut+t.r) return true; } return false; }); };
+  let accOK=decks.length>0; const accTxt=[];
+  decks.forEach(dk=>{ const L=ladders.find(l=>l.deck===dk); const g=L&&L.gate, bl=!!(g&&blocked(g));
+    if(!(L&&g&&g.ok&&!bl)) accOK=false;
+    accTxt.push(dk.name+': '+(L?'tangga':'belum ada tangga')+(g?(g.ok?' + pintu':' + pintu belum memenuhi')+(bl?', bukaan terhalang':', bukaan bebas'):(L?', tanpa pintu':''))); });
+  add('access','Akses & status','Akses aman ke setiap lantai kerja', accOK, decks.length?accTxt.join(' · '):noDeck,'setiap lantai kerja: tangga + pintu yang menutup sendiri; bukaan bebas setinggi ≥ 1,75 m','OSHA 1926.451(e)(1), (e)(9) · NASC SG25:20 butir 5, 6.4 · EN 12811-1 butir 5.3, 5.8');
+  const noGate=ladders.filter(L=>L.deck&&!L.gate);
+  const gateOK=gatesM.length>0&&gatesM.every(g=>g.ok)&&!noGate.length;
+  const gateTxt=(gatesM.length?gatesM.map(g=>g.deck.name+': '+(g.closed?'tertutup, menumpang '+fmt(Math.min(g.ovL,g.ovR)*1000,0)+' mm pada rail tetap':'celah tidak tertutup')+(g.inward?', membuka ke dalam':', dapat membuka ke luar')+' · top bar '+fmt(g.hTop,2)+' m · papan kaki '+fmt(g.hKick*1000,0)+' mm'+(g.selfClosing?' · engsel pegas':' · bukan pintu menutup sendiri')).join(' · '):'belum ada pintu akses')+noGate.map(L=>' · '+lname(L)+': tidak ada pintu di titik akses').join('');
+  add('gate','Akses & status','Pintu akses menutup sendiri', gateOK, gateTxt,'menutup celah dan menumpang pada rail tetap (tidak dapat membuka ke luar); top bar ≥ 1,0 m; papan kaki ≥ 150 mm; engsel pegas','NASC SG25:20 butir 6.4 · Permenaker 9/2016 Pasal 24 · EN 12811-1 butir 5.5 · PER.01/MEN/1980 Pasal 8','ukur+cek');
+  /* kesesuaian dengan rencana pemasangan: inspeksi serah terima memeriksa perancah yang dirancang (2 lantai kerja, 3 level ledger) */
+  const planDecks=PLAN.decks.filter(T=>decks.some(d=>Math.abs(d.top-T)<0.01)).length, planLv=PLAN.levels.filter(y=>levels.some(l=>Math.abs(l.y-y)<0.01)).length;
+  items.unshift({id:'plan', grp:'Dasar & rangka', label:'Perancah sesuai rencana pemasangan', ok:planDecks===PLAN.decks.length&&planLv===PLAN.levels.length,
+    value:'lantai kerja '+planDecks+'/'+PLAN.decks.length+' · level ledger '+planLv+'/'+PLAN.levels.length, limit:'jumlah lantai kerja dan level ledger sama dengan rencana (lantai +2,06 m dan +4,01 m; ledger +0,15 / +1,95 / +3,90 m)',
+    ref:'OSHA 1926.451(a)(6) · rencana pemasangan (tahap 1)', how:'ukur'});
   const readyCore=items.every(i=>i.ok);
   const tagCols=(E.tag||[]).map(o=>o.userData.color), red=tagCols.indexOf('red')>=0, green=tagCols.indexOf('green')>=0;
   const inspected=state.current>INSP_IDX;
   add('tag','Akses & status','Tag status di akses', green?(inspected&&readyCore&&!red):red,
     green?(red?'tag hijau dan tag merah terpasang bersamaan':'tag hijau "boleh digunakan"'):(red?'tag merah "jangan digunakan"':'belum ada tag status'),
-    'merah selama perakitan; hijau hanya setelah inspeksi serah terima','OSHA 1926.451(f)(3) · WAHR 2005 reg. 12');
+    'merah selama perakitan; hijau hanya setelah inspeksi serah terima','OSHA 1926.451(f)(3) · WAHR 2005 reg. 12','cek');
   const fails=items.filter(i=>!i.ok&&i.id!=='tag');
   return {items:items, m:m, ready:readyCore, inspected:inspected, handedOver:green&&inspected&&readyCore&&!red, red:red, green:green,
     pass:items.filter(i=>i.ok).length, total:items.length, fails:fails};
@@ -1500,8 +1636,8 @@ function buildEdge(ev){
     const hex=okT&&okG&&okE?OKC:BADC;
     g.add(makeLine(V(x,T,z),V(x,T+Math.max(dk.topRail,0.05),z),hex));
     [0,Math.max(0,dk.toe),RAIL.mid,dk.topRail].forEach(h=>g.add(makeLine(V(x-0.08,T+h,z),V(x+0.08,T+h,z),hex)));
-    addLabel(dk.name+' · top rail '+fmt(dk.topRail,3)+' m'+mark(okT),V(x,T+dk.topRail+0.12,z),okT?'ok':'bad');
-    addLabel('Celah terbesar '+fmt(Math.min(dk.gapMax,9),3)+' m'+mark(okG),V(x+0.9,T+0.55,z),okG?'ok':'bad');
+    addLabel(dk.name+' · top rail '+fmt(dk.topRail,3)+' m'+(dk.topRailMax-dk.topRail>0.001?' (ujung '+fmt(dk.topRailMax,3)+' m)':'')+mark(okT),V(x,T+dk.topRail+0.12,z),okT?'ok':'bad');
+    addLabel(dk.gapMax<9?'Celah terbesar '+fmt(dk.gapLong,3)+' m sisi panjang · '+fmt(dk.gapEnd,3)+' m sisi ujung'+mark(okG):'Celah: rail belum lengkap'+mark(false),V(x+0.9,T+0.55,z),okG?'ok':'bad');
     addLabel('Toe board '+fmt(Math.max(0,dk.toe)*1000,0)+' mm'+mark(okE),V(x+0.9,T+0.1,z),okE?'ok':'bad'); });
   if(!ev.m.decks.length) addLabel('Belum ada lantai kerja'+mark(false),V(1.0,2.7,-LZ),'bad');
   return g;
@@ -1541,8 +1677,8 @@ const pEyebrow=document.getElementById('pEyebrow'), pTitle=document.getElementBy
 let curLibType='fix';
 
 /* legend */
-const legendTypes=['fix','swivel','sleeve','jointpin','putlog','board'];
-const legShort={fix:'Klem Mati',swivel:'Klem Putar',sleeve:'Sleeve',jointpin:'Joint Pin',putlog:'Putlog',board:'Klem Papan'};
+const legendTypes=['fix','swivel','sleeve','jointpin','putlog','board','ladder'];
+const legShort={fix:'Klem Mati',swivel:'Klem Putar',sleeve:'Sleeve',jointpin:'Joint Pin',putlog:'Putlog',board:'Klem Papan',ladder:'Klem Tangga'};
 document.getElementById('legendItems').innerHTML=legendTypes.map(t=>
   `<div class="it"><span class="d" style="background:${COUPLER[t].color}"></span>${legShort[t]}</div>`).join('');
 
@@ -1632,6 +1768,7 @@ const inspMeta=[
   {k:'edge', c:'#5b636c', t:'Pelindung Tepi', s:'Top rail, celah, toe board.'},
   {k:'stab', c:'#2b2b30', t:'Stabilitas', s:'Rasio tinggi : lebar dasar.'},
 ];
+const HOW={ukur:'Diukur dari model', cek:'Diperiksa dari jenis/keberadaan komponen', 'ukur+cek':'Diukur dari model; sifat menutup sendiri diperiksa dari jenis komponen'};
 const esc=(s)=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderInspPanel(){
   const ev=evaluate(), total=STEPS.length;
@@ -1652,8 +1789,10 @@ function renderInspPanel(){
     html+=`<p class="insp-grp">${esc(g.n)}</p><ul class="insp-list">${g.items.map(it=>`<li class="${it.ok?'ok':'bad'}" data-check="${it.id}">
       <span class="i" aria-hidden="true">${it.ok?'✓':'✗'}</span>
       <span class="t"><b>${esc(it.label)}<span class="sr-only"> — ${it.ok?'memenuhi':'belum memenuhi'}</span></b>
-      <span class="v">${esc(it.value)}</span><span class="lim">Syarat: ${esc(it.limit)}</span><span class="src">${esc(it.ref)}</span></span></li>`).join('')}</ul>`;
+      <span class="v">${esc(it.value)}</span><span class="lim">Syarat: ${esc(it.limit)}</span><span class="src">${esc(it.ref)}</span><span class="how">${HOW[it.how]||HOW.ukur}</span></span></li>`).join('')}</ul>`;
   });
+  const nU=ev.items.filter(i=>i.how==='ukur').length, nUC=ev.items.filter(i=>i.how==='ukur+cek').length, nC=ev.items.filter(i=>i.how==='cek').length;
+  html+=`<div class="insp-note"><b>Cara pemeriksaan:</b> ${nU} dari ${ev.total} butir diukur dari geometri model (posisi, panjang, dan sambungan komponen yang terpasang); ${nUC} butir diukur dengan sebagian syarat diperiksa dari jenis komponen; ${nC} butir diperiksa dari keberadaan atau jenis komponen. Tanda * menandai kriteria aplikasi yang bukan nilai standar.</div>`;
   html+=`<div class="insp-note"><b>Konfigurasi ilustratif:</b> 2 bay × 2,0 m, lebar 1,2 m, lift 1,95 m — di dalam batas tabel pedoman (tidak mengikat) OSHA 1926 Subpart L App. A untuk tube &amp; coupler <i>light duty</i> (jarak tiang 4 ft × 10 ft; jarak runner vertikal 6 ft 6 in). Bukan pengganti desain dan perhitungan perancah oleh ahli.</div>`;
   pBody.innerHTML=html;
   pBody.querySelectorAll('[data-insp]').forEach(b=>b.onclick=()=>toggleInsp(b.dataset.insp));

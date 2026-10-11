@@ -120,17 +120,38 @@
     return o;
   }
   function str(v, max) { return String(v === undefined || v === null ? '' : v).trim().slice(0, max); }
+  /* Firestore Timestamp (server time, e.g. application.submittedAt) → ISO string. Also accepts the
+     {seconds, nanoseconds} shape a Timestamp turns into once it went through JSON. */
   function toIso(v) {
     if (v && typeof v === 'object' && typeof v.toDate === 'function') { try { return v.toDate().toISOString(); } catch (e) { return ''; } }
+    if (v && typeof v === 'object' && typeof v.seconds === 'number' && isFinite(v.seconds)) {
+      try { return new Date(v.seconds * 1000 + Math.floor((Number(v.nanoseconds) || 0) / 1e6)).toISOString(); } catch (e) { return ''; }
+    }
     return v === undefined || v === null ? '' : v;
+  }
+  /* deep copy with every Timestamp replaced by its ISO string (JSON alone would drop toDate()) */
+  function deTs(v) {
+    if (v && typeof v === 'object' && typeof v.toDate === 'function') return toIso(v);
+    if (Array.isArray(v)) return v.map(deTs);
+    if (v && typeof v === 'object') { var o = {}; Object.keys(v).forEach(function (k) { o[k] = deTs(v[k]); }); return o; }
+    return v;
+  }
+  function plain(o) { return o === undefined ? undefined : clone(deTs(o)); }
+  /* placeholder for FieldValue.serverTimestamp() in Firebase writes (rules: == request.time) */
+  var SERVER_TIME = { __serverTime: true };
+  /* An account email counts only once its owner has proven it (Firebase: emailVerified; Google
+     accounts are verified). Demo accounts have no mailbox: treated as verified unless flagged false. */
+  function verifiedEmail(user) {
+    if (!user || !user.email) return '';
+    return (mode() === 'local' ? user.emailVerified !== false : user.emailVerified === true) ? String(user.email) : '';
   }
   function rid(prefix) { return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function fold(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
   function alnum(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
   function own(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
-  /* https://… only (documents, proofs) */
+  /* https://… only (documents, proofs, certificate links) */
   function httpsUrl(v, max) { var s = str(v, max || 1000); return /^https:\/\/[^\s<>"']+$/i.test(s) ? s : ''; }
-  /* http(s)://… only (certificate links) */
+  /* http(s)://… (public regulation links from official sites, some of which are still http) */
   function httpUrl(v, max) { var s = str(v, max || 1000); return /^https?:\/\/[^\s<>"']+$/i.test(s) ? s : ''; }
   /* profile photo: http(s) URL or an inline raster image (never javascript:, data:text/html, svg …) */
   function photoUrl(v) {
@@ -139,7 +160,8 @@
     if (/^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(s)) return s;
     return '';
   }
-  var PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+  /* pas foto: a JPEG data URL only (SPEC v2 §1.1; pendaftaran.js re-encodes every upload to JPEG) */
+  var PHOTO_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
   /* content links: http(s) or a same-site relative path (no scheme, no //, no ..) */
   function contentUrl(v) {
     var s = str(v, 1000);
@@ -157,7 +179,7 @@
   function emptyApplication() {
     return {
       type: 'baru', kategori: '', submittedAt: '', updatedAt: '',
-      pengalaman: [], dokumen: [], pasFoto: '',
+      pengalaman: [], dokumen: [], pasFoto: '', pasFotoAda: false,
       pembayaran: { metode: '', tanggal: '', buktiUrl: '' },
       pernyataan: { kodeEtik: false, kebenaranData: false, privasi: false, namaTerang: '', tanggal: '' },
       catatan: ''
@@ -168,7 +190,7 @@
     return {
       uid: user.uid,
       name: user.name || '',
-      email: user.email || '',
+      email: verifiedEmail(user),
       phone: user.phone || '',
       photoURL: user.photoURL || '',
       kta: '',
@@ -190,7 +212,7 @@
   /** Fill missing keys so pages can rely on the full v2 Member shape (read-side normalisation). */
   function normalize(m) {
     if (!m || typeof m !== 'object') return null;
-    var out = clone(m);
+    var out = plain(m);
     ['name', 'email', 'phone', 'photoURL', 'kta', 'joinedAt', 'validUntil', 'approvedBy'].forEach(function (k) { if (out[k] === undefined || out[k] === null) out[k] = ''; });
     ['approvedAt', 'updatedAt', 'createdAt'].forEach(function (k) { out[k] = toIso(out[k]); });
     if (MEMBER_TYPES.indexOf(out.memberType) === -1) out.memberType = 'Praktisi';
@@ -206,11 +228,14 @@
       type: out.application.type, kategori: typeof app.kategori === 'string' ? app.kategori : '',
       submittedAt: typeof out.application.submittedAt === 'string' ? out.application.submittedAt : '',
       updatedAt: typeof out.application.updatedAt === 'string' ? out.application.updatedAt : '',
-      pengalaman: app.pengalaman, dokumen: app.dokumen, pasFoto: app.pasFoto, pembayaran: null, pernyataan: null, catatan: txt(app.catatan, LIMITS.catatan)
+      pengalaman: app.pengalaman, dokumen: app.dokumen, pasFoto: app.pasFoto, pasFotoAda: false, pembayaran: null, pernyataan: null, catatan: txt(app.catatan, LIMITS.catatan)
     };
     ap.pengalaman = cleanPengalaman(ap.pengalaman, true);
     ap.dokumen = cleanDokumen(ap.dokumen, true);
     ap.pasFoto = typeof ap.pasFoto === 'string' && PHOTO_RE.test(ap.pasFoto) ? ap.pasFoto : '';
+    /* Firebase keeps the photo in member_photos/{uid} (flag pasFotoAda); an inline photo (demo, older
+       data) also counts. Lists may omit the image itself — see getMember / listMembers / store.pasFoto */
+    ap.pasFotoAda = app.pasFotoAda === true || !!ap.pasFoto;
     var pb = app.pembayaran && typeof app.pembayaran === 'object' ? app.pembayaran : {};
     ap.pembayaran = { metode: txt(pb.metode, 60), tanggal: isIsoDate(pb.tanggal) ? pb.tanggal : '', buktiUrl: httpsUrl(txt(pb.buktiUrl)) };
     var pn = app.pernyataan && typeof app.pernyataan === 'object' ? app.pernyataan : {};
@@ -307,7 +332,7 @@
       return {
         id: itemId(c, 'c', i, read),
         title: txt(c.title, 200), number: txt(c.number, 120), issuer: txt(c.issuer, 200),
-        issuedAt: txt(c.issuedAt, 10), expiresAt: txt(c.expiresAt, 10), link: httpUrl(txt(c.link, 1000))
+        issuedAt: txt(c.issuedAt, 10), expiresAt: txt(c.expiresAt, 10), link: httpsUrl(txt(c.link, 1000))
       };
     });
   }
@@ -348,9 +373,10 @@
     if (Array.isArray(p.dokumen)) a.dokumen = cleanDokumen(p.dokumen);
     if (p.pasFoto !== undefined) {
       var ph = String(p.pasFoto || '');
-      if (ph && !PHOTO_RE.test(ph)) throw storeError('store/invalid-photo', 'Pas foto harus berupa gambar JPEG, PNG, atau WebP.');
+      if (ph && !PHOTO_RE.test(ph)) throw storeError('store/invalid-photo', 'Pas foto harus berupa gambar JPEG.');
       if (ph.length > PHOTO_MAX_CHARS) throw storeError('store/photo-too-large', 'Ukuran pas foto maksimal ' + LIMITS.pasFotoKB + ' KB. Gunakan foto berukuran lebih kecil.');
       a.pasFoto = ph;
+      a.pasFotoAda = !!ph;
     }
     if (p.pembayaran && typeof p.pembayaran === 'object') {
       var pb = p.pembayaran, cur = a.pembayaran || {};
@@ -428,9 +454,61 @@
       return snap.exists ? snap.data() : null;
     } catch (e) { throw mapFirestoreError(e); }
   }
-  async function getMember(uid) {
+  function serverTs(f) { return f.fb.firestore.FieldValue.serverTimestamp(); }
+
+  /* ---- Pas foto ----
+     Firebase: the image lives in member_photos/{uid} ({uid, data, updatedAt}); the member record only
+     carries application.pasFotoAda. A list of members therefore stays a few KB per member. The image is
+     read when ONE record is opened (getMember, admin.getMember, store.pasFoto) and, in listMembers, for
+     the review queue only. Demo: the photo stays inline in the record (same API, same results).
+     Cache per uid, keyed by application.updatedAt (saving the photo always changes it); '*' = written
+     by this page — adopt the next key without reading it back. */
+  var photoCache = Object.create(null);
+  function photoRef(f, uid) { return f.db.collection('member_photos').doc(uid); }
+  async function readPhoto(uid, key) {
+    var c = photoCache[uid];
+    if (c && (c.key === key || c.key === '*')) { c.key = key; return c.data; }
+    var f = await fx(), data = '';
+    try {
+      var snap = await photoRef(f, uid).get();
+      data = snap.exists ? txt((snap.data() || {}).data, PHOTO_MAX_CHARS) : '';
+    } catch (e) { throw mapFirestoreError(e); }
+    data = PHOTO_RE.test(data) ? data : '';
+    photoCache[uid] = { key: key, data: data };
+    return data;
+  }
+  /* fills m.application.pasFoto in place (normalised member); no-op in demo (inline) */
+  async function hydratePhoto(m) {
+    if (!m || mode() === 'local' || m.application.pasFoto || !m.application.pasFotoAda || !m.uid) return m;
+    try { m.application.pasFoto = await readPhoto(m.uid, m.application.updatedAt || ''); }
+    catch (e) { console.warn('[PPAPI] Pas foto belum dapat dimuat:', e && e.message); }
+    return m;
+  }
+  function withoutPhoto(m) { if (m && m.application.pasFoto) m.application.pasFoto = ''; return m; }
+
+  /* the stored record, normalised — never fetches the photo (internal: writes, status checks) */
+  async function memberFor(uid) {
+    var m = normalize(await rawMember(uid));
+    if (m && !m.uid) m.uid = uid;
+    return m;
+  }
+  /** getMember(uid, { pasFoto }) — one record with its pas foto; pasFoto:false leaves the image out
+      (application.pasFoto '' while application.pasFotoAda still says whether there is one). */
+  async function getMember(uid, opts) {
     if (!uid) return null;
-    return normalize(await rawMember(uid));
+    var m = await memberFor(uid);
+    if (!m) return null;
+    return opts && opts.pasFoto === false ? withoutPhoto(m) : hydratePhoto(m);
+  }
+  /** pasFoto(uid) → Promise<data URL | ''> — the owner or an admin (store/forbidden otherwise). */
+  async function pasFoto(uid) {
+    var u = me();
+    if (!u || !uid) throw storeError('store/forbidden', 'Pas foto hanya dapat dilihat oleh pemilik akun dan admin PPAPI.');
+    if (u.uid !== uid) await requireAdmin();
+    var m = await memberFor(uid);
+    if (!m) return '';
+    if (m.application.pasFoto || mode() === 'local') return m.application.pasFoto;
+    return m.application.pasFotoAda ? readPhoto(uid, m.application.updatedAt || '') : '';
   }
 
   async function ensureMember(user) {
@@ -438,15 +516,23 @@
     var raw = await rawMember(user.uid);
     if (raw) {
       var existing = normalize(raw);
+      if (!existing.uid) existing.uid = user.uid;
       /* v1 record "Menunggu Verifikasi" without a submitted application → Draf (also stored) */
       if (raw.status === 'Menunggu Verifikasi' && !(raw.application && raw.application.submittedAt)) {
         try {
           if (mode() === 'local') { raw.status = 'Draf'; lsSet(K_MEMBER + user.uid, raw); }
-          else { var f0 = await fx(); await f0.db.collection('members').doc(user.uid).update({ status: 'Draf', updatedAt: nowIso() }); }
+          else { var f0 = await fx(); await f0.db.collection('members').doc(user.uid).update({ status: 'Draf', updatedAt: serverTs(f0) }); }
         } catch (e) { console.warn('[PPAPI] Status lama belum dapat diperbarui:', e && e.message); }
       }
+      /* empty contact fields are filled from the account. While the application is being verified the
+         reviewed fields stay exactly as submitted; only a (verified) email may still be added. */
+      var pending = existing.status === 'Menunggu Verifikasi';
       var sync = {};
-      ['name', 'email', 'phone', 'photoURL'].forEach(function (k) { if (!existing[k] && user[k]) sync[k] = user[k]; });
+      ['name', 'email', 'phone', 'photoURL'].forEach(function (k) {
+        if (pending && k !== 'email') return;
+        var v = k === 'email' ? verifiedEmail(user) : user[k];
+        if (!existing[k] && v) sync[k] = v;
+      });
       if (Object.keys(sync).length) return saveMember(user.uid, sync);
       return existing;
     }
@@ -461,33 +547,64 @@
     return normalize(doc);
   }
 
+  /* reviewed data: frozen while the application is "Menunggu Verifikasi" (rules: ownerUpdate) */
+  var LOCKED_WHILE_PENDING = ['name', 'phone', 'photoURL', 'profile', 'competencies', 'certificates'];
+  function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  function pendingLocked() {
+    return storeError('store/application-locked', 'Data Anda sedang diverifikasi sekretariat sehingga belum dapat diubah. Tarik pengajuan terlebih dahulu bila ingin mengubah data.');
+  }
+  /* approved before (approvedAt) and a name of ≥ 3 characters on record → the name is locked for the owner */
+  function identityLocked(m) {
+    return !!m && !!String(m.approvedAt || '').trim() && String(m.name || '').length >= 3;
+  }
+  function identityLockedError() {
+    return storeError('store/identity-locked', 'Nama lengkap tercantum pada KTA dan daftar verifikasi sehingga hanya dapat diubah oleh sekretariat. Hubungi sekretariat melalui halaman Kontak bila nama Anda perlu dikoreksi.');
+  }
+
   async function saveMember(uid, patch) {
     if (!uid) throw storeError('store/no-user', 'Pengguna tidak dikenali. Silakan masuk kembali.');
     var p = cleanPatch(patch);
     /* Who writes? Firebase rules allow the OWNER (whitelisted keys) or an admin. Demo mirrors that for a
        signed-in caller: another member's record → store/forbidden. (A signed-out call stays possible in
        demo only — v1 tests use it; Firebase refuses it anyway.) */
-    var actor = me(), actorAdmin = false;
+    var actor = me(), actorAdmin = null;
+    async function adminActor() {
+      if (actorAdmin === null) {
+        try { actorAdmin = PPAPI.auth && typeof PPAPI.auth.isAdmin === 'function' ? !!(await PPAPI.auth.isAdmin()) : false; } catch (e) { actorAdmin = false; }
+      }
+      return actorAdmin;
+    }
+    var otherAdmin = false;
     if (actor && actor.uid !== uid) {
-      try { actorAdmin = PPAPI.auth && typeof PPAPI.auth.isAdmin === 'function' ? await PPAPI.auth.isAdmin() : false; } catch (e) { actorAdmin = false; }
-      if (!actorAdmin) throw storeError('store/forbidden', 'Data anggota hanya dapat diubah oleh pemilik akun.');
+      otherAdmin = await adminActor();
+      if (!otherAdmin) throw storeError('store/forbidden', 'Data anggota hanya dapat diubah oleh pemilik akun.');
     }
     /* member.email is the signed-in ACCOUNT email (admins add admins by email): a member may only set
-       it to '' or to their own account email — anything else is ignored (rules: ownEmailOk). */
-    if (p.email !== undefined && !actorAdmin) {
-      var mine = actor && actor.uid === uid ? String(actor.email || '') : '';
+       it to '' or to their own VERIFIED account email — anything else is ignored (rules: ownEmailOk). */
+    if (p.email !== undefined && !otherAdmin) {
+      var mine = actor && actor.uid === uid ? verifiedEmail(actor) : '';
       if (p.email === '' || (mine && p.email.toLowerCase() === mine.toLowerCase())) p.email = p.email === '' ? '' : mine;
       else {
-        if (!warned['email']) { warned.email = true; console.warn('[PPAPI] saveMember: email anggota mengikuti email akun dan tidak dapat diganti di sini.'); }
+        if (!warned['email']) { warned.email = true; console.warn('[PPAPI] saveMember: email anggota mengikuti email akun yang telah diverifikasi dan tidak dapat diganti di sini.'); }
         delete p.email;
       }
     }
-    var existing = await getMember(uid);
+    var existing = await memberFor(uid);
     if (!existing) {
       var u = me();
       if (u && u.uid === uid) existing = await ensureMember(u);
       else throw storeError('store/not-found', 'Data anggota tidak ditemukan.');
     }
+    if (existing.status === 'Menunggu Verifikasi') {
+      var changed = LOCKED_WHILE_PENDING.some(function (k) {
+        if (p[k] === undefined) return false;
+        return !sameJson(k === 'profile' ? Object.assign({}, existing.profile, p.profile) : p[k], existing[k]);
+      });
+      if (changed && !(await adminActor())) throw pendingLocked();
+    }
+    /* the name reviewed at approval is printed on the KTA and published in the registry: after approval
+       only the secretariat changes it (rules: identityKept); an empty name may still be filled in */
+    if (p.name !== undefined && identityLocked(existing) && p.name !== existing.name && !(await adminActor())) throw identityLockedError();
     var stamp = nowIso();
     if (mode() === 'local') {
       var cur = lsGet(K_MEMBER + uid, null) || existing;
@@ -498,7 +615,7 @@
     }
     var f = await fx();
     try {
-      await f.db.collection('members').doc(uid).set(Object.assign({}, p, { updatedAt: stamp }), { merge: true });
+      await f.db.collection('members').doc(uid).set(Object.assign({}, p, { updatedAt: serverTs(f) }), { merge: true });
     } catch (e) { throw mapFirestoreError(e); }
     var fresh = await getMember(uid);
     return fresh || normalize(Object.assign(merge(existing, p), { updatedAt: stamp }));
@@ -519,23 +636,29 @@
   async function ownMember(uid) {
     var u = me();
     if (!uid || !u || u.uid !== uid) throw storeError('store/forbidden', 'Formulir hanya dapat diubah oleh pemilik akun.');
-    var m = await getMember(uid);
+    var m = await memberFor(uid);
     if (!m) m = await ensureMember(u);
     return m;
   }
-  async function writeOwn(uid, patch) {
+  /* Demo: patch = top-level keys of the stored record. Firebase: fields = Firestore field paths
+     ('application.kategori' …) so only what changed is written — the server-set timestamps
+     (SERVER_TIME → serverTimestamp(); rules: == request.time) are never rewritten from a local copy. */
+  async function writeOwn(uid, patch, fields) {
     if (mode() === 'local') {
       var cur = lsGet(K_MEMBER + uid, null) || {};
       Object.keys(patch).forEach(function (k) { cur[k] = patch[k]; });
       lsSet(K_MEMBER + uid, cur);
       return normalize(cur);
     }
-    var f = await fx();
-    try { await f.db.collection('members').doc(uid).update(patch); }
+    var f = await fx(), upd = {};
+    Object.keys(fields).forEach(function (k) { upd[k] = fields[k] === SERVER_TIME ? serverTs(f) : fields[k]; });
+    upd.updatedAt = serverTs(f);
+    try { await f.db.collection('members').doc(uid).update(upd); }
     catch (e) { throw mapFirestoreError(e); }
     return getMember(uid);
   }
 
+  var APP_FIELDS = ['kategori', 'catatan', 'pengalaman', 'dokumen', 'pembayaran', 'pernyataan'];
   /** Draft save of the membership application (autosave). */
   async function saveApplication(uid, applicationPatch) {
     var m = await ownMember(uid);
@@ -544,11 +667,27 @@
         ? 'Pengajuan Anda sedang diverifikasi sekretariat. Tarik pengajuan terlebih dahulu bila ingin mengubah data.'
         : 'Formulir pendaftaran tidak dapat diubah karena keanggotaan Anda masih aktif.');
     }
-    var app = cleanApplication(applicationPatch, m.application, m);
+    var ap = applicationPatch && typeof applicationPatch === 'object' ? applicationPatch : {};
+    var app = cleanApplication(ap, m.application, m);
     app.type = applicationType(m);
     var stamp = nowIso();
     app.updatedAt = stamp;
-    return writeOwn(uid, { application: app, updatedAt: stamp });
+    if (mode() === 'local') return writeOwn(uid, { application: app, updatedAt: stamp });
+    var fields = { 'application.type': app.type, 'application.updatedAt': SERVER_TIME };
+    APP_FIELDS.forEach(function (k) { if (ap[k] !== undefined) fields['application.' + k] = app[k]; });
+    /* the photo goes to member_photos/{uid}; a photo still stored inline (older record) moves there too */
+    var photo = ap.pasFoto !== undefined ? app.pasFoto : (m.application.pasFoto || null);
+    if (photo !== null) {
+      var f = await fx();
+      try {
+        if (photo) await photoRef(f, uid).set({ uid: uid, data: photo, updatedAt: serverTs(f) });
+        else await photoRef(f, uid).delete();
+      } catch (e) { throw mapFirestoreError(e); }
+      photoCache[uid] = { key: '*', data: photo };
+      fields['application.pasFoto'] = '';
+      fields['application.pasFotoAda'] = !!photo;
+    }
+    return writeOwn(uid, null, fields);
   }
 
   /** Submit the application → 'Menunggu Verifikasi'. Throws store/application-incomplete with .missing[] / .fields[]. */
@@ -571,14 +710,18 @@
     app.type = applicationType(m);
     app.submittedAt = stamp;
     app.updatedAt = stamp;
-    if (!app.pernyataan.tanggal) app.pernyataan.tanggal = todayIso();
-    var patch = { status: 'Menunggu Verifikasi', application: app, updatedAt: stamp };
+    var newDate = !app.pernyataan.tanggal;
+    if (newDate) app.pernyataan.tanggal = todayIso();
+    var out;
     if (mode() === 'local') {
       var rv = clone(m.review);
       rv.history.push({ at: stamp, by: uid, byName: m.name || '', action: 'diajukan', note: app.type === 'perpanjangan' ? 'Pengajuan perpanjangan' : '' });
-      patch.review = rv;
+      out = await writeOwn(uid, { status: 'Menunggu Verifikasi', application: app, updatedAt: stamp, review: rv });
+    } else {
+      var fields = { status: 'Menunggu Verifikasi', 'application.type': app.type, 'application.submittedAt': SERVER_TIME, 'application.updatedAt': SERVER_TIME };
+      if (newDate) fields['application.pernyataan.tanggal'] = app.pernyataan.tanggal;
+      out = await writeOwn(uid, null, fields);
     }
-    var out = await writeOwn(uid, patch);
     await refreshSessionFor(uid);
     return out;
   }
@@ -588,16 +731,17 @@
     var m = await ownMember(uid);
     if (m.status !== 'Menunggu Verifikasi') throw storeError('store/invalid-transition', 'Hanya pengajuan yang sedang menunggu verifikasi yang dapat ditarik.');
     var stamp = nowIso();
-    var app = clone(m.application);
-    app.submittedAt = '';
-    app.updatedAt = stamp;
-    var patch = { status: 'Draf', application: app, updatedAt: stamp };
+    var out;
     if (mode() === 'local') {
+      var app = clone(m.application);
+      app.submittedAt = '';
+      app.updatedAt = stamp;
       var rv = clone(m.review);
       rv.history.push({ at: stamp, by: uid, byName: m.name || '', action: 'ditarik', note: '' });
-      patch.review = rv;
+      out = await writeOwn(uid, { status: 'Draf', application: app, updatedAt: stamp, review: rv });
+    } else {
+      out = await writeOwn(uid, null, { status: 'Draf', 'application.submittedAt': '', 'application.updatedAt': SERVER_TIME });
     }
-    var out = await writeOwn(uid, patch);
     await refreshSessionFor(uid);
     return out;
   }
@@ -703,8 +847,12 @@
     var hay = fold([m.name, m.email, m.phone, m.kta, m.profile.company, m.profile.city, m.profile.province, m.memberType, m.application.kategori].join(' '));
     return fold(q).split(' ').every(function (t) { return hay.indexOf(t) !== -1; });
   }
-  /** listMembers({status?, q?}) — status = an EFFECTIVE status ('Aktif' excludes expired members,
-      'Kedaluwarsa' lists them) or an array of statuses; q = words matched in name, email, HP, KTA, … */
+  /** listMembers({status?, q?, pasFoto?}) — status = an EFFECTIVE status ('Aktif' excludes expired
+      members, 'Kedaluwarsa' lists them) or an array of statuses; q = words matched in name, email, HP, KTA, …
+      pasFoto: 'antrian' (default) = the image only for the review queue (stored status Menunggu Verifikasi /
+      Perlu Perbaikan) · false = none (counts, dashboards) · true = every member (avoid: one read each).
+      Rows without the image keep application.pasFotoAda; load it with admin.getMember(uid) / store.pasFoto(uid). */
+  var REVIEW_QUEUE = ['Menunggu Verifikasi', 'Perlu Perbaikan'];
   async function listMembers(opts) {
     await requireAdmin();
     opts = opts || {};
@@ -713,6 +861,10 @@
       if (want && want.indexOf(effectiveStatus(m)) === -1) return false;
       return memberMatches(m, opts.q);
     });
+    var policy = opts.pasFoto === undefined ? 'antrian' : opts.pasFoto;
+    var withPhoto = list.filter(function (m) { return policy === true || (policy === 'antrian' && REVIEW_QUEUE.indexOf(m.status) !== -1); });
+    list.forEach(function (m) { if (withPhoto.indexOf(m) === -1) withoutPhoto(m); });
+    await Promise.all(withPhoto.map(hydratePhoto));
     return sortMembers(list);
   }
   async function adminGetMember(uid) {
@@ -727,11 +879,32 @@
       kta: m.kta, nama: m.name, kategori: m.memberType,
       kompetensi: (m.competencies || []).map(function (c) { return c && c.name; }).filter(Boolean).slice(0, 5),
       kota: m.profile.city || '', berlakuHingga: m.validUntil || '', status: m.status === 'Nonaktif' ? 'Nonaktif' : 'Aktif',
-      namaCari: fold(m.name), updatedAt: nowIso()
+      /* search keys for bounded server-side lookups (registryLookup): name prefix, whole words, KTA number */
+      namaCari: fold(m.name), namaKata: words(m.name), ktaNomor: ktaNomor(m.kta), updatedAt: nowIso()
     };
     if (m.contoh) e.contoh = true;
     return Object.assign(e, overrides || {});
   }
+  /* The entry an admin action writes. APPROVAL (spec === true) publishes a fresh snapshot of the data the
+     secretariat has just reviewed. Every other action (extend, deactivate, reactivate, kategori) updates
+     only what the secretariat controls — kategori, berlakuHingga, status — and keeps nama / kompetensi /
+     kota of the existing entry (the snapshot of the last approval), so data the member edited afterwards
+     is never republished without review. No existing entry (older data) → built from the member. */
+  function registryWrite(m, spec, prev) {
+    var over = spec === true ? null : spec;
+    if (spec === true || !prev || typeof prev !== 'object') return registryEntry(m, over);
+    var nama = str(prev.nama, 120) || m.name;
+    var e = {
+      kta: m.kta, nama: nama, kategori: m.memberType,
+      kompetensi: (Array.isArray(prev.kompetensi) ? prev.kompetensi : []).map(function (x) { return str(x, 120); }).filter(Boolean).slice(0, 5),
+      kota: str(prev.kota, 100), berlakuHingga: m.validUntil || '', status: m.status === 'Nonaktif' ? 'Nonaktif' : 'Aktif',
+      namaCari: fold(nama), namaKata: words(nama), ktaNomor: ktaNomor(m.kta), updatedAt: nowIso()
+    };
+    if (prev.contoh === true || m.contoh) e.contoh = true;
+    return Object.assign(e, over || {});
+  }
+  function words(s) { return fold(s).split(/[^a-z0-9]+/).filter(Boolean).slice(0, 10); }
+  function ktaNomor(kta) { var x = /^PPAPI-\d{4}-(\d{6})$/.exec(String(kta || '')); return x ? x[1] : ''; }
   function staticRegistry() { var r = PPAPI.data && PPAPI.data.registry; return Array.isArray(r) ? r : []; }
   function ktaFormat(year, n) { return 'PPAPI-' + year + '-' + ('000000' + n).slice(-6); }
   function ktaTaken(kta, extra) {
@@ -772,7 +945,7 @@
         var reg2 = lsMap(K_REGISTRY);
         var key2 = nm.kta;
         if (key2) {
-          reg2[key2] = registryEntry(nm, res.registry === true ? null : res.registry);
+          reg2[key2] = registryWrite(nm, res.registry, own(reg2, key2) ? reg2[key2] : null);
           lsSet(K_REGISTRY, reg2);
         }
       }
@@ -809,13 +982,19 @@
           if (!kta) throw storeError('store/kta-unavailable', 'Nomor KTA baru belum dapat dibuat. Silakan coba lagi.');
           res.patch.kta = kta;
         }
+        /* actions other than approval keep the registry snapshot (registryWrite): read it before any write */
+        var regKta = res.patch.kta || m.kta, prevReg = null;
+        if (res.registry && res.registry !== true && regKta) {
+          var rsnap = await t.get(db.collection('registry').doc(regKta));
+          prevReg = rsnap.exists ? rsnap.data() : null;
+        }
         var stamp = nowIso();
         var patch = Object.assign({}, res.patch, { review: res.review, updatedAt: stamp });
-        var nm = normalize(Object.assign(clone(snap.data()), patch));
+        var nm = normalize(Object.assign(plain(snap.data()), patch));
         if (!nm.uid) nm.uid = uid;
         if (counterRef) t.set(counterRef, { value: n, updatedAt: stamp }, { merge: true });
         t.update(memRef, patch);
-        if (res.registry && nm.kta) t.set(db.collection('registry').doc(nm.kta), registryEntry(nm, res.registry === true ? null : res.registry), { merge: true });
+        if (res.registry && nm.kta) t.set(db.collection('registry').doc(nm.kta), registryWrite(nm, res.registry, nm.kta === regKta ? prevReg : null), { merge: true });
         t.set(db.collection('audit_log').doc(), auditEntry(adm, action, 'anggota', uid, nm.name, res.note));
         out = nm;
       });
@@ -857,18 +1036,39 @@
       return { needKta: true, patch: patch, review: withHistory(m, histEntry(adm, 'disetujui', note), note), registry: true, note: note };
     });
   }
+  /* A RENEWAL (application.type 'perpanjangan') of a membership approved before: returning or rejecting
+     it must not take away the period already granted. The member goes back to the membership state held
+     before the renewal — 'Aktif' (also when validUntil has passed: effective Kedaluwarsa, renewable again)
+     or 'Nonaktif' — keeping KTA and validUntil, so member record and public registry keep agreeing. The
+     history entry ('perbaikan' / 'ditolak') and review.note still tell the member why. The previous state
+     is read from the admin-written history (members cannot write it). '' = not such a renewal. */
+  function stateBeforeRenewal(m) {
+    if (!m || m.application.type !== 'perpanjangan' || !m.kta) return '';
+    var hist = m.review.history || [];
+    for (var i = hist.length - 1; i >= 0; i--) {
+      var a = hist[i] && hist[i].action;
+      if (a === 'dinonaktifkan') return 'Nonaktif';
+      if (a === 'disetujui' || a === 'diaktifkan' || a === 'diperpanjang') return 'Aktif';
+    }
+    return m.approvedAt ? 'Aktif' : '';
+  }
+  function renewalNote(n, back, m) {
+    return n + ' [Perpanjangan; keanggotaan kembali ' + back + (m.validUntil ? ', berlaku hingga ' + m.validUntil : '') + '.]';
+  }
   function requestRevision(uid, note) {
     return adminMutate(uid, 'anggota.perbaikan', function (m, adm) {
       if (['Menunggu Verifikasi', 'Perlu Perbaikan'].indexOf(m.status) === -1) throw transitionError('Permintaan perbaikan hanya untuk pengajuan yang sedang diverifikasi.');
       var n = needNote(note, 'catatan perbaikan untuk pemohon');
-      return { patch: { status: 'Perlu Perbaikan' }, review: withHistory(m, histEntry(adm, 'perbaikan', n), n), note: n };
+      var back = stateBeforeRenewal(m);
+      return { patch: { status: back || 'Perlu Perbaikan' }, review: withHistory(m, histEntry(adm, 'perbaikan', n), n), note: back ? renewalNote(n, back, m) : n };
     });
   }
   function reject(uid, note) {
     return adminMutate(uid, 'anggota.ditolak', function (m, adm) {
       if (['Menunggu Verifikasi', 'Perlu Perbaikan', 'Draf'].indexOf(m.status) === -1) throw transitionError('Penolakan hanya untuk pengajuan yang belum disetujui.');
       var n = needNote(note, 'alasan penolakan');
-      return { patch: { status: 'Ditolak' }, review: withHistory(m, histEntry(adm, 'ditolak', n), n), note: n };
+      var back = stateBeforeRenewal(m);
+      return { patch: { status: back || 'Ditolak' }, review: withHistory(m, histEntry(adm, 'ditolak', n), n), note: back ? renewalNote(n, back, m) : n };
     });
   }
   function deactivate(uid, note) {
@@ -887,7 +1087,7 @@
       var n = str(o.note, LIMITS.note);
       var patch = { status: 'Aktif', validUntil: until };
       if (!m.approvedAt) { patch.approvedAt = nowIso(); patch.approvedBy = adm.uid; }
-      return { needKta: true, patch: patch, review: withHistory(m, histEntry(adm, 'diaktifkan', n), n), registry: true, note: n };
+      return { needKta: true, patch: patch, review: withHistory(m, histEntry(adm, 'diaktifkan', n), n), registry: {}, note: n };
     });
   }
   function extend(uid, validUntil, note) {
@@ -895,7 +1095,7 @@
       if (m.status !== 'Aktif') throw transitionError('Perpanjangan langsung hanya untuk anggota berstatus Aktif (termasuk yang masa berlakunya telah habis).');
       var until = validDate(validUntil, 'berlaku hingga');
       var n = str(note, LIMITS.note) || ('Masa berlaku diperpanjang hingga ' + until + '.');
-      return { patch: { validUntil: until }, review: withHistory(m, histEntry(adm, 'diperpanjang', n), m.review.note), registry: m.kta ? true : null, note: n };
+      return { patch: { validUntil: until }, review: withHistory(m, histEntry(adm, 'diperpanjang', n), m.review.note), registry: m.kta ? {} : null, note: n };
     });
   }
   function setMemberType(uid, type) {
@@ -1009,7 +1209,9 @@
     var adm = await requireAdmin();
     if (!(U().isEmail ? U().isEmail(email) : /@/.test(String(email)))) throw storeError('store/invalid-email', 'Masukkan alamat email yang valid.');
     var m = await findMemberByEmail(email);
-    if (!m || !m.uid) throw storeError('store/not-found', 'Email tersebut belum terdaftar sebagai akun di situs PPAPI. Minta yang bersangkutan membuat akun terlebih dahulu.');
+    if (!m || !m.uid) throw storeError('store/not-found', 'Email tersebut belum terdaftar sebagai akun dengan email terverifikasi di situs PPAPI. Minta yang bersangkutan membuat akun dan memverifikasi emailnya terlebih dahulu.');
+    /* member.email is written only after the account proved the address (rules: email_verified) */
+    if (!m.email) throw storeError('store/email-unverified', 'Akun tersebut belum memiliki email terverifikasi. Minta yang bersangkutan memverifikasi emailnya terlebih dahulu.');
     var current = await listAdmins();
     if (current.some(function (a) { return a.uid === m.uid; })) throw storeError('store/already-admin', 'Akun tersebut sudah menjadi admin.');
     var rec = { uid: m.uid, name: str(m.name, 120), email: str(m.email, 200), addedAt: nowIso(), addedBy: adm.uid };
@@ -1084,6 +1286,7 @@
     return s;
   }
 
+  var CSV_FORMULA = /^[\s\u0000-\u001F\u007F-\u009F\u00A0\u00AD\u034F\u061C\u115F\u1160\u1680\u180E\u2000-\u200F\u2028-\u202F\u205F-\u206F\u3000\u3164\uFEFF\uFFA0]*[=+\-@\uFF1D\uFF0B\uFF0D\uFF20\uFE66\uFE62\uFE63\uFE6B\u2212]/;
   /** CSV for Excel (Indonesian locale): UTF-8 BOM, ';' separator, CRLF; formula-like cells are neutralised. */
   function exportMembersCsv(members) {
     var cols = [
@@ -1110,8 +1313,9 @@
     ];
     function cell(v) {
       var s = v === null || v === undefined ? '' : String(v);
-      /* formula / DDE triggers (OWASP CSV injection), incl. the full-width forms Excel also accepts */
-      if (/^[=+\-@\t\r＝＋－＠]/.test(s)) s = "'" + s;
+      /* formula / DDE triggers (OWASP CSV injection): = + - @ TAB CR and their full-width / small forms,
+         also behind leading spaces, NBSP, zero-width or other invisible characters that importers may trim */
+      if (CSV_FORMULA.test(s) || /^[\t\r]/.test(s)) s = "'" + s;
       if (/[";,\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
       return s;
     }
@@ -1390,38 +1594,23 @@
 
   /* ======================================================================
      REGISTRY — public verification lookup
+     Firebase: never the whole collection. The rules allow get (one KTA) and list queries of at most
+     20 documents, matching kebijakan-privasi.html ("Publik hanya dapat memeriksa data terbatas"):
+       • full KTA → one get();
+       • 'PPAPI…' / digits → prefix range on kta (year) or ktaNomor (6-digit number part);
+       • name → prefix range on namaCari + whole-word match on namaKata (array-contains).
+     Results are filtered with the same rules as demo mode (which searches its local copy in full).
      ====================================================================== */
-  var registryCache = null;
+  var REG_LIMIT = 20;
   function publicEntry(x) {
     if (!x || !x.kta) return null;
     var e = { kta: x.kta, nama: x.nama || '', kategori: x.kategori || '', kompetensi: Array.isArray(x.kompetensi) ? x.kompetensi : [], kota: x.kota || '', berlakuHingga: x.berlakuHingga || '', status: x.status || '' };
     if (x.contoh) e.contoh = true;
     return e;
   }
-  async function registryEntries(exactKta) {
-    var statics = staticRegistry().filter(function (r) { return mode() === 'local' || !r.contoh; });
-    var dyn = [];
-    if (mode() === 'local') {
-      var reg = lsMap(K_REGISTRY);
-      dyn = Object.keys(reg).map(function (k) { return reg[k]; });
-    } else {
-      var f = await fx();
-      try {
-        if (exactKta) {
-          var s = await f.db.collection('registry').doc(exactKta).get();
-          dyn = s.exists ? [s.data()] : [];
-        } else {
-          if (!registryCache) {
-            var snap = await f.db.collection('registry').limit(5000).get();
-            registryCache = [];
-            snap.forEach(function (doc) { registryCache.push(Object.assign({ kta: doc.id }, doc.data())); });
-          }
-          dyn = registryCache;
-        }
-      } catch (e) { throw mapFirestoreError(e); }
-    }
+  function mergeEntries(list) {
     var map = {}, order = [];
-    statics.concat(dyn).forEach(function (x) {
+    list.forEach(function (x) {
       var e = publicEntry(x);
       if (!e) return;
       var k = alnum(e.kta);
@@ -1430,43 +1619,80 @@
     });
     return order.map(function (k) { return map[k]; });
   }
+  /* static samples are local data: every entry in demo mode, only the non-contoh ones in Firebase mode */
+  function staticEntries() { return staticRegistry().filter(function (r) { return mode() === 'local' || !r.contoh; }); }
+  function localRegistry() { var reg = lsMap(K_REGISTRY); return Object.keys(reg).map(function (k) { return reg[k]; }); }
+  /* Firebase: run bounded queries → entries (docs carry their id as kta) */
+  async function fbRegistry(runs) {
+    var f = await fx(), col = f.db.collection('registry'), out = [];
+    try {
+      for (var i = 0; i < runs.length; i++) {
+        var r = runs[i], snap;
+        if (r.get) {
+          snap = await col.doc(r.get).get();
+          if (snap.exists) out.push(Object.assign({ kta: snap.id || r.get }, snap.data()));
+          continue;
+        }
+        var q = r.prefix !== undefined
+          ? col.where(r.field, '>=', r.prefix).where(r.field, '<=', r.prefix + '')
+          : col.where(r.field, 'array-contains', r.word);
+        snap = await q.limit(REG_LIMIT).get();
+        snap.forEach(function (doc) { out.push(Object.assign({ kta: doc.id }, doc.data())); });
+      }
+    } catch (e) { throw mapFirestoreError(e); }
+    return out;
+  }
+  async function registrySource(runs) {
+    return mergeEntries(staticEntries().concat(mode() === 'local' ? localRegistry() : await fbRegistry(runs)));
+  }
+  /* 'PPAPI-2026-000318' style prefix from the digits after "PPAPI" (year first, then the number) */
+  function ktaPrefix(digits) { return 'PPAPI-' + digits.slice(0, 4) + (digits.length > 4 ? '-' + digits.slice(4, 10) : ''); }
   /** lookup(query) → { exact: Entry|null, matches: Entry[], kind: 'kta'|'kta-awal'|'nama'|'kosong', query } */
   async function registryLookup(query) {
     var q = String(query || '').replace(/\s+/g, ' ').trim();
     var a = alnum(q);
     var res = { exact: null, matches: [], kind: 'kosong', query: q };
     if (!q) return res;
-    var list;
+    var list, digits;
     if (/^PPAPI/.test(a)) {
-      var digits = a.slice(5);
+      digits = a.slice(5);
       if (digits.length >= 10) {
         var pretty = /^PPAPI(\d{4})(\d{6})$/.exec(a);
-        list = await registryEntries(pretty ? 'PPAPI-' + pretty[1] + '-' + pretty[2] : null);
         res.kind = 'kta';
+        list = await registrySource(pretty ? [{ get: 'PPAPI-' + pretty[1] + '-' + pretty[2] }] : []);
         res.exact = list.filter(function (r) { return alnum(r.kta) === a; })[0] || null;
         res.matches = res.exact ? [res.exact] : [];
         return res;
       }
       res.kind = 'kta-awal';
-      if (digits.length < 4) return res;
-      list = await registryEntries();
-      res.matches = list.filter(function (r) { return alnum(r.kta).indexOf(a) === 0; }).slice(0, 20);
+      if (digits.length < 4 || !/^\d+$/.test(digits)) return res;
+      list = await registrySource([{ field: 'kta', prefix: ktaPrefix(digits) }]);
+      res.matches = list.filter(function (r) { return alnum(r.kta).indexOf(a) === 0; }).slice(0, REG_LIMIT);
       return res;
     }
     if (/^[\d\s.\-\/]+$/.test(q)) {
       res.kind = 'kta-awal';
       if (a.length < 4) return res;
-      list = await registryEntries();
-      res.matches = list.filter(function (r) { return alnum(r.kta).indexOf(a) !== -1; }).slice(0, 20);
+      var runs = [];
+      if (a.length >= 10) runs.push({ get: ktaPrefix(a) });
+      else {
+        if (a.length <= 6) runs.push({ field: 'ktaNomor', prefix: a });
+        if (/^(19|20)\d{2}/.test(a)) runs.push({ field: 'kta', prefix: ktaPrefix(a) });
+      }
+      list = await registrySource(runs);
+      res.matches = list.filter(function (r) { return alnum(r.kta).indexOf(a) !== -1; }).slice(0, REG_LIMIT);
       return res;
     }
     res.kind = 'nama';
     var fq = fold(q);
     if (fq.replace(/[^a-z]/g, '').length < 3) return res;
-    list = await registryEntries();
+    var nameRuns = [{ field: 'namaCari', prefix: fq }];
+    var w0 = words(q)[0];
+    if (w0 && w0.length >= 2) nameRuns.push({ field: 'namaKata', word: w0 });
+    list = await registrySource(nameRuns);
     res.matches = list.filter(function (r) { return fold(r.nama).indexOf(fq) !== -1; })
       .sort(function (x, y) { return fold(x.nama).indexOf(fq) - fold(y.nama).indexOf(fq) || String(x.nama).localeCompare(String(y.nama), 'id'); })
-      .slice(0, 20);
+      .slice(0, REG_LIMIT);
     return res;
   }
 
@@ -1525,6 +1751,7 @@
     AUDIT_LABELS: Object.assign({}, AUDIT_LABELS),
     LIMITS: Object.assign({}, LIMITS),
     getMember: getMember,
+    pasFoto: pasFoto,
     saveMember: saveMember,
     ensureMember: ensureMember,
     saveApplication: saveApplication,

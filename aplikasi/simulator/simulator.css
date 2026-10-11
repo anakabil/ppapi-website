@@ -173,6 +173,7 @@ button{font:inherit;color:inherit}
 .insp-list .v{display:block;margin-top:2px;font-size:12px;line-height:1.45;color:var(--sim-text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .insp-list .lim,.insp-list .src{display:block;font-size:11px;line-height:1.45;color:var(--sim-muted);overflow-wrap:anywhere}
 .insp-list .src{color:var(--sim-faint)}
+.insp-list .how{display:inline-block;margin-top:4px;padding:1px 6px;font:600 10px/1.5 var(--pp-f-cond);letter-spacing:.08em;text-transform:uppercase;color:var(--sim-muted);border:1px solid var(--sim-line);border-radius:var(--r)}
 @media (max-width:380px){ .insp-tools{grid-template-columns:1fr} }
 
 /* legenda (kiri bawah) — warna pita = jenis klem */

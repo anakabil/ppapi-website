@@ -267,17 +267,20 @@
     }
     function updateHeroStatus() {
       if (!heroStatus) return;
-      var s = st(), extra = '';
+      var s = st(), extra = '', railMeta = $('#daf-rail-meta');
       /* say the status once: the dark member card is the Aktif view's hero moment, and right after submitting the
          "terkirim" banner says it (the content stays in the DOM, so the live region is ready when the view changes) */
       heroStatus.hidden = S.view === 'active' || (S.view === 'pending' && S.justSubmitted);
       /* the completeness meter belongs to a form being filled in — not next to a rejection or an expired membership */
-      if (S.view === 'wizard' && (s === 'Draf' || s === 'Perlu Perbaikan')) {
+      var meter = S.view === 'wizard' && (s === 'Draf' || s === 'Perlu Perbaikan');
+      if (railMeta) railMeta.hidden = !meter;
+      if (meter) {
         var missing = missingAll().length, done = Math.max(0, TOTAL_REQ - missing);
         var pct = TOTAL_REQ ? Math.round(done / TOTAL_REQ * 100) : 0;
         extra = '<div class="daf-hstat__progress">' +
           '<div class="progress progress--metal" role="progressbar" aria-label="Kelengkapan isian wajib" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" style="--value:' + pct + '"></div>' +
           '<p class="daf-hstat__meta"><span class="daf-hstat__num">' + done + '</span> dari ' + TOTAL_REQ + ' isian wajib lengkap</p></div>';
+        if (railMeta) railMeta.innerHTML = '<span class="daf-railmeta__num">' + done + '</span> dari ' + TOTAL_REQ + ' isian wajib lengkap';
       } else if (S.view === 'pending') {
         extra = '<p class="daf-hstat__meta">Diajukan ' + h(fmtDate(member.application.submittedAt, true) || '—') + '</p>';
       } else if (S.view === 'active') {
@@ -378,7 +381,8 @@
       S.dok = (member.application.dokumen || []).map(function (x) { return { id: safeId(x.id), jenis: x.jenis, label: x.label, url: x.url }; });
       root.innerHTML = noticesHtml() +
         '<div class="daf-wizard">' +
-          '<div class="daf-rail">' + stepperHtml() + saveHtml('daf-save--rail') + helpHtml('daf-help--rail') + '</div>' +
+          /* daf-railmeta: the completeness line for phones, where the hero status card is hidden to bring the form up */
+          '<div class="daf-rail">' + stepperHtml() + '<p class="daf-railmeta" id="daf-rail-meta" hidden></p>' + saveHtml('daf-save--rail') + helpHtml('daf-help--rail') + '</div>' +
           '<div class="daf-main">' +
             '<section class="daf-panel" aria-labelledby="daf-step-title">' +
               '<header class="daf-step-head">' +
@@ -412,6 +416,7 @@
       S.step = -1;
       goStep(start, { noFocus: !opts.focus, noScroll: !opts.focus });
       updateSave();
+      updateHeroStatus(); /* renderHero ran before the rail existed → fill #daf-rail-meta now */
     }
     /* which step to open: #hash → first step with missing data → review */
     function startStep() {
@@ -623,7 +628,7 @@
           '<ol class="daf-tip__list"><li>Unggah berkas (PDF atau foto) ke Google Drive, OneDrive, atau layanan serupa.</li>' +
           '<li>Ubah akses berbagi menjadi <strong>“Siapa saja yang memiliki link dapat melihat”</strong>.</li>' +
           '<li>Salin tautannya, lalu tempel di bawah. Tautan harus diawali <span class="nowrap">https://</span>.</li></ol>' +
-          '<p class="daf-tip__note">Jangan melampirkan KTP, NIK, atau data rekening kecuali diminta sekretariat. Di situs ini tautan hanya dapat dilihat oleh Anda dan sekretariat, tetapi siapa pun yang memegang tautan tersebut dapat membuka berkasnya. Setelah pengajuan Anda diputuskan, akses berbagi dapat Anda nonaktifkan kembali.</p></div>' +
+          '<p class="daf-tip__note"><strong>Jangan melampirkan KTP, NIK, atau data rekening kecuali diminta sekretariat.</strong> Di situs ini tautan hanya dapat dilihat oleh Anda dan sekretariat, tetapi siapa pun yang memegang tautan tersebut dapat membuka berkasnya. Pertahankan akses berbagi sampai pengajuan Anda diputuskan; setelah itu akses tersebut dapat Anda nonaktifkan (lihat <a class="link" href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a>).</p></div>' +
         '</div>' +
         '<div class="daf-sub">' +
           '<div class="daf-sub__head"><h3 class="daf-sub__title">Daftar dokumen</h3><span class="daf-sub__count" id="dok-count" aria-live="polite"></span></div>' +
@@ -691,6 +696,8 @@
       var mail = user.email || member.email || '';
       $('#f-email').value = mail;
       if (!mail) { $('#f-email').placeholder = 'Akun tanpa email'; $('#f-email-hint').textContent = 'Akun ini masuk dengan nomor HP, sehingga tidak memiliki email.'; }
+      /* Mode Firebase: email tercatat pada data keanggotaan setelah diverifikasi (aturan Firestore) */
+      else if (auth.mode === 'firebase' && user.emailVerified === false) $('#f-email-hint').textContent = 'Email ini belum diverifikasi. Buka tautan verifikasi yang dikirim ke email Anda agar tercatat pada data keanggotaan; tautan baru dapat diminta di Dasbor.';
       $('#f-company').value = p.company || '';
       $('#f-position').value = p.position || '';
       ensureOption($('#f-education'), p.education);
@@ -706,6 +713,34 @@
       $('#f-kebenaranData').checked = !!a.pernyataan.kebenaranData;
       $('#f-privasi').checked = !!a.pernyataan.privasi;
       $('#f-namaTerang').value = a.pernyataan.namaTerang || '';
+      applyIdentityLock();
+    }
+    /* Nama lengkap (dan tanggal lahir yang sudah terisi) telah ditinjau saat keanggotaan disetujui: nama
+       tercantum pada KTA dan daftar verifikasi, sehingga pada pengajuan perpanjangan keduanya tidak diubah
+       melalui formulir ini (aturan Firestore identityKept; sama dengan Profil Anggota). Isian yang masih
+       kosong tetap dapat dilengkapi. */
+    var NAME_HINT = 'Tulis sesuai KTP atau identitas resmi lain, beserta gelar bila ingin dicantumkan.';
+    function applyIdentityLock() {
+      var approved = !!String(member.approvedAt || '').trim();
+      var lockName = approved && String(member.name || '').trim().length >= 3;
+      var lockBirth = approved && /^\d{4}-\d{2}-\d{2}$/.test(String((member.profile || {}).birthDate || ''));
+      var nm = $('#f-name'), bd = $('#f-birthDate'), hint = $('#f-name-hint');
+      if (nm) nm.readOnly = lockName;
+      if (bd) {
+        bd.readOnly = lockBirth;
+        if (lockBirth) bd.setAttribute('aria-describedby', 'f-name-hint'); else bd.removeAttribute('aria-describedby');
+      }
+      if (!hint) return;
+      if (lockName || lockBirth) {
+        var what = lockName && lockBirth ? 'Nama lengkap dan tanggal lahir' : lockName ? 'Nama lengkap' : 'Tanggal lahir';
+        hint.classList.add('daf-identity-note');
+        hint.innerHTML = icon('lock', { size: 15 }) + '<span>' + h(what) + ' mengikuti data keanggotaan yang telah disetujui' +
+          (lockName ? ' dan tercantum pada Kartu Tanda Anggota' : '') + ', sehingga tidak diubah melalui formulir ini. ' +
+          'Untuk perbaikan, hubungi sekretariat melalui halaman <a class="link" href="umpan-balik.html?kategori=Pertanyaan">Kontak</a>.</span>';
+      } else {
+        hint.classList.remove('daf-identity-note');
+        hint.textContent = NAME_HINT;
+      }
     }
     /* selected card: highlighted, requirements & benefits open; the others fold back to one line each */
     function syncCats() {

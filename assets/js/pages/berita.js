@@ -24,6 +24,52 @@
   var PAGE_SIZE = 6;
   var KATEGORI_ORDER = ['Kegiatan', 'Pengumuman', 'Edukasi', 'Regulasi', 'Organisasi'];
 
+  /* ==========================================================================
+     PEMULIHAN POSISI GULIR (muat ulang / kembali tanpa bfcache) — pola yang
+     sama dengan agenda.js. Pemulihan bawaan peramban terjadi sebelum sorotan,
+     pengumuman, dan kisi arsip dirender (asinkron), sehingga konten yang
+     sedang dilihat lalu terdorong (CLS 0,96–0,97 terukur pada desktop bila
+     gerak dikurangi). Posisi disimpan di history.state entri ini setelah
+     guliran berhenti; 'manual' hanya dipasang saat pagehide (dibaca peramban
+     pada pemuatan berikutnya; replaceState di dalam pagehide justru
+     membatalkannya) dan dikembalikan ke 'auto' setelah pemuatan agar
+     #jangkar + Kembali tetap ditangani peramban. Posisi dikembalikan setelah
+     halaman dirender dan huruf web siap (paling lama 2,5 detik), hanya bila
+     pengguna belum menggulir dan alamat tanpa #fragmen.
+     ========================================================================== */
+  var restoreY = null;
+  (function () {
+    try {
+      var H = window.history;
+      if (!('scrollRestoration' in H)) return;
+      var st = H.state, y = st && typeof st.beritaY === 'number' ? st.beritaY : 0;
+      if (y > 0 && !window.location.hash) restoreY = y;
+      var saveTimer = null;
+      var save = function () {
+        try { H.replaceState(Object.assign({}, H.state, { beritaY: Math.round(window.scrollY || 0) }), ''); } catch (e) { /* abaikan */ }
+      };
+      window.addEventListener('scroll', function () { clearTimeout(saveTimer); saveTimer = setTimeout(save, 250); }, { passive: true });
+      window.addEventListener('pagehide', function () {
+        if (!window.location.hash) { try { H.scrollRestoration = 'manual'; } catch (e) { /* abaikan */ } }
+      });
+      window.addEventListener('pageshow', function (e) { if (e.persisted) autoRestoration(); });
+    } catch (e) { restoreY = null; }
+  })();
+  function autoRestoration() { try { window.history.scrollRestoration = 'auto'; } catch (e) { /* abaikan */ } }
+  function finishRestore() {
+    var y = restoreY, done = false;
+    restoreY = null;
+    function release() {
+      if (document.readyState === 'complete') autoRestoration();
+      else window.addEventListener('load', autoRestoration, { once: true });
+    }
+    if (y === null) { release(); return; }
+    function go() { if ((window.scrollY || 0) < 2) window.scrollTo(0, y); release(); }
+    function once() { if (done) return; done = true; window.requestAnimationFrame(function () { window.requestAnimationFrame(go); }); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(once, once); else once();
+    setTimeout(once, 2500);
+  }
+
   PPAPI.onReady(async function () {
     var U = PPAPI.util, h = U.h, ui = PPAPI.ui, icon = PPAPI.icon;
     var data = PPAPI.data || {};
@@ -108,6 +154,8 @@
 
     if (DETAIL_ID) renderDetail(DETAIL_ID);
     else renderList();
+    /* posisi gulir tersimpan dikembalikan setelah konten terisi (lihat atas) */
+    finishRestore();
 
     /* ======================================================================
        MODE DAFTAR
@@ -378,10 +426,26 @@
 
       apply();
 
-      /* tautan dengan filter (mis. dari halaman Agenda) → langsung ke arsip */
-      if ((state.kategori || state.q) && !window.location.hash) {
+      /* tautan dengan filter (mis. dari halaman Agenda) → langsung ke arsip.
+         Digulir setelah huruf web siap (paling lama 1 detik) + dua bingkai: bila
+         digulir lebih awal, pelipatan ulang teks saat huruf web tiba menggeser
+         arsip yang sedang dilihat (CLS ≈ 0,02 terukur pada desktop). Tidak
+         menggulir bila pengguna (atau pemulihan posisi peramban) sudah menggulir,
+         atau bila posisi tersimpan akan dipulihkan (muat ulang/kembali). */
+      if ((state.kategori || state.q) && !window.location.hash && restoreY === null) {
         var sec = U.$('#arsip');
-        if (sec) setTimeout(function () { sec.scrollIntoView({ block: 'start' }); }, 60);
+        if (sec) {
+          var done = false;
+          var go = function () {
+            if (done) return;
+            done = true;
+            window.requestAnimationFrame(function () {
+              window.requestAnimationFrame(function () { if ((window.scrollY || 0) < 2) sec.scrollIntoView({ block: 'start' }); });
+            });
+          };
+          if (document.fonts && document.fonts.ready) document.fonts.ready.then(go, go); else go();
+          setTimeout(go, 1000);
+        }
       }
     }
 

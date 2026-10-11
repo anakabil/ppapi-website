@@ -75,8 +75,10 @@
   K.kategoriText = kategoriText;
   function kategoriCell(m) {
     var pl = kategoriPlan(m);
+    /* first application: the cell already names the applied kategori; renewal: the cell names the held one */
+    var warn = pl.invalid ? (m.approvedAt ? 'Meminta ' + pl.invalid + ' (tidak dapat diajukan pemohon)' : 'Tidak dapat diajukan pemohon') : '';
     return h(kategoriText(m)) +
-      (pl.invalid ? '<span class="table__muted text-warn">' + h(pl.invalid + ' tidak dapat diajukan') + '</span>' : '') +
+      (warn ? '<span class="table__muted text-warn">' + h(warn) + '</span>' : '') +
       '<span class="table__muted">' + h(typeLabel(m) + (pl.change ? ' · ubah kategori' : '')) + '</span>';
   }
   function completeness(m) {
@@ -117,16 +119,17 @@
             : K.empty({ icon: PQ.status === 'Menunggu Verifikasi' ? 'check-circle' : 'file-text', title: PQ.status === 'Menunggu Verifikasi' ? 'Antrean kosong' : 'Tidak ada pengajuan', text: { 'Menunggu Verifikasi': 'Semua formulir pendaftaran sudah ditinjau.', 'Perlu Perbaikan': 'Tidak ada pengajuan yang sedang dikembalikan kepada pemohon.', 'Ditolak': 'Belum ada pengajuan yang ditolak.' }[PQ.status] });
           return;
         }
-        listEl.innerHTML = '<p class="adm-count">' + h(K.plural(list.length, 'pengajuan')) + (PQ.status === 'Menunggu Verifikasi' ? ' · terlama di atas' : '') + '</p>' +
-          '<div class="table-wrap"><table class="table adm-table"><caption class="sr-only">Permohonan berstatus ' + h(PQ.status) + '</caption><thead><tr>' +
-          '<th scope="col">Pemohon</th><th scope="col">Kategori</th><th scope="col">Diajukan</th><th scope="col">Kelengkapan</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Aksi</span></th></tr></thead><tbody>' +
+        /* no Status column: every row has the status of the selected chip (named in the count line and
+           the caption), so the column only cost width and wrapped the other cells */
+        listEl.innerHTML = '<p class="adm-count">' + h(K.plural(list.length, 'pengajuan')) + ' · ' + h(PQ.status.toLowerCase()) + (PQ.status === 'Menunggu Verifikasi' ? ' · terlama di atas' : '') + '</p>' +
+          '<div class="table-wrap"><table class="table adm-table adm-table--queue"><caption class="sr-only">Permohonan berstatus ' + h(PQ.status) + '</caption><thead><tr>' +
+          '<th scope="col">Pemohon</th><th scope="col">Kategori</th><th scope="col">Diajukan</th><th scope="col">Kelengkapan</th><th scope="col"><span class="sr-only">Aksi</span></th></tr></thead><tbody>' +
           list.map(function (m) {
             var at = m.application.submittedAt;
             return '<tr><td>' + K.person(m, { open: 'member' }) + '</td>' +
               '<td data-label="Kategori">' + kategoriCell(m) + '</td>' +
               '<td data-label="Diajukan">' + K.timeTag(at) + (at ? '<span class="table__muted">' + h(K.rel(at)) + '</span>' : '') + '</td>' +
               '<td data-label="Kelengkapan">' + completeness(m) + '</td>' +
-              '<td data-label="Status">' + K.statusBadge(m) + '</td>' +
               '<td class="adm-table__actions"><button type="button" class="adm-act adm-act--strong" data-open="member" data-id="' + h(m.uid) + '"><span>Tinjau</span>' + icon('arrow-right', { size: 14 }) + '<span class="sr-only"> pengajuan ' + h(m.name) + '</span></button></td></tr>';
           }).join('') + '</tbody></table></div>';
       }
@@ -169,7 +172,7 @@
       '<td data-label="Kategori">' + h(m.memberType) + (region ? '<span class="table__muted">' + h(region) + '</span>' : '') + '</td>' +
       '<td data-label="Status">' + K.statusBadge(m) + until + '</td>' +
       /* the name already opens the drawer: the row action is a square icon button from tablets up */
-      '<td class="adm-table__actions"><button type="button" class="adm-act adm-act--icon" data-open="member" data-id="' + h(m.uid) + '" title="Detail">' + icon('arrow-right', { size: 15 }) +
+      '<td class="adm-table__actions"><button type="button" class="adm-act adm-act--icon adm-act--open" data-open="member" data-id="' + h(m.uid) + '" title="Detail">' + icon('arrow-right', { size: 15 }) +
         '<span class="adm-act__label">Detail<span class="sr-only"> ' + h(m.name) + '</span></span></button></td></tr>';
   }
   K.sections.anggota = {
@@ -322,11 +325,29 @@
         '<span class="status-track__meta">' + (it.at ? h(K.dateTime(it.at)) : '') + (it.by ? ' · ' + h(it.by) : '') + (it.note ? '<span class="adm-track__note">' + h(it.note) + '</span>' : '') + '</span></li>';
     }).join('') + '</ol>';
   }
-  function memberBody(m) {
-    var st = K.eff(m), a = m.application, p = m.profile;
-    var photo = a.pasFoto
+  function photoHtml(m) {
+    var a = m.application;
+    return a.pasFoto
       ? '<img class="adm-dhead__photo" src="' + h(a.pasFoto) + '" alt="Pas foto ' + h(m.name) + '" width="96" height="128" decoding="async">'
       : '<span class="avatar avatar--lg adm-dhead__avatar" aria-hidden="true">' + h(K.initials(m.name || m.email)) + '</span>';
+  }
+  /* store.admin.listMembers() carries the image only for the review queue; any other record keeps
+     application.pasFotoAda and its photo is read when the drawer opens (store.pasFoto), then kept on
+     the listed record so a re-render or the next open does not read it again */
+  function loadPhoto(m, api) {
+    var a = m.application;
+    if (a.pasFoto || !a.pasFotoAda || typeof store().pasFoto !== 'function') return;
+    store().pasFoto(m.uid).then(function (data) {
+      if (!data || !/^data:image\//.test(data)) return;
+      a.pasFoto = data;
+      if (!drawer || drawer.api !== api) return;
+      var av = api.el.querySelector('.adm-dhead__avatar');
+      if (av) av.outerHTML = photoHtml(m);
+    }, function (err) { console.warn('[PPAPI] Pas foto belum dapat dimuat:', err && err.message); });
+  }
+  function memberBody(m) {
+    var st = K.eff(m), a = m.application, p = m.profile;
+    var photo = photoHtml(m);
     var mail = memberMail(m);
     var head = '<div class="adm-dhead">' + photo + '<div class="adm-dhead__text">' +
       '<div class="adm-badges">' + K.statusBadge(m) + K.adminBadge(m) + '<span class="badge badge--outline">' + h(m.approvedAt || st === 'Aktif' ? m.memberType : (a.kategori || m.memberType)) + '</span>' +
@@ -455,6 +476,7 @@
     });
     drawer.api = api;
     api.el.setAttribute('data-member', uid);
+    loadPhoto(m, api);
   };
   function refreshDrawer() {
     if (!drawer || !drawer.api) return;
@@ -467,6 +489,7 @@
     api.setBody(memberBody(m));
     api.setActions(memberActions(m));
     api.body.scrollTop = scroll;
+    loadPhoto(m, api);
   }
   async function decided(message) {
     await K.after(['members'], message);
@@ -504,8 +527,8 @@
       '</div>' +
       K.field({ name: 'note', label: 'Catatan untuk pemohon', type: 'textarea', rows: 3, maxlength: 2000, counter: true, optional: true, placeholder: 'Mis. Data lengkap dan sesuai.' });
     K.formDialog({
-      title: stored === 'Draf' ? 'Tetapkan sebagai anggota' : 'Setujui pendaftaran', eyebrow: m.name, size: 'md', intro: intro, fields: fields,
-      submitLabel: 'Setujui & Terbitkan KTA', submitId: 'dlg-approve-ok',
+      title: stored === 'Draf' ? 'Tetapkan sebagai anggota' : (m.application.type === 'perpanjangan' ? 'Setujui perpanjangan' : 'Setujui pendaftaran'), eyebrow: m.name, size: 'md', intro: intro, fields: fields,
+      submitLabel: keep ? 'Setujui & Perbarui Keanggotaan' : 'Setujui & Terbitkan KTA', submitId: 'dlg-approve-ok',
       submit: function (v) { return store().admin.approve(m.uid, { memberType: v.memberType, validUntil: v.validUntil, note: v.note }); }
     }).then(async function (res) {
       if (!res) return;

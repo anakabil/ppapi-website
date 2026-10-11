@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Profil Anggota — PPAPI</title>
   <meta name="description" content="Halaman anggota PPAPI (khusus anggota berstatus Aktif): kelola profil, kompetensi, dan sertifikat, tampilkan Kartu Tanda Anggota digital beserta masa berlakunya, serta buka aplikasi perencanaan dan simulator pemasangan perancah.">
   <meta name="robots" content="noindex, nofollow">
@@ -161,7 +162,7 @@
                       </div>
                       <div class="field">
                         <label class="field__label" for="f-linkedin">Tautan LinkedIn</label>
-                        <div class="input-icon"><span data-icon="linkedin" data-icon-size="18"></span><input class="field__control" id="f-linkedin" name="linkedin" type="url" inputmode="url" maxlength="300" placeholder="https://www.linkedin.com/in/nama-anda" autocomplete="url"></div>
+                        <div class="input-icon"><span data-icon="linkedin" data-icon-size="18"></span><input class="field__control" id="f-linkedin" name="linkedin" type="url" inputmode="url" maxlength="300" placeholder="https://linkedin.com/in/…" autocomplete="url"></div>
                       </div>
                     </div>
                   </fieldset>

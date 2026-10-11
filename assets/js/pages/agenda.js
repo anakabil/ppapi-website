@@ -4,7 +4,10 @@
    • Penyaring: Akan Datang | Telah Berlangsung, jenis kegiatan, mode
      pelaksanaan — tersinkron ke ?tab=&jenis=&mode= (history.replaceState).
    • Daftar dikelompokkan per bulan; detail lewat PPAPI.ui.modal
-     (tautan langsung: agenda.html?id=<id>).
+     (tautan langsung: agenda.html?id=<id> — detail dibuka tanpa menggulir
+     halaman; baris agenda dituju setelah detail ditutup).
+   • Sebelum data dimuat, kerangka jadwal (bentuk dari data bawaan) memesan
+     ruang daftar agar bagian di bawahnya tidak terdorong (CLS).
    • "Tambahkan ke Kalender": berkas .ics (RFC 5545) dibuat di peramban,
      waktu dalam zona Asia/Jakarta (WIB; WITA/WIT dikenali bila tertulis).
    • Agenda dibaca melalui PPAPI.store.content.list('agenda'): data bawaan
@@ -24,12 +27,253 @@
     WIT: { id: 'Asia/Jayapura', off: 9 }
   };
 
-  PPAPI.onReady(async function () {
-    var U = PPAPI.util, h = U.h, ui = PPAPI.ui, icon = PPAPI.icon;
-    var data = PPAPI.data || {};
+  var U = PPAPI.util, h = U.h, icon = PPAPI.icon;
 
-    function pad2(n) { return (n < 10 ? '0' : '') + n; }
-    function today() { return U.parseDate(U.todayIso()); }
+  /* ==========================================================================
+     PEMBANTU BERSAMA — dipakai kerangka jadwal (sebelum data dimuat) dan
+     halaman (setelah PPAPI.onReady), sehingga markah keduanya identik.
+     ========================================================================== */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function today() { return U.parseDate(U.todayIso()); }
+
+  /* ---------- normalisasi data ---------- */
+  function toEvents(list) {
+    return (Array.isArray(list) ? list : []).filter(function (a) {
+      return a && a.id && a.judul && U.parseDate(a.mulai);
+    }).map(function (a) {
+      var s = U.parseDate(a.mulai), e = U.parseDate(a.selesai) || s;
+      if (e < s) e = s;
+      return { raw: a, id: String(a.id), start: s, end: e };
+    });
+  }
+  function isPast(ev) { return ev.end < today(); }
+  function isOngoing(ev) { var t = today(); return ev.start <= t && ev.end >= t; }
+  function byStartAsc(x, y) { return x.start - y.start || String(x.raw.judul).localeCompare(String(y.raw.judul)); }
+  function splitEvents(events) {
+    var up = events.filter(function (ev) { return !isPast(ev); }).sort(byStartAsc);
+    return { upcoming: up, past: events.filter(isPast).sort(function (x, y) { return y.start - x.start; }), next: up[0] || null };
+  }
+  function jenisOf(events) {
+    var present = {};
+    events.forEach(function (ev) { if (ev.raw.jenis) present[ev.raw.jenis] = 1; });
+    var list = JENIS_ORDER.filter(function (j) { return present[j]; });
+    Object.keys(present).sort().forEach(function (j) { if (list.indexOf(j) === -1) list.push(j); });
+    return list;
+  }
+  /* tab & penyaring dari alamat: ?tab=&jenis=&mode=; ?id= tanpa ?tab= memilih tab agenda itu */
+  function stateFromUrl(events, allJenis) {
+    var st = { tab: TAB_UP, jenis: '', mode: '' };
+    var tab = (U.qs('tab') || '').toLowerCase();
+    if (tab === TAB_PAST || tab === 'lalu' || tab === 'past') st.tab = TAB_PAST;
+    var j = (U.qs('jenis') || '').trim().toLowerCase();
+    allJenis.forEach(function (x) { if (x.toLowerCase() === j) st.jenis = x; });
+    var m = (U.qs('mode') || '').trim().toLowerCase();
+    MODES.forEach(function (x) { if (x.toLowerCase() === m) st.mode = x; });
+    var id = (U.qs('id') || '').trim(), ev = null;
+    for (var i = 0; id && i < events.length; i++) if (events[i].id === id) { ev = events[i]; break; }
+    if (ev && !U.qs('tab')) st.tab = isPast(ev) ? TAB_PAST : TAB_UP;
+    return st;
+  }
+  function matchesState(ev, st, ignoreJenis) {
+    if (st.mode && ev.raw.mode !== st.mode) return false;
+    if (!ignoreJenis && st.jenis && ev.raw.jenis !== st.jenis) return false;
+    return true;
+  }
+
+  /* ---------- waktu & zona ---------- */
+  function parseWaktu(w) {
+    var s = String(w || ''), re = /(\d{1,2})[.:](\d{2})/g, m, out = [];
+    while ((m = re.exec(s)) && out.length < 2) {
+      var hh = +m[1], mm = +m[2];
+      if (hh <= 23 && mm <= 59) out.push([hh, mm]);
+    }
+    var zone = /\bWITA\b/i.test(s) ? 'WITA' : (/\bWIT\b/i.test(s) ? 'WIT' : 'WIB');
+    var start = out[0] || null, end = out[1] || null;
+    if (start && end && (end[0] * 60 + end[1]) <= (start[0] * 60 + start[1])) end = null;
+    return { start: start, end: end, zone: zone, tz: ZONES[zone] };
+  }
+
+  /* ---------- format ---------- */
+  function weekday(d) { return (U.formatDate(d, { weekday: true }) || '').split(',')[0]; }
+  function dayCount(ev) { return Math.round((ev.end - ev.start) / 86400000) + 1; }
+  function dateLong(ev) {
+    var multi = ev.end > ev.start;
+    return multi
+      ? weekday(ev.start) + ' – ' + weekday(ev.end) + ', ' + U.formatDateRange(ev.raw.mulai, ev.raw.selesai)
+      : U.formatDate(ev.start, { weekday: true });
+  }
+  function daysLabel(ev) { var n = dayCount(ev); return n > 1 ? n + ' hari' : 'Satu hari'; }
+  function kuotaText(k) {
+    var n = Number(k);
+    return (k === null || k === undefined || k === '' || !isFinite(n) || n <= 0) ? 'Tidak dibatasi' : U.formatNumber(n) + ' peserta';
+  }
+  function statusInfo(ev) {
+    if (isOngoing(ev)) return { key: 'ongoing', label: 'Sedang berlangsung', rel: 'Sedang berlangsung hingga ' + U.formatDate(ev.end) };
+    if (isPast(ev)) return { key: 'past', label: 'Telah berlangsung', rel: 'Telah berlangsung ' + U.relativeTime(ev.raw.selesai || ev.raw.mulai) };
+    var d = U.daysUntil(ev.raw.mulai);
+    return { key: 'up', label: 'Akan datang', rel: d === 0 ? 'Dimulai hari ini' : 'Dimulai ' + U.relativeTime(ev.raw.mulai) };
+  }
+  function dateBlock(ev, extra) {
+    var multi = ev.end > ev.start, s = ev.start, e = ev.end;
+    var day = multi ? s.getDate() + '–' + e.getDate() : String(s.getDate());
+    var mon = U.MONTHS_SHORT[s.getMonth()] + (multi && e.getMonth() !== s.getMonth() ? '–' + U.MONTHS_SHORT[e.getMonth()] : '');
+    var yr = s.getFullYear() + (multi && e.getFullYear() !== s.getFullYear() ? '–' + e.getFullYear() : '');
+    return '<div class="date-block' + (multi ? ' date-block--range' : '') + (extra ? ' ' + extra : '') + '" aria-hidden="true">' +
+      '<span class="date-block__day">' + h(day) + '</span><span class="date-block__month">' + h(mon) + '</span><span class="date-block__year">' + h(yr) + '</span></div>';
+  }
+  function modeBadge(a) { return a.mode ? '<span class="badge badge--outline">' + h(a.mode) + '</span>' : ''; }
+
+  /* ---------- baris & kelompok bulan ----------
+     ph = true: salinan untuk kerangka — tanpa atribut id agar tidak bentrok
+     dengan daftar sebenarnya; pembungkusnya aria-hidden + inert. */
+  function rowHtml(ev, nextEv, ph) {
+    var a = ev.raw, past = isPast(ev), st = statusInfo(ev), isNext = nextEv && ev === nextEv;
+    var badge = st.key === 'ongoing' ? '<span class="badge badge--ok">Sedang berlangsung</span>'
+      : (isNext ? '<span class="badge badge--solid">Terdekat</span>' : '');
+    var multi = ev.end > ev.start;
+    var when = multi ? weekday(ev.start) + ' – ' + weekday(ev.end) + ' · ' + daysLabel(ev) : weekday(ev.start);
+    return '<article class="event-row agenda-row' + (past ? ' is-past' : '') + (isNext ? ' is-next' : '') + '"' + (ph ? '' : ' id="agenda-' + h(ev.id) + '"') + '>' +
+      dateBlock(ev, isNext ? 'date-block--dark' : '') +
+      '<div class="event-row__body">' +
+        '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + badge + U.contohBadge(a) + '</div>' +
+        '<h4 class="event-row__title"><a href="agenda.html?id=' + encodeURIComponent(ev.id) + '" data-agenda-open="' + h(ev.id) + '">' + h(a.judul) + '</a></h4>' +
+        '<p class="event-row__info">' +
+          '<span class="sr-only">' + h(dateLong(ev)) + '. </span>' +
+          '<span aria-hidden="true">' + icon('calendar', { size: 16 }) + h(when) + '</span>' +
+          (a.waktu ? '<span>' + icon('clock', { size: 16 }) + h(a.waktu) + '</span>' : '') +
+          (a.lokasi ? '<span>' + icon('map-pin', { size: 16 }) + h(a.lokasi) + '</span>' : '') +
+          '<span>' + icon('users', { size: 16 }) + 'Kuota ' + h(kuotaText(a.kuota).toLowerCase()) + '</span>' +
+        '</p>' +
+      '</div>' +
+      '<div class="event-row__aside">' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-agenda-open="' + h(ev.id) + '" aria-haspopup="dialog"><span>Detail</span><span class="sr-only"> ' + h(a.judul) + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 16 }) + '</button>' +
+        (past ? '' : '<button type="button" class="btn btn--link btn--sm agenda-row__ics" data-agenda-ics="' + h(ev.id) + '">' + icon('calendar', { size: 16 }) + '<span>Tambahkan ke Kalender</span><span class="sr-only"> — ' + h(a.judul) + '</span></button>') +
+      '</div>' +
+    '</article>';
+  }
+  function monthsHtml(list, nextEv, ph) {
+    var groups = [], map = {};
+    list.forEach(function (ev) {
+      var key = ev.start.getFullYear() + '-' + pad2(ev.start.getMonth() + 1);
+      if (!map[key]) { map[key] = { key: key, month: U.MONTHS[ev.start.getMonth()], year: ev.start.getFullYear(), items: [] }; groups.push(map[key]); }
+      map[key].items.push(ev);
+    });
+    return groups.map(function (g) {
+      var hid = ph ? '' : 'agenda-m-' + g.key;
+      return '<section class="agenda-month"' + (ph ? '' : ' aria-labelledby="' + hid + '"') + '>' +
+        '<header class="agenda-month__head">' +
+          '<h3 class="agenda-month__title"' + (ph ? '' : ' id="' + hid + '"') + '><span class="agenda-month__name">' + h(g.month) + '</span> <span class="agenda-month__year">' + g.year + '</span></h3>' +
+          '<p class="agenda-month__count">' + pad2(g.items.length) + ' agenda</p>' +
+        '</header>' +
+        '<div class="agenda-month__list">' + g.items.map(function (ev) { return rowHtml(ev, nextEv, ph); }).join('') + '</div>' +
+      '</section>';
+    }).join('');
+  }
+  /* counts (kerangka saja): jumlah per jenis agar lebar chip kerangka sama dengan chip jadi */
+  function chipsHtml(allJenis, ph, counts) {
+    return [''].concat(allJenis).map(function (j) {
+      var label = h(j || 'Semua');
+      var count = '<span class="chip__count"><span class="sr-only">(</span><span data-chip-n>' + ((counts && counts[j]) || 0) + '</span><span class="sr-only"> agenda)</span></span>';
+      return ph
+        ? '<span class="chip agenda-chip-ph"><span>' + label + '</span> ' + count + '</span>'
+        : '<button type="button" class="chip" data-jenis="' + h(j) + '" aria-pressed="false">' + label + ' ' + count + '</button>';
+    }).join('');
+  }
+
+  /* ==========================================================================
+     KERANGKA JADWAL (sebelum data dimuat)
+     Daftar sebenarnya baru dirender setelah PPAPI.onReady + store.content.list
+     (asinkron). Tanpa kerangka, #agenda-list kosong lalu tumbuh ±0,9–3 ribu px
+     dan mendorong pita tautan serta kaki halaman — pergeseran besar (CLS
+     0,5–1,0 terukur) bila halaman sudah berada pada posisi gulir tertentu,
+     mis. pemulihan gulir saat muat ulang atau kembali. Kerangka disusun dari
+     data bawaan (assets/data/agenda.js) dengan markah baris yang sama serta
+     tab/penyaring dari alamat, sehingga tingginya mengikuti daftar yang akan
+     tampil; teks diganti batang kerangka (agenda.css). Seluruhnya aria-hidden
+     + inert, lalu diganti oleh render().
+     ========================================================================== */
+  (function reserveSchedule() {
+    try {
+      var listEl = document.getElementById('agenda-list'), chipsEl = document.getElementById('agenda-chips');
+      if (!listEl) return;
+      var data = PPAPI.data || {};
+      var events = toEvents((Array.isArray(data.agenda) ? data.agenda : []).filter(function (x) { return x && !x.hidden; }));
+      if (!events.length) return;
+      var sp = splitEvents(events), allJenis = jenisOf(events), st = stateFromUrl(events, allJenis);
+      var pool = st.tab === TAB_PAST ? sp.past : sp.upcoming;
+      if (chipsEl && !chipsEl.children.length) {
+        var counts = {};
+        pool.forEach(function (ev) {
+          if (!matchesState(ev, st, true)) return;
+          counts[''] = (counts[''] || 0) + 1;
+          if (ev.raw.jenis) counts[ev.raw.jenis] = (counts[ev.raw.jenis] || 0) + 1;
+        });
+        chipsEl.innerHTML = chipsHtml(allJenis, true, counts);
+      }
+      var list = pool.filter(function (ev) { return matchesState(ev, st); });
+      if (!list.length) return;
+      listEl.innerHTML = '<p class="sr-only">Memuat jadwal kegiatan…</p>' +
+        '<div class="agenda-list__ph" aria-hidden="true" inert>' + monthsHtml(list, sp.next, true) + '</div>';
+    } catch (e) { /* kerangka hanya pelengkap: halaman tetap dirender oleh PPAPI.onReady */ }
+  })();
+
+  /* ==========================================================================
+     PEMULIHAN POSISI GULIR (muat ulang / kembali tanpa bfcache)
+     Pemulihan bawaan peramban berjalan pada tata letak awal — sebelum skrip
+     defer memasang kerangka dan sebelum kaki halaman disisipkan — sehingga
+     posisi terpotong ke dokumen yang belum lengkap, lalu jadwal yang terisi
+     tercatat menggeser konten yang sedang dilihat (CLS 0,5–1,0 terukur pada
+     desktop/tablet bila gerak dikurangi). Karena itu:
+     • posisi disimpan di history.state entri ini setelah guliran berhenti
+       (replaceState saat pagehide tidak ikut tersimpan pada muat ulang);
+     • scrollRestoration 'manual' dipasang hanya saat halaman ditinggalkan
+       (pagehide) — peramban membacanya pada pemuatan berikutnya entri ini —
+       dan dikembalikan ke 'auto' setelah pemuatan, sehingga selama halaman
+       terbuka navigasi #jangkar + Kembali tetap ditangani peramban;
+     • posisi dikembalikan setelah jadwal dirender dan huruf web siap (paling
+       lama 2,5 detik; pada muat ulang huruf biasanya sudah di cache) agar
+       pelipatan ulang judul saat huruf tiba tidak terjadi di area yang
+       dilihat — hanya bila pengguna belum menggulir, alamat tanpa
+       #fragmen, dan bukan tautan detail ?id=.
+     ========================================================================== */
+  var restoreY = null;
+  (function () {
+    try {
+      var H = window.history;
+      if (!('scrollRestoration' in H)) return;
+      var st = H.state, y = st && typeof st.agendaY === 'number' ? st.agendaY : 0;
+      if (y > 0 && !window.location.hash) restoreY = y;
+      var saveTimer = null;
+      var save = function () {
+        try { H.replaceState(Object.assign({}, H.state, { agendaY: Math.round(window.scrollY || 0) }), ''); } catch (e) { /* abaikan */ }
+      };
+      window.addEventListener('scroll', function () { clearTimeout(saveTimer); saveTimer = setTimeout(save, 250); }, { passive: true });
+      /* hanya mode: replaceState di dalam pagehide tidak tersimpan dan justru
+         membatalkan perubahan mode (teruji pada Chromium) */
+      window.addEventListener('pagehide', function () {
+        if (!window.location.hash) { try { H.scrollRestoration = 'manual'; } catch (e) { /* abaikan */ } }
+      });
+      window.addEventListener('pageshow', function (e) { if (e.persisted) autoRestoration(); });
+    } catch (e) { restoreY = null; }
+  })();
+  function autoRestoration() { try { window.history.scrollRestoration = 'auto'; } catch (e) { /* abaikan */ } }
+  function finishRestore(skip) {
+    var y = restoreY, done = false;
+    restoreY = null;
+    function release() {
+      if (document.readyState === 'complete') autoRestoration();
+      else window.addEventListener('load', autoRestoration, { once: true });
+    }
+    if (y === null || skip) { release(); return; }
+    function go() { if ((window.scrollY || 0) < 2) window.scrollTo(0, y); release(); }
+    function once() { if (done) return; done = true; window.requestAnimationFrame(function () { window.requestAnimationFrame(go); }); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(once, once); else once();
+    setTimeout(once, 2500);
+  }
+
+  PPAPI.onReady(async function () {
+    var ui = PPAPI.ui;
+    var data = PPAPI.data || {};
 
     /* ---------- data ----------
        Dibaca melalui PPAPI.store.content.list('agenda'): data bawaan (assets/data/agenda.js)
@@ -46,33 +290,12 @@
     var agendaData = await loadAgenda();
 
     /* ---------- normalisasi data ---------- */
-    var events = agendaData.filter(function (a) {
-      return a && a.id && a.judul && U.parseDate(a.mulai);
-    }).map(function (a) {
-      var s = U.parseDate(a.mulai), e = U.parseDate(a.selesai) || s;
-      if (e < s) e = s;
-      return { raw: a, id: String(a.id), start: s, end: e };
-    });
-    function isPast(ev) { return ev.end < today(); }
-    function isOngoing(ev) { var t = today(); return ev.start <= t && ev.end >= t; }
-    function byStartAsc(x, y) { return x.start - y.start || String(x.raw.judul).localeCompare(String(y.raw.judul)); }
-    var upcoming = events.filter(function (ev) { return !isPast(ev); }).sort(byStartAsc);
-    var past = events.filter(isPast).sort(function (x, y) { return y.start - x.start; });
-    var nextEv = upcoming[0] || null;
+    var events = toEvents(agendaData);
+    var split = splitEvents(events);
+    var upcoming = split.upcoming, past = split.past, nextEv = split.next;
     function findEv(id) { for (var i = 0; i < events.length; i++) if (events[i].id === id) return events[i]; return null; }
 
     /* ---------- waktu & zona ---------- */
-    function parseWaktu(w) {
-      var s = String(w || ''), re = /(\d{1,2})[.:](\d{2})/g, m, out = [];
-      while ((m = re.exec(s)) && out.length < 2) {
-        var hh = +m[1], mm = +m[2];
-        if (hh <= 23 && mm <= 59) out.push([hh, mm]);
-      }
-      var zone = /\bWITA\b/i.test(s) ? 'WITA' : (/\bWIT\b/i.test(s) ? 'WIT' : 'WIB');
-      var start = out[0] || null, end = out[1] || null;
-      if (start && end && (end[0] * 60 + end[1]) <= (start[0] * 60 + start[1])) end = null;
-      return { start: start, end: end, zone: zone, tz: ZONES[zone] };
-    }
     function instant(date, hm, off) {
       return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), hm[0] - off, hm[1]);
     }
@@ -85,39 +308,10 @@
       return instant(ev.end, t.end || [23, 59], t.tz.off);
     }
 
-    /* ---------- format ---------- */
-    function weekday(d) { return (U.formatDate(d, { weekday: true }) || '').split(',')[0]; }
-    function dayCount(ev) { return Math.round((ev.end - ev.start) / 86400000) + 1; }
-    function dateLong(ev) {
-      var multi = ev.end > ev.start;
-      return multi
-        ? weekday(ev.start) + ' – ' + weekday(ev.end) + ', ' + U.formatDateRange(ev.raw.mulai, ev.raw.selesai)
-        : U.formatDate(ev.start, { weekday: true });
-    }
-    function daysLabel(ev) { var n = dayCount(ev); return n > 1 ? n + ' hari' : 'Satu hari'; }
-    function kuotaText(k) {
-      var n = Number(k);
-      return (k === null || k === undefined || k === '' || !isFinite(n) || n <= 0) ? 'Tidak dibatasi' : U.formatNumber(n) + ' peserta';
-    }
-    function statusInfo(ev) {
-      if (isOngoing(ev)) return { key: 'ongoing', label: 'Sedang berlangsung', rel: 'Sedang berlangsung hingga ' + U.formatDate(ev.end) };
-      if (isPast(ev)) return { key: 'past', label: 'Telah berlangsung', rel: 'Telah berlangsung ' + U.relativeTime(ev.raw.selesai || ev.raw.mulai) };
-      var d = U.daysUntil(ev.raw.mulai);
-      return { key: 'up', label: 'Akan datang', rel: d === 0 ? 'Dimulai hari ini' : 'Dimulai ' + U.relativeTime(ev.raw.mulai) };
-    }
     function registerUrl(a) {
       var u = String(a.tautanDaftar || '').trim();
       return /^https?:\/\/[^\s]+$/i.test(u) ? u : '';
     }
-    function dateBlock(ev, extra) {
-      var multi = ev.end > ev.start, s = ev.start, e = ev.end;
-      var day = multi ? s.getDate() + '–' + e.getDate() : String(s.getDate());
-      var mon = U.MONTHS_SHORT[s.getMonth()] + (multi && e.getMonth() !== s.getMonth() ? '–' + U.MONTHS_SHORT[e.getMonth()] : '');
-      var yr = s.getFullYear() + (multi && e.getFullYear() !== s.getFullYear() ? '–' + e.getFullYear() : '');
-      return '<div class="date-block' + (multi ? ' date-block--range' : '') + (extra ? ' ' + extra : '') + '" aria-hidden="true">' +
-        '<span class="date-block__day">' + h(day) + '</span><span class="date-block__month">' + h(mon) + '</span><span class="date-block__year">' + h(yr) + '</span></div>';
-    }
-    function modeBadge(a) { return a.mode ? '<span class="badge badge--outline">' + h(a.mode) + '</span>' : ''; }
 
     /* ======================================================================
        HERO META
@@ -211,26 +405,8 @@
        ====================================================================== */
     var listEl = U.$('#agenda-list'), chipsEl = U.$('#agenda-chips'), countEl = U.$('#agenda-count');
     var tabsEl = U.$('#agenda-tabs'), modeEl = U.$('#agenda-mode'), resetBtn = U.$('#agenda-reset');
-    var allJenis = (function () {
-      var present = {};
-      events.forEach(function (ev) { if (ev.raw.jenis) present[ev.raw.jenis] = 1; });
-      var list = JENIS_ORDER.filter(function (j) { return present[j]; });
-      Object.keys(present).sort().forEach(function (j) { if (list.indexOf(j) === -1) list.push(j); });
-      return list;
-    })();
-
-    var state = { tab: TAB_UP, jenis: '', mode: '' };
-    (function readUrl() {
-      var tab = (U.qs('tab') || '').toLowerCase();
-      if (tab === TAB_PAST || tab === 'lalu' || tab === 'past') state.tab = TAB_PAST;
-      var j = (U.qs('jenis') || '').trim().toLowerCase();
-      allJenis.forEach(function (x) { if (x.toLowerCase() === j) state.jenis = x; });
-      var m = (U.qs('mode') || '').trim().toLowerCase();
-      MODES.forEach(function (x) { if (x.toLowerCase() === m) state.mode = x; });
-      var id = (U.qs('id') || '').trim();
-      var ev = id && findEv(id);
-      if (ev && !U.qs('tab')) state.tab = isPast(ev) ? TAB_PAST : TAB_UP;
-    })();
+    var allJenis = jenisOf(events);
+    var state = stateFromUrl(events, allJenis);
 
     function syncUrl() {
       try {
@@ -252,18 +428,11 @@
     }
 
     function pool() { return state.tab === TAB_PAST ? past : upcoming; }
-    function matches(ev, ignoreJenis) {
-      if (state.mode && ev.raw.mode !== state.mode) return false;
-      if (!ignoreJenis && state.jenis && ev.raw.jenis !== state.jenis) return false;
-      return true;
-    }
+    function matches(ev, ignoreJenis) { return matchesState(ev, state, ignoreJenis); }
 
-    /* chip jenis */
+    /* chip jenis (menggantikan chip kerangka) */
     if (chipsEl) {
-      chipsEl.innerHTML = [''].concat(allJenis).map(function (j) {
-        return '<button type="button" class="chip" data-jenis="' + h(j) + '" aria-pressed="false">' + h(j || 'Semua') +
-          ' <span class="chip__count"><span class="sr-only">(</span><span data-chip-n>0</span><span class="sr-only"> agenda)</span></span></button>';
-      }).join('');
+      chipsEl.innerHTML = chipsHtml(allJenis);
       chipsEl.addEventListener('click', function (e) {
         var c = e.target.closest('.chip');
         if (!c) return;
@@ -283,32 +452,6 @@
     });
     function resetFilters() { state.jenis = ''; state.mode = ''; render(); }
     if (resetBtn) resetBtn.addEventListener('click', resetFilters);
-
-    function rowHtml(ev) {
-      var a = ev.raw, past = isPast(ev), st = statusInfo(ev), isNext = nextEv && ev === nextEv;
-      var badge = st.key === 'ongoing' ? '<span class="badge badge--ok">Sedang berlangsung</span>'
-        : (isNext ? '<span class="badge badge--solid">Terdekat</span>' : '');
-      var multi = ev.end > ev.start;
-      var when = multi ? weekday(ev.start) + ' – ' + weekday(ev.end) + ' · ' + daysLabel(ev) : weekday(ev.start);
-      return '<article class="event-row agenda-row' + (past ? ' is-past' : '') + (isNext ? ' is-next' : '') + '" id="agenda-' + h(ev.id) + '">' +
-        dateBlock(ev, isNext ? 'date-block--dark' : '') +
-        '<div class="event-row__body">' +
-          '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + badge + U.contohBadge(a) + '</div>' +
-          '<h4 class="event-row__title"><a href="agenda.html?id=' + encodeURIComponent(ev.id) + '" data-agenda-open="' + h(ev.id) + '">' + h(a.judul) + '</a></h4>' +
-          '<p class="event-row__info">' +
-            '<span class="sr-only">' + h(dateLong(ev)) + '. </span>' +
-            '<span aria-hidden="true">' + icon('calendar', { size: 16 }) + h(when) + '</span>' +
-            (a.waktu ? '<span>' + icon('clock', { size: 16 }) + h(a.waktu) + '</span>' : '') +
-            (a.lokasi ? '<span>' + icon('map-pin', { size: 16 }) + h(a.lokasi) + '</span>' : '') +
-            '<span>' + icon('users', { size: 16 }) + 'Kuota ' + h(kuotaText(a.kuota).toLowerCase()) + '</span>' +
-          '</p>' +
-        '</div>' +
-        '<div class="event-row__aside">' +
-          '<button type="button" class="btn btn--ghost btn--sm" data-agenda-open="' + h(ev.id) + '" aria-haspopup="dialog"><span>Detail</span><span class="sr-only"> ' + h(a.judul) + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 16 }) + '</button>' +
-          (past ? '' : '<button type="button" class="btn btn--link btn--sm agenda-row__ics" data-agenda-ics="' + h(ev.id) + '">' + icon('calendar', { size: 16 }) + '<span>Tambahkan ke Kalender</span><span class="sr-only"> — ' + h(a.judul) + '</span></button>') +
-        '</div>' +
-      '</article>';
-    }
 
     function render() {
       var list = pool().filter(function (ev) { return matches(ev); });
@@ -362,21 +505,7 @@
           actionHtml: '<button type="button" class="btn btn--ghost btn--sm" data-agenda-reset><span>Hapus filter</span></button>'
         }) + '</div>';
       } else {
-        var groups = [], map = {};
-        list.forEach(function (ev) {
-          var key = ev.start.getFullYear() + '-' + pad2(ev.start.getMonth() + 1);
-          if (!map[key]) { map[key] = { key: key, month: U.MONTHS[ev.start.getMonth()], year: ev.start.getFullYear(), items: [] }; groups.push(map[key]); }
-          map[key].items.push(ev);
-        });
-        listEl.innerHTML = groups.map(function (g) {
-          return '<section class="agenda-month" aria-labelledby="agenda-m-' + g.key + '">' +
-            '<header class="agenda-month__head">' +
-              '<h3 class="agenda-month__title" id="agenda-m-' + g.key + '"><span class="agenda-month__name">' + h(g.month) + '</span> <span class="agenda-month__year">' + g.year + '</span></h3>' +
-              '<p class="agenda-month__count">' + pad2(g.items.length) + ' agenda</p>' +
-            '</header>' +
-            '<div class="agenda-month__list">' + g.items.map(rowHtml).join('') + '</div>' +
-          '</section>';
-        }).join('');
+        listEl.innerHTML = monthsHtml(list, nextEv);
       }
       listEl.classList.toggle('is-past-tab', state.tab === TAB_PAST);
       syncUrl();
@@ -465,7 +594,7 @@
             '<div class="agenda-modal__buttons">' + buttons + '</div>' +
           '</div>' +
         '</div>';
-      if (openModal) { try { openModal.close(); } catch (e) { /* abaikan */ } }
+      if (openModal) { replacing = true; try { openModal.close(); } catch (e) { /* abaikan */ } replacing = false; }
       openModal = ui.modal({
         eyebrow: (a.jenis || 'Agenda') + (past ? ' · Telah berlangsung' : ''),
         title: a.judul,
@@ -478,10 +607,42 @@
             if (b) { e.preventDefault(); downloadIcs(b.getAttribute('data-agenda-ics')); }
           });
         },
-        onClose: function () { openModal = null; setParam('id', ''); restoreMeta(); }
+        onClose: function () {
+          openModal = null; setParam('id', ''); restoreMeta();
+          if (opts && opts.deep && !replacing) revealRow(ev.id);
+        }
       });
       applyEventMeta(ev);
       if (!(opts && opts.keepUrl)) setParam('id', ev.id);
+    }
+    var replacing = false;   /* detail diganti detail lain: jangan menuju baris */
+
+    /* ======================================================================
+       TAUTAN LANGSUNG (?id=…)
+       Detail dibuka seketika tanpa menggulir halaman di belakangnya.
+       Sebelumnya baris digulir ke tengah layar tepat setelah daftar dirender —
+       saat tata letak dan huruf web belum tenang — sehingga seluruh jadwal
+       bergeser di bawah modal (CLS 0,84–1,0 bila gerak dikurangi; 0,04–0,12
+       saat huruf web terlambat). Baris agenda kini dituju setelah detail
+       ditutup: guliran mengikuti tindakan pengguna, baris disorot sejenak, dan
+       fokus berpindah ke judulnya agar pengguna papan ketik melanjutkan dari
+       agenda yang sama (tanpa pemicu, fokus semula hanyalah <body>).
+       ====================================================================== */
+    var targetTimer = null;
+    function revealRow(id) {
+      var row = document.getElementById('agenda-' + id);
+      if (!row) return;   /* tersaring oleh ?jenis=/?mode= pada alamat: posisi halaman dibiarkan */
+      var link = U.$('.event-row__title a', row);
+      if (link) { try { link.focus({ preventScroll: true }); } catch (e) { link.focus(); } }
+      var r = row.getBoundingClientRect(), hdr = U.$('.site-header');
+      var top = hdr ? Math.max(0, hdr.getBoundingClientRect().bottom) : 0;
+      if (r.top < top || r.bottom > (window.innerHeight || document.documentElement.clientHeight)) {
+        var reduced = !!(PPAPI.motion && PPAPI.motion.prefersReduced());
+        try { row.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) { row.scrollIntoView(); }
+      }
+      row.classList.add('is-target');
+      clearTimeout(targetTimer);
+      targetTimer = setTimeout(function () { row.classList.remove('is-target'); }, 2600);
     }
 
     /* ======================================================================
@@ -604,22 +765,17 @@
     renderNext();
     render();
 
-    /* tautan langsung ?id=… → gulir ke baris lalu buka detail */
-    var deepId = (U.qs('id') || '').trim();
+    /* tautan langsung ?id=… → buka detail; baris dituju setelah detail ditutup (lihat revealRow) */
+    var deepId = (U.qs('id') || '').trim(), deepEv = deepId ? findEv(deepId) : null;
     if (deepId) {
-      var target = findEv(deepId);
-      if (!target) {
+      if (!deepEv) {
         setParam('id', '');
         ui.toast('Agenda yang Anda cari tidak ditemukan. Silakan pilih dari jadwal di bawah ini.', { type: 'info' });
       } else {
-        var row = document.getElementById('agenda-' + deepId);
-        if (row) {
-          row.classList.add('is-target');
-          row.scrollIntoView({ block: 'center' });
-          setTimeout(function () { row.classList.remove('is-target'); }, 2600);
-        }
-        openDetail(deepId, { keepUrl: true });
+        openDetail(deepId, { keepUrl: true, deep: true });
       }
     }
+    /* posisi gulir tersimpan dikembalikan setelah jadwal terisi; tidak untuk tautan detail */
+    finishRestore(!!deepEv);
   });
 })();

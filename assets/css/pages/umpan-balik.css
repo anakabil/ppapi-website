@@ -9,6 +9,11 @@ body[data-page="umpan-balik"] .ub-hero h1 { max-width: 22ch; }
 
 /* ---------- Layout utama ---------- */
 body[data-page="umpan-balik"] .ub-layout { gap: clamp(36px, 5vw, 72px); }
+/* 1024–1279px: the form column beside the secretariat card is ~445 px — email and phone stack so a full
+   number ("812-3456-7890" after the +62 prefix) is never clipped */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  body[data-page="umpan-balik"] .ub-form .form__row--2 { grid-template-columns: minmax(0, 1fr); }
+}
 body[data-page="umpan-balik"] .ub-opt-word { font-style: italic; }
 
 /* ---------- Kartu formulir ---------- */

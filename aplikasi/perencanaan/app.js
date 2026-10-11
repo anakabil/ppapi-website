@@ -21,6 +21,10 @@
      sesudah, sumber, dan contoh numerik: aplikasi/KOREKSI-PERHITUNGAN.md.
      Nilai acuan diuji oleh devtools/flows/aplikasi-perencanaan-koreksi.mjs
      terhadap perhitungan independen devtools/flows/aplikasi-perencanaan-ref.mjs.
+   • v2.4.0 (BETA): revisi hasil tinjauan independen — lentur transom/ledger, 50 % beban
+     layan pada lift berpapan berikutnya (BS EN 12811-1 §6.2.9.2 a)3), pagar ujung, migrasi
+     material v2.2.0, kelas Tahap 2 ditegakkan, tag/PDF mengikuti analisis, jsPDF dengan SRI.
+     Rincian: aplikasi/KOREKSI-PERHITUNGAN.md §19; uji: devtools/flows/aplikasi-perencanaan-temuan.mjs.
    Skrip ini klasik (bukan modul): fungsi global dipakai oleh atribut onclick.
    ========================================================================== */
 
@@ -112,8 +116,9 @@ function cleanMats(a){
 }
 function cleanAnalisis(a){
   if(!isObj(a)) return null;
-  const vals={}; if(isObj(a.vals)) AN_IDS.forEach(function(id){ if(a.vals[id]!=null) vals[id]=str(a.vals[id],40); });
-  return {vals:vals, mats:cleanMats(a.mats)};
+  const vals={}; if(isObj(a.vals)) AN_IDS.forEach(function(id){ if(a.vals[id]!=null) vals[id]=str(a.vals[id], id==='an-kurva-why'?300:40); });
+  const src=['auto','user','legacy'].indexOf(a.matSrc)>=0 ? a.matSrc : null;
+  return {vals:vals, mats:cleanMats(a.mats), matSrc:src, matGeom:src?str(a.matGeom,160):''};
 }
 
 const state = { answers:{}, photos:{}, naNote:{} };
@@ -133,6 +138,18 @@ function setNaNote(key,v){ state.naNote[key]=str(v,300); if(!state.naNote[key].t
 /* rincian material Tahap 5. v2.3.0: nilai bawaan = estimasi dari geometri Data Proyek (materialRows),
    menggantikan 8 komponen tetap aplikasi lama yang tidak sesuai dengan geometri bawaan (E2). */
 let matRows = [];
+/* v2.4.0: asal rincian material — 'auto' (estimasi geometri, diperbarui otomatis saat geometri berubah),
+   'user' (disunting/dikonfirmasi pengguna untuk geometri matMeta.geom), 'legacy' (data versi lama, belum dicocokkan) */
+let matMeta = {src:'auto', geom:''};
+/* 8 komponen bawaan v2.2.0 (393 kg) yang ikut tersimpan di data lama walaupun tidak pernah disunting */
+const MAT_V22=[['Standard / tiang (3 m)',6,12],['Ledger (2,5 m)',8,10],['Transom (1,2 m)',6,5],['Bracing (±3 m)',4,12],['Coupler / klem',40,1.2],['Base plate / jack base',6,2.5],['Papan / plank',5,16],['Toe board',4,5]];
+function isMatV22(rows){ return Array.isArray(rows) && rows.length===MAT_V22.length && rows.every(function(r,i){ const m=MAT_V22[i]; return !!r && String(r.n).trim()===m[0] && Number(r.q)===m[1] && Number(r.w)===m[2]; }); }
+function sameRows(a,b){ return a.length===b.length && a.every(function(r,i){ return String(r.n)===String(b[i].n) && Number(r.q)===Number(b[i].q) && Math.abs(Number(r.w)-Number(b[i].w))<1e-9; }); }
+function matKg(rows){ return rows.reduce(function(acc,r){ return acc+(Number(r.q)||0)*(Number(r.w)||0); },0); }
+function matStatus(G){ const key=matGeomKey(G); return {src:matMeta.src, legacy:matMeta.src==='legacy', stale:matMeta.src!=='legacy' && matMeta.geom!==key, key:key}; }
+/* rincian otomatis mengikuti geometri; rincian yang disunting/lama tidak diubah (ditandai di Tahap 5 dan CEK) */
+function syncMaterials(){ const G=geom(), k=matGeomKey(G); if(matMeta.src==='auto' && matMeta.geom!==k){ matRows=materialRows(G); matMeta.geom=k; return true; } return false; }
+function setMatAuto(){ const G=geom(); matRows=materialRows(G); matMeta={src:'auto', geom:matGeomKey(G)}; }
 const VERDICT = {
   'HIJAU':{c:'#17824a',label:'HIJAU — Aman Digunakan',short:'AMAN',desc:'Seluruh item sesuai. Perancah layak dan aman digunakan.'},
   'KUNING':{c:'#e0a200',label:'KUNING — Bersyarat',short:'BERSYARAT',desc:'Item kritis lolos, namun terdapat temuan non-kritis. Perbaiki sebelum penggunaan penuh.'},
@@ -253,7 +270,15 @@ function updateScores(){
   const fill=document.getElementById('prog-fill'); fill.style.width=pct+'%';
   fill.style.background = st.status==='MERAH'?VERDICT.MERAH.c : st.status==='KUNING'?VERDICT.KUNING.c : st.status==='HIJAU'?VERDICT.HIJAU.c : 'var(--hz)';
   setChip('prog-verdict',st.status);
-  setChip('head-verdict',st.status);
+  updateHeadChip();
+}
+/* chip status di bilah menu = status akhir (checklist + analisis struktur indikatif), sama dengan tag dan PDF */
+function updateHeadChip(){
+  const el=document.getElementById('head-verdict'); if(!el) return;
+  const F=finalView();
+  setChip('head-verdict',F.status);
+  if(F.hold) el.textContent='KUNING · DESAIN';
+  el.title='Status akhir — checklist inspeksi: '+F.st.status+'; analisis struktur indikatif: '+(F.A.ok?'lolos':'perlu review');
 }
 function setChip(id,status){
   const el=document.getElementById(id); if(!el)return;
@@ -263,19 +288,35 @@ function setChip(id,status){
   else { el.style.background=v.c; el.style.color=inkOn(v.c); }
 }
 
+/* ---------- status akhir: checklist inspeksi + analisis struktur indikatif (v2.4.0) ---------- */
+/* Tag, ringkasan, banner Data Proyek, dan PDF tidak boleh menyatakan "aman digunakan" bila analisis
+   struktur indikatif berstatus PERLU REVIEW: checklist HIJAU/KUNING + analisis PERLU REVIEW →
+   KUNING "menunggu verifikasi desain". Chip progres checklist tetap menunjukkan hasil checklist saja. */
+function finalView(){
+  const st=stats(), A=analisisData();
+  const nCek=A.checks.filter(function(c){return !c.ok;}).length;
+  let status=st.status, hold=false;
+  if((status==='HIJAU'||status==='KUNING') && !A.ok){ status='KUNING'; hold=true; }
+  const v=VERDICT[status];
+  const label=hold ? 'KUNING — Menunggu Verifikasi Desain' : v.label;
+  const desc=hold ? 'Checklist inspeksi '+(st.status==='HIJAU'?'terpenuhi':'berstatus KUNING')+', tetapi analisis struktur indikatif (Beta) berstatus PERLU REVIEW: '+nCek+' pemeriksaan CEK. Jangan dibebani sesuai kelas beban sampai desain diverifikasi ahli perancah yang kompeten.' : v.desc;
+  return {status:status, hold:hold, st:st, A:A, nCek:nCek, v:v, label:label, desc:desc, c:v.c};
+}
+function anLine(F){ return 'Analisis struktur indikatif (Beta): '+(F.A.ok?'LOLOS PEMERIKSAAN INDIKATIF':'PERLU REVIEW — '+F.nCek+' pemeriksaan CEK'); }
+
 /* ---------- proyek banner ---------- */
 function renderProyekBanner(){
-  const st=stats(), v=VERDICT[st.status];
+  const F=finalView(), st=F.st;
   document.getElementById('banner-proyek').innerHTML =
-    `<div class="verdict-banner" style="background:${v.c};color:${inkOn(v.c)}">
-       <div class="vb-icon">${st.status==='HIJAU'?'✓':st.status==='MERAH'?'✕':st.status==='KUNING'?'!':'…'}</div>
-       <div class="vb-txt"><h2>${v.label}</h2><p>${st.ans}/${st.total} item terjawab · ${st.critFail} item kritis gagal. ${v.desc}</p></div>
+    `<div class="verdict-banner" style="background:${F.c};color:${inkOn(F.c)}">
+       <div class="vb-icon">${F.status==='HIJAU'?'✓':F.status==='MERAH'?'✕':F.status==='KUNING'?'!':'…'}</div>
+       <div class="vb-txt"><h2>${F.label}</h2><p>${st.ans}/${st.total} item terjawab · ${st.critFail} item kritis gagal. ${F.desc}</p></div>
      </div>`;
 }
 
 /* ---------- ringkasan ---------- */
 function renderRingkasan(){
-  const st=stats(), v=VERDICT[st.status];
+  const F=finalView(), st=F.st;
   const rows = st.sec.map(s=>{
     const app_=s.T-s.X, pct = app_>0? Math.round(s.O/app_*100)+'%' : 'N/A';   /* skor = sesuai ÷ butir yang berlaku (N/A tidak dihitung) */
     const col = s.CF>0?'var(--red)':s.N>0?'var(--amber)':s.A<s.T?'var(--mute)':'var(--green)';
@@ -292,15 +333,17 @@ function renderRingkasan(){
       naList += `<div class="find na-row"><div class="fc">${s.code} N/A</div><div class="ft">${it.t}<span class="na-why">${naNoteOf(si,ii)?'Alasan: '+esc(naNoteOf(si,ii)):'Alasan belum diisi — butir dianggap belum dinilai.'}</span></div></div>`;
   }));
   if(!finds) finds = `<div class="empty">Tidak ada temuan "Tidak Sesuai". ✓</div>`;
-  const rec = st.status==='MERAH' ? 'Perbaiki seluruh item kritis yang gagal, lalu lakukan inspeksi ulang sebelum perancah boleh digunakan. Pasang tag MERAH (Do Not Use).'
-            : st.status==='KUNING' ? 'Tindak lanjuti temuan non-kritis. Penggunaan terbatas dapat dipertimbangkan oleh supervisor; pasang tag KUNING (Incomplete) hingga tuntas.'
-            : st.status==='HIJAU' ? 'Perancah memenuhi seluruh kriteria. Pasang tag HIJAU dan catat jadwal pemeriksaan ulang ≤ 7 hari.'
+  const rec = F.status==='MERAH' ? 'Perbaiki seluruh item kritis yang gagal, lalu lakukan inspeksi ulang sebelum perancah boleh digunakan. Pasang tag MERAH (Do Not Use).'
+            : F.hold ? 'Checklist inspeksi belum cukup untuk menyatakan perancah aman: analisis struktur indikatif masih berstatus PERLU REVIEW. Tutup setiap butir CEK di Tahap 3 dan Tahap 6 atau minta verifikasi desain oleh ahli perancah yang kompeten; selama itu pasang tag KUNING (menunggu verifikasi desain).'
+            : F.status==='KUNING' ? 'Tindak lanjuti temuan non-kritis. Penggunaan terbatas dapat dipertimbangkan oleh supervisor; pasang tag KUNING (Incomplete) hingga tuntas.'
+            : F.status==='HIJAU' ? 'Perancah memenuhi seluruh kriteria checklist dan pemeriksaan indikatif. Pasang tag HIJAU dan catat jadwal pemeriksaan ulang ≤ 7 hari. Hasil analisis bersifat indikatif (Beta) dan bukan sertifikasi desain.'
             : 'Lengkapi seluruh item pada tab Checklist untuk memperoleh verdict akhir dan rekomendasi.';
   document.getElementById('ringkasan-root').innerHTML = `
-    <div class="verdict-banner" style="background:${v.c};color:${inkOn(v.c)}">
-      <div class="vb-icon">${st.status==='HIJAU'?'✓':st.status==='MERAH'?'✕':st.status==='KUNING'?'!':'…'}</div>
-      <div class="vb-txt"><h2>${v.label}</h2><p>${v.desc}</p></div>
+    <div class="verdict-banner" style="background:${F.c};color:${inkOn(F.c)}">
+      <div class="vb-icon">${F.status==='HIJAU'?'✓':F.status==='MERAH'?'✕':F.status==='KUNING'?'!':'…'}</div>
+      <div class="vb-txt"><h2>${F.label}</h2><p>${F.desc}</p></div>
     </div>
+    <p class="verdict-basis"><span>Checklist inspeksi: <b>${st.status}</b></span><span>${anLine(F)}</span></p>
     <div class="stats">
       <div class="stat"><div class="n">${st.total}</div><div class="l">Total Item</div></div>
       <div class="stat"><div class="n" style="color:var(--green)">${st.ok}</div><div class="l">Sesuai</div></div>
@@ -325,19 +368,22 @@ function renderRingkasan(){
 /* ---------- tag ---------- */
 function val(id){return (document.getElementById(id)||{}).value||'';}
 function tagHTML(){
-  const st=stats(), v=VERDICT[st.status];
+  const F=finalView(), st=F.st, A=F.A, status=F.status;
   const tgl = val('f-tanggal')?localDate(val('f-tanggal')).toLocaleDateString('id-ID'):'—';
   const next = (()=>{ const d=val('f-tanggal'); if(!d)return '—'; const dt=localDate(d); dt.setDate(dt.getDate()+7); return dt.toLocaleDateString('id-ID'); })();
-  const D=dutyInfo(); const kgBay=Math.round(D.kn*1000/9.80665);
+  const D=A.d; const kgBay=Math.round(D.kn*1000/9.80665);
   const tagno = esc(val('f-tag')||'SC-—');
-  const sub = st.status==='HIJAU'?'SAFE FOR USE':st.status==='KUNING'?'USE WITH RESTRICTION':st.status==='MERAH'?'DO NOT USE':'AWAITING INSPECTION';
-  const subID = st.status==='HIJAU'?'AMAN DIGUNAKAN':st.status==='KUNING'?'PENGGUNAAN BERSYARAT':st.status==='MERAH'?'DILARANG DIGUNAKAN':'MENUNGGU INSPEKSI';
-  const icon = st.status==='HIJAU'?'✓':st.status==='MERAH'?'✕':st.status==='KUNING'?'!':'…';
-  const restrict = st.status==='KUNING'?'Perancah dimodifikasi / belum lengkap. Wajib tie-off 100%. Lengkapi sebelum penggunaan penuh.':st.status==='MERAH'?'Perancah TIDAK AMAN. Dilarang dinaiki sampai diperbaiki dan diperiksa ulang.':st.status==='HIJAU'?'Perancah lengkap dan aman untuk akses sesuai kelas beban.':'Lengkapi inspeksi untuk menentukan status.';
+  const sub = F.hold?'AWAITING DESIGN VERIFICATION':status==='HIJAU'?'SAFE FOR USE':status==='KUNING'?'USE WITH RESTRICTION':status==='MERAH'?'DO NOT USE':'AWAITING INSPECTION';
+  const subID = F.hold?'MENUNGGU VERIFIKASI DESAIN':status==='HIJAU'?'AMAN DIGUNAKAN':status==='KUNING'?'PENGGUNAAN BERSYARAT':status==='MERAH'?'DILARANG DIGUNAKAN':'MENUNGGU INSPEKSI';
+  const icon = status==='HIJAU'?'✓':status==='MERAH'?'✕':status==='KUNING'?'!':'…';
+  const restrict = F.hold?'Analisis struktur indikatif belum terpenuhi ('+F.nCek+' pemeriksaan CEK). Jangan dibebani sesuai kelas beban sampai desain diverifikasi ahli perancah yang kompeten.'+(st.status==='KUNING'?' Tindak lanjuti juga temuan non-kritis checklist.':'')
+    :status==='KUNING'?'Perancah dimodifikasi / belum lengkap. Wajib tie-off 100%. Lengkapi sebelum penggunaan penuh.':status==='MERAH'?'Perancah TIDAK AMAN. Dilarang dinaiki sampai diperbaiki dan diperiksa ulang.':status==='HIJAU'?'Perancah lengkap dan aman untuk akses sesuai kelas beban.':'Lengkapi inspeksi untuk menentukan status.';
+  const recHigher = A.L2.kn > D.kn + 1e-9;
+  const anTxt = A.ok?'Lolos indikatif (Beta)':'Perlu review (Beta)';
   const bars='<i></i>'.repeat(26);
   const front=`<div class="tag-card">
     <div class="tag-logobar"><img src="${LOGO_D}" alt="PPAPI"></div><div class="tag-sub">SCAFFOLD TAG · ${tagno}</div>
-    <div class="tag-band" style="background:${v.c};color:${inkOn(v.c)}"><div class="tb-ic">${icon}</div><div class="tb-st">${subID}</div><div class="tb-sub">${sub}</div></div>
+    <div class="tag-band" style="background:${F.c};color:${inkOn(F.c)}"><div class="tb-ic">${icon}</div><div class="tb-st">${subID}</div><div class="tb-sub">${sub}</div></div>
     <div class="tag-perf"></div>
     <div class="tag-body2">
       <div class="tag-row"><span class="k">Proyek</span><span class="v">${esc(val('f-proyek'))||'—'}</span></div>
@@ -346,7 +392,9 @@ function tagHTML(){
       <div class="tag-row"><span class="k">Model</span><span class="v">${modelName(getModel())}</span></div>
       <div class="tag-row"><span class="k">Tinggi</span><span class="v">${val('f-tinggi')?esc(val('f-tinggi'))+' m':'—'}</span></div>
       <div class="tag-row"><span class="k">Kelas beban</span><span class="v">${D.en} · ${D.kn.toFixed(1).replace('.',',')} kN/bay (≈${kgBay} kg)</span></div>
+      ${recHigher?`<div class="tag-row tag-flag"><span class="k">Rekomendasi Tahap 2</span><span class="v">${A.L2.cls} · ${nf(A.L2.kn,1)} kN/bay — lebih tinggi</span></div>`:''}
       <div class="tag-duty"><span class="${D.code==='RINGAN'?'on':''}">Light</span><span class="${D.code==='SEDANG'?'on':''}">Medium</span><span class="${D.code==='BERAT'?'on':''}">Heavy</span><span class="${D.code==='KHUSUS'?'on':''}">Special</span></div>
+      <div class="tag-row"><span class="k">Analisis struktur</span><span class="v">${anTxt}</span></div>
       <div class="tag-row"><span class="k">Didirikan</span><span class="v">${tgl}</span></div>
       <div class="tag-row"><span class="k">Inspektor</span><span class="v">${esc(val('f-inspektor'))||'—'}</span></div>
       <div class="tag-row"><span class="k">Periksa ulang</span><span class="v">${next}</span></div>
@@ -362,14 +410,15 @@ function tagHTML(){
     <div class="tag-body2">
       <div class="tag-state">Perancah ini telah diperiksa oleh personel yang berkompeten dan dinyatakan <b>${subID.toLowerCase()}</b> pada tanggal pemeriksaan terakhir. Catatan: ${restrict}</div>
       <table class="tag-rec"><thead><tr><th>Tanggal</th><th>Inspektor</th><th>Hasil</th></tr></thead><tbody>
-        <tr><td>${tgl}</td><td>${esc(val('f-inspektor'))||'—'}</td><td>${st.status}</td></tr>
+        <tr><td>${tgl}</td><td>${esc(val('f-inspektor'))||'—'}</td><td>${status}${F.hold?' (desain)':''}</td></tr>
         <tr><td>&nbsp;</td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td></tr>
         <tr><td>&nbsp;</td><td></td><td></td></tr>
       </tbody></table>
       <div class="tag-row" style="margin-top:8px"><span class="k">Periksa ulang</span><span class="v">≤ 7 hari / cuaca ekstrem</span></div>
-      <div class="tag-row"><span class="k">Acuan</span><span class="v">BS EN 12811-1 · BS EN 74-1 · NASC TG20/SG4</span></div>
+      <div class="tag-row"><span class="k">Acuan perhitungan</span><span class="v">BS EN 12811-1 · BS EN 74-1 · NASC TG20:21</span></div>
+      <div class="tag-beta">Analisis struktur aplikasi PPAPI Scaffold v${APP_VERSION} (Beta) bersifat indikatif dan bukan sertifikasi desain.</div>
     </div>
     <div class="tag-warn">Melepas tag tanpa wewenang dapat membahayakan keselamatan dan melanggar prosedur K3.</div>
     <div class="tag-foot">PPAPI Scaffold · Tagging Perancah</div>
@@ -463,14 +512,20 @@ function pdfKV(doc,label,value,x,y,labelW,cellW){
   if(doc.getTextWidth(v)>avail){ while(v.length>1 && doc.getTextWidth(v+'...')>avail) v=v.slice(0,-1); v=v.replace(/\s+$/,'')+'...'; }
   doc.text(v,x+lw,y);
 }
-/* Perbaikan B15: pustaka jsPDF dimuat saat laporan dibuat (bukan memblokir setiap kunjungan) */
+/* Perbaikan B15: pustaka jsPDF dimuat saat laporan dibuat (bukan memblokir setiap kunjungan).
+   Keamanan: halaman ini satu origin dengan portal (sesi Firebase, konsol admin, localStorage), sehingga
+   skrip CDN wajib memakai Subresource Integrity — berkas yang berubah satu bita pun ditolak peramban.
+   Hash SHA-512 jspdf.umd.min.js 2.5.1 (cdnjs) — dicatat juga di aplikasi/CATATAN.md §7. */
+const JSPDF_SRC='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const JSPDF_SRI='sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==';
 let jspdfLoading=null;
 function ensureJsPDF(){
   if(window.jspdf&&window.jspdf.jsPDF) return Promise.resolve();
   if(jspdfLoading) return jspdfLoading;
   jspdfLoading=new Promise(function(res,rej){
     const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.integrity=JSPDF_SRI; s.crossOrigin='anonymous'; s.referrerPolicy='no-referrer';
+    s.src=JSPDF_SRC;
     s.onload=function(){ (window.jspdf&&window.jspdf.jsPDF)?res():rej(new Error('jspdf')); };
     s.onerror=function(){ jspdfLoading=null; rej(new Error('jspdf')); };
     document.head.appendChild(s);
@@ -517,7 +572,7 @@ async function buildPDFNow(){
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'mm',format:'a4'});
-  const st=stats(), v=VERDICT[st.status];
+  const FV=finalView(), st=FV.st, v=FV.v;
   const W=210, M=14; let y=0;
   const rgb=(hex)=>{const n=parseInt(hex.slice(1),16);return [n>>16,(n>>8)&255,n&255];};
   // hazard bar
@@ -556,13 +611,18 @@ async function buildPDFNow(){
     doc.text(cl, M+20, y);
     y += cl.length*4.2 + 4;
   }
-  // verdict banner
-  const [vr,vg,vb]=rgb(v.c); doc.setFillColor(vr,vg,vb); doc.roundedRect(M,y,W-2*M,18,2,2,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
-  doc.text('VERDICT: '+st.status,M+5,y+8);
-  doc.setFontSize(8.5); doc.setFont('helvetica','normal');
-  doc.text(doc.splitTextToSize(v.desc,W-2*M-10),M+5,y+13);
-  y+=24;
+  // verdict banner — status akhir = checklist + analisis struktur indikatif (v2.4.0)
+  const vDesc=doc.splitTextToSize(pdfSan(FV.desc),W-2*M-10);
+  const vH=18+Math.max(0,vDesc.length-1)*3.8+4.4;
+  const [vr,vg,vb]=rgb(v.c); doc.setFillColor(vr,vg,vb); doc.roundedRect(M,y,W-2*M,vH,2,2,'F');
+  if(inkOn(v.c)==='#fff') doc.setTextColor(255,255,255); else doc.setTextColor(27,31,36);
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(FV.hold?'STATUS: KUNING - MENUNGGU VERIFIKASI DESAIN':'VERDICT: '+FV.status,M+5,y+7.5);
+  doc.setFontSize(8.2); doc.setFont('helvetica','bold');
+  doc.text(pdfSan('Checklist inspeksi: '+st.status+'  |  '+anLine(FV)),M+5,y+12.4);
+  doc.setFont('helvetica','normal');
+  doc.text(vDesc,M+5,y+16.6);
+  y+=vH+6;
   // stats line
   doc.setTextColor(27,31,36); doc.setFontSize(9); doc.setFont('helvetica','bold');
   doc.text(`Total ${st.total}  |  Sesuai ${st.ok}  |  Tidak Sesuai ${st.no}  |  N/A ${st.na}  |  Kritis gagal ${st.critFail}/${st.crit}`,M,y);
@@ -618,18 +678,26 @@ async function buildPDFNow(){
     ['Geometri', AG.nb+' bay x '+nf(AG.L,2)+' m; lebar '+nf(AG.B,2)+' m; '+AG.nl+' lift x '+nf(AG.h,2)+' m'],
     ['Kelas beban', A.d.en+' - '+nf(A.d.kn,1)+' kN/bay ('+nf(A.kgBay)+' kg)'],
     ['Lift berpapan / kerja', AG.nbd+' lift berpapan / '+AG.nwork+' platform kerja'],
-    ['Bay terberat (Tahap 2)', nf(L2.bay)+' kg -> '+L2.cls],
-    ['Pipa', AG.tubeLabel+', fy '+FY_TUBE+' N/mm2'],
+    ['Bay terberat (Tahap 2)', nf(L2.bay)+' kg -> '+L2.cls+' ('+nf(L2.kn,1)+' kN/bay)'+(L2.kn>A.d.kn+1e-9?' - LEBIH TINGGI DARI KELAS DIPILIH':'')],
+    ['Beban terpusat rencana', fkN(A.pt)+' kN'+(A.ptFromLL?' (Tahap 2, '+nf(L2.ptKg)+' kg)':' (kelas)')],
+    ['Pipa', AG.tubeLabel+(AG.tubeUnset?' (BELUM DIPILIH)':'')+', fy '+FY_TUBE+' N/mm2'],
+    ['Transom antara', AG.ntr?'1 per bay (papan bentang 1/2 bay)':'tidak ada (papan bentang 1 bay)'],
+    ['Beban hidup', AG.nb+' bay x '+nf(A.model==='independent'?AG.nlive:AG.nwork,1)+' level x '+nf(A.kgBay)+' kg'+(A.model==='independent'&&AG.half?' (termasuk 50% satu lift berpapan)':'')],
     ['Beban kerja total', nf(A.total)+' kg (mati '+nf(A.dead)+' + hidup '+nf(A.live)+')'],
     ['Dasar keamanan', 'tegangan izin: kapasitas / (1,1 x 1,5)']
   ];
+  if(A.model!=='independent' && A.deadUsed>A.dead+0.5) arows.push(['Beban mati dipakai', nf(A.deadUsed)+' kg (estimasi geometri > rincian Tahap 5 '+nf(A.dead)+' kg)']);
   if(A.model==='suspended'){ arows.push(['Tarik per tali', nf(A.X.Tkg)+' kg ('+nf(A.X.TkN,2)+' kN), '+A.X.nrope+' tali, FoS '+A.X.fos]); arows.push(['Counterweight', nf(A.X.ncw)+' terpasang / butuh '+A.X.ncwReq+' per needle']); }
   else if(A.model==='mobile'){ arows.push(['Beban per castor', nf(A.X.Ncas)+' kg (WLL '+nf(A.X.wll)+' kg)']); arows.push(['Rasio H : B', nf(A.H/Math.max(0.1,A.Bmin),2)+' (batas '+nf(A.X.ratio,1)+')']); }
   else {
     arows.push(['Beban tiang maks.', nf(A.N)+' kg ('+nf(A.NkN,2)+' kN), '+A.ST.gov.label.toLowerCase()]);
     arows.push(['Kapasitas izin tiang', nf(A.BK.Nperm,2)+' kN (Le '+nf(A.BK.Le,2)+' m, kurva '+A.BK.curve+'; rasio '+nf(A.util,2)+')']);
+    if(A.BK.curve==='a') arows.push(['Alasan kurva a', String(val('an-kurva-why')||'(belum diisi)')]);
+    arows.push(['Kestabilan', A.tied?'diikat ke bangunan (tie wajib didesain tersendiri)':'tanpa ikatan: H <= 3 x B_min']);
     arows.push(['Tekanan pondasi', nf(A.bearing)+' kg/m2 (izin '+nf(A.dukung)+')']);
   }
+  arows.push(['Lentur transom', nf(A.MB.tr.M,2)+' kNm vs '+nf(A.MB.tr.Mperm,2)+' kNm (rasio '+nf(A.MB.tr.ratio,2)+')']);
+  if(A.MB.lg) arows.push(['Lentur ledger', nf(A.MB.lg.M,2)+' kNm vs '+nf(A.MB.lg.Mperm,2)+' kNm (rasio '+nf(A.MB.lg.ratio,2)+')']);
   arows.push(['Reaksi klem siku maks.', nf(A.CP.kN,2)+' kN vs '+nf(A.CP.swl,2)+' kN (kelas '+A.CP.cls+')']);
   doc.setFontSize(8.6);
   const arH=5.8, aRows=arows.length;
@@ -655,17 +723,18 @@ async function buildPDFNow(){
     });
     doc.setFont('helvetica','normal'); y+=2;
   }
-  const GN={PLT:'PLATFORM (PAPAN)',STR:'KEKUATAN',STA:'KESTABILAN',RIG:'INDIKASI KEKOKOHAN'};
+  const GN={PLT:'PLATFORM (PAPAN)',STR:'KEKUATAN',STA:'KESTABILAN',RIG:'INDIKASI KEKOKOHAN',DAT:'DATA & ASUMSI MASUKAN'};
   doc.setFontSize(8.4);
-  ['PLT','STR','STA','RIG'].forEach(function(g){
+  ['PLT','STR','STA','RIG','DAT'].forEach(function(g){
     const list=A.checks.filter(function(c){return c.g===g;}); if(!list.length) return;
     if(y>268){doc.addPage();y=20;}
     doc.setFont('helvetica','bold'); doc.setTextColor(60,68,77); doc.text(GN[g],M,y); y+=4.6;
     list.forEach(function(c){
       if(y>272){doc.addPage();y=20;}
-      doc.setFillColor(c.ok?31:214, c.ok?157:57, c.ok?87:47); doc.rect(M,y-3.2,4,4,'F');
+      if(c.info) doc.setFillColor(105,112,121); else doc.setFillColor(c.ok?31:214, c.ok?157:57, c.ok?87:47);
+      doc.rect(M,y-3.2,4,4,'F');
       doc.setTextColor(27,31,36); doc.setFont('helvetica','normal');
-      const tl=doc.splitTextToSize((c.ok?'OK  ':'CEK ')+pdfSan(c.t), W-2*M-8);
+      const tl=doc.splitTextToSize((c.info?'INFO ':c.ok?'OK  ':'CEK ')+pdfSan(c.t), W-2*M-8);
       doc.text(tl, M+6, y); y+=tl.length*4.3+1.1;
     });
     y+=1.5;
@@ -674,13 +743,15 @@ async function buildPDFNow(){
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(60,68,77); doc.text('DASAR PERHITUNGAN (v'+APP_VERSION+'):',M,y); y+=4.2;
   doc.setFont('helvetica','normal'); doc.setTextColor(105,112,121); doc.setFontSize(7.6);
   let fxs=['Dasar keamanan tunggal (tegangan izin): beban kerja tanpa faktor <= kapasitas izin = tahanan karakteristik / (gamma_M 1,1 x gamma_F 1,5) (BS EN 12811-1:2003 10.3.2). Tidak ada faktor keamanan tambahan pada beban.',
-    'Kelas duty dari bay terberat: Light/Medium/Heavy = 2,2/4,4/6,6 kN per bay per platform; beban terpusat 1,0/1,5/2,0 kN (AS/NZS 1576.1:2019). UDL dan beban terpusat dibandingkan dengan kapasitas papan dari data pabrikan.'];
+    'Kelas duty dari bay terberat: Light/Medium/Heavy = 225/450/675 kg (2,2/4,4/6,6 kN) per bay per platform, termasuk beban terpusat 100/150/200 kg (AS/NZS 1576.1:2019 menurut CFMEU Victoria 2024). Papan diperiksa terhadap UDL dan beban terpusat rencana (1,0/1,5/2,0 kN atau beban terpusat Tahap 2 bila lebih besar) dengan kapasitas dari data pabrikan.',
+    'Lentur transom: M = t(W_q - F + W_papan)B/8 + F.B/4 + w.B2/8 <= W_pl.fy/(1,1 x 1,5) = 1,12 kNm (48,3 x 4,0) / 0,93 kNm (48,3 x 3,2) (NASC TG20:21 Tabel 5.9; BS EN 12811-1 6.2.2.3, 10.3.3.2). Ledger diperiksa bila ada transom antara.'];
+  if(A.model!=='independent') fxs.push('Beban mati W_d = maks(rincian Tahap 5, estimasi material dari geometri) agar rincian lama/basi tidak meloloskan tali atau castor.');
   if(A.model==='suspended'){ fxs.push('T = W/n_tali <= MBL/FoS (FoS 6 tali baja/rantai, 10 tali serat); n_cw = 3 x T x L_out / (L_in x m_cw). Asumsi: beban dibagi rata ke tali, satu needle per tali, berat needle diabaikan. FoS dan faktor 3 dari aplikasi lama - perlu verifikasi.'); }
   else if(A.model==='mobile'){ fxs.push('N_castor = W/n_castor <= WLL castor; H <= rasio x B_min (3,5 dalam / 3 luar gedung, nilai aplikasi lama - ikuti instruksi pabrikan, BS EN 1004); B_min >= 1,2 m.'); }
   else {
-    fxs.push('Beban tiang dari geometri: tiang tengah 1 bay, tiang ujung 1/2 bay, 1/2 lebar platform per sisi; N = berat sendiri per lift x (lift + lift dasar) + tiang + bracing + papan per lift berpapan + pagar sisi luar + q_duty x lebar pengaruh x 1/2 x platform kerja. Dipakai N maksimum.');
+    fxs.push('Beban tiang dari geometri: tiang tengah 1 bay, tiang ujung 1/2 bay, 1/2 lebar platform per sisi; N = berat sendiri per lift x (lift + lift dasar) + tiang + bracing + papan per lift berpapan + pagar sisi luar (dan pagar ujung pada tiang ujung) + q_duty x lebar pengaruh x 1/2 x (platform kerja + 0,5 untuk satu lift berpapan berikutnya, BS EN 12811-1:2003 6.2.9.2 a)3). Dipakai N maksimum.');
     fxs.push('Tekuk tiang (Perry-Robertson/Ayrton-Perry, EN 1993-1-1 6.3.1.2): Le = k x tinggi lift; chi = 1/(Phi + sqrt(Phi^2 - lambda^2)), Phi = 0,5[1 + alpha(lambda - 0,2) + lambda^2]; kurva c alpha 0,49 / kurva a 0,21; fy 235 N/mm2 (BS EN 12811-1 4.2.1.2); E 210.000 N/mm2.');
-    fxs.push('Pondasi q = N_maks / A_dukung <= daya dukung izin. Kestabilan bebas berdiri H <= 3 x B_min (kaidah praktis) atau pasang tie/outrigger sesuai desain; tie dan beban angin tidak dihitung.');
+    fxs.push('Pondasi q = N_maks / A_dukung <= daya dukung izin. Kestabilan: perancah tanpa ikatan H <= 3 x B_min (kaidah praktis); perancah yang diikat ke bangunan bergantung pada tie sesuai desain. Jarak dan kapasitas tie serta beban angin tidak dihitung.');
   }
   fxs.push('Klem siku ledger-tiang: R = 1/2 (q_duty + W_papan) x lebar pengaruh + W_ledger + 1/2 W_transom <= Fs,k/(1,1 x 1,5); Fs,k kelas A/B 10/15 kN (BS EN 12811-1:2003 Tabel C.1) -> 6,06/9,09 kN (NASC TG20: 6,1/9,1 kN).');
   fxs.forEach(function(f){ const fl=doc.splitTextToSize('- '+f, W-2*M); if(y>274){doc.addPage();y=20;} doc.text(fl,M,y); y+=fl.length*3.5+1; });
@@ -800,14 +871,15 @@ async function buildPDFNow(){
 
 /* ---------- penyimpanan otomatis (per anggota, di peramban ini) ---------- */
 let KEY='';   // diisi saat sesi SSO dimulai: 'ppapi_app_perencanaan_v1_u_<uid>' (lihat startSessionSSO)
-const FIELDS=['f-proyek','f-lokasi','f-kontraktor','f-jenis','f-model','f-tinggi','f-lift','f-tag','f-tanggal','f-inspektor','f-tipe','f-catatan','f-nbay','f-lbay','f-lebar','f-hlift','f-papan','f-pipa','f-kesimpulan'];
+const FIELDS=['f-proyek','f-lokasi','f-kontraktor','f-jenis','f-model','f-tinggi','f-lift','f-tag','f-tanggal','f-inspektor','f-tipe','f-catatan','f-nbay','f-lbay','f-lebar','f-hlift','f-papan','f-pipa','f-transom','f-kesimpulan'];
+const GEOM_FIELDS=['f-model','f-tinggi','f-lift','f-nbay','f-lbay','f-lebar','f-hlift','f-papan','f-pipa','f-transom'];
 function collectFields(){const o={};FIELDS.forEach(id=>{const e=document.getElementById(id);if(e)o[id]=e.value;});return o;}
 function applyFields(o){if(!o)return;FIELDS.forEach(id=>{const e=document.getElementById(id);if(e&&o[id]!=null)e.value=String(o[id]);});}
-function showSaved(){const el=document.getElementById('saved-ind');if(el){const d=new Date();el.textContent='Tersimpan '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}}
+function showSaved(){const el=document.getElementById('saved-ind');if(el){const d=new Date();el.innerHTML='<span class="saved-k">Tersimpan </span>'+esc(d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}));}}
 let saveT=null;
 /* Perbaikan B4: isian Tahap 2, 3, 5, dan 6 (kelas duty, parameter analisis, rincian material)
    ikut tersimpan bersama jawaban checklist dan data proyek. */
-function save(){ if(!KEY) return; clearTimeout(saveT); saveT=null; if(lsSet(KEY,JSON.stringify({v:3,answers:state.answers,naNote:state.naNote,fields:collectFields(),analisis:collectAnalisis(),ts:Date.now()}))) showSaved(); }
+function save(){ if(!KEY) return; clearTimeout(saveT); saveT=null; if(lsSet(KEY,JSON.stringify({v:4,answers:state.answers,naNote:state.naNote,fields:collectFields(),analisis:collectAnalisis(),ts:Date.now()}))) showSaved(); }
 function saveSoon(){ if(!KEY) return; clearTimeout(saveT); saveT=setTimeout(save,450); }
 function loadSaved(){ if(!KEY) return null; try{ const r=localStorage.getItem(KEY); if(!r) return null; const d=JSON.parse(r); if(!isObj(d)) return null; state.answers=cleanAnswers(d.answers); state.naNote=cleanNotes(d.naNote); return d; }catch(e){ return null; } }
 /* nilai bawaan formulir (atribut value / option selected di markup) */
@@ -820,7 +892,7 @@ function clearWorkingState(){
   DWG={depan:[],samping:[],atas:[],_w:2}; dwgSeq=1; dwgSel=null; dwgMode=null; dwgDim1=null;
   FIELDS.forEach(function(id){ resetControl(document.getElementById(id)); });
   AN_IDS.forEach(function(id){ resetControl(document.getElementById(id)); });
-  matRows=materialRows(geom());
+  setMatAuto();
   const td=document.getElementById('f-tanggal'); if(td) td.value=todayLocal();
   fillInspektor();
   saveJsa(); dwgSaveLS();
@@ -835,7 +907,7 @@ function resetAll(){
   logAct('Proyek baru');
   notify('Proyek baru siap. Isian sebelumnya telah dikosongkan.','success');
 }
-function exportJSON(){const data={v:3,app:'PPAPI Scaffold',appVersion:APP_VERSION,answers:state.answers,naNote:state.naNote,photos:state.photos,plans:state.plans||[],dwg:DWG,jsa:state.jsa||[],analisis:collectAnalisis(),fields:collectFields(),ts:Date.now()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Inspeksi_'+(((document.getElementById('f-tag')||{}).value)||'Perancah').replace(/[^a-z0-9]/gi,'_')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);}
+function exportJSON(){const data={v:4,app:'PPAPI Scaffold',appVersion:APP_VERSION,answers:state.answers,naNote:state.naNote,photos:state.photos,plans:state.plans||[],dwg:DWG,jsa:state.jsa||[],analisis:collectAnalisis(),fields:collectFields(),ts:Date.now()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Inspeksi_'+(((document.getElementById('f-tag')||{}).value)||'Perancah').replace(/[^a-z0-9]/gi,'_')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);}
 /* Impor JSON (juga dari aplikasi lama): setiap bagian divalidasi sebelum dipakai. */
 function importJSON(input){
   const f=input.files&&input.files[0]; if(!f) return;
@@ -851,12 +923,12 @@ function importJSON(input){
       if(d.plans) state.plans=cleanPlans(d.plans);
       const j=cleanJsa(d.jsa); if(j&&j.length){ state.jsa=j; saveJsa(); }
       if(d.dwg){ DWG=migrateDwg(cleanDwg(d.dwg)); dwgSetSeqFrom(DWG); dwgSaveLS(); if(dwgInited){ dwgRender(); dwgCheck(); } }
-      applyFields(cleanFields(d.fields)); applyAnalisis(d.analisis);
-      renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); renderPlans(); renderJSA();
+      applyRecordFields(d.fields); const mi=applyAnalisis(d.analisis);
+      renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); computeLL(); renderPlans(); renderJSA();
       const v=document.querySelector('.view.active'); if(v&&v.id==='v-laporan') renderRingkasan();
       save(); savePhotos(); savePlans();
       logAct('Muat data dari berkas');
-      notify('Data inspeksi berhasil dimuat.','success');
+      notify('Data inspeksi berhasil dimuat.','success'); matLoadNotice(mi);
     }catch(e){ notify('Berkas tidak valid. Pilih berkas .json hasil Ekspor Data PPAPI Scaffold.','error'); }
     input.value='';
   };
@@ -865,10 +937,26 @@ function importJSON(input){
 
 /* ---------- analisis kekuatan struktur ---------- */
 function num(id,def){ const e=document.getElementById(id); const v=e?parseFloat(e.value):NaN; return isNaN(v)?def:v; }
-function setMat(i,k,v){ matRows[i][k]= (k==='n')? v : (parseFloat(v)||0); const c=document.getElementById('mtot-'+i); if(c) c.textContent=(matRows[i].q*matRows[i].w).toFixed(1); computeAnalisis(); }
-function addMat(){ matRows.push({n:'Komponen baru',q:0,w:0}); renderAnalisis(); }
-function delMat(i){ matRows.splice(i,1); renderAnalisis(); }
-function renderAnalisis(){
+/* menyunting rincian otomatis menjadikannya rincian pengguna untuk geometri yang sama; rincian lama/basi tetap bertanda */
+function matEdited(){ if(matMeta.src==='auto') matMeta.src='user'; }
+function setMat(i,k,v){ matRows[i][k]= (k==='n')? v : (parseFloat(v)||0); matEdited(); const c=document.getElementById('mtot-'+i); if(c) c.textContent=(matRows[i].q*matRows[i].w).toFixed(1); computeAnalisis(); }
+function addMat(){ matRows.push({n:'Komponen baru',q:0,w:0}); matEdited(); renderAnalisis(); }
+function delMat(i){ matRows.splice(i,1); matEdited(); renderAnalisis(); }
+/* pengguna menyatakan rincian yang ada (lama/disunting) benar untuk geometri saat ini */
+function confirmMat(){ matMeta={src:'user', geom:matGeomKey(geom())}; computeAnalisis(); save(); logAct('Konfirmasi rincian material'); notify('Rincian material dikonfirmasi untuk geometri Data Proyek saat ini.','success'); }
+function renderMatNote(G){
+  const el=document.getElementById('mat-note'); if(!el) return;
+  const MS=matStatus(G), est=matKg(materialRows(G));
+  if(MS.legacy || MS.stale){
+    el.innerHTML='<div class="find warn mat-flag" role="note"><div class="fc">CEK</div><div class="ft"><span>'
+      +(MS.legacy?'Rincian material ini berasal dari data versi sebelumnya dan belum dicocokkan dengan geometri Data Proyek.':'Rincian material ini disusun untuk geometri lain; geometri Data Proyek telah berubah.')
+      +' Total rincian '+nf(matKg(matRows))+' kg, sedangkan estimasi dari geometri saat ini '+nf(est)+' kg. Untuk model suspended dan mobile, beban mati yang dipakai adalah nilai terbesar dari keduanya.</span>'
+      +'<span class="mat-acts"><button type="button" class="photo-btn" onclick="autoMaterial()">Ganti dengan estimasi geometri</button><button type="button" class="photo-btn" onclick="confirmMat()">Rincian ini sudah sesuai</button></span></div></div>';
+  } else {
+    el.innerHTML='<p class="note mat-src">'+(MS.src==='auto'?'Rincian mengikuti geometri Data Proyek dan diperbarui otomatis saat geometri berubah.':'Rincian disunting pengguna untuk geometri saat ini. Bila geometri berubah, rincian ditandai CEK sampai diperbarui atau dikonfirmasi.')+'</p>';
+  }
+}
+function renderMatTable(){
   const b=document.getElementById('mat-body'); if(!b)return;
   b.innerHTML = matRows.map(function(r,i){ return `<tr>
     <td><input class="ai" value="${esc(r.n)}" aria-label="Nama komponen, baris ${i+1}" oninput="setMat(${i},'n',this.value)"></td>
@@ -876,8 +964,8 @@ function renderAnalisis(){
     <td><input class="ai num" type="number" min="0" step="0.1" value="${Number(r.w)||0}" aria-label="Berat satuan (kg), baris ${i+1}" oninput="setMat(${i},'w',this.value)"></td>
     <td class="num" id="mtot-${i}">${((Number(r.q)||0)*(Number(r.w)||0)).toFixed(1)}</td>
     <td><button type="button" class="thumb-x" onclick="delMat(${i})" aria-label="Hapus komponen, baris ${i+1}">hapus</button></td></tr>`; }).join('');
-  computeAnalisis();
 }
+function renderAnalisis(){ syncMaterials(); renderMatTable(); computeAnalisis(); }
 /* =====================================================================
    KOREKSI METODE PERHITUNGAN — PPAPI Scaffold v2.3.0 (BETA)
    ---------------------------------------------------------------------
@@ -917,9 +1005,13 @@ function nf(v,d){ const n=Number(v); if(!isFinite(n)) return '—'; return n.toL
 function tubeSection(t){
   const D=48.3, d=D-2*t;
   const A=Math.PI/4*(D*D-d*d), I=Math.PI/64*(Math.pow(D,4)-Math.pow(d,4));
-  return {D:D, t:t, A:A, I:I, i:Math.sqrt(I/A), m:A*1e-6*STEEL.rho};
+  const Wpl=(Math.pow(D,3)-Math.pow(d,3))/6;             /* mm³, modulus plastis pipa bulat */
+  return {D:D, t:t, A:A, I:I, i:Math.sqrt(I/A), m:A*1e-6*STEEL.rho, Wpl:Wpl,
+          Mperm:Wpl*FY_TUBE/(GAMMA_M*GAMMA_F)/1e6};       /* kNm, momen izin M_pl,k/(γM·γF) — TG20:21 Tabel 5.9: 1,12 kNm (pipa 4,0) */
 }
-function tubeKey(){ const v=(document.getElementById('f-pipa')||{}).value; return TUBE_TYPES[v]?v:'4.0'; }
+/* v2.4.0: isian kosong (data lama tanpa jenis pipa) dihitung sebagai pipa 3,2 mm (kapasitas lebih kecil) dan ditandai CEK */
+function tubeUnset(){ const e=document.getElementById('f-pipa'); return !!e && !TUBE_TYPES[e.value]; }
+function tubeKey(){ const v=(document.getElementById('f-pipa')||{}).value; return TUBE_TYPES[v]?v:(tubeUnset()?'3.2':'4.0'); }
 
 /* geometri tunggal yang dipakai Tahap 5 (estimasi material) dan Tahap 6 (analisis) */
 function geom(){
@@ -939,22 +1031,38 @@ function geom(){
   if(nbd>nl){ notes.push('Jumlah lift berpapan ('+nbd+') melebihi jumlah lift ('+nl+'); dipakai '+nl+'.'); nbd=nl; }
   if(nwork>nbd){ notes.push('Platform kerja ('+nwork+') lebih banyak daripada lift berpapan ('+nbd+'); setiap platform kerja harus berpapan — dipakai '+nwork+' lift berpapan.'); nbd=nwork; }
   const tk=tubeKey(), tb=tubeSection(TUBE_TYPES[tk].t);
-  return {nb:nb, L:L, B:B, h:h, nl:nl, nlev:nl+1, H:nl*h, Hs:nl*h+H_GUARD, Hin:Hin, nbd:nbd, nwork:nwork,
-          tubeKey:tk, tubeLabel:TUBE_TYPES[tk].label, tube:tb, m:tb.m,
+  const ntr=((document.getElementById('f-transom')||{}).value==='1')?1:0;   /* transom antara di tengah bay (pada lift berpapan) */
+  /* BS EN 12811-1:2003 §6.2.9.2 a)3: bila lebih dari satu level berpapan, 50 % beban layan bekerja pada
+     area kerja di level berikutnya (di atas/bawah) — satu level tambahan bila ada lift berpapan yang bukan platform kerja */
+  const half=(nbd>nwork)?0.5:0;
+  return {nb:nb, L:L, B:B, h:h, nl:nl, nlev:nl+1, H:nl*h, Hs:nl*h+H_GUARD, Hin:Hin, nbd:nbd, nwork:nwork, half:half, nlive:nwork+half, ntr:ntr,
+          tubeKey:tk, tubeLabel:TUBE_TYPES[tk].label, tubeUnset:tubeUnset(), tube:tb, m:tb.m,
           boardsPerBay:Math.max(3,Math.round(B/0.24)), brace:Math.hypot(L,h), notes:notes};
 }
+/* kunci geometri yang menentukan estimasi material Tahap 5 (E2: satu sumber data) */
+function matGeomKey(G){ return [G.nb,G.L,G.B,G.h,G.nl,G.nbd,G.tubeKey,G.ntr].join('|'); }
+/* berat satu set pagar ujung per tiang ujung per lift berpapan: ½ × 2 rail (B + 0,2 m) + ½ papan kaki (B) + 2 klem siku */
+function endSetKg(G){ return (G.B+TRANSOM_EXTRA)*G.m + 0.5*G.B*W_TOE_M + 2*W_RA; }
+/* berat satu transom antara + 2 klem (bertumpu di tengah ledger dalam & luar) */
+function midTransomKg(G){ return (G.B+TRANSOM_EXTRA)*G.m + 2*W_RA; }
 
-/* E1/E2 — beban kerja satu tiang dari lebar pengaruh (trib: 1 = tiang tengah, 0,5 = tiang ujung) */
+/* E1/E2 — beban kerja satu tiang dari lebar pengaruh (trib: 1 = tiang tengah, 0,5 = tiang ujung).
+   v2.4.0: tiang ujung memikul pagar ujung (2 rail + papan kaki melintang selebar B, dengan klemnya);
+   transom antara (bila dipakai) ¼ beratnya ke setiap simpul sudut bay; beban hidup memakai G.nlive
+   (platform kerja + 50 % pada satu level berpapan berikutnya, BS EN 12811-1:2003 §6.2.9.2 a)3). */
 function stdLoad(G,trib,outer,qkg){
   const joints=Math.max(0,Math.ceil(G.Hs/6)-1);
   const perLevel=trib*G.L*G.m + 0.5*(G.B+TRANSOM_EXTRA)*G.m + 2*W_RA;    /* ledger + ½ transom + 2 klem siku per level */
   const braceKg=2*G.nl*G.brace*G.m + (4*G.nl+4)*W_SWIVEL;                /* bracing: dibagi rata ke semua tiang */
-  const self=G.Hs*G.m + joints*W_SLEEVE + G.nlev*perLevel + braceKg/(2*(G.nb+1));
+  const mid=G.ntr*G.nbd*trib*0.5*midTransomKg(G);                          /* transom antara: ¼ per sudut bay */
+  const self=G.Hs*G.m + joints*W_SLEEVE + G.nlev*perLevel + braceKg/(2*(G.nb+1)) + mid;
   const boards=G.nbd*trib*0.5*G.boardsPerBay*G.L*W_BOARD_M;
-  const edge=outer ? G.nbd*(trib*G.L*(2*G.m+W_TOE_M) + 2*W_RA) : 0;      /* guardrail + midrail + papan kaki, sisi luar */
-  const live=G.nwork*trib*0.5*qkg;
+  const isEnd=trib<1;
+  const edge=(outer ? G.nbd*(trib*G.L*(2*G.m+W_TOE_M) + 2*W_RA) : 0)     /* guardrail + midrail + papan kaki, sisi luar */
+           + (isEnd ? G.nbd*endSetKg(G) : 0);                             /* pagar ujung, tiang ujung (dalam & luar) */
+  const live=G.nlive*trib*0.5*qkg;
   const N=self+boards+edge+live;
-  return {trib:trib, outer:outer, self:self, boards:boards, edge:edge, live:live, N:N, NkN:N*G_ACC/1000, perLevel:perLevel};
+  return {trib:trib, outer:outer, isEnd:isEnd, self:self, boards:boards, edge:edge, live:live, N:N, NkN:N*G_ACC/1000, perLevel:perLevel};
 }
 function stdAll(G,qkg){
   const pos=[];
@@ -970,8 +1078,8 @@ function stdAll(G,qkg){
   return {pos:pos, gov:gov, avg:sum/n, sum:sum, n:n};
 }
 /* E3 — tekuk lentur tiang, Perry–Robertson dalam bentuk EN 1993-1-1 §6.3.1.2 (η = α(λ̄ − 0,2)) */
-function buckling(G){
-  const curve=((document.getElementById('an-kurva')||{}).value==='a')?'a':'c';
+function buckling(G,forceCurve){
+  const curve=forceCurve||(((document.getElementById('an-kurva')||{}).value==='a')?'a':'c');
   const k=Math.min(3,Math.max(0.5,num('an-kle',1.0)));
   const Le=k*G.h, s=G.tube, fy=FY_TUBE;
   const lam=Le*1000/s.i, lam1=Math.PI*Math.sqrt(STEEL.E/fy), lb=lam/lam1, alpha=CURVE_ALPHA[curve];
@@ -989,42 +1097,97 @@ function couplerData(G,qkg){
   const fk=COUPLER_FK[cls], swl=fk/(GAMMA_M*GAMMA_F);
   return {kg:kg, kN:kg*G_ACC/1000, cls:cls, fk:fk, swl:swl, trib:trib};
 }
+/* v2.4.0 — LENTUR TRANSOM dan LEDGER (sebelumnya tidak diperiksa).
+   Papan logam membentang satu bay di atas transom pada simpul tiang, sehingga transom di tiang tengah
+   memikul ½ bay kiri + ½ bay kanan; dengan transom antara, transom simpul memikul ¼ + ¼ bay dan transom
+   antara ½ bay. Kelas duty AS/NZS 1576.1 MEMUAT satu beban terpusat F per bay (CFMEU Victoria, Scaffold
+   Guide 2024); F diletakkan pada posisi paling merugikan — di tengah bentang transom yang ditinjau, atau di
+   ujung transom antara dekat ledger yang ditinjau — dan jalur bebannya wajib mampu meneruskannya ke tiang
+   (BS EN 12811-1:2003 §6.2.2.3). Bay yang memuat F menyumbang sisa bebannya (W_q − F) secara merata;
+   bay lain menyumbang W_q penuh. Momen:
+     M_transom = [Σt·(W_q + W_papan) − t_min·min(F, W_q)]·B/8 + F·B/4 + w_pipa·B²/8
+     M_ledger  = P·L/4 + w_pipa·L²/8 ; P = ¼(W_q − F + W_papan) + F + ½ W_transom antara  (bila ada transom antara)
+   dibandingkan dengan M_izin = W_pl·f_y/(γM·γF) = 1,12 kNm (48,3 × 4,0) / 0,93 kNm (48,3 × 3,2):
+   NASC TG20:21 Tabel 5.9 "moment capacity 1,12 kN.m" (dikutip PSD Calc. 9989-1 E hlm. 3; hlm. 8–10 memeriksa
+   transom dan ledger terhadap nilai ini) dan BS EN 12811-1:2003 §10.3.3.2 (M_pl,d = M_pl,k/γM).
+   Catatan: BS EN 12811-1 §6.2.2.1 memeriksa q₁ dan beban terpusat secara terpisah; penggabungan di atas
+   mengikuti definisi kelas AS/NZS dan lebih konservatif (pertanyaan Q14 untuk Komite). */
+function memberBending(G,qkg,FkN){
+  const s=G.tube, Wq=qkg*G_ACC/1000, Wb=G.boardsPerBay*G.L*W_BOARD_M*G_ACC/1000, wp=G.m*G_ACC/1000, F=Math.max(0,FkN);
+  /* bagian bay yang dipikul setiap jenis transom */
+  const types=G.ntr ? [{lbl:'¼ + ¼ bay (transom simpul)', fr:G.nb>=2?[0.25,0.25]:[0.25]},{lbl:'½ bay (transom antara)', fr:[0.5]}]
+                    : [{lbl:G.nb>=2?'½ + ½ bay (transom tiang tengah)':'½ bay (menara 1 bay)', fr:G.nb>=2?[0.5,0.5]:[0.5]}];
+  let tr=null;
+  types.forEach(function(ty){
+    const sum=ty.fr.reduce(function(a,b){return a+b;},0), mn=Math.min.apply(null,ty.fr);
+    const Mudl=sum*(Wq+Wb)*G.B/8 + wp*G.B*G.B/8;
+    const Mpt=(sum*(Wq+Wb) - mn*Math.min(F,Wq))*G.B/8 + F*G.B/4 + wp*G.B*G.B/8;
+    const M=Math.max(Mudl,Mpt);
+    if(!tr || M>tr.M) tr={share:sum, lbl:ty.lbl, Mudl:Mudl, Mpt:Mpt, M:M, Mperm:s.Mperm};
+  });
+  tr.ratio=tr.M/tr.Mperm; tr.ok=tr.M<=tr.Mperm;
+  let lg=null;
+  if(G.ntr){
+    const Wmid=midTransomKg(G)*G_ACC/1000;
+    const R=0.25*(Math.max(0,Wq-F)+Wb) + F + 0.5*Wmid;   /* beban terpusat di ujung transom antara, dekat ledger yang ditinjau */
+    lg={R:R, M:R*G.L/4 + wp*G.L*G.L/8, Mperm:s.Mperm};
+    lg.ratio=lg.M/lg.Mperm; lg.ok=lg.M<=lg.Mperm;
+  }
+  return {tr:tr, lg:lg, F:F, Wq:Wq, Wb:Wb};
+}
 
 function dutyInfo(){
   const e=document.getElementById('an-kelas'); const v=e?e.value:'4.4';
   const map={'2.2':{code:'RINGAN',en:'Light Duty',kn:2.2,pt:1.0,minw:450},
              '4.4':{code:'SEDANG',en:'Medium Duty',kn:4.4,pt:1.5,minw:900},
              '6.6':{code:'BERAT',en:'Heavy Duty',kn:6.6,pt:2.0,minw:1000}};
-  if(v==='sp'){ const kn=Math.max(6.6,num('an-sduty',8)); return {code:'KHUSUS',en:'Special Duty',kn:kn,pt:2.0,minw:1000,sp:true}; }
+  /* Special: beban terpusat rencana dari isian an-sdpt (≥ 2,0 kN; diisi otomatis dari Tahap 2 saat "Terapkan") */
+  if(v==='sp'){ const kn=Math.max(6.6,num('an-sduty',8)); const pt=Math.max(2.0,num('an-sdpt',2.0)); return {code:'KHUSUS',en:'Special Duty',kn:kn,pt:pt,minw:1000,sp:true}; }
   return map[v]||map['4.4'];
 }
+/* beban terpusat rencana untuk papan dan transom: nilai kelas, atau beban terpusat Tahap 2 bila lebih besar */
+function pointDesign(d,L2){ return Math.max(d.pt, L2.ptkN); }
 function getModel(){ const e=document.getElementById('f-model'); return e&&e.value?e.value:'independent'; }
 function modelName(m){ return m==='suspended'?'Suspended (Hanging/Spurs)':(m==='mobile'?'Mobile Scaffold':'Independent / Tower'); }
 function secBad(code){ const st=stats(); const s=st.sec.find(function(x){return x.code===code;}); return s? s.N>0 : false; }
+/* angka kN: satu desimal untuk nilai bulat persepuluhan (1,5), dua desimal selainnya (2,95) */
+function fkN(v){ return Math.abs(v*10-Math.round(v*10))<1e-9 ? nf(v,1) : nf(v,2); }
 function analisisData(){
   const G=geom();
-  const dead=matRows.reduce(function(acc,r){return acc+(r.q*r.w);},0);
+  const dead=matKg(matRows);
+  const MS=matStatus(G);
+  const deadEst=matKg(materialRows(G));
   const d=dutyInfo();
+  const L2=llData();
   const model=getModel();
+  const indep=(model==='independent');
   const kgBay=d.kn*1000/G_ACC;
-  const live=kgBay*G.nb*G.nwork;                 /* seluruh bay pada setiap platform kerja dibebani penuh */
+  /* independent (perancah fasad): platform kerja penuh + 50 % pada satu level berpapan berikutnya (BS EN 12811-1:2003 §6.2.9.2 a)2–3) */
+  const nLive=indep?G.nlive:G.nwork;
+  const live=kgBay*G.nb*nLive;
   const total=dead+live;                         /* beban kerja total — TANPA faktor */
+  /* suspended/mobile: beban mati yang dipakai tidak boleh lebih kecil dari estimasi geometri (rincian lama/basi tidak dapat meloloskan tali atau castor) */
+  const deadUsed=indep?dead:Math.max(dead,deadEst);
+  const totalUsed=deadUsed+live;
+  const pt=pointDesign(d,L2), ptFromLL=L2.ptkN>d.pt+1e-9;
   const udl=kgBay/(G.L*G.B);
   const udlCap=Math.max(1,num('an-udl',250));
   const ptCap=parseFloat((document.getElementById('an-ptpapan')||{}).value);
   const ptKnown=isFinite(ptCap)&&ptCap>0;
-  const ST=stdAll(G,kgBay), BK=buckling(G), CP=couplerData(G,kgBay);
+  const ST=stdAll(G,kgBay), BK=buckling(G), CP=couplerData(G,kgBay), MB=memberBending(G,kgBay,pt);
   const dukung=Math.max(1,num('an-dukung',10000)), plateA=Math.max(0.001,num('an-plate',0.04));
   const N=ST.gov.N, NkN=ST.gov.NkN, util=NkN/BK.Nperm, bearing=N/plateA;
   const H=G.Hin>0?G.Hin:G.H;
   const Bmin=Math.min(G.B, G.nb*G.L);
+  const tied=indep && (document.getElementById('an-tie')||{}).value==='ya';
   const checks=[];
-  function C(g,ok,t){ checks.push({g:g,ok:!!ok,t:t}); }
+  function C(g,ok,t,o){ checks.push(Object.assign({g:g,ok:!!ok,t:t},o||{})); }
   /* ---- PLATFORM (papan) — E7 ---- */
   C('PLT', udl<=udlCap, 'Beban merata platform '+nf(udl)+' kg/m² '+cmpSym(udl<=udlCap,'≤')+' kapasitas izin papan '+nf(udlCap)+' kg/m² (data pabrikan; bay '+nf(G.L,2)+' × '+nf(G.B,2)+' m)');
-  C('PLT', ptKnown && d.pt<=ptCap, ptKnown
-    ? 'Beban terpusat kelas '+nf(d.pt,1)+' kN '+cmpSym(d.pt<=ptCap,'≤')+' kapasitas beban terpusat papan '+nf(ptCap,2)+' kN (data pabrikan)'
-    : 'Beban terpusat kelas '+nf(d.pt,1)+' kN belum dapat diperiksa — isi kapasitas beban terpusat papan dari data pabrikan');
+  const ptLbl=ptFromLL ? 'Beban terpusat Tahap 2 '+fkN(pt)+' kN ('+nf(L2.ptKg)+' kg; lebih besar dari nilai kelas '+fkN(d.pt)+' kN)' : 'Beban terpusat kelas '+fkN(pt)+' kN';
+  C('PLT', ptKnown && pt<=ptCap, ptKnown
+    ? ptLbl+' '+cmpSym(pt<=ptCap,'≤')+' kapasitas beban terpusat papan '+nf(ptCap,2)+' kN (data pabrikan)'
+    : ptLbl+' belum dapat diperiksa — isi kapasitas beban terpusat papan dari data pabrikan');
   C('PLT', (G.B*1000)>=d.minw, 'Lebar platform '+nf(G.B*1000)+' mm '+cmpSym((G.B*1000)>=d.minw,'≥')+' minimum '+nf(d.minw)+' mm untuk '+d.en);
   const X={model:model, H:H, Bmin:Bmin};
   if(model==='suspended'){
@@ -1032,8 +1195,8 @@ function analisisData(){
     const ft=(document.getElementById('an-ftali')||{}).value||'6';
     const fos= ft==='10'?10:6;
     const mbl=num('an-mbl',60);
-    const Tkg=total/nrope, TkN=Tkg*G_ACC/1000, capkN=mbl/fos;
-    C('STR', TkN<=capkN, 'Tarik tali T = W/n = '+nf(Tkg)+' kg ('+nf(TkN,2)+' kN) '+cmpSym(TkN<=capkN,'≤')+' MBL/FoS = '+nf(mbl)+'/'+fos+' = '+nf(capkN,2)+' kN (beban kerja tanpa faktor; FoS dari aplikasi lama — perlu verifikasi)');
+    const Tkg=totalUsed/nrope, TkN=Tkg*G_ACC/1000, capkN=mbl/fos;
+    C('STR', TkN<=capkN, 'Tarik tali T = W/n = '+nf(Tkg)+' kg ('+nf(TkN,2)+' kN) '+cmpSym(TkN<=capkN,'≤')+' MBL/FoS = '+nf(mbl)+'/'+fos+' = '+nf(capkN,2)+' kN (W = beban mati '+nf(deadUsed)+' kg + hidup '+nf(live)+' kg; beban kerja tanpa faktor; FoS dari aplikasi lama — perlu verifikasi)');
     const Lin=Math.max(0.1,num('an-in',3.6)), Lout=Math.max(0.1,num('an-out',0.9));
     const mcw=Math.max(1,num('an-mcw',25)), ncw=num('an-ncw',0);
     const ncwReq=Math.ceil(3*Tkg*Lout/(Lin*mcw));
@@ -1043,8 +1206,8 @@ function analisisData(){
   } else if(model==='mobile'){
     const ncas=Math.max(3,num('an-ncastor',4));
     const wll=Math.max(1,num('an-wllcastor',500));
-    const Ncas=total/ncas;
-    C('STR', Ncas<=wll, 'Beban per castor '+nf(Ncas)+' kg '+cmpSym(Ncas<=wll,'≤')+' WLL castor '+nf(wll)+' kg (beban kerja tanpa faktor)');
+    const Ncas=totalUsed/ncas;
+    C('STR', Ncas<=wll, 'Beban per castor '+nf(Ncas)+' kg '+cmpSym(Ncas<=wll,'≤')+' WLL castor '+nf(wll)+' kg (W = beban mati '+nf(deadUsed)+' kg + hidup '+nf(live)+' kg; beban kerja tanpa faktor)');
     const r=parseFloat((document.getElementById('an-lok')||{}).value||'3.5');
     C('STA', H<=r*Bmin, 'Tinggi '+nf(H,1)+' m '+cmpSym(H<=r*Bmin,'≤')+' '+nf(r,1)+' × lebar dasar terkecil '+nf(Bmin,2)+' m = '+nf(r*Bmin,1)+' m (rasio aplikasi lama; ikuti instruksi pabrikan menara)');
     C('STA', Bmin>=1.2, 'Lebar dasar terkecil '+nf(Bmin,2)+' m '+cmpSym(Bmin>=1.2,'≥')+' 1,2 m');
@@ -1054,17 +1217,39 @@ function analisisData(){
   } else {
     C('STR', NkN<=BK.Nperm, 'Beban tiang terbesar '+nf(N)+' kg ('+nf(NkN,2)+' kN, '+ST.gov.label.toLowerCase()+') '+cmpSym(NkN<=BK.Nperm,'≤')+' kapasitas izin tekuk '+nf(BK.Nperm,2)+' kN (panjang efektif '+nf(BK.Le,2)+' m, kurva '+BK.curve+'; rasio '+nf(util,2)+')');
     C('STA', bearing<=dukung, 'Tekanan pondasi q = N/A = '+nf(bearing)+' kg/m² '+cmpSym(bearing<=dukung,'≤')+' daya dukung izin '+nf(dukung)+' kg/m² (A = '+nf(plateA,3)+' m² per tiang)');
-    C('STA', H<=3*Bmin, 'Tinggi '+nf(H,1)+' m '+cmpSym(H<=3*Bmin,'≤')+' 3 × lebar dasar terkecil '+nf(Bmin,2)+' m = '+nf(3*Bmin,1)+' m — kaidah praktis perancah tanpa ikatan; bila tidak terpenuhi, pasang tie/outrigger sesuai desain');
+    if(tied) C('STA', true, 'Perancah diikat ke bangunan: kestabilan bergantung pada tie sesuai desain. Jarak dan kapasitas tie serta beban angin tidak dihitung aplikasi ini — wajib dirancang dan diperiksa tersendiri', {info:true});
+    else C('STA', H<=3*Bmin, 'Tinggi '+nf(H,1)+' m '+cmpSym(H<=3*Bmin,'≤')+' 3 × lebar dasar terkecil '+nf(Bmin,2)+' m = '+nf(3*Bmin,1)+' m — kaidah praktis perancah tanpa ikatan; bila tidak terpenuhi, pasang tie/outrigger sesuai desain');
   }
+  /* ---- LENTUR TRANSOM & LEDGER — v2.4.0 ---- */
+  const tr=MB.tr;
+  C('STR', tr.ok, 'Lentur transom M = '+nf(tr.M,2)+' kNm '+cmpSym(tr.ok,'≤')+' momen izin '+nf(tr.Mperm,2)+' kNm (pipa '+G.tubeLabel+'; bentang '+nf(G.B,2)+' m memikul '+tr.lbl+' beban kelas dan papan, ditambah beban terpusat '+fkN(MB.F)+' kN di tengah bentang; rasio '+nf(tr.ratio,2)+')');
+  if(MB.lg) C('STR', MB.lg.ok, 'Lentur ledger M = '+nf(MB.lg.M,2)+' kNm '+cmpSym(MB.lg.ok,'≤')+' momen izin '+nf(MB.lg.Mperm,2)+' kNm (bentang '+nf(G.L,2)+' m; reaksi transom antara di tengah bentang '+nf(MB.lg.R,2)+' kN termasuk beban terpusat; rasio '+nf(MB.lg.ratio,2)+')');
+  else C('STR', true, 'Lentur ledger tidak menentukan: transom hanya pada simpul tiang, sehingga beban papan masuk ke simpul dan tidak ke bentang ledger. Bila dipakai transom antara (mis. papan kayu), pilih di Data Proyek agar ledger diperiksa', {info:true});
   /* ---- KLEM SIKU (coupler) — E5 ---- */
   C('STR', CP.kN<=CP.swl, 'Reaksi klem siku ledger–tiang terbesar '+nf(CP.kg)+' kg ('+nf(CP.kN,2)+' kN) '+cmpSym(CP.kN<=CP.swl,'≤')+' kapasitas izin gelincir '+nf(CP.swl,2)+' kN (kelas '+CP.cls+': gelincir karakteristik '+nf(CP.fk,1)+' kN ÷ (1,1 × 1,5))');
   /* ---- INDIKASI KEKOKOHAN — E10 (tidak dihitung: tie dan beban angin) ---- */
   C('RIG', !secBad('BRC'), 'Indikasi: bracing tanpa temuan pada checklist BRC');
   C('RIG', !secBad('STB'), 'Indikasi: pengikatan dan kestabilan tanpa temuan pada checklist STB (jarak dan kapasitas tie tidak dihitung aplikasi ini)');
   C('RIG', G.L<=2.4, 'Indikasi: bentang bay '+nf(G.L,2)+' m '+cmpSym(G.L<=2.4,'≤')+' 2,4 m (batas praktis aplikasi untuk kendali lendutan papan)');
+  /* ---- DATA & ASUMSI MASUKAN — v2.4.0 ---- */
+  const recOk=d.kn>=L2.kn-1e-9;
+  C('DAT', recOk, recOk
+    ? 'Kelas beban dipilih '+d.en+' ('+nf(d.kn,1)+' kN/bay) ≥ rekomendasi Tahap 2 '+L2.cls+' ('+nf(L2.kn,1)+' kN/bay; bay terberat '+nf(L2.bay)+' kg)'
+    : 'Kelas beban dipilih '+d.en+' ('+nf(d.kn,1)+' kN/bay) lebih rendah dari rekomendasi Tahap 2 '+L2.cls+' ('+nf(L2.kn,1)+' kN/bay; bay terberat '+nf(L2.bay)+' kg) — tekan "Terapkan Kelas Duty" di Tahap 2 atau tinjau isian beban hidup', {key:'duty'});
+  if(!indep){
+    const matOk=!MS.legacy && !MS.stale;
+    C('DAT', matOk, matOk
+      ? 'Rincian material Tahap 5 sesuai geometri Data Proyek ('+(MS.src==='auto'?'estimasi otomatis':'disunting dan dikonfirmasi pengguna')+'): '+nf(dead)+' kg; beban mati dipakai '+nf(deadUsed)+' kg (tidak kurang dari estimasi geometri '+nf(deadEst)+' kg)'
+      : 'Rincian material Tahap 5 ('+nf(dead)+' kg) '+(MS.legacy?'berasal dari data versi sebelumnya':'disusun untuk geometri lain')+' dan belum dicocokkan dengan geometri Data Proyek (estimasi '+nf(deadEst)+' kg) — tekan "Estimasi Otomatis" atau konfirmasi rinciannya di Tahap 5. Beban mati dipakai: '+nf(deadUsed)+' kg', {key:'mat'});
+  }
+  if(G.tubeUnset) C('DAT', false, 'Jenis pipa standard & ledger belum dipilih di Data Proyek (data versi lama) — sementara dihitung sebagai 48,3 × 3,2 mm, kapasitas yang lebih kecil', {key:'pipa'});
+  if(indep && BK.curve==='a'){
+    const why=String((document.getElementById('an-kurva-why')||{}).value||'').trim();
+    C('DAT', false, 'Kurva tekuk a dipakai: kapasitas tiang 12–23 % di atas tabel beban aksial aman NASC TG20:21. Hanya untuk pipa canai panas bersertifikat dan memerlukan persetujuan ahli/Komite Teknis (Q9). '+(why?'Alasan/sertifikat: "'+why+'"':'Alasan/sertifikat belum diisi'), {key:'kurva'});
+  }
   const ok=checks.every(function(c){return c.ok;});
-  return {G:G, dead:dead, live:live, total:total, udl:udl, udlCap:udlCap, ptCap:ptKnown?ptCap:null, d:d, kgBay:kgBay,
-          ST:ST, BK:BK, CP:CP, N:N, NkN:NkN, util:util, bearing:bearing, dukung:dukung, plateA:plateA,
+  return {G:G, dead:dead, deadEst:deadEst, deadUsed:deadUsed, MS:MS, live:live, nLive:nLive, total:total, totalUsed:totalUsed, udl:udl, udlCap:udlCap, ptCap:ptKnown?ptCap:null, pt:pt, ptFromLL:ptFromLL, L2:L2,
+          d:d, kgBay:kgBay, ST:ST, BK:BK, CP:CP, MB:MB, N:N, NkN:NkN, util:util, bearing:bearing, dukung:dukung, plateA:plateA, tied:tied,
           nbay:G.nb, plat:G.nwork, lbay:G.L, lebar:G.B, model:model, H:H, Bmin:Bmin, X:X, checks:checks, ok:ok};
 }
 function statusBox(kind,label,desc){
@@ -1078,14 +1263,15 @@ function kv(rows){ return '<dl class="calc-kv">'+rows.map(function(r){ return '<
 function geomSummary(G){
   return G.nb+' bay × '+nf(G.L,2)+' m · lebar '+nf(G.B,2)+' m · '+G.nl+' lift × '+nf(G.h,2)+' m (platform teratas '+nf(G.H,1)+' m; tiang '+nf(G.Hs,1)+' m) · '+G.nbd+' lift berpapan · '+G.nwork+' platform kerja · pipa '+G.tubeLabel;
 }
+function liveLabel(G){ return G.nwork+' platform kerja'+(G.half?' + 50 % satu lift berpapan':''); }
 function stdCardsHTML(A){
   const G=A.G;
   return '<div class="std-grid">'+A.ST.pos.map(function(p){
     return '<div class="std-card'+(p.gov?' is-gov':'')+'"><div class="std-h"><b>'+p.label+'</b>'+(p.gov?'<span class="std-tag">menentukan</span>':'')+'</div>'
       +'<dl><dt>Berat sendiri struktur</dt><dd>'+nf(p.self)+' kg</dd>'
       +'<dt>Papan ('+G.nbd+' lift berpapan)</dt><dd>'+nf(p.boards)+' kg</dd>'
-      +(p.outer?'<dt>Pagar &amp; papan kaki</dt><dd>'+nf(p.edge)+' kg</dd>':'')
-      +'<dt>Beban hidup ('+G.nwork+' platform kerja)</dt><dd>'+nf(p.live)+' kg</dd>'
+      +(p.edge>0?'<dt>'+(p.outer&&p.isEnd?'Pagar sisi luar &amp; ujung':p.isEnd?'Pagar ujung':'Pagar &amp; papan kaki')+'</dt><dd>'+nf(p.edge)+' kg</dd>':'')
+      +'<dt>Beban hidup ('+liveLabel(G)+')</dt><dd>'+nf(p.live)+' kg</dd>'
       +'<dt class="tot">N (beban kerja)</dt><dd class="tot">'+nf(p.N)+' kg · '+nf(p.NkN,2)+' kN</dd></dl></div>';
   }).join('')+'</div>';
 }
@@ -1093,18 +1279,38 @@ function renderGeomNotes(G){
   const html=G.notes.map(function(t){ return '<div class="find warn hint-row" role="note"><div class="fc">CATATAN</div><div class="ft"><span>'+esc(t)+'</span></div></div>'; }).join('');
   ['geom-hint-duty','geom-hint-an'].forEach(function(id){ const b=document.getElementById(id); if(b) b.innerHTML=html; });
 }
+/* daftar pemeriksaan per kelompok — dipakai Tahap 3 dan Tahap 6 */
+const CHECK_GROUPS={PLT:['PLATFORM (papan)','#3c444d'],STR:['KEKUATAN (Strength)','#1c5fae'],STA:['KESTABILAN (Stability)','#b8860b'],RIG:['INDIKASI KEKOKOHAN (Rigidity)','#5e35b1'],DAT:['DATA &amp; ASUMSI MASUKAN','#3c444d']};
+function checksHTML(A,gs){
+  let html='';
+  gs.forEach(function(g){
+    const list=A.checks.filter(function(c){return c.g===g;}); if(!list.length) return;
+    const gok=list.every(function(c){return c.ok;});
+    html+='<div class="grp-h"><span class="gb" style="background:'+CHECK_GROUPS[g][1]+'"></span>'+CHECK_GROUPS[g][0]+' <span style="color:'+(gok?'#17824a':'#d6392f')+'">'+(gok?'✓ terpenuhi':'✗ periksa')+'</span></div>';
+    html+=list.map(function(c){
+      if(c.info) return '<div class="find chk-info"><div class="fc">INFO</div><div class="ft">'+esc(c.t)+'</div></div>';
+      return '<div class="find" style="border-left-color:'+(c.ok?'#17824a':'#d6392f')+';background:'+(c.ok?'#e7f5ec':'#fbe8e6')+'"><div class="fc" style="background:'+(c.ok?'#17824a':'#d6392f')+'">'+(c.ok?'OK':'CEK')+'</div><div class="ft">'+esc(c.t)+'</div></div>';
+    }).join('');
+  });
+  return html;
+}
 function computeAnalisis(){
-  const fs=document.getElementById('fld-sduty'); const ks=document.getElementById('an-kelas');
-  if(fs&&ks) fs.style.display = ks.value==='sp'?'':'none';
+  if(syncMaterials()) renderMatTable();          /* rincian otomatis mengikuti perubahan geometri */
+  const ks=document.getElementById('an-kelas'), sp=!!ks && ks.value==='sp';
+  ['fld-sduty','fld-sdpt'].forEach(function(id){ const e=document.getElementById(id); if(e) e.style.display = sp?'':'none'; });
   const A=analisisData(); const d=A.d; const m=A.model; const G=A.G;
   const chip=document.getElementById('an-modelchip'); if(chip) chip.textContent=modelName(m);
   const sus=document.getElementById('an-sus'); if(sus) sus.style.display = m==='suspended'?'':'none';
   const mob=document.getElementById('an-mob'); if(mob) mob.style.display = m==='mobile'?'':'none';
-  ['fld-kurva','fld-kle','fld-dukung','fld-plate'].forEach(function(id){ const e=document.getElementById(id); if(e) e.style.display = m==='independent'?'':'none'; });
+  ['fld-kurva','fld-kle','fld-dukung','fld-plate','fld-tie'].forEach(function(id){ const e=document.getElementById(id); if(e) e.style.display = m==='independent'?'':'none'; });
+  const fw=document.getElementById('fld-kurva-why'); if(fw) fw.style.display = (m==='independent' && A.BK.curve==='a')?'':'none';
   const nt=document.getElementById('an-dutynote');
-  if(nt) nt.textContent=d.en+': beban '+nf(d.kn,1)+' kN per bay per platform (≈ '+nf(A.kgBay)+' kg), termasuk satu beban terpusat '+nf(d.pt,1)+' kN pada posisi terburuk (AS/NZS 1576.1:2019). Lebar platform minimum '+nf(d.minw)+' mm (nilai aplikasi lama — perlu verifikasi Komite Teknis).';
+  if(nt) nt.textContent=d.en+': beban '+nf(d.kn,1)+' kN per bay per platform (≈ '+nf(A.kgBay)+' kg), termasuk satu beban terpusat '+fkN(d.pt)+' kN pada posisi terburuk (AS/NZS 1576.1:2019).'
+    +(A.ptFromLL?' Beban terpusat Tahap 2 ('+nf(A.L2.ptKg)+' kg = '+fkN(A.L2.ptkN)+' kN) lebih besar dan dipakai untuk papan dan transom.':'')
+    +' Lebar platform minimum '+nf(d.minw)+' mm (nilai aplikasi lama — perlu verifikasi Komite Teknis).';
   const ge=document.getElementById('an-geom'); if(ge) ge.textContent=geomSummary(G);
   renderGeomNotes(G);
+  renderMatNote(G);
   const indep=(m==='independent');
   const tiles=[['Beban mati (Tahap 5)',nf(A.dead)+' kg'],['Beban hidup '+d.en,nf(A.live)+' kg'],['Beban kerja total',nf(A.total)+' kg']];
   if(m==='suspended'){ tiles.push(['Tarik per tali',nf(A.X.Tkg)+' kg'],['Tarik per tali',nf(A.X.TkN,2)+' kN'],['CW dibutuhkan',A.X.ncwReq+' buah']); }
@@ -1112,37 +1318,39 @@ function computeAnalisis(){
   else { tiles.push(['Beban tiang maks.',nf(A.N)+' kg'],['Beban tiang maks.',nf(A.NkN,2)+' kN'],['Kapasitas izin tiang',nf(A.BK.Nperm,2)+' kN']); }
   const stats2=document.getElementById('an-stats');
   if(stats2) stats2.innerHTML=tiles.map(function(s){return '<div class="stat"><div class="n" style="font-size:19px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
+  const nCek=A.checks.filter(function(c){return !c.ok;}).length;
   const vb=document.getElementById('an-verdict');
-  if(vb) vb.innerHTML='<div class="verdict-banner" style="background:'+(A.ok?'#17824a':'#e0a200')+';color:'+(A.ok?'#fff':'#1b1f24')+'"><div class="vb-icon">'+(A.ok?'✓':'!')+'</div><div class="vb-txt"><h2>'+(A.ok?'LOLOS PEMERIKSAAN INDIKATIF':'PERLU REVIEW')+'</h2><p>'+(A.ok?'Seluruh pemeriksaan indikatif model '+modelName(m)+' terpenuhi. Hasil ini bukan sertifikasi; desain wajib diverifikasi ahli perancah yang kompeten.':'Ada pemeriksaan yang belum terpenuhi atau data yang belum diisi — periksa butir bertanda CEK.')+'</p></div></div>';
+  if(vb) vb.innerHTML='<div class="verdict-banner" style="background:'+(A.ok?'#17824a':'#e0a200')+';color:'+(A.ok?'#fff':'#1b1f24')+'"><div class="vb-icon">'+(A.ok?'✓':'!')+'</div><div class="vb-txt"><h2>'+(A.ok?'LOLOS PEMERIKSAAN INDIKATIF':'PERLU REVIEW')+'</h2><p>'+(A.ok?'Seluruh pemeriksaan indikatif model '+modelName(m)+' terpenuhi. Hasil ini bukan sertifikasi; desain wajib diverifikasi ahli perancah yang kompeten.':nCek+' pemeriksaan belum terpenuhi atau datanya belum lengkap — periksa butir bertanda CEK. Selama status ini, scaffold tag dan laporan PDF berstatus menunggu verifikasi desain.')+'</p></div></div>';
   renderMatStats();
   const fxd=document.getElementById('fx-dead');
-  if(fxd) fxd.innerHTML=statusBox('info','TERHITUNG','Beban mati W<sub>d</sub> = '+nf(A.dead)+' kg — rekap berat seluruh komponen pada tabel di atas.');
+  if(fxd) fxd.innerHTML=statusBox('info','TERHITUNG','Beban mati W<sub>d</sub> = '+nf(A.dead)+' kg — rekap berat seluruh komponen pada tabel di atas.'+(Math.abs(A.dead-A.deadEst)>0.5?' Estimasi dari geometri Data Proyek: '+nf(A.deadEst)+' kg.':''));
   /* Tahap 3: platform */
   const fxl=document.getElementById('fx-live');
   if(fxl){
-    const okU=A.udl<=A.udlCap, okW=(G.B*1000)>=d.minw, okP=A.ptCap!=null && d.pt<=A.ptCap;
+    const okU=A.udl<=A.udlCap, okW=(G.B*1000)>=d.minw, okP=A.ptCap!=null && A.pt<=A.ptCap;
     const all=okU&&okW&&okP;
-    fxl.innerHTML=statusBox(all?'ok':(okU&&okW?'warn':'bad'), all?'PLATFORM MEMENUHI':(okU&&okW?'LENGKAPI DATA PAPAN':'PERLU PERBAIKAN'),
-      'UDL '+nf(A.udl)+' kg/m² '+(okU?'≤':'&gt;')+' '+nf(A.udlCap)+' kg/m² · beban terpusat '+nf(d.pt,1)+' kN '+(A.ptCap==null?'(kapasitas papan belum diisi)':(okP?'≤ ':'&gt; ')+nf(A.ptCap,2)+' kN')+' · lebar '+nf(G.B*1000)+' mm '+(okW?'≥':'&lt;')+' '+nf(d.minw)+' mm');
+    fxl.innerHTML=statusBox(all?'ok':(okU&&okW&&A.ptCap==null?'warn':'bad'), all?'PLATFORM MEMENUHI':(okU&&okW&&A.ptCap==null?'LENGKAPI DATA PAPAN':'PERLU PERBAIKAN'),
+      'UDL '+nf(A.udl)+' kg/m² '+(okU?'≤':'&gt;')+' '+nf(A.udlCap)+' kg/m² · beban terpusat '+fkN(A.pt)+' kN'+(A.ptFromLL?' (Tahap 2)':'')+' '+(A.ptCap==null?'(kapasitas papan belum diisi)':(okP?'≤ ':'&gt; ')+nf(A.ptCap,2)+' kN')+' · lebar '+nf(G.B*1000)+' mm '+(okW?'≥':'&lt;')+' '+nf(d.minw)+' mm');
   }
   /* Tahap 6: tiang / tali / castor */
   const fxc=document.getElementById('fx-cap');
   if(fxc){
     let h='';
+    const deadTxt=(A.deadUsed>A.dead+0.5)?' (beban mati dipakai '+nf(A.deadUsed)+' kg = estimasi geometri, lebih besar dari rincian Tahap 5 '+nf(A.dead)+' kg)':'';
     if(m==='suspended'){
-      h+=fxBlock('T = W/n<sub>tali</sub> ≤ MBL/FoS (FoS 6 tali baja/rantai, 10 tali serat)','beban kerja tanpa faktor',
+      h+=fxBlock('T = W/n<sub>tali</sub> ≤ MBL/FoS (FoS 6 tali baja/rantai, 10 tali serat) ; W = maks(W<sub>d</sub> Tahap 5, W<sub>d</sub> estimasi geometri) + W<sub>l</sub>','beban kerja tanpa faktor',
         'memastikan tali penggantung kuat menahan seluruh beban kerja. Asumsi: beban dibagi rata ke semua tali, satu needle per tali, berat needle diabaikan. Nilai FoS berasal dari aplikasi lama dan perlu diverifikasi Komite Teknis.');
       h+=statusBox(A.X.TkN<=A.X.capkN?'ok':'bad', A.X.TkN<=A.X.capkN?'TALI MEMENUHI':'TALI TIDAK MEMENUHI',
-        'Tarik per tali '+nf(A.X.Tkg)+' kg ('+nf(A.X.TkN,2)+' kN) vs MBL/FoS = '+nf(A.X.capkN,2)+' kN'+(A.X.TkN<=A.X.capkN?'':' — tambah jumlah tali atau pakai tali dengan MBL lebih besar.'));
+        'Tarik per tali '+nf(A.X.Tkg)+' kg ('+nf(A.X.TkN,2)+' kN) vs MBL/FoS = '+nf(A.X.capkN,2)+' kN'+deadTxt+(A.X.TkN<=A.X.capkN?'':' — tambah jumlah tali atau pakai tali dengan MBL lebih besar.'));
       h+=fxBlock('n<sub>cw</sub> = 3 × T × L<sub>out</sub> / (L<sub>in</sub> × m<sub>cw</sub>)','faktor stabilitas 3 (aplikasi lama)',
         'memastikan rig kantilever tidak terguling: momen penahan counterweight minimal tiga kali momen guling akibat tarikan tali di ujung outboard.');
       h+=statusBox(A.X.ncw>=A.X.ncwReq?'ok':'bad', A.X.ncw>=A.X.ncwReq?'RIG MEMENUHI':'TAMBAH COUNTERWEIGHT',
         nf(A.X.ncw)+' terpasang vs kebutuhan '+A.X.ncwReq+' buah per needle'+(A.X.ncw>=A.X.ncwReq?'':' — tambah '+(A.X.ncwReq-A.X.ncw)+' buah lagi.'));
     } else if(m==='mobile'){
-      h+=fxBlock('N<sub>castor</sub> = W/n<sub>castor</sub> ≤ WLL castor','beban kerja tanpa faktor',
+      h+=fxBlock('N<sub>castor</sub> = W/n<sub>castor</sub> ≤ WLL castor ; W = maks(W<sub>d</sub> Tahap 5, W<sub>d</sub> estimasi geometri) + W<sub>l</sub>','beban kerja tanpa faktor',
         'memastikan roda castor memikul reaksi rangkaian; castor wajib bertanda WLL dan ber-rem.');
       h+=statusBox(A.X.Ncas<=A.X.wll?'ok':'bad', A.X.Ncas<=A.X.wll?'CASTOR MEMENUHI':'CASTOR TIDAK MEMENUHI',
-        'Beban per castor '+nf(A.X.Ncas)+' kg vs WLL '+nf(A.X.wll)+' kg'+(A.X.Ncas<=A.X.wll?'':' — pakai castor berkapasitas lebih besar atau kurangi beban.'));
+        'Beban per castor '+nf(A.X.Ncas)+' kg vs WLL '+nf(A.X.wll)+' kg'+deadTxt+(A.X.Ncas<=A.X.wll?'':' — pakai castor berkapasitas lebih besar atau kurangi beban.'));
       h+=fxBlock('H ≤ '+nf(A.X.ratio,1)+' × B<sub>min</sub> ; B<sub>min</sub> ≥ 1,2 m','rasio aplikasi lama — ikuti instruksi pabrikan (BS EN 1004)',
         'memastikan menara beroda tidak terguling saat digunakan atau dipindah.');
       const okR=A.H<=A.X.ratio*A.Bmin;
@@ -1150,31 +1358,60 @@ function computeAnalisis(){
         'Rasio H:B = '+nf(A.H/Math.max(0.1,A.Bmin),2)+' vs batas '+nf(A.X.ratio,1)+(okR?'':' — turunkan tinggi, perlebar dasar, atau pasang outrigger.'));
     } else {
       const BK=A.BK, s=G.tube, okN=A.NkN<=BK.Nperm;
-      h+=fxBlock('N = Σ berat sendiri per lift + papan per lift berpapan + pagar (sisi luar) + q<sub>duty</sub> × lebar pengaruh × ½ × n<sub>platform kerja</sub>',
-        'lebar pengaruh dari geometri — BS EN 12811-1:2003 §6.2.2.1',
-        'menghitung beban kerja setiap posisi tiang dari geometri proyek. Tiang tengah memikul satu bay, tiang ujung setengah bay; setiap sisi (dalam/luar) memikul setengah lebar platform. Yang dipakai adalah tiang dengan beban <b>terbesar</b>, bukan rata-rata.');
+      h+=fxBlock('N = Σ berat sendiri per lift + papan per lift berpapan + pagar (sisi luar; ujung pada tiang ujung) + q<sub>duty</sub> × lebar pengaruh × ½ × (n<sub>platform kerja</sub> + ½ bila ada lift berpapan lain)',
+        'lebar pengaruh — BS EN 12811-1:2003 §6.2.2.1 · kombinasi beban §6.2.9.2 a)',
+        'menghitung beban kerja setiap posisi tiang dari geometri proyek. Tiang tengah memikul satu bay, tiang ujung setengah bay; setiap sisi (dalam/luar) memikul setengah lebar platform. Bila ada lebih dari satu lift berpapan, 50 % beban layan bekerja pada satu lift berpapan berikutnya (BS EN 12811-1:2003 §6.2.9.2 a)3). Yang dipakai adalah tiang dengan beban <b>terbesar</b>, bukan rata-rata.');
       h+=stdCardsHTML(A);
-      h+='<p class="note calc-note">Rata-rata seluruh '+A.ST.n+' tiang '+nf(A.ST.avg)+' kg — tiang menentukan '+nf(A.N/A.ST.avg*100)+'% dari rata-rata. Berat sendiri per lift (tiang tengah): '+nf(A.ST.pos[0].perLevel,1)+' kg (ledger, ½ transom, 2 klem siku).</p>';
+      h+='<p class="note calc-note">Rata-rata seluruh '+A.ST.n+' tiang '+nf(A.ST.avg)+' kg — tiang menentukan '+nf(A.N/A.ST.avg*100)+'% dari rata-rata. Berat sendiri per lift ('+A.ST.pos[0].label.toLowerCase()+'): '+nf(A.ST.pos[0].perLevel,1)+' kg (ledger, ½ transom, 2 klem siku).</p>';
       h+=fxBlock('N<sub>izin</sub> = χ · A · f<sub>y</sub> / (γ<sub>M</sub> · γ<sub>F</sub>) ; χ = 1/(Φ + √(Φ² − λ̄²)) ; Φ = 0,5[1 + α(λ̄ − 0,2) + λ̄²]',
         'Perry–Robertson/Ayrton–Perry, EN 1993-1-1 §6.3.1.2 · γ BS EN 12811-1:2003 §10.3.2',
-        'menghitung kapasitas tekuk tiang dari panjang efektif (tinggi lift) dan penampang pipa — kapasitas turun tajam bila lift makin tinggi. Dengan kurva c, hasil untuk pipa 48,3 × 4,0 mm setara tabel beban aksial aman NASC TG20:21 (selisih kurang dari 0,5%).');
-      h+=kv([
-        ['Penampang', 'Pipa '+G.tubeLabel+': A = '+nf(s.A)+' mm², I = '+nf(s.I/1e4,2)+' cm⁴, i = '+nf(s.i,2)+' mm; f<sub>y</sub> = '+BK.fy+' N/mm², E = '+nf(STEEL.E)+' N/mm²'],
+        'menghitung kapasitas tekuk tiang dari panjang efektif (tinggi lift) dan penampang pipa — kapasitas turun tajam bila lift makin tinggi. Dengan kurva c, hasil untuk pipa 48,3 × 4,0 mm setara tabel beban aksial aman NASC TG20:21 (0 sampai −0,5 % pada panjang yang ditabelkan; paling banyak +0,3 % di antaranya).');
+      const rowsK=[
+        ['Penampang', 'Pipa '+G.tubeLabel+(G.tubeUnset?' (jenis pipa belum dipilih)':'')+': A = '+nf(s.A)+' mm², I = '+nf(s.I/1e4,2)+' cm⁴, i = '+nf(s.i,2)+' mm; f<sub>y</sub> = '+BK.fy+' N/mm², E = '+nf(STEEL.E)+' N/mm²'],
         ['Kelangsingan', 'L<sub>e</sub> = k × h = '+nf(BK.k,2)+' × '+nf(G.h,2)+' = '+nf(BK.Le,2)+' m → λ = L<sub>e</sub>/i = '+nf(BK.lam,1)+' ; λ̄ = λ/λ<sub>1</sub> = '+nf(BK.lb,3)+' (λ<sub>1</sub> = '+nf(BK.lam1,1)+')'],
         ['Reduksi tekuk', 'kurva '+BK.curve+' (α = '+nf(BK.alpha,2)+'): Φ = '+nf(BK.Phi,3)+' ; χ = '+nf(BK.chi,3)],
         ['Kapasitas', 'N<sub>b,Rk</sub> = '+nf(BK.NbRk,2)+' kN → N<sub>izin</sub> = '+nf(BK.NbRk,2)+'/(1,1 × 1,5) = <b>'+nf(BK.Nperm,2)+' kN</b> (≈ '+nf(BK.NpermKg)+' kg)']
-      ]);
+      ];
+      if(BK.curve==='a'){ const Bc=buckling(G,'c'); rowsK.push(['Pembanding', 'kurva c (bawaan, setara TG20:21): N<sub>izin</sub> = '+nf(Bc.Nperm,2)+' kN · rasio '+nf(A.NkN/Bc.Nperm,2)+' — kurva a selalu ditandai CEK sampai keputusan Komite (Q9)']); }
+      h+=kv(rowsK);
       h+=statusBox(okN?'ok':'bad', okN?'TIANG MEMENUHI':'TIANG TIDAK MEMENUHI',
         'Beban tiang terbesar '+nf(A.N)+' kg ('+nf(A.NkN,2)+' kN) vs kapasitas izin '+nf(BK.Nperm,2)+' kN · rasio '+nf(A.util,2)+(okN?'':' — perpendek tinggi lift, kurangi platform kerja atau kelas beban, atau gunakan pipa 4,0 mm.'));
       h+=fxBlock('q = N<sub>maks</sub>/A<sub>dukung</sub> ≤ q<sub>izin</sub> tanah/lantai','prinsip daya dukung',
         'memastikan landasan mampu memikul reaksi tiang terbesar; penurunan setempat membuat rangkaian miring dan membebani tiang lain secara tidak merata.');
       h+=statusBox(A.bearing<=A.dukung?'ok':'bad', A.bearing<=A.dukung?'PONDASI MEMENUHI':'PERLU PERBAIKAN',
         'Tekanan '+nf(A.bearing)+' kg/m² vs daya dukung '+nf(A.dukung)+' kg/m²'+(A.bearing<=A.dukung?'':' — perbesar bidang dukung (sole board) atau perbaiki landasan.'));
-      const okH=A.H<=3*A.Bmin;
-      h+=statusBox(okH?'ok':'warn', okH?'BERDIRI STABIL':'PASANG TIE/OUTRIGGER',
-        'Tinggi '+nf(A.H,1)+' m vs 3 × lebar dasar terkecil = '+nf(3*A.Bmin,1)+' m (kaidah praktis perancah tanpa ikatan)');
+      if(A.tied){
+        h+=statusBox('info','DIIKAT KE BANGUNAN','Kestabilan bergantung pada tie sesuai desain. Jarak dan kapasitas tie serta beban angin tidak dihitung aplikasi ini — wajib dirancang dan diperiksa tersendiri (BS EN 12811-1, NASC TG20:21).');
+      } else {
+        const okH=A.H<=3*A.Bmin;
+        h+=statusBox(okH?'ok':'warn', okH?'BERDIRI STABIL':'PASANG TIE/OUTRIGGER',
+          'Tinggi '+nf(A.H,1)+' m vs 3 × lebar dasar terkecil = '+nf(3*A.Bmin,1)+' m (kaidah praktis perancah tanpa ikatan). Bila perancah diikat ke bangunan, nyatakan di Tahap 3.');
+      }
     }
     fxc.innerHTML=h;
+  }
+  /* lentur transom & ledger (semua model) */
+  const fxb=document.getElementById('fx-bend');
+  if(fxb){
+    const MB=A.MB, tr=MB.tr;
+    let h=fxBlock('M<sub>transom</sub> = [Σt · (W<sub>q</sub> + W<sub>papan</sub>) − t<sub>min</sub> · F] · B/8 + F · B/4 + w<sub>pipa</sub> · B²/8 ≤ M<sub>izin</sub> = W<sub>pl</sub> · f<sub>y</sub>/(γ<sub>M</sub> · γ<sub>F</sub>)',
+      'NASC TG20:21 Tabel 5.9 · BS EN 12811-1:2003 §6.2.2.3, §10.3.3.2',
+      'memeriksa transom yang memikul papan: papan logam membentang satu bay, sehingga transom di tiang tengah memikul ½ bay kiri + ½ bay kanan (Σt = 1; dengan transom antara ¼ + ¼ atau ½ bay). Kelas duty sudah memuat satu beban terpusat F; F diletakkan di tengah bentang transom (posisi paling merugikan) dan bay yang memuatnya menyumbang sisa bebannya secara merata. Momen izin pipa '+G.tubeLabel+' = '+nf(tr.Mperm,2)+' kNm (TG20:21: 1,12 kNm untuk 48,3 × 4,0).');
+    h+=kv([
+      ['Beban', 'W<sub>q</sub> = '+nf(MB.Wq,2)+' kN/bay ('+d.en+') ; F = '+fkN(MB.F)+' kN'+(A.ptFromLL?' (Tahap 2)':'')+' ; W<sub>papan</sub> = '+nf(MB.Wb,2)+' kN/bay ; transom menentukan memikul '+tr.lbl],
+      ['Momen', 'beban merata saja '+nf(tr.Mudl,2)+' kNm ; dengan F di tengah bentang <b>'+nf(tr.Mpt,2)+' kNm</b>']
+    ]);
+    h+=statusBox(tr.ok?'ok':'bad', tr.ok?'TRANSOM MEMENUHI':'TRANSOM TIDAK MEMENUHI',
+      'M = '+nf(tr.M,2)+' kNm vs momen izin '+nf(tr.Mperm,2)+' kNm · rasio '+nf(tr.ratio,2)+(tr.ok?'':' — pasang transom antara di tengah bay (Data Proyek), perkecil lebar perancah, turunkan kelas beban, atau gunakan pipa 4,0 mm.'));
+    if(MB.lg){
+      h+=fxBlock('M<sub>ledger</sub> = R · L/4 + w<sub>pipa</sub> · L²/8 ; R = ¼ (W<sub>q</sub> − F + W<sub>papan</sub>) + F + ½ W<sub>transom antara</sub>','reaksi transom antara di tengah bentang ledger',
+        'memeriksa ledger yang menerima transom antara di tengah bay; beban terpusat diletakkan di dekat ledger yang ditinjau. Balok sederhana (konservatif terhadap ledger menerus).');
+      h+=statusBox(MB.lg.ok?'ok':'bad', MB.lg.ok?'LEDGER MEMENUHI':'LEDGER TIDAK MEMENUHI',
+        'R = '+nf(MB.lg.R,2)+' kN ; M = '+nf(MB.lg.M,2)+' kNm vs momen izin '+nf(MB.lg.Mperm,2)+' kNm · rasio '+nf(MB.lg.ratio,2)+(MB.lg.ok?'':' — perpendek bay, turunkan kelas beban, atau gunakan pipa 4,0 mm.'));
+    } else {
+      h+=statusBox('info','LEDGER TIDAK MENENTUKAN','Transom hanya pada simpul tiang: beban papan diteruskan ke simpul, bukan ke bentang ledger. Bila memakai transom antara (mis. papan kayu bentang ≤ 1,2 m), pilih di Data Proyek agar ledger diperiksa.');
+    }
+    fxb.innerHTML=h;
   }
   /* klem siku */
   const fxk=document.getElementById('fx-klem');
@@ -1190,29 +1427,19 @@ function computeAnalisis(){
   const gl=document.getElementById('gl-stats');
   if(gl) gl.innerHTML=[['Self weight (W<sub>d</sub>)',nf(A.dead)+' kg'],['Beban hidup (W<sub>l</sub>)',nf(A.live)+' kg'],['Gross load (W<sub>d</sub> + W<sub>l</sub>)',nf(A.total)+' kg']].map(function(s){return '<div class="stat"><div class="n" style="font-size:19px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
   const gls=document.getElementById('gl-status');
-  if(gls) gls.innerHTML=statusBox('info','TERHITUNG','Gross load '+nf(A.total)+' kg = self weight '+nf(A.dead)+' kg + beban hidup '+nf(A.live)+' kg ('+G.nb+' bay × '+G.nwork+' platform kerja × '+nf(A.kgBay)+' kg). Beban kerja tanpa faktor — faktor keamanan sudah berada di sisi kapasitas (Tahap 6).'+(indep?' Untuk model independent, beban tiang di Tahap 6 dihitung per posisi tiang dari geometri.':''));
+  if(gls) gls.innerHTML=statusBox('info','TERHITUNG','Gross load '+nf(A.total)+' kg = self weight '+nf(A.dead)+' kg + beban hidup '+nf(A.live)+' kg ('+G.nb+' bay × '+(indep?liveLabel(G):G.nwork+' platform kerja')+' × '+nf(A.kgBay)+' kg). Beban kerja tanpa faktor — faktor keamanan sudah berada di sisi kapasitas (Tahap 6).'+(indep?' Untuk model independent, beban tiang di Tahap 6 dihitung per posisi tiang dari geometri.':(A.deadUsed>A.dead+0.5?' Untuk tali/castor dipakai beban mati estimasi geometri '+nf(A.deadUsed)+' kg karena lebih besar dari rincian.':'')));
   /* Tahap 6: ringkasan atas */
   const dl=document.getElementById('an-dead');
   if(dl) dl.innerHTML=(indep?[['Beban tiang terbesar',nf(A.N)+' kg'],['Kapasitas izin tiang',nf(A.BK.Nperm,2)+' kN'],['Reaksi klem terbesar',nf(A.CP.kN,2)+' kN']]
-      :[['Beban mati',nf(A.dead)+' kg'],['Beban hidup '+d.en,nf(A.live)+' kg'],['Beban kerja total',nf(A.total)+' kg']]).map(function(s){return '<div class="stat"><div class="n" style="font-size:19px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
+      :[['Beban mati dipakai',nf(A.deadUsed)+' kg'],['Beban hidup '+d.en,nf(A.live)+' kg'],['Beban kerja total',nf(A.totalUsed)+' kg']]).map(function(s){return '<div class="stat"><div class="n" style="font-size:19px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
   /* Tahap 3: duty */
   const ds=document.getElementById('duty-stats');
   if(ds) ds.innerHTML=[['Kelas duty',d.en],['Beban per bay',nf(d.kn,1)+' kN'],['Setara massa',nf(A.kgBay)+' kg'],['Lebar platform min',nf(d.minw)+' mm'],['Beban hidup total',nf(A.live)+' kg']].map(function(s){return '<div class="stat"><div class="n" style="font-size:17px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
-  const GDEF={PLT:['PLATFORM (papan)','#3c444d'],STR:['KEKUATAN (Strength)','#1c5fae'],STA:['KESTABILAN (Stability)','#b8860b'],RIG:['INDIKASI KEKOKOHAN (Rigidity)','#5e35b1']};
-  function grpHTML(gs){
-    let html='';
-    gs.forEach(function(g){
-      const list=A.checks.filter(function(c){return c.g===g;}); if(!list.length) return;
-      const gok=list.every(function(c){return c.ok;});
-      html+='<div class="grp-h"><span class="gb" style="background:'+GDEF[g][1]+'"></span>'+GDEF[g][0]+' <span style="color:'+(gok?'#17824a':'#d6392f')+'">'+(gok?'✓ terpenuhi':'✗ periksa')+'</span></div>';
-      html+=list.map(function(c){return '<div class="find" style="border-left-color:'+(c.ok?'#17824a':'#d6392f')+';background:'+(c.ok?'#e7f5ec':'#fbe8e6')+'"><div class="fc" style="background:'+(c.ok?'#17824a':'#d6392f')+'">'+(c.ok?'OK':'CEK')+'</div><div class="ft">'+esc(c.t)+'</div></div>';}).join('');
-    });
-    return html;
-  }
   const sta=document.getElementById('an-checks-sta');
-  if(sta) sta.innerHTML=grpHTML(['PLT','STA']);
+  if(sta) sta.innerHTML=checksHTML(A,['PLT','STA','DAT']);
   const ch=document.getElementById('an-checks');
-  if(ch) ch.innerHTML=grpHTML(['STR','STA','RIG']);
+  if(ch) ch.innerHTML=checksHTML(A,['STR','STA','RIG','DAT']);
+  updateHeadChip();
   saveSoon();
 }
 
@@ -1224,7 +1451,10 @@ function llData(){
   const bay=wOrg+eq+mat+wImp;                     /* beban kerja pada SATU bay terberat per platform */
   const ptkN=ptKg*G_ACC/1000;
   const i1= bay<=225?0 : bay<=450?1 : bay<=675?2 : 3;
-  const i2= ptkN<=1.0?0 : ptkN<=1.5?1 : ptkN<=2.0?2 : 3;
+  /* v2.4.0: batas beban terpusat dibandingkan dalam kg sesuai sumber (100/150/200 kg = 0,98/1,47/1,96 kN;
+     CFMEU Victoria, Scaffold Guide 2024), bukan dibulatkan ke 1,0/1,5/2,0 kN yang sedikit tidak konservatif.
+     Nilai bulat 1,0/1,5/2,0 kN tetap dipakai untuk pemeriksaan papan (pembulatan ke atas = konservatif). */
+  const i2= ptKg<=100?0 : ptKg<=150?1 : ptKg<=200?2 : 3;
   const idx=Math.max(i1,i2);
   const CLS=[['Light Duty',2.2],['Medium Duty',4.4],['Heavy Duty',6.6]];
   let cls,kn,sp=false;
@@ -1238,16 +1468,21 @@ function computeLL(){
   if(st) st.innerHTML=[['Manpower',nf(L.wOrg)+' kg'],['Alat & mesin',nf(L.eq)+' kg'],['Material & debris',nf(L.mat)+' kg'],['Impact '+nf(L.impP*100)+'%',nf(L.wImp)+' kg'],['Beban bay terberat',nf(L.bay)+' kg'],['Beban terpusat terbesar',L.ptKg>0?nf(L.ptKg)+' kg':'—']].map(function(s){return '<div class="stat"><div class="n" style="font-size:19px">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>';}).join('');
   const bx=document.getElementById('ll-status');
   if(bx) bx.innerHTML=statusBox(L.sp?'warn':'ok','REKOMENDASI: '+L.cls.toUpperCase(),
-    'Beban kerja pada bay terberat '+nf(L.bay)+' kg per platform'+(L.ptKg>0?' dengan beban terpusat terbesar '+nf(L.ptKg)+' kg ('+nf(L.ptkN,2)+' kN)':'')+' → kelas '+L.cls+' ('+nf(L.kn,1)+' kN per bay)'+(L.byPoint?', ditentukan oleh beban terpusat':'')+'. Batas per bay per platform: 225 / 450 / 675 kg (AS/NZS 1576.1:2019)'+(L.sp?' — melebihi Heavy Duty, rangkaian wajib didesain khusus oleh ahli yang kompeten.':'.'));
+    'Beban kerja pada bay terberat '+nf(L.bay)+' kg per platform'+(L.ptKg>0?' dengan beban terpusat terbesar '+nf(L.ptKg)+' kg ('+nf(L.ptkN,2)+' kN)':'')+' → kelas '+L.cls+' ('+nf(L.kn,1)+' kN per bay)'+(L.byPoint?', ditentukan oleh beban terpusat':'')+'. Batas per bay per platform: 225 / 450 / 675 kg dengan beban terpusat 100 / 150 / 200 kg (AS/NZS 1576.1:2019)'+(L.sp?' — melebihi Heavy Duty, rangkaian wajib didesain khusus oleh ahli yang kompeten.':'.'));
   saveSoon();
 }
 function applyLLtoAnalisis(){
   const L=llData();
   const ks=document.getElementById('an-kelas'); if(!ks) return;
-  if(L.sp){ ks.value='sp'; const sd=document.getElementById('an-sduty'); if(sd) sd.value=Math.max(6.6,L.kn); }
+  if(L.sp){
+    ks.value='sp';
+    const sd=document.getElementById('an-sduty'); if(sd) sd.value=Math.max(6.6,L.kn);
+    /* beban terpusat rencana Special = beban terpusat Tahap 2 (dibulatkan ke atas 0,01 kN), minimal 2,0 kN */
+    const sp=document.getElementById('an-sdpt'); if(sp) sp.value=Math.max(2.0, Math.ceil(L.ptkN*100-1e-9)/100);
+  }
   else { ks.value=String(L.kn); }
   computeAnalisis();
-  notify('Kelas beban '+L.cls+' ('+nf(L.kn,1)+' kN per bay) diterapkan ke Duty & Analisis Struktur.','success');
+  notify('Kelas beban '+L.cls+' ('+nf(L.kn,1)+' kN per bay'+(L.sp&&L.ptkN>2?'; beban terpusat '+fkN(Math.ceil(L.ptkN*100-1e-9)/100)+' kN':'')+') diterapkan ke Duty & Analisis Struktur.','success');
 }
 
 /* ---------- tahap 5: estimasi material dari geometri yang sama dengan analisis (E2) ---------- */
@@ -1259,8 +1494,10 @@ function materialRows(G){
     {n:'Ledger memanjang ('+fmtm(G.nb*G.L)+' m per run; '+G.nlev+' level × 2 sisi)', q:2*G.nlev, w:r1(G.nb*G.L*m)},
     {n:'Transom ('+fmtm(G.B+TRANSOM_EXTRA)+' m)', q:(G.nb+1)*G.nlev, w:r1((G.B+TRANSOM_EXTRA)*m)},
     {n:'Bracing diagonal ('+fmtm(G.brace)+' m)', q:2*G.nl, w:r1(G.brace*m)},
+    {n:'Transom antara ('+fmtm(G.B+TRANSOM_EXTRA)+' m; tengah bay, lift berpapan)', q:G.ntr*G.nb*G.nbd, w:r1((G.B+TRANSOM_EXTRA)*m)},
     {n:'Guardrail + midrail sisi luar ('+G.nbd+' lift berpapan)', q:2*G.nbd, w:r1(G.nb*G.L*m)},
-    {n:'Klem siku / fix clamp (simpul + pagar)', q:4*(G.nb+1)*G.nlev+2*(G.nb+1)*G.nbd, w:W_RA},
+    {n:'Pagar ujung: 2 rail '+fmtm(G.B+TRANSOM_EXTRA)+' m + toe board '+fmtm(G.B)+' m (set per ujung)', q:2*G.nbd, w:r1(2*(G.B+TRANSOM_EXTRA)*m + G.B*W_TOE_M)},
+    {n:'Klem siku / fix clamp (simpul, pagar, transom antara)', q:4*(G.nb+1)*G.nlev+2*(G.nb+1)*G.nbd+8*G.nbd+2*G.ntr*G.nb*G.nbd, w:W_RA},
     {n:'Swivel clamp (bracing)', q:4*G.nl+4, w:W_SWIVEL},
     {n:'Sleeve coupler / sambungan tiang', q:nStd*joints, w:W_SLEEVE},
     {n:'Base plate / jack base', q:nStd, w:2.5},
@@ -1270,9 +1507,16 @@ function materialRows(G){
     {n:'Tangga akses', q:Math.max(1,Math.ceil(G.nl/2)), w:15}
   ].filter(function(r){return r.q>0;});
 }
+/* estimasi material v2.3.0 (tanpa set pagar ujung dan transom antara) — untuk mengenali rincian otomatis lama yang belum disunting */
+function materialRowsV23(G){
+  return materialRows(Object.assign({},G,{ntr:0})).filter(function(r){ return !/^Pagar ujung/.test(r.n); }).map(function(r){
+    return /^Klem siku/.test(r.n) ? {n:'Klem siku / fix clamp (simpul + pagar)', q:4*(G.nb+1)*G.nlev+2*(G.nb+1)*G.nbd, w:r.w} : r;
+  });
+}
 function autoMaterial(){
-  matRows=materialRows(geom());
+  setMatAuto();
   renderAnalisis();
+  save();
   logAct('Estimasi material otomatis');
 }
 function renderMatStats(){
@@ -1319,12 +1563,12 @@ function resetJsa(){ if(!confirm('Muat ulang template JSA standar? Isian saat in
 /* ---------- tahap 8: kesimpulan ---------- */
 function kesimpulanText(){
   const st=stats(), A=analisisData(), L=llData(), G=A.G;
-  let t='Perancah tubular model '+modelName(A.model)+', '+G.nb+' bay × '+nf(G.L,2)+' m, lebar '+nf(G.B,2)+' m, '+G.nl+' lift × '+nf(G.h,2)+' m (platform teratas '+nf(G.H,1)+' m), '+G.nbd+' lift berpapan dan '+G.nwork+' platform kerja, direncanakan untuk kelas beban '+A.d.en+' ('+nf(A.d.kn,1)+' kN per bay). Estimasi beban kerja pada bay terberat (Tahap 2): '+nf(L.bay)+' kg ('+L.cls+').';
+  let t='Perancah tubular model '+modelName(A.model)+', '+G.nb+' bay × '+nf(G.L,2)+' m, lebar '+nf(G.B,2)+' m, '+G.nl+' lift × '+nf(G.h,2)+' m (platform teratas '+nf(G.H,1)+' m), '+G.nbd+' lift berpapan dan '+G.nwork+' platform kerja, direncanakan untuk kelas beban '+A.d.en+' ('+nf(A.d.kn,1)+' kN per bay). Estimasi beban kerja pada bay terberat (Tahap 2): '+nf(L.bay)+' kg ('+L.cls+', '+nf(L.kn,1)+' kN per bay)'+(L.kn>A.d.kn+1e-9?' — LEBIH TINGGI dari kelas yang dipilih; kelas beban wajib ditinjau.':'.');
   t+=' Hasil pemeriksaan checklist: status '+st.status+' — '+st.ok+' sesuai, '+st.no+' tidak sesuai ('+st.critFail+' temuan kritis) dari '+st.ans+'/'+st.total+' item dinilai.';
-  if(A.model==='independent') t+=' Beban kerja tiang terbesar '+nf(A.NkN,2)+' kN ('+A.ST.gov.label.toLowerCase()+') terhadap kapasitas izin tekuk '+nf(A.BK.Nperm,2)+' kN (rasio '+nf(A.util,2)+'); reaksi klem siku terbesar '+nf(A.CP.kN,2)+' kN terhadap '+nf(A.CP.swl,2)+' kN (kelas '+A.CP.cls+').';
+  if(A.model==='independent') t+=' Beban kerja tiang terbesar '+nf(A.NkN,2)+' kN ('+A.ST.gov.label.toLowerCase()+') terhadap kapasitas izin tekuk '+nf(A.BK.Nperm,2)+' kN (rasio '+nf(A.util,2)+'); lentur transom '+nf(A.MB.tr.M,2)+' kNm terhadap '+nf(A.MB.tr.Mperm,2)+' kNm (rasio '+nf(A.MB.tr.ratio,2)+'); reaksi klem siku terbesar '+nf(A.CP.kN,2)+' kN terhadap '+nf(A.CP.swl,2)+' kN (kelas '+A.CP.cls+').';
   t+=' Analisis struktur indikatif (metode terkoreksi versi Beta, menunggu tinjauan Komite Teknis PPAPI): '+(A.ok?'seluruh pemeriksaan indikatif terpenuhi.':'PERLU REVIEW — '+A.checks.filter(function(c){return !c.ok;}).length+' pemeriksaan belum terpenuhi atau datanya belum lengkap dan wajib ditindaklanjuti sebelum digunakan.');
   if(st.status==='HIJAU'&&A.ok) t+=' Berdasarkan inspeksi, perancah dapat digunakan sesuai kelas beban pada tag setelah desainnya diverifikasi ahli perancah yang kompeten, dengan pemeriksaan ulang maksimal 7 hari atau setelah cuaca ekstrem/modifikasi.';
-  else t+=' Perancah belum boleh digunakan penuh sampai seluruh temuan ditutup dan diperiksa ulang oleh personel berkompeten.';
+  else t+=' Perancah belum boleh digunakan penuh sampai seluruh temuan ditutup dan diperiksa ulang oleh personel berkompeten.'+((st.status==='HIJAU'||st.status==='KUNING')&&!A.ok?' Status tag: KUNING — menunggu verifikasi desain.':'');
   return t;
 }
 function genKesimpulan(){ const e=document.getElementById('f-kesimpulan'); if(e){ e.value=kesimpulanText(); save(); } }
@@ -1416,10 +1660,20 @@ function openSim(){ location.href='../simulator/index.html'; }
 function projStoreKey(u){ return APP_PREFIX+'projects_'+u; }
 function getProjects(u){ try{ const r=localStorage.getItem(projStoreKey(u)); if(r){ const l=JSON.parse(r); return Array.isArray(l)?l.filter(isObj):[]; } }catch(e){} return []; }
 function setProjects(u,list){ try{ localStorage.setItem(projStoreKey(u), JSON.stringify(list)); return true; }catch(e){ return false; } }
-const APP_VERSION='2.3.0';
+const APP_VERSION='2.4.0';
 /* tanda Beta (disetujui pemilik aplikasi) — tampil di aplikasi, laporan PDF, dan kesimpulan */
 const BETA_TEXT='Beta — metode perhitungan telah dikoreksi dan menunggu tinjauan Komite Teknis PPAPI. Hasil bersifat indikatif dan wajib diverifikasi oleh ahli perancah yang kompeten.';
 const CHANGELOG=[
+ {v:'2.4.0', d:'9 Oktober 2026 · Beta', items:[
+   'Revisi hasil tinjauan independen atas metode v2.3.0; rinciannya dicatat dalam dokumen KOREKSI-PERHITUNGAN bagian 19. Status tetap Beta.',
+   'Pemeriksaan baru: lentur transom (dan ledger bila memakai transom antara) terhadap momen izin pipa 1,12 kNm (48,3 × 4,0) atau 0,93 kNm (48,3 × 3,2) sesuai NASC TG20:21. Pilihan transom antara ditambahkan pada Data Proyek.',
+   'Beban tiang model independent kini memuat 50 % beban layan pada satu lift berpapan berikutnya (BS EN 12811-1:2003 §6.2.9.2) serta pagar ujung pada tiang ujung.',
+   'Kelas beban yang lebih rendah dari rekomendasi Tahap 2, jenis pipa yang belum dipilih, dan kurva tekuk a kini ditandai CEK. Beban terpusat rencana memakai beban terpusat Tahap 2 bila lebih besar; batas kelas beban terpusat dibandingkan dalam kg (100/150/200 kg).',
+   'Scaffold tag, ringkasan, dan laporan PDF tidak lagi menyatakan AMAN DIGUNAKAN bila analisis struktur indikatif berstatus PERLU REVIEW; statusnya menjadi KUNING (menunggu verifikasi desain) dan tag mencantumkan status analisis serta catatan Beta.',
+   'Rincian material Tahap 5 mengikuti perubahan geometri secara otomatis. Rincian bawaan versi 2.2.0 diganti estimasi geometri saat dimuat; rincian lama atau yang disusun untuk geometri lain ditandai sampai diperbarui atau dikonfirmasi. Model suspended dan mobile memakai beban mati terbesar dari rincian dan estimasi geometri.',
+   'Model independent: isian perancah diikat ke bangunan. Perancah berikat tidak lagi diperiksa dengan kaidah perancah bebas berdiri; tie dan beban angin tetap wajib didesain tersendiri.',
+   'Pustaka PDF dimuat dengan Subresource Integrity. Tampilan di dalam portal diringkas: identitas aplikasi cukup pada bilah portal dan status penyimpanan berada di bilah menu.'
+ ]},
  {v:'2.3.0', d:'9 Oktober 2026 · Beta', items:[
    'Versi Beta: metode perhitungan dikoreksi atas persetujuan pemilik aplikasi dan menunggu tinjauan Komite Teknis PPAPI. Rincian setiap koreksi tersedia dalam dokumen KOREKSI-PERHITUNGAN.',
    'Dasar keamanan tunggal (tegangan izin): beban kerja tanpa faktor dibandingkan dengan kapasitas izin = tahanan karakteristik / (1,1 × 1,5) sesuai BS EN 12811-1. Faktor keamanan beban hidup (Tahap 2) dan faktor keamanan beban rencana (Tahap 6) dihapus agar tidak terjadi faktor ganda.',
@@ -1544,19 +1798,42 @@ function wipeMyData(){
 /* ---------- arsip proyek per anggota ---------- */
 /* v2.3.0: an-bay, an-fk, an-tiang, an-kaptiang, an-nklem, dan ll-sf dihapus (diturunkan dari geometri / dasar keamanan tunggal).
    Nilai lama di data tersimpan diabaikan oleh cleanAnalisis. */
-const AN_IDS=['an-kelas','an-sduty','an-lantai','an-udl','an-ptpapan','an-kurva','an-kle','an-dukung','an-plate','an-nrope','an-ftali','an-mbl','an-in','an-out','an-mcw','an-ncw','an-ncastor','an-wllcastor','an-lok','an-lock','an-klemcls','ll-org','ll-worg','ll-eq','ll-mat','ll-imp','ll-pt'];
-function collectAnalisis(){ const o={}; AN_IDS.forEach(function(id){ const e=document.getElementById(id); if(e)o[id]=e.value; }); return {vals:o, mats:matRows}; }
+const AN_IDS=['an-kelas','an-sduty','an-sdpt','an-lantai','an-udl','an-ptpapan','an-kurva','an-kurva-why','an-kle','an-dukung','an-plate','an-tie','an-nrope','an-ftali','an-mbl','an-in','an-out','an-mcw','an-ncw','an-ncastor','an-wllcastor','an-lok','an-lock','an-klemcls','ll-org','ll-worg','ll-eq','ll-mat','ll-imp','ll-pt'];
+/* v2.4.0: rincian material disimpan bersama asalnya (otomatis/pengguna/lama) dan kunci geometrinya */
+function collectAnalisis(){ const o={}; AN_IDS.forEach(function(id){ const e=document.getElementById(id); if(e)o[id]=e.value; }); return {vals:o, mats:matRows, matSrc:matMeta.src, matGeom:matMeta.geom}; }
+/* Memuat analisis tersimpan/impor. Dipanggil SETELAH data proyek (geometri) dimuat.
+   Mengembalikan 'v22' bila 8 komponen bawaan v2.2.0 diganti estimasi geometri, 'legacy' bila rincian lama
+   dipertahankan tetapi perlu dicocokkan, atau null. */
 function applyAnalisis(a){
-  a=cleanAnalisis(a); if(!a)return;
-  if(a.mats&&a.mats.length) matRows=a.mats;
+  a=cleanAnalisis(a);
+  if(!a){ setMatAuto(); return null; }
   /* data lama (v2.2.0): kelas klem disimpan sebagai SWL BS 5973 '6.3'/'9.4' → kelas A/B */
   if(a.vals['an-klemcls']==='6.3') a.vals['an-klemcls']='A';
   if(a.vals['an-klemcls']==='9.4') a.vals['an-klemcls']='B';
   AN_IDS.forEach(function(id){
-    const e=document.getElementById(id); if(!e || a.vals[id]==null) return;
+    const e=document.getElementById(id); if(!e) return;
+    if(a.vals[id]==null){ resetControl(e); return; }                    /* isian yang belum ada di data lama → bawaan */
     e.value=a.vals[id];
     if(e.tagName==='SELECT' && e.selectedIndex<0) resetControl(e);   /* nilai tidak dikenal → bawaan */
   });
+  const G=geom(), key=matGeomKey(G);
+  if(!a.mats || !a.mats.length){ setMatAuto(); return null; }
+  if(a.matSrc){ matRows=a.mats; matMeta={src:a.matSrc, geom:a.matGeom}; return null; }   /* v2.4.0+ */
+  if(isMatV22(a.mats)){ setMatAuto(); return 'v22'; }                 /* 8 komponen bawaan v2.2.0 (393 kg), tidak pernah disunting */
+  if(sameRows(a.mats, materialRows(G))){ matRows=a.mats; matMeta={src:'auto', geom:key}; return null; }
+  if(sameRows(a.mats, materialRowsV23(G))){ setMatAuto(); return null; }   /* estimasi otomatis v2.3.0 yang belum disunting → estimasi v2.4.0 */
+  matRows=a.mats; matMeta={src:'legacy', geom:''}; return 'legacy';
+}
+function matLoadNotice(info){
+  if(info==='v22') notify('Rincian material bawaan versi 2.2.0 (8 komponen, 393 kg) tidak sesuai geometri dan diganti dengan estimasi dari Data Proyek. Periksa Tahap 5.','warn');
+  else if(info==='legacy') notify('Rincian material dari versi sebelumnya dipertahankan tetapi belum dicocokkan dengan geometri. Buka Tahap 5 untuk memperbarui atau mengonfirmasinya.','warn');
+}
+/* data proyek dari rekaman tersimpan/impor; isian yang belum ada di rekaman lama kembali ke bawaan,
+   kecuali jenis pipa: dikosongkan (belum dipilih) agar tidak diam-diam memakai pipa 4,0 mm (v2.4.0) */
+function applyRecordFields(raw){
+  const f=cleanFields(raw);
+  FIELDS.forEach(function(id){ const e=document.getElementById(id); if(!e) return; if(f[id]!=null) e.value=String(f[id]); else if(id==='f-pipa') e.value=''; else resetControl(e); });
+  return f;
 }
 function saveProject(){
   if(!CURRENT_USER){ notify('Sesi belum siap. Muat ulang halaman.','error'); return; }
@@ -1595,10 +1872,10 @@ function openProject(id){
   state.answers=cleanAnswers(p.answers); state.naNote=cleanNotes(p.naNote); state.photos=cleanPhotos(p.photos); state.plans=cleanPlans(p.plans);
   const j=cleanJsa(p.jsa); state.jsa=j&&j.length?j:jsaCopyTpl(); saveJsa();
   if(p.dwg){ DWG=migrateDwg(cleanDwg(p.dwg)); dwgSetSeqFrom(DWG); dwgSaveLS(); if(dwgInited){ dwgRender(); dwgCheck(); } }
-  applyFields(cleanFields(p.fields)); applyAnalisis(p.analisis);
-  renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); renderPlans(); renderJSA(); renderProjects(); save(); savePhotos(); savePlans();
+  applyRecordFields(p.fields); const mi=applyAnalisis(p.analisis);
+  renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); computeLL(); renderPlans(); renderJSA(); renderProjects(); save(); savePhotos(); savePlans();
   logAct('Buka proyek: '+str(p.name,140));
-  notify('Proyek "'+str(p.name,140)+'" dimuat.','success');
+  notify('Proyek "'+str(p.name,140)+'" dimuat.','success'); matLoadNotice(mi);
 }
 function deleteProject(id){
   if(!confirm('Hapus proyek ini dari arsip?'))return;
@@ -2299,14 +2576,15 @@ function initApp(){
     });
     const pin=document.getElementById('photo-input');
     if(pin) pin.addEventListener('change',function(){ const f=this.files&&this.files[0]; if(!f||!pendingPhotoKey)return; downscale(f,function(durl){ state.photos[pendingPhotoKey]=durl; const k=pendingPhotoKey; pendingPhotoKey=null; refreshItem(k); savePhotos(); }); });
-    FIELDS.forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('input',function(){save();});});
+    /* geometri berubah → rincian material otomatis ikut diperbarui (E2); hasil analisis dihitung ulang */
+    FIELDS.forEach(id=>{const e=document.getElementById(id);if(e){ e.addEventListener('input',function(){ if(GEOM_FIELDS.indexOf(id)>=0) computeAnalisis(); save(); }); }});
   }
   var _bl=document.getElementById('brand-logo'); if(_bl)_bl.src=LOGO_D;
   var _al=document.getElementById('about-logo'); if(_al)_al.src=LOGO_L;
   const saved=loadSaved();
-  if(saved&&saved.fields){applyFields(cleanFields(saved.fields));}
-  if(saved&&saved.analisis){applyAnalisis(saved.analisis);}
-  if(!matRows.length) matRows=materialRows(geom());   /* belum ada rincian tersimpan → estimasi dari geometri */
+  if(saved&&saved.fields){applyRecordFields(saved.fields);}
+  const matInfo=(saved&&saved.analisis)?applyAnalisis(saved.analisis):null;
+  if(!matRows.length) setMatAuto();   /* belum ada rincian tersimpan → estimasi dari geometri */
   /* Perbaikan B3: tanggal inspeksi bawaan = tanggal lokal perangkat (sebelumnya UTC → mundur sehari 00.00–06.59 WIB) */
   const td=document.getElementById('f-tanggal'); if(td&&!td.value){td.value=todayLocal();}
   const hadInspektor=!!val('f-inspektor');
@@ -2315,6 +2593,7 @@ function initApp(){
   renderChecklist(); renderTag();
   if(saved){showSaved();}
   if(!hadInspektor&&val('f-inspektor')) save();
+  if(matInfo){ matLoadNotice(matInfo); save(); }
   /* service worker aplikasi lama TIDAK didaftarkan: sw.js lama menghapus cache lain di origin
      yang sama dan menyimpan semua permintaan GET (termasuk skrip portal) secara cache-first. */
 }
@@ -2336,6 +2615,8 @@ function appBoot(){
   setH();
   if(hd&&window.ResizeObserver) new ResizeObserver(setH).observe(hd); else window.addEventListener('resize',setH);
   renderChangelog();
+  /* simpanan tertunda (debounce 450 ms) ditulis segera saat halaman ditutup/dimuat ulang */
+  window.addEventListener('pagehide', function(){ if(saveT) save(); });
 }
 function startSessionSSO(u){
   SSO={ uid:str(u.uid,128), name:str(u.name,120)||'Anggota PPAPI', kta:str(u.kta,40), email:str(u.email,200),

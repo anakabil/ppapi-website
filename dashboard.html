@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Dasbor Anggota — PPAPI</title>
   <meta name="description" content="Dasbor anggota PPAPI: status keanggotaan dan tahapan pendaftaran, agenda terdekat, berita, pengumuman, Produk Pengetahuan, aplikasi anggota, serta pengingat masa berlaku keanggotaan dan sertifikat.">
   <meta name="robots" content="noindex, nofollow">
@@ -45,6 +46,8 @@
           </div>
           <div class="dash-hero__actions" id="dash-hero-actions"></div>
         </div>
+        <!-- Mode Firebase: akun email yang belum diverifikasi (diisi dashboard.js; akun demo dianggap terverifikasi) -->
+        <div class="dash-verify" id="dash-verify" hidden></div>
       </div>
     </section>
 

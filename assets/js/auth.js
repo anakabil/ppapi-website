@@ -10,6 +10,11 @@
    v2: auth.isAdmin() (Firebase: admins/{uid} exists · demo: ppapi_demo_admins),
    demo seed (admin@ppapi.demo + 4 contoh members, key ppapi_demo_seed_v2),
    auth.postSignUpTarget = 'pendaftaran.html'.
+   Email verification (Firebase): signUpEmail() sends the verification mail; user.emailVerified tells
+   whether the address is proven (Google accounts are). Only a verified address is copied into the
+   member record (rules: email_verified) — admins are added by that address. auth.sendEmailVerification()
+   resends it; auth.refreshUser() picks up a verification done in the mail (also run on page load).
+   Demo accounts have no mailbox and count as verified.
    ========================================================================== */
 (function (w, d) {
   'use strict';
@@ -56,6 +61,8 @@
     'auth/operation-not-supported-in-this-environment': 'Fitur masuk ini tidak didukung di lingkungan peramban saat ini. Buka situs melalui alamat https dan pastikan penyimpanan situs diizinkan.',
     'auth/invalid-api-key': 'Konfigurasi layanan masuk tidak valid. Mohon hubungi pengelola situs.',
     'auth/missing-name': 'Nama lengkap wajib diisi (minimal 3 karakter).',
+    'auth/email-already-verified': 'Alamat email akun ini sudah terverifikasi.',
+    'auth/no-email': 'Akun ini tidak menggunakan alamat email.',
     'auth/no-current-user': 'Anda belum masuk. Silakan masuk terlebih dahulu.',
     'auth/sdk-load-failed': 'Layanan masuk tidak dapat dimuat. Periksa koneksi internet Anda, lalu muat ulang halaman.',
     'default': 'Terjadi kendala saat memproses permintaan Anda. Silakan coba lagi.'
@@ -157,6 +164,9 @@
     try {
       if (uid && PPAPI.store && typeof PPAPI.store.saveMember === 'function') await PPAPI.store.saveMember(uid, { name: name });
     } catch (e) {
+      /* after approval the member record keeps the reviewed name (store/identity-locked): only the
+         account's display name changes — expected, not an error */
+      if (e && e.code === 'store/identity-locked') return;
       console.warn('[PPAPI] Nama pada data anggota belum diperbarui:', e && e.message);
     }
   }
@@ -180,6 +190,8 @@
   function publicUser(rec) {
     return {
       uid: rec.uid, name: rec.name || '', email: rec.email || '', phone: rec.phone || '',
+      /* demo: no mailbox to prove the address — counts as verified */
+      emailVerified: !!rec.email,
       photoURL: rec.photoURL || '', provider: rec.provider || 'password', createdAt: rec.createdAt || new Date().toISOString()
     };
   }
@@ -529,7 +541,14 @@
       await syncMemberName(current.uid, name);
       notify();
       return copy(current);
-    }
+    },
+    /* demo accounts have no mailbox: the address counts as verified */
+    sendEmailVerification: async function () {
+      if (!current) throw authError('auth/no-current-user');
+      if (!current.email) throw authError('auth/no-email');
+      throw authError('auth/email-already-verified');
+    },
+    refreshUser: async function () { return copy(current); }
   };
 
   if (MODE === 'demo') {
@@ -581,12 +600,25 @@
   }
   newVerifierSlot.n = 0;
 
-  function loadScript(src) {
+  /* Subresource Integrity for the pinned compat SDK: sha384 of the exact files served by
+     www.gstatic.com/firebasejs/<version>/ (versioned files never change). When config.firebaseSdkVersion
+     is raised, add that version's hashes here (README: "Memperbarui versi Firebase SDK"); a version
+     without hashes still loads, with a console warning. */
+  var SDK_SRI = {
+    '12.4.0': {
+      'firebase-app-compat.js': 'sha384-NGw427w9kUd0u0OjHkygdwNKinWp4DiQMkOsafkwq98j2+E3EN8pn0oSlx3Fe61F',
+      'firebase-auth-compat.js': 'sha384-P44Lc4FFaOc/XnFQzAIpmmZZpAstRvYwQLiHHU5LHtlBmblzk5gCbsRCe4hJY6IN',
+      'firebase-firestore-compat.js': 'sha384-DW7welpkxbrycUYGrFJDY26esOqRCi4XxdQi/owqbMLv8q2x9QWoJCrvVyD0UKmu',
+      'firebase-app-check-compat.js': 'sha384-11DWt84+eRNysY+l1B5BzHSjhrmH6TESr5Ii/P0aW0rq/wlfLf2Ng+MRQfAGH2Fc'
+    }
+  };
+  function loadScript(src, integrity) {
     return new Promise(function (resolve, reject) {
       var s = d.createElement('script');
       s.src = src;
       s.async = false;
       s.crossOrigin = 'anonymous';
+      if (integrity) s.integrity = integrity;
       s.onload = function () { resolve(); };
       s.onerror = function () { reject(authError('auth/sdk-load-failed')); };
       d.head.appendChild(s);
@@ -595,10 +627,13 @@
   async function loadSdk() {
     var v = cfg.firebaseSdkVersion || '12.4.0';
     var base = 'https://www.gstatic.com/firebasejs/' + v + '/';
-    if (!w.firebase || typeof w.firebase.initializeApp !== 'function') await loadScript(base + 'firebase-app-compat.js');
-    if (typeof w.firebase.auth !== 'function') await loadScript(base + 'firebase-auth-compat.js');
-    if (typeof w.firebase.firestore !== 'function') await loadScript(base + 'firebase-firestore-compat.js');
-    if (appCheckKey() && typeof w.firebase.appCheck !== 'function') await loadScript(base + 'firebase-app-check-compat.js');
+    var sri = Object.prototype.hasOwnProperty.call(SDK_SRI, v) ? SDK_SRI[v] : null;
+    if (!sri) console.warn('[PPAPI] Firebase SDK ' + v + ' dimuat tanpa pemeriksaan integritas (SRI): hash untuk versi ini belum tercatat di auth.js.');
+    function file(name) { return loadScript(base + name, sri && sri[name]); }
+    if (!w.firebase || typeof w.firebase.initializeApp !== 'function') await file('firebase-app-compat.js');
+    if (typeof w.firebase.auth !== 'function') await file('firebase-auth-compat.js');
+    if (typeof w.firebase.firestore !== 'function') await file('firebase-firestore-compat.js');
+    if (appCheckKey() && typeof w.firebase.appCheck !== 'function') await file('firebase-app-check-compat.js');
   }
   /* Optional Firebase App Check (reCAPTCHA v3 site key in config.appCheckSiteKey): attests that
      Firestore/Auth requests come from this site, so enforcement in the Console can stop bots
@@ -618,6 +653,7 @@
     try { created = u.metadata && u.metadata.creationTime ? new Date(u.metadata.creationTime).toISOString() : ''; } catch (e) { created = ''; }
     return {
       uid: u.uid, name: u.displayName || '', email: u.email || '', phone: u.phoneNumber || '',
+      emailVerified: !!(u.email && u.emailVerified),
       photoURL: u.photoURL || '', provider: provider, createdAt: created
     };
   }
@@ -659,9 +695,47 @@
     return copy(current);
   }
 
+  /* verification mail; the link returns to the dashboard when this domain is an authorised
+     continue URL, otherwise Firebase's own confirmation page is used */
+  async function sendVerification(u) {
+    var back = null;
+    try { back = { url: new URL('dashboard.html', w.location.href).href }; } catch (e) { back = null; }
+    try { await u.sendEmailVerification(back || undefined); }
+    catch (e) {
+      if (back && e && /continue-uri|unauthorized-domain|invalid-continue/.test(String(e.code || ''))) await u.sendEmailVerification();
+      else throw e;
+    }
+  }
+  /* re-read the account (e.g. after the mail link was opened elsewhere); once the address is verified
+     the ID token is refreshed (rules read email_verified from it) and the member record gets the email */
+  async function refreshFirebaseUser() {
+    var fx = await getFb();
+    var u = fx.auth.currentUser;
+    if (!u) return null;
+    var was = !!u.emailVerified;
+    try { await u.reload(); } catch (e) { throw mapError(e); }
+    u = fx.auth.currentUser;
+    if (!u) return null;
+    var nameNow = current && current.uid === u.uid ? current.name : '';
+    current = mapUser(u);
+    if (current && !current.name && nameNow) current.name = nameNow;
+    if (!was && u.emailVerified) {
+      try { await u.getIdToken(true); } catch (e) { /* the next automatic refresh carries the claim */ }
+      await ensure(copy(current));
+      notify();
+    }
+    return copy(current);
+  }
+
   var firebase = {
     ready: function () {
-      return initFirebase().catch(function (e) {
+      return initFirebase().then(function (u) {
+        /* unverified email account: check quietly whether the mail link has been opened meanwhile */
+        if (u && u.provider === 'password' && u.email && !u.emailVerified) {
+          setTimeout(function () { refreshFirebaseUser().catch(function () { /* offline: next visit */ }); }, 0);
+        }
+        return u;
+      }).catch(function (e) {
         console.error('[PPAPI] Firebase tidak dapat dimuat:', e && e.message);
         PPAPI.auth.error = mapError(e);
         setTimeout(function () {
@@ -683,6 +757,9 @@
         var cred = await fx.auth.createUserWithEmailAndPassword(email, pw);
         await cred.user.updateProfile({ displayName: name });
       } catch (e) { throw mapError(e); }
+      /* prove the address: until then it is not copied into the member record (rules) */
+      try { await sendVerification(cred.user); }
+      catch (e) { console.warn('[PPAPI] Email verifikasi belum terkirim:', e && (e.code || e.message)); }
       var u = refreshFromFirebase(name);
       await ensure(u);
       notify();
@@ -789,7 +866,17 @@
       await syncMemberName(u.uid, name);
       notify();
       return copy(current);
-    }
+    },
+    sendEmailVerification: async function () {
+      var fx = await getFb();
+      var u = fx.auth.currentUser;
+      if (!u) throw authError('auth/no-current-user');
+      if (!u.email) throw authError('auth/no-email');
+      if (u.emailVerified) throw authError('auth/email-already-verified');
+      try { fx.auth.languageCode = 'id'; await sendVerification(u); } catch (e) { throw mapError(e); }
+      return true;
+    },
+    refreshUser: function () { return refreshFirebaseUser(); }
   };
 
   /* ======================================================================
@@ -849,6 +936,10 @@
     confirmPhone: function (o) { return impl.confirmPhone(o); },
     signOut: function () { return impl.signOut(); },
     updateName: function (name) { return impl.updateName(name); },
+    /** Firebase: (re)send the verification mail of the signed-in email account. */
+    sendEmailVerification: function () { return impl.sendEmailVerification(); },
+    /** Re-read the signed-in account (emailVerified …); Promise<user|null>. */
+    refreshUser: function () { return impl.refreshUser(); },
     /** Promise<boolean> — is the signed-in user an admin (sekretariat)? Cached per uid. */
     isAdmin: isAdmin,
     /** Where pages send a NEW account when no explicit ?next= is given (SPEC v2 §3.2). */

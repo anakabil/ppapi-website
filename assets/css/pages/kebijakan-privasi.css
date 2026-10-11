@@ -114,6 +114,9 @@ body[data-page="kebijakan-privasi"] .kp-table { margin-top: 1.4em; }
 body[data-page="kebijakan-privasi"] .kp-table .table { font-size: .92rem; line-height: 1.55; }
 body[data-page="kebijakan-privasi"] .kp-table td:first-child { color: var(--text-strong); font-weight: 500; }
 body[data-page="kebijakan-privasi"] .kp-table td { color: var(--text); }
+/* nama kunci penyimpanan: deretan "chip" di bawah jenis penyimpanan; nama panjang boleh patah di mana saja */
+body[data-page="kebijakan-privasi"] .kp-keys { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+body[data-page="kebijakan-privasi"] .kp-table code { font-size: .84em; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
 @media (min-width: 768px) {
   body[data-page="kebijakan-privasi"] .kp-table td:last-child { white-space: nowrap; }
 }

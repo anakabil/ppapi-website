@@ -35,13 +35,15 @@ window.PPAPI_CONFIG = {
   // terhadap akar situs — jangan diawali garis miring (/).
   //   key   : kode tetap aplikasi (jangan diubah)
   //   title : nama aplikasi;  short : nama singkat (tombol, kartu kecil)
+  //           (aplikasi perencanaan masih Beta: tanda "(Beta)" pada title dipertahankan
+  //           sampai Komite Teknis PPAPI menyelesaikan tinjauan metode perhitungan)
   //   desc  : deskripsi singkat;  fitur : butir fitur utama
   // Istilah dalam kurung (checklist, scaffold tag, duty, verdict, JSA) adalah
   // nama fitur di dalam aplikasi.
   apps: [
     {
       key: 'perencanaan',
-      title: 'PPAPI Scaffold — Perencanaan & Analisis Struktur',
+      title: 'PPAPI Scaffold (Beta) — Perencanaan & Analisis Struktur',
       short: 'Perencanaan & Analisis Struktur',
       desc: 'Perencanaan dan inspeksi perancah tubular (tube & coupler) dalam sembilan tahap — data proyek, beban hidup, kelas beban (duty) dan stabilitas, gambar rencana, material dan beban kotor, analisis struktur, Job Safety Analysis (JSA), daftar periksa inspeksi, hingga laporan dan label perancah (scaffold tag).',
       url: 'aplikasi/perencanaan/index.html',
@@ -57,13 +59,13 @@ window.PPAPI_CONFIG = {
       key: 'simulator',
       title: 'Simulator Pemasangan Perancah Tube & Coupler',
       short: 'Simulator Tube & Coupler',
-      desc: 'Simulator 3D pelatihan K3 untuk perancah tube & coupler: mengenali komponen dan jenis klem, merakit menara perancah 20 tahap sesuai urutan kerja, lalu berlatih memeriksa kelurusan, kedataran, jarak, dan kesikuan.',
+      desc: 'Simulator 3D pelatihan K3 untuk perancah tube & coupler: mengenali komponen dan jenis klem, lalu merakit menara perancah 20 tahap sesuai urutan kerja — dari persiapan dan tag merah hingga inspeksi serah terima 24 butir terukur dan tag hijau.',
       url: 'aplikasi/simulator/index.html',
       ikon: 'layers',
       fitur: [
-        'Pengenalan 18 komponen perancah dan jenis klem (coupler) dalam model 3D',
-        'Simulasi perakitan 20 tahap berurutan, dari papan alas hingga tangga akses dan tag',
-        'Mode inspeksi: kelurusan vertikal, kedataran, jarak antarpipa, dan kesikuan 90°',
+        'Pengenalan 18 komponen dan perlengkapan — jenis klem (coupler), tag status, alat ukur — dalam model 3D',
+        'Perakitan 20 tahap berurutan, dari persiapan dan tag merah hingga tangga akses berpintu',
+        'Inspeksi serah terima 24 butir terukur (rangka, bracing, stabilitas, lantai, pelindung tepi, akses) sebelum tag hijau',
         'Kemajuan latihan tersimpan di peramban masing-masing anggota'
       ]
     }

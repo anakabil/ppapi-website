@@ -604,11 +604,13 @@
               '<td><button type="button" class="adm-link-title" data-open="feedback" data-id="' + h(x.id) + '">' + h(subj) + '</button>' +
               '<span class="table__muted adm-clamp">' + h(String(x.pesan || '').slice(0, 220)) + '</span></td>' +
               '<td data-label="Kategori"><span class="tag">' + h(x.kategori) + '</span></td>' +
-              '<td data-label="Pengirim">' + h(fbSender(x)) + (x.email && !x.anonim ? '<span class="table__muted">' + h(x.email) + '</span>' : '') + '</td>' +
+              '<td data-label="Pengirim">' + h(fbSender(x)) + (x.email && !x.anonim ? '<span class="table__muted adm-break">' + h(x.email) + '</span>' : '') + '</td>' +
               '<td data-label="Nilai">' + stars(x.rating) + '</td>' +
               '<td data-label="Diterima">' + K.timeTag(x.createdAt) + '</td>' +
               '<td data-label="Status">' + fbBadge(x.status) + '</td>' +
-              '<td class="adm-table__actions"><button type="button" class="adm-act" data-open="feedback" data-id="' + h(x.id) + '"><span>Buka</span>' + icon('arrow-right', { size: 14 }) + '<span class="sr-only"> umpan balik ' + h(subj) + '</span></button></td></tr>';
+              /* the subject already opens the drawer: square icon action from tablets up (as in Anggota) */
+              '<td class="adm-table__actions"><button type="button" class="adm-act adm-act--icon adm-act--open" data-open="feedback" data-id="' + h(x.id) + '" title="Buka">' + icon('arrow-right', { size: 15 }) +
+                '<span class="adm-act__label">Buka<span class="sr-only"> umpan balik ' + h(subj) + '</span></span></button></td></tr>';
           }).join('') + '</tbody></table></div>';
       }
       paint();
@@ -709,7 +711,7 @@
                 '</form>' +
                 '<div id="adm-add-result" aria-live="polite"></div>' +
               '</div>' +
-              '<div class="alert alert--warn adm-add__note">' + icon('alert-triangle', { size: 18 }) + '<div><p class="alert__title">Pastikan pemilik akun</p><p>Situs tidak memverifikasi kepemilikan alamat email. Mintalah petugas sekretariat membuat akunnya sendiri, lalu konfirmasikan email tersebut langsung kepada Anda sebelum memberi akses admin.</p></div></div>' +
+              '<div class="alert alert--warn adm-add__note">' + icon('alert-triangle', { size: 18 }) + '<div><p class="alert__title">Hanya email terverifikasi</p><p>Peran admin hanya dapat diberikan kepada akun yang alamat emailnya sudah diverifikasi melalui tautan yang dikirim saat pendaftaran. Mintalah petugas sekretariat membuat akunnya sendiri, lalu konfirmasikan langsung kepada yang bersangkutan sebelum memberi akses admin.</p></div></div>' +
             '</div>' +
           '</section>' +
         '</div>';
@@ -726,7 +728,7 @@
           return;
         }
         if (!hits.length) {
-          result.innerHTML = '<div class="alert alert--warn">' + icon('alert-triangle', { size: 18 }) + '<div><p class="alert__title">Akun belum ditemukan</p><p>Belum ada data anggota dengan email ini. Minta yang bersangkutan membuat akun di situs terlebih dahulu, lalu periksa kembali.</p></div></div>';
+          result.innerHTML = '<div class="alert alert--warn">' + icon('alert-triangle', { size: 18 }) + '<div><p class="alert__title">Akun belum ditemukan</p><p>Belum ada akun dengan email terverifikasi ini. Minta yang bersangkutan membuat akun di situs dan membuka tautan verifikasi pada emailnya, lalu periksa kembali.</p></div></div>';
           return;
         }
         if (hits.length > 1) {

@@ -2,6 +2,11 @@
    PPAPI — berita.css  (Berita & Kegiatan: daftar + detail artikel)
    Hanya memakai token dari main.css. Semua selektor dibatasi
    body[data-page="berita"].
+   Lebar baca memakai em yang setara Nch pada huruf web (Cormorant: 1ch =
+   0,477em; Inter: 0,618em pada tebal 300, 0,631em pada tebal 400), bukan ch:
+   ch mengikuti huruf yang sedang dipakai sehingga lebarnya berubah 5–13 %
+   saat huruf web menggantikan huruf cadangan, dan judul/paragraf terlipat
+   ulang (pergeseran tata letak).
    ========================================================================== */
 
 body[data-page="berita"] {
@@ -15,7 +20,7 @@ body[data-page="berita"][data-view="detail"] #berita-list { display: none; }
    HERO (daftar)
    -------------------------------------------------------------------------- */
 body[data-page="berita"] .berita-hero { --hero-pos: 50% 32%; }
-body[data-page="berita"] .berita-hero .display { max-width: 20ch; }
+body[data-page="berita"] .berita-hero .display { max-width: 9.54em; } /* ≈ 20ch */
 /* baris ringkasan hero diisi berita.js: pesan tingginya (1 baris; 2 baris di
    ponsel, tempat ketiga butirnya terlipat) agar konten di bawah hero tidak bergeser */
 body[data-page="berita"] #berita-hero-meta:empty { min-height: calc(.74rem * 1.4); }
@@ -237,7 +242,7 @@ body[data-page="berita"] .berita-more__text {
    -------------------------------------------------------------------------- */
 body[data-page="berita"] .berita-agenda__split { align-items: start; }
 body[data-page="berita"] .berita-agenda__intro .h2 { margin: 0; }
-body[data-page="berita"] .berita-agenda__intro .lead { margin-top: 18px; max-width: 42ch; }
+body[data-page="berita"] .berita-agenda__intro .lead { margin-top: 18px; max-width: 25.94em; } /* ≈ 42ch */
 body[data-page="berita"] .berita-agenda__items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
 body[data-page="berita"] .berita-agenda__item {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px 22px; align-items: center;
@@ -295,7 +300,7 @@ body[data-page="berita"] .berita-article__cat {
 }
 body[data-page="berita"] .berita-article__cat:hover { background: var(--c-bone); color: var(--c-black); border-color: var(--c-bone); }
 body[data-page="berita"] .berita-article__title {
-  max-width: 22ch; margin-top: clamp(18px, 2.4vw, 28px);
+  max-width: 10.49em; margin-top: clamp(18px, 2.4vw, 28px); /* ≈ 22ch */
   font: 600 clamp(2.2rem, 4.6vw, 4.1rem)/1.06 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.01em; color: var(--c-white);
 }
 body[data-page="berita"] .berita-article__byline {
@@ -315,7 +320,7 @@ body[data-page="berita"] .berita-article__read {
   body[data-page="berita"] .berita-article__read { flex-basis: 100%; padding-left: 0; border-left: 0; }
 }
 body[data-page="berita"] .berita-nf__hero { padding-bottom: clamp(56px, 7vw, 96px); }
-body[data-page="berita"] .berita-nf__hero .lead { max-width: 52ch; }
+body[data-page="berita"] .berita-nf__hero .lead { max-width: 32.12em; } /* ≈ 52ch */
 
 body[data-page="berita"] .berita-article__figure-wrap {
   position: relative; z-index: 1; margin-top: calc(var(--fig-overlap) * -1);
@@ -337,7 +342,7 @@ body[data-page="berita"] .berita-article__layout {
 @media (min-width: 1024px) {
   body[data-page="berita"] .berita-article__layout { grid-template-columns: minmax(0, 1fr) 320px; gap: clamp(56px, 6vw, 104px); }
 }
-body[data-page="berita"] .berita-article__main { min-width: 0; max-width: 72ch; }
+body[data-page="berita"] .berita-article__main { min-width: 0; max-width: 45.42em; } /* ≈ 72ch */
 body[data-page="berita"] .berita-article__standfirst {
   position: relative;
   padding-bottom: 32px; margin-bottom: 40px; border-bottom: 1px solid var(--line);
@@ -421,7 +426,7 @@ body[data-page="berita"] .berita-pager__dir svg { transition: transform .5s var(
 body[data-page="berita"] .berita-pager__link--prev:hover .berita-pager__dir svg { transform: translateX(-4px); }
 body[data-page="berita"] .berita-pager__link--next:hover .berita-pager__dir svg { transform: translateX(4px); }
 body[data-page="berita"] .berita-pager__title {
-  max-width: 32ch; font: 600 clamp(1.3rem, 2vw, 1.7rem)/1.2 var(--f-display); font-variant-numeric: lining-nums;
+  max-width: 15.26em; /* ≈ 32ch */ font: 600 clamp(1.3rem, 2vw, 1.7rem)/1.2 var(--f-display); font-variant-numeric: lining-nums;
 }
 body[data-page="berita"] .berita-pager__link:hover .berita-pager__title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
 body[data-page="berita"] .berita-pager__link.is-index .berita-pager__title { color: var(--muted); font-style: italic; font-weight: 500; }

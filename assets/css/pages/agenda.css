@@ -2,6 +2,11 @@
    PPAPI — agenda.css  (Agenda Kegiatan)
    Hanya memakai token dari main.css. Semua selektor dibatasi
    body[data-page="agenda"].
+   Lebar baca memakai em yang setara Nch pada huruf web (Cormorant: 1ch =
+   0,477em; Inter: 0,618em pada tebal 300, 0,631em pada tebal 400), bukan ch:
+   ch mengikuti huruf yang sedang dipakai sehingga lebarnya berubah 5–13 %
+   saat huruf web menggantikan huruf cadangan, dan judul/paragraf terlipat
+   ulang (pergeseran tata letak).
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -55,7 +60,7 @@ body[data-page="agenda"] .agenda-feature__scaffold .scaffold-draw { color: inher
 body[data-page="agenda"] .agenda-feature__head { grid-area: head; min-width: 0; }
 body[data-page="agenda"] .agenda-feature__eyebrow { color: var(--c-silver); margin-bottom: 24px; }
 body[data-page="agenda"] .agenda-feature__title {
-  max-width: 24ch; margin-top: 14px;
+  max-width: 11.45em; margin-top: 14px; /* ≈ 24ch */
   font: 600 clamp(1.95rem, 3.3vw, 3rem)/1.08 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: -.01em; color: var(--c-white);
 }
 body[data-page="agenda"] .agenda-feature__title a {
@@ -68,7 +73,7 @@ body[data-page="agenda"] .agenda-feature__title a:focus-visible { background-siz
 
 body[data-page="agenda"] .agenda-feature__body { grid-area: body; min-width: 0; }
 body[data-page="agenda"] .agenda-feature__desc {
-  max-width: 62ch; font-weight: 300; font-size: 1.06rem; line-height: 1.7; color: var(--c-silver);
+  max-width: 38.27em; /* ≈ 62ch */ font-weight: 300; font-size: 1.06rem; line-height: 1.7; color: var(--c-silver);
 }
 body[data-page="agenda"] .agenda-feature__facts {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 32px;
@@ -201,6 +206,8 @@ body[data-page="agenda"] .agenda-status {
   min-height: 44px; padding: 14px 0 clamp(24px, 3.5vw, 40px);
 }
 body[data-page="agenda"] .agenda-status__text {
+  /* satu baris dipesan sebelum agenda.js mengisi jumlah agenda (tanpa pergeseran) */
+  min-height: 1.5em;
   font: 600 .76rem/1.5 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
 }
 
@@ -231,7 +238,7 @@ body[data-page="agenda"] .agenda-month__count {
 }
 
 /* baris agenda */
-body[data-page="agenda"] .agenda-row { padding: 26px 0; transition: background-color .6s var(--ease); }
+body[data-page="agenda"] .agenda-row { padding: 26px 0; transition: background-color .6s var(--ease), box-shadow .6s var(--ease); }
 body[data-page="agenda"] .agenda-row .date-block { width: 88px; min-width: 0; }
 body[data-page="agenda"] .agenda-row .event-row__title {
   /* h4 semantik: kembalikan ke gaya judul serif */
@@ -260,8 +267,54 @@ body[data-page="agenda"] .date-block__day { white-space: nowrap; }
   body[data-page="agenda"] .agenda-row .event-row__aside { flex-direction: column; align-items: stretch; gap: 6px; min-width: 200px; }
   body[data-page="agenda"] .agenda-row__ics { justify-content: center; }
 }
-body[data-page="agenda"] .agenda-row.is-target { background: var(--hover-bg); }
+/* baris tujuan tautan langsung (setelah detail ditutup): sorotan melebar ke
+   samping lewat bayangan — tanpa mengubah tata letak */
+body[data-page="agenda"] .agenda-row.is-target {
+  --target-pad: clamp(10px, 1.4vw, 18px);
+  background: var(--hover-bg);
+  box-shadow: calc(-1 * var(--target-pad)) 0 0 var(--hover-bg), var(--target-pad) 0 0 var(--hover-bg);
+}
 body[data-page="agenda"] .agenda-empty .empty-state { background: var(--surface); }
+
+/* --------------------------------------------------------------------------
+   KERANGKA JADWAL — dipasang agenda.js sebelum data dimuat, dengan markah
+   baris yang sama (data bawaan) sehingga tinggi daftar sudah tepat sejak awal.
+   Garis rambut, bulan, dan bingkai blok tanggal tetap; teks menjadi batang
+   kerangka. aria-hidden + inert; diganti daftar sebenarnya oleh render().
+   -------------------------------------------------------------------------- */
+body[data-page="agenda"] .agenda-list__ph { pointer-events: none; user-select: none; }
+body[data-page="agenda"] .agenda-list__ph :is(.agenda-month__name, .agenda-month__year, .agenda-month__count, .event-row__title a, .event-row__info > span, .tag, .badge, .btn, .date-block__day, .date-block__month, .date-block__year) {
+  color: transparent; -webkit-text-fill-color: transparent;
+  background: var(--skeleton-a); border-color: transparent; border-radius: var(--radius-sm);
+}
+/* teks yang dapat terlipat: satu batang per baris, dengan jeda antarbaris */
+body[data-page="agenda"] .agenda-list__ph :is(.agenda-month__name, .agenda-month__year, .event-row__title a) {
+  background: linear-gradient(var(--skeleton-a), var(--skeleton-a)) 0 55% / 100% .66em no-repeat;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+@supports (height: 1lh) {
+  body[data-page="agenda"] .agenda-list__ph .event-row__info > span {
+    background: repeating-linear-gradient(to bottom, transparent 0 .3em, var(--skeleton-a) .3em calc(1lh - .3em), transparent calc(1lh - .3em) 1lh);
+    border-radius: 0;
+  }
+}
+body[data-page="agenda"] .agenda-list__ph svg,
+body[data-page="agenda"] .agenda-list__ph .tag::before,
+body[data-page="agenda"] .agenda-list__ph .badge::before,
+body[data-page="agenda"] .agenda-list__ph .btn::before { visibility: hidden; }
+body[data-page="agenda"] .agenda-list__ph .btn.btn--link { background: linear-gradient(var(--skeleton-a), var(--skeleton-a)) 0 50% / 100% 1.1em no-repeat; }
+body[data-page="agenda"] .agenda-list__ph .btn--link > span { background-image: none; }
+body[data-page="agenda"] .agenda-list__ph .date-block { background: transparent; border-color: var(--line); }
+body[data-page="agenda"] .agenda-list__ph .date-block::before,
+body[data-page="agenda"] .agenda-list__ph .date-block::after { background: var(--line-strong); }
+/* chip jenis kerangka: ukuran sama dengan chip sebenarnya (teks & angka yang sama) */
+body[data-page="agenda"] .chip.agenda-chip-ph { pointer-events: none; color: transparent; border-color: var(--line); }
+body[data-page="agenda"] .chip.agenda-chip-ph > span:first-child,
+body[data-page="agenda"] .chip.agenda-chip-ph [data-chip-n] { background: var(--skeleton-a); border-radius: var(--radius-sm); }
+@media (prefers-reduced-motion: no-preference) {
+  body[data-page="agenda"] :is(.agenda-list__ph, .agenda-chip-ph) { animation: agenda-ph-pulse 1.6s var(--ease-in-out) infinite; }
+}
+@keyframes agenda-ph-pulse { 50% { opacity: .55; } }
 
 /* --------------------------------------------------------------------------
    MODAL DETAIL
@@ -336,7 +389,7 @@ body[data-page="agenda"] .agenda-cross__card:hover::before { width: 100%; }
   body[data-page="agenda"] .agenda-cross__card + .agenda-cross__card:not(:last-child):hover::before { width: calc(100% - 2 * var(--cross-gap)); }
 }
 body[data-page="agenda"] .agenda-cross__title { font: 600 clamp(1.8rem, 3vw, 2.4rem)/1.1 var(--f-display); font-variant-numeric: lining-nums; }
-body[data-page="agenda"] .agenda-cross__text { max-width: 46ch; color: var(--muted); }
+body[data-page="agenda"] .agenda-cross__text { max-width: 29.02em; color: var(--muted); } /* ≈ 46ch */
 body[data-page="agenda"] .agenda-cross__go {
   display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 44px;
   font: 600 .78rem/1 var(--f-cond); letter-spacing: .16em; text-transform: uppercase;

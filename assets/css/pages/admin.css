@@ -8,18 +8,20 @@
    ========================================================================== */
 
 /* ---------- 01. HERO BAND ---------- */
+/* a working console, not a landing page: the band is a slim title strip (≈ 205 px including the
+   76 px header at 1440 × 900) so the first queue rows sit above the fold */
 body[data-page="admin"] .adm-hero {
   min-height: 0;
-  padding-bottom: clamp(34px, 4vw, 48px);
+  padding: calc(var(--header-offset) + clamp(12px, 1.2vw, 16px)) 0 clamp(16px, 1.4vw, 20px);
 }
 body[data-page="admin"] .adm-hero > [data-scaffold] { opacity: .75; }
 body[data-page="admin"] .adm-hero__row {
-  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px;
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 40px;
 }
 body[data-page="admin"] .adm-hero__text { min-width: 0; flex: 1 1 480px; }
-body[data-page="admin"] .adm-hero__eyebrow { margin: 0 0 12px; }
-body[data-page="admin"] .adm-hero__title { margin: 0; max-width: none; }
-body[data-page="admin"] .adm-hero__meta { margin-top: 16px; gap: 10px 24px; }
+body[data-page="admin"] .adm-hero__eyebrow { margin: 0 0 6px; }
+body[data-page="admin"] .adm-hero__title { margin: 0; max-width: none; font-size: clamp(1.9rem, 2.6vw, 2.35rem); line-height: 1.04; }
+body[data-page="admin"] .adm-hero__meta { margin-top: 10px; gap: 8px 22px; }
 body[data-page="admin"] .adm-hero__meta svg { color: var(--c-gray); }
 body[data-page="admin"] .adm-hero__mode { color: var(--c-bone); border-color: rgba(255,255,255,.28); }
 body[data-page="admin"] .adm-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -29,7 +31,7 @@ body[data-page="admin"] .adm-skel {
 }
 
 /* ---------- 02. SHELL & NAVIGATION ---------- */
-body[data-page="admin"] .adm-body { padding: clamp(28px, 4vw, 56px) 0 var(--section-y); }
+body[data-page="admin"] .adm-body { padding: clamp(20px, 2.4vw, 32px) 0 var(--section-y); }
 body[data-page="admin"] .adm-shell { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 body[data-page="admin"] .adm-main { min-width: 0; }
 body[data-page="admin"] .adm-nav { min-width: 0; }
@@ -104,6 +106,13 @@ body[data-page="admin"] .adm-head__title {
 body[data-page="admin"] .adm-head__title:focus { outline: none; }
 body[data-page="admin"] .adm-head__title:focus-visible { outline: 2px solid var(--focus); outline-offset: 6px; }
 body[data-page="admin"] .adm-head__lead { margin-top: 12px; max-width: 66ch; color: var(--muted); }
+/* working sections (everything except Ringkasan, which keeps the editorial head): an h3-size title
+   and a single short lead line, so the toolbar and the first rows come up immediately */
+body[data-page="admin"] .adm-section:not(#sec-ringkasan) .adm-head { margin-bottom: clamp(16px, 1.8vw, 22px); }
+body[data-page="admin"] .adm-section:not(#sec-ringkasan) .adm-head .eyebrow { margin-bottom: 8px; }
+body[data-page="admin"] .adm-section:not(#sec-ringkasan) .adm-head__title { font-size: clamp(1.45rem, 1.9vw, 1.65rem); line-height: 1.15; letter-spacing: -.005em; }
+body[data-page="admin"] .adm-section:not(#sec-ringkasan) .adm-head__title:focus-visible { outline-offset: 3px; }
+body[data-page="admin"] .adm-section:not(#sec-ringkasan) .adm-head__lead { margin-top: 6px; max-width: none; font-size: .92rem; line-height: 1.5; }
 
 body[data-page="admin"] .adm-panel {
   min-width: 0; padding: clamp(20px, 2.4vw, 30px);
@@ -131,6 +140,15 @@ body[data-page="admin"] .adm-badges { display: flex; flex-wrap: wrap; align-item
 body[data-page="admin"] .adm-stack { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 body[data-page="admin"] .adm-more { margin: 24px 0 0; text-align: center; }
 body[data-page="admin"] .adm-more .btn { gap: 8px; }
+/* one demo notice per screen: the Konten line shows only where the rail (and its note) is a tab strip */
+body[data-page="admin"] .adm-demo-note { margin: 0 0 16px; }
+@media (min-width: 1200px) { body[data-page="admin"] .adm-demo-note { display: none; } }
+/* empty state INSIDE an overview card: one muted line, the height of a list row (K.empty is for full lists) */
+body[data-page="admin"] .adm-empty-line {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0; padding: 12px 0;
+  font-size: .92rem; line-height: 1.5; color: var(--muted); border-top: 1px solid var(--line);
+}
+body[data-page="admin"] .adm-empty-line svg { flex: none; }
 
 /* ---------- 04. TOOLBAR ---------- */
 body[data-page="admin"] .adm-toolbar { display: grid; gap: 14px; margin-bottom: 22px; }
@@ -143,6 +161,27 @@ body[data-page="admin"] .adm-select .field__control { min-height: 48px; padding-
 body[data-page="admin"] .adm-select .field__label { font-size: .68rem; }
 body[data-page="admin"] .adm-export, body[data-page="admin"] .adm-new { flex: none; gap: 10px; }
 body[data-page="admin"] .adm-chips { gap: 6px; }
+/* Permohonan: status chips and search share one row where there is room */
+@media (min-width: 1024px) {
+  body[data-page="admin"] .adm-toolbar--inline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
+  body[data-page="admin"] .adm-toolbar--inline > .adm-chips { flex: 0 1 auto; }
+  body[data-page="admin"] .adm-toolbar--inline > .adm-toolbar__row { flex: 1 1 260px; }
+}
+/* Anggota: on phones the four selects fold behind "Saring (n)"; from tablets up they always show */
+body[data-page="admin"] .adm-filter-toggle { display: none; flex: none; gap: 8px; }
+body[data-page="admin"] .adm-filter-toggle__count {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px;
+  font: 600 .7rem/1 var(--f-cond); letter-spacing: .04em; font-variant-numeric: tabular-nums;
+  color: var(--bg); background: var(--text); border-radius: 10px;
+}
+body[data-page="admin"] .adm-filter-toggle__count[hidden] { display: none; }
+body[data-page="admin"] .adm-filter-toggle__chev { transition: transform .3s var(--ease); }
+body[data-page="admin"] .adm-filter-toggle[aria-expanded="true"] .adm-filter-toggle__chev { transform: rotate(180deg); }
+@media (max-width: 767px) {
+  body[data-page="admin"] .adm-toolbar--members .adm-filter-toggle { display: inline-flex; flex: 1 1 0; }
+  body[data-page="admin"] .adm-toolbar--members .adm-export { flex: 1 1 0; }
+  body[data-page="admin"] .adm-toolbar--members .adm-toolbar__filters.is-collapsed { display: none; }
+}
 
 /* ---------- 05. TABLES & ROWS ---------- */
 body[data-page="admin"] .adm-table { font-size: .92rem; }
@@ -151,6 +190,19 @@ body[data-page="admin"] .adm-table { font-size: .92rem; }
   body[data-page="admin"] .adm-table td { padding: 14px 12px; vertical-align: middle; }
   body[data-page="admin"] .adm-table th:first-child, body[data-page="admin"] .adm-table td:first-child { padding-left: 0; }
   body[data-page="admin"] .adm-table th:last-child, body[data-page="admin"] .adm-table td:last-child { padding-right: 0; }
+}
+/* tablets (table layout, no rail, ≈ 700–960 px column): narrower record column and cell gutters so
+   every directory/queue/content table fits without a horizontal scroll */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body[data-page="admin"] .adm-table th, body[data-page="admin"] .adm-table td { padding-inline: 9px; }
+  body[data-page="admin"] .adm-table--content td:first-child { min-width: 200px; }
+  /* the four directory selects fit one row */
+  body[data-page="admin"] .adm-toolbar__filters { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+/* desktop working density */
+@media (min-width: 1200px) {
+  body[data-page="admin"] .adm-table th { padding-block: 10px; }
+  body[data-page="admin"] .adm-table td { padding-block: 11px; }
 }
 body[data-page="admin"] .adm-table .table__muted { margin-top: 4px; font-size: .82rem; line-height: 1.45; }
 body[data-page="admin"] .adm-table__actions { text-align: right; white-space: nowrap; }
@@ -181,15 +233,11 @@ body[data-page="admin"] button.adm-person__name, body[data-page="admin"] .adm-li
 body[data-page="admin"] button.adm-person__name:hover, body[data-page="admin"] .adm-link-title:hover { text-decoration-color: currentColor; }
 body[data-page="admin"] .adm-person__sub { font-size: .82rem; line-height: 1.4; color: var(--muted); overflow-wrap: break-word; min-width: 0; }
 body[data-page="admin"] .adm-table time { white-space: nowrap; }
-@media (min-width: 768px) {
-  /* the record column keeps room for a full name + email; the others size to their content */
-  body[data-page="admin"] .adm-table:not(.adm-table--content) td:first-child { min-width: 250px; }
-  /* content actions: square icon buttons with a tooltip; the label stays for screen readers */
-  body[data-page="admin"] .adm-acts--icons { flex-wrap: nowrap; }
-  body[data-page="admin"] .adm-act--icon { width: 38px; padding: 0; }
-  body[data-page="admin"] .adm-act--icon .adm-act__label {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
-  }
+@media (min-width: 1024px) {
+  /* the record column keeps room for a name + email; the others size to their content. With the
+     row action as a 38 px icon button and validity under the status badge, the member directory
+     fits the 860–893 px console column at 1200–1440 px without horizontal scrolling */
+  body[data-page="admin"] .adm-table:not(.adm-table--content) td:first-child { min-width: 220px; }
 }
 body[data-page="admin"] .adm-person .badge { min-height: 20px; padding: 2px 7px; font-size: .6rem; }
 body[data-page="admin"] .adm-link-title { font: 600 .96rem/1.4 var(--f-body); color: var(--text); text-align: left; }
@@ -209,6 +257,16 @@ body[data-page="admin"] .adm-act--danger:hover { color: var(--bg); background: v
 body[data-page="admin"] .adm-act svg { flex: none; }
 body[data-page="admin"] .adm-act.is-loading { gap: 0; }
 @media (pointer: coarse) { body[data-page="admin"] .adm-act { min-height: 44px; } }
+/* row actions from tablets up: square icon buttons with a tooltip (title); the label stays for
+   screen readers. Declared after .adm-act so the square box wins over its padding/min-height. */
+@media (min-width: 768px) {
+  body[data-page="admin"] .adm-acts--icons { flex-wrap: nowrap; }
+  body[data-page="admin"] .adm-act--icon { width: 38px; min-height: 38px; padding: 0; }
+  body[data-page="admin"] .adm-act--icon .adm-act__label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+}
+@media (pointer: coarse) and (min-width: 768px) { body[data-page="admin"] .adm-act--icon { width: 44px; min-height: 44px; } }
 
 body[data-page="admin"] .adm-stars { display: inline-flex; gap: 2px; color: var(--text); vertical-align: middle; }
 body[data-page="admin"] .adm-src { gap: 6px; }
@@ -371,6 +429,11 @@ body[data-page="admin"] .adm-feed__meta > * + *::before { content: "·"; margin:
 @media (pointer: coarse) { .adm-modal .adm-template { min-height: 44px; } }
 .adm-modal .alert p { color: var(--text); }
 .adm-modal .alert .alert__title { color: var(--text); }
+/* approve dialog: the kategori differs from what the applicant asked for (requested change, or a
+   category applicants cannot choose) → the select is outlined and its hint names the request */
+.adm-modal .adm-field--attention .field__control { border-color: var(--warn-fg); box-shadow: 0 0 0 3px var(--warn-bg); }
+.adm-modal .adm-field--attention .field__control:focus { border-color: var(--text); }
+.adm-modal .adm-field--attention .field__hint { color: var(--text); }
 
 /* KTA result */
 .adm-modal--kta .adm-kta {
@@ -434,6 +497,8 @@ body[data-page="admin"] #log-list > .adm-count + .adm-day { margin-top: 8px; }
   /* stacked table cards: actions read left to right under the record */
   body[data-page="admin"] .adm-table__actions { text-align: left; white-space: normal; }
   body[data-page="admin"] .adm-acts { justify-content: flex-start; }
+  /* open-record actions on the cards read label first: "Detail →", "Buka →" */
+  body[data-page="admin"] .adm-act--open { flex-direction: row-reverse; }
   body[data-page="admin"] .adm-table td { padding-block: 11px; vertical-align: top; }
   body[data-page="admin"] .adm-table tr { padding: 4px 16px; }
   body[data-page="admin"] .adm-table--content td:first-child { min-width: 0; }

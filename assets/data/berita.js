@@ -38,17 +38,18 @@ PPAPI_DATA.berita = [
     judul: 'PPAPI Menghadirkan Situs Resmi dan Layanan Anggota Daring',
     kategori: 'Organisasi',
     tanggal: '2026-10-07',
-    ringkasan: 'Anggota kini dapat mengelola profil, kompetensi, dan sertifikat, menampilkan Kartu Tanda Anggota digital, serta membuka aplikasi simulator dan analisis struktur perancah dari satu akun.',
+    ringkasan: 'Calon anggota kini dapat mengajukan pendaftaran secara daring, sedangkan anggota berstatus Aktif dapat menampilkan Kartu Tanda Anggota digital, membuka Produk Pengetahuan, dan menggunakan aplikasi anggota dari satu akun.',
     isi: [
       'Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI) menghadirkan situs resmi sebagai pintu layanan bagi anggota dan masyarakat. Situs ini dirancang agar informasi organisasi, agenda kegiatan, serta rujukan regulasi perancah dapat diakses dengan mudah dari perangkat apa pun.',
       '## Layanan yang tersedia',
-      '- Pendaftaran dan masuk menggunakan email, nomor HP, atau akun Google.',
-      '- Dasbor anggota berisi agenda terdekat, berita terbaru, pengumuman, dan daftar regulasi kunci.',
-      '- Halaman Anggota untuk mengelola profil diri, kompetensi, dan data sertifikat beserta masa berlakunya.',
+      '- Pembuatan akun dan masuk menggunakan email, nomor HP, atau akun Google.',
+      '- Formulir Pendaftaran Anggota daring; sekretariat memverifikasi setiap pengajuan dan memberikan catatan bila ada data yang perlu diperbaiki.',
+      '- Dasbor berisi status keanggotaan, agenda terdekat, berita terbaru, dan pengumuman.',
+      '- Profil Anggota untuk mengelola profil diri, kompetensi, dan data sertifikat beserta masa berlakunya.',
       '- Kartu Tanda Anggota (KTA) digital dengan kode QR yang dapat diverifikasi publik.',
-      '- Tautan langsung ke aplikasi Simulator Perancah dan Analisis Struktur Perancah.',
-      '## Langkah berikutnya bagi anggota',
-      'Anggota diimbau membuat akun, melengkapi profil, dan mencatat sertifikat yang dimiliki. Sekretariat akan memverifikasi data secara bertahap sebelum status keanggotaan berubah menjadi Aktif.',
+      '- Produk Pengetahuan serta aplikasi anggota — PPAPI Scaffold untuk perencanaan dan analisis struktur, dan Simulator Pemasangan Perancah Tube & Coupler — bagi anggota berstatus Aktif.',
+      '## Langkah berikutnya bagi calon anggota',
+      'Calon anggota diimbau membuat akun dan mengisi Formulir Pendaftaran Anggota. Sekretariat memverifikasi data yang diajukan sebelum status keanggotaan berubah menjadi Aktif.',
       'Kritik dan saran mengenai situs dapat disampaikan melalui halaman Kontak. Masukan anggota akan menjadi bahan penyempurnaan layanan berikutnya.'
     ],
     gambar: 'assets/img/stair-tower.webp',
@@ -116,7 +117,7 @@ PPAPI_DATA.berita = [
       '- Teknisi Scaffolding (jenjang 4).',
       '- Pengawas Scaffolding (jenjang 5).',
       '## Mengapa penting bagi anggota',
-      'Mengetahui standar acuan membantu anggota memetakan kompetensi yang perlu disiapkan sebelum mengikuti uji kompetensi. Anggota dapat mencatat kompetensi dan sertifikat yang dimiliki pada Halaman Anggota agar riwayat profesional tersimpan rapi.',
+      'Mengetahui standar acuan membantu anggota memetakan kompetensi yang perlu disiapkan sebelum mengikuti uji kompetensi. Anggota dapat mencatat kompetensi dan sertifikat yang dimiliki pada Profil Anggota agar riwayat profesional tersimpan rapi.',
       'Naskah lengkap keputusan tersebut dapat dibaca melalui tautan resmi pada halaman Regulasi.'
     ],
     gambar: 'assets/img/stair-tower.webp',
@@ -252,7 +253,7 @@ PPAPI_DATA.pengumuman = [
   {
     id: 'lengkapi-profil-dan-sertifikat',
     judul: 'Lengkapi profil dan data sertifikat Anda',
-    isi: 'Anggota diimbau melengkapi profil, kompetensi, dan data sertifikat melalui Halaman Anggota agar verifikasi oleh sekretariat dapat diproses.',
+    isi: 'Anggota diimbau melengkapi profil, kompetensi, dan data sertifikat melalui Profil Anggota agar data keanggotaan tetap mutakhir.',
     tanggal: '2026-10-07',
     penting: true,
     contoh: true

@@ -240,14 +240,16 @@ PPAPI_DATA.pustaka = [
   /* ---------- APLIKASI ANGGOTA (aset nyata, bukan contoh) ---------- */
   {
     id: 'aplikasi-perencanaan',
-    judul: 'PPAPI Scaffold — Perencanaan & Analisis Struktur',
+    judul: 'PPAPI Scaffold (Beta) — Perencanaan & Analisis Struktur',
     kategori: 'Aplikasi',
     kode: '',
     versi: '',
     tanggal: '',
     status: 'Berlaku',
     ringkasan: 'Aplikasi perencanaan dan inspeksi perancah tubular dalam sembilan tahap: data proyek, beban hidup, kelas beban (duty) dan stabilitas, gambar rencana, material, analisis struktur, JSA, daftar periksa inspeksi 52 butir, serta laporan dan label perancah (scaffold tag). Hasil perhitungan bersifat indikatif.',
-    penyusun: 'PPAPI',
+    /* Penyusun dikosongkan (baris "Penyusun" tidak ditampilkan) sampai klien memutuskan apakah isian ini
+       diisi. Kredit pengembang yang diizinkan hanya "mrezahuzain@2026" (lihat aplikasi/CATATAN.md). */
+    penyusun: '',
     format: 'Aplikasi Web',
     halaman: '',
     akses: 'anggota',
@@ -264,8 +266,9 @@ PPAPI_DATA.pustaka = [
     versi: '',
     tanggal: '',
     status: 'Berlaku',
-    ringkasan: 'Simulator 3D pelatihan K3: mengenali 18 komponen dan jenis klem, merakit menara perancah tube & coupler dalam 20 tahap berurutan, lalu berlatih memeriksa kelurusan, kedataran, jarak, dan kesikuan.',
-    penyusun: 'PPAPI',
+    ringkasan: 'Simulator 3D pelatihan K3: mengenali 18 komponen dan perlengkapan (jenis klem, tag status, alat ukur), lalu merakit menara perancah tube & coupler dalam 20 tahap — dari persiapan dan tag merah hingga inspeksi serah terima 24 butir terukur dan tag hijau.',
+    /* Penyusun dikosongkan sampai atribusi pengembang aplikasi dikonfirmasi klien (lihat di atas). */
+    penyusun: '',
     format: 'Aplikasi Web',
     halaman: '',
     akses: 'anggota',

@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Berita &amp; Kegiatan — PPAPI</title>
   <meta name="description" content="Berita, liputan kegiatan, pengumuman, materi edukasi, dan pembaruan regulasi seputar perancah dari Perkumpulan Praktisi dan Ahli Perancah Indonesia.">
   <meta name="theme-color" content="#0a0a0b">
@@ -17,7 +18,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/pages/berita.css">
-  <script>document.documentElement.classList.replace('no-js','js')</script>
+  <script>document.documentElement.classList.replace('no-js','js');
+    /* #fragmen dari halaman lain: lompatan bawaan peramban ditunda sampai bagian yang dirender dari data
+       selesai (core.js deferredHashScroll), agar konten tidak bergeser. */
+    (function () { try { var h = location.hash; if (['#arsip', '#pengumuman'].indexOf(h) !== -1 && !/[?&]id=/.test(location.search) && history.replaceState) { window.__ppHash = h; history.replaceState(history.state, '', location.pathname + location.search); } } catch (e) {} })();</script>
 </head>
 <body data-page="berita" data-auth="public">
   <a class="skip-link" href="#main">Lewati ke konten utama</a>
@@ -103,7 +107,7 @@
               <label class="sr-only" for="berita-q">Cari berita</label>
               <div class="search-box">
                 <span data-icon="search" data-icon-size="18"></span>
-                <input class="field__control" id="berita-q" name="q" type="search" placeholder="Cari judul atau ringkasan…" autocomplete="off" enterkeyhint="search" maxlength="80">
+                <input class="field__control" id="berita-q" name="q" type="search" placeholder="Cari judul, ringkasan…" autocomplete="off" enterkeyhint="search" maxlength="80">
                 <button type="button" class="search-box__clear" aria-label="Hapus pencarian" hidden><span data-icon="close" data-icon-size="16"></span></button>
               </div>
             </form>

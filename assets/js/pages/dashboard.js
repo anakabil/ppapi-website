@@ -154,7 +154,77 @@
         acts.innerHTML = html;
         acts.hidden = !html;
       }
+      renderVerify(s);
     }
+
+    /* ------------------------------------------------------------------
+       Verifikasi email (Mode Firebase). Email akun baru tercatat pada data
+       keanggotaan setelah tautan verifikasi dibuka (aturan Firestore:
+       email_verified). Akun Google sudah terverifikasi; akun demo dianggap
+       terverifikasi, sehingga pemberitahuan ini tidak tampil di Mode Demo.
+       ------------------------------------------------------------------ */
+    function needsVerify(s) {
+      var u = (s && s.user) || {};
+      return !!(PPAPI.auth && PPAPI.auth.mode === 'firebase' && u.email && u.emailVerified === false);
+    }
+    function renderVerify(s) {
+      var box = byId('dash-verify');
+      if (!box) return;
+      if (!needsVerify(s)) { box.hidden = true; box.innerHTML = ''; box.removeAttribute('data-for'); return; }
+      var key = s.user.uid + '|' + s.user.email;
+      if (box.getAttribute('data-for') === key && box.innerHTML) { box.hidden = false; return; }
+      box.setAttribute('data-for', key);
+      box.innerHTML = '<div class="dash-verify__inner" role="region" aria-labelledby="dash-verify-title">' +
+        icon('mail', { size: 20, cls: 'dash-verify__icon' }) +
+        '<div class="dash-verify__text">' +
+          '<p class="dash-verify__title" id="dash-verify-title">Verifikasi alamat email Anda</p>' +
+          '<p>Tautan verifikasi telah dikirim ke <strong>' + h(s.user.email) + '</strong>. Setelah tautan tersebut dibuka, email tercatat pada data keanggotaan sehingga sekretariat dapat menghubungi Anda.</p>' +
+          '<p class="dash-verify__status" id="dash-verify-status" role="status" aria-live="polite"></p>' +
+        '</div>' +
+        '<div class="dash-verify__actions">' +
+          '<button type="button" class="btn btn--primary btn--sm" data-verify="check"><span>Saya Sudah Memverifikasi</span></button>' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-verify="send"><span>Kirim Ulang Tautan</span></button>' +
+        '</div></div>';
+      box.hidden = false;
+    }
+    function verifyStatus(text) {
+      var el = byId('dash-verify-status');
+      if (el) el.textContent = text || '';
+    }
+    async function verifyCheck(btnEl) {
+      ui.setLoading(btnEl, true, 'Memeriksa…');
+      try {
+        var u = await PPAPI.auth.refreshUser();
+        if (u && u.emailVerified) {
+          var s = await PPAPI.session.refresh();
+          ui.toast('Alamat email Anda telah terverifikasi.', { type: 'success' });
+          renderVerify(s);
+          return;
+        }
+        verifyStatus('Email belum terverifikasi. Buka tautan pada email dari PPAPI (periksa juga folder Spam), lalu tekan tombol ini kembali.');
+      } catch (err) {
+        verifyStatus((err && err.message) || 'Status verifikasi belum dapat diperiksa. Periksa koneksi Anda, lalu coba lagi.');
+      }
+      ui.setLoading(btnEl, false);
+    }
+    async function verifySend(btnEl) {
+      ui.setLoading(btnEl, true, 'Mengirim…');
+      try {
+        await PPAPI.auth.sendEmailVerification();
+        var u = PPAPI.auth.current() || {};
+        verifyStatus('Tautan verifikasi baru telah dikirim ke ' + (u.email || 'email Anda') + '.');
+      } catch (err) {
+        if (err && err.code === 'auth/email-already-verified') { ui.setLoading(btnEl, false); return verifyCheck(btnEl); }
+        verifyStatus((err && err.message) || 'Tautan verifikasi belum dapat dikirim. Silakan coba lagi beberapa saat lagi.');
+      }
+      ui.setLoading(btnEl, false);
+    }
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('#dash-verify [data-verify]');
+      if (!b || b.getAttribute('aria-busy') === 'true' || b.disabled) return;
+      if (b.getAttribute('data-verify') === 'check') verifyCheck(b);
+      else verifySend(b);
+    });
 
     function showView(mode) {
       var sv = byId('dash-status-view'), av = byId('dash-active-view'), er = byId('dash-error');
@@ -195,6 +265,7 @@
 
     function ctaFor(status, renew) {
       if (status === 'Draf' && renew) return ['Lanjutkan Pengajuan Perpanjangan', 'pendaftaran.html'];
+      if (status === 'Ditolak' && renew) return ['Ajukan Ulang Perpanjangan', 'pendaftaran.html'];
       return {
         'Draf': ['Lengkapi Formulir Pendaftaran', 'pendaftaran.html'],
         'Menunggu Verifikasi': ['Lihat Pengajuan', 'pendaftaran.html'],
@@ -242,9 +313,9 @@
           : 'KTA dengan kode QR verifikasi, beserta profil, kompetensi, dan sertifikat Anda — terbit setelah keanggotaan disetujui sekretariat.'
       };
       if (st === 'Nonaktif') {
-        c.fiturLead = 'Fitur berikut dapat digunakan kembali setelah keanggotaan Anda diaktifkan kembali oleh sekretariat PPAPI atau perpanjangan Anda disetujui.';
+        c.fiturLead = 'Fitur berikut dapat digunakan kembali setelah perpanjangan Anda disetujui atau keanggotaan Anda diaktifkan kembali oleh sekretariat PPAPI.';
         c.helpLead = 'Halaman publik berikut tetap dapat dibuka selama keanggotaan Anda nonaktif.';
-        c.kta = 'KTA Anda aktif kembali setelah keanggotaan diaktifkan kembali oleh sekretariat atau perpanjangan disetujui — lengkap dengan kode QR verifikasi, profil, kompetensi, dan sertifikat Anda.';
+        c.kta = 'KTA Anda aktif kembali setelah perpanjangan disetujui atau keanggotaan dipulihkan sekretariat — lengkap dengan kode QR verifikasi, profil, kompetensi, dan sertifikat Anda.';
       } else if (st === 'Kedaluwarsa') {
         c.fiturLead = 'Fitur berikut dapat digunakan kembali setelah pengajuan perpanjangan Anda disetujui sekretariat PPAPI.';
         c.helpLead = 'Halaman publik berikut tetap dapat dibuka selama keanggotaan Anda belum diperpanjang.';
@@ -446,7 +517,7 @@
       /* pemegang KTA resmi (Nonaktif · Kedaluwarsa · perpanjangan) melihat nomornya sendiri, tersamar */
       var no = officialKta(m, s.status) || 'PPAPI-0000-000000';
       return '<div class="dash-ktamock theme-dark">' +
-        '<div class="dash-ktamock__top"><img src="assets/img/logo-light.png" alt="" width="1200" height="418" decoding="async" loading="lazy"><span>Kartu Tanda Anggota</span></div>' +
+        '<div class="dash-ktamock__top"><img src="assets/img/logo-light-sm.webp" alt="" width="480" height="167" decoding="async" loading="lazy"><span>Kartu Tanda Anggota</span></div>' +
         '<p class="dash-ktamock__name">' + h(name) + '</p>' +
         '<p class="dash-ktamock__no">' + h(no) + '</p>' +
         '<div class="dash-ktamock__facts"><span>Kategori</span><span>Berlaku hingga</span><span>Status</span></div>' +
