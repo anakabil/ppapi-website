@@ -140,6 +140,27 @@ service cloud.firestore {
     // pengalaman ≤ 10, dokumen ≤ 12, catatan ≤ 1.000. Pas foto disimpan di
     // member_photos/{uid} (pasFotoAda = ada/tidak); pasFoto di sini hanya untuk data lama
     // (data URL JPEG ≤ 120 KB).
+    // Sub-peta formulir diperiksa lewat get() dengan nilai bawaan: mesin aturan Firestore
+    // menolak pemeriksaan keys()/in pada peta bersarang dua tingkat (diverifikasi 2026-10-15),
+    // sedangkan pola get() terbukti berjalan (lihat kategoriAllowed).
+    function strMax(v, max) {
+      return v == null || v == '' || (v is string && v.size() <= max);
+    }
+    function validPembayaran(p) {
+      return p is map && p.size() <= 3
+          && strMax(p.get('metode', ''), 60)
+          && strMax(p.get('tanggal', ''), 10)
+          && strMax(p.get('buktiUrl', ''), 1000);
+    }
+    function validPernyataan(p) {
+      return p is map && p.size() <= 5
+          && p.get('kodeEtik', false) is bool
+          && p.get('kebenaranData', false) is bool
+          && p.get('privasi', false) is bool
+          && strMax(p.get('namaTerang', ''), 120)
+          && strMax(p.get('tanggal', ''), 10);
+    }
+
     function validApplication(a) {
       return a is map
           && a.keys().hasOnly([
@@ -153,16 +174,8 @@ service cloud.firestore {
           && (!('dokumen' in a) || (a.dokumen is list && a.dokumen.size() <= 12))
           && (!('pasFoto' in a) || a.pasFoto == null || a.pasFoto == '' || jpegDataUrl(a.pasFoto))
           && (!('pasFotoAda' in a) || a.pasFotoAda is bool)
-          && (!('pembayaran' in a) || (a.pembayaran is map
-              && a.pembayaran.keys().hasOnly(['metode', 'tanggal', 'buktiUrl'])
-              && optString(a.pembayaran, 'metode', 60) && optString(a.pembayaran, 'tanggal', 10)
-              && optString(a.pembayaran, 'buktiUrl', 1000)))
-          && (!('pernyataan' in a) || (a.pernyataan is map
-              && a.pernyataan.keys().hasOnly(['kodeEtik', 'kebenaranData', 'privasi', 'namaTerang', 'tanggal'])
-              && (!('kodeEtik' in a.pernyataan) || a.pernyataan.kodeEtik is bool)
-              && (!('kebenaranData' in a.pernyataan) || a.pernyataan.kebenaranData is bool)
-              && (!('privasi' in a.pernyataan) || a.pernyataan.privasi is bool)
-              && optString(a.pernyataan, 'namaTerang', 120) && optString(a.pernyataan, 'tanggal', 10)))
+          && validPembayaran(a.get('pembayaran', {}))
+          && validPernyataan(a.get('pernyataan', {}))
           && optString(a, 'catatan', 1000);
     }
 
