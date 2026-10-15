@@ -26,7 +26,7 @@ window.PPAPI_CONFIG = {
   // mis. 'https://<user>.github.io/<repo>/' — diawali https:// dan diakhiri garis miring (/).
   // Dipakai untuk tautan QR KTA, tautan bagikan, dan tautan kanonis (canonical).
   // Jika dibiarkan kosong, situs otomatis memakai alamat yang sedang dibuka.
-  siteUrl: 'https://anakabil.github.io/ppapi-website/',
+  siteUrl: '',
 
   /* ---------- APLIKASI ANGGOTA ---------- */
   // Aplikasi milik PPAPI yang menjadi aset anggota. Keduanya berada di folder
