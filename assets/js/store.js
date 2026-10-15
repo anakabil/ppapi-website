@@ -542,9 +542,19 @@
       return normalize(doc);
     }
     var f = await fx();
-    try { await f.db.collection('members').doc(user.uid).set(doc); }
+    /* Firebase: tulis dokumen INTI saja (tanpa profile/application/competencies/certificates/review; email '' dulu).
+       Aturan Firestore memvalidasi seluruh dokumen saat pembuatan dan dibatasi 1.000 ekspresi per
+       permintaan (dokumen lengkap ditolak pada proyek nyata, 2026-10-15); bagian lain diisi oleh
+       pembaruan berikutnya yang hanya memvalidasi kolom yang berubah. Email disinkronkan pada
+       kunjungan berikutnya setelah token akun memuat status terverifikasi. */
+    var core = {
+      uid: doc.uid, name: doc.name, email: '', phone: doc.phone, photoURL: doc.photoURL,
+      kta: '', memberType: doc.memberType, status: doc.status, joinedAt: doc.joinedAt,
+      validUntil: '', approvedAt: '', approvedBy: '', createdAt: doc.createdAt, updatedAt: doc.updatedAt
+    };
+    try { await f.db.collection('members').doc(user.uid).set(core); }
     catch (e) { throw mapFirestoreError(e); }
-    return normalize(doc);
+    return normalize(Object.assign({}, doc, { email: '' }));
   }
 
   /* reviewed data: frozen while the application is "Menunggu Verifikasi" (rules: ownerUpdate) */
