@@ -425,6 +425,16 @@ service cloud.firestore {
                             && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'addedAt', 'addedBy'])
                             && request.resource.data.uid == uid
                             && request.resource.data.addedBy == request.auth.uid;
+      // Bootstrap ADMIN PERTAMA tanpa menyunting Firestore di konsol: pemilik akun dengan
+      // email TERVERIFIKASI yang persis sama dengan alamat di bawah boleh membuat dokumen
+      // admin untuk dirinya sendiri (sekali; dokumen tidak dapat dibuat ulang bila sudah ada).
+      // Setelah admin pertama ada, klausul ini boleh dihapus atau alamatnya diganti.
+      allow create: if isOwner(uid)
+                    && verifiedEmail('ppapi.indonesia@gmail.com')
+                    && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'addedAt', 'addedBy'])
+                    && request.resource.data.uid == uid
+                    && request.resource.data.email == 'ppapi.indonesia@gmail.com'
+                    && request.resource.data.addedBy == 'bootstrap';
       // Konsol Admin mencegah penghapusan admin terakhir.
       allow delete: if isAdmin();
     }
