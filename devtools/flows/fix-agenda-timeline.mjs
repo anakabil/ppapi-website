@@ -1,0 +1,32 @@
+// fixer probe (berita+agenda): reload timeline — first paint, scroll restoration, skeleton insertion, render, shifts.
+// Usage (cwd devtools/): node flows/fix-agenda-timeline.mjs [w] [h] [spot] [motion] [path]
+import { chromium } from 'playwright';
+import { startServer } from './qa-lib.mjs';
+const argv = process.argv.filter(a => !a.startsWith('--'));
+const [w, hgt, spot, motion, p] = [+argv[2] || 1440, +argv[3] || 900, argv[4] || '.agenda-cross', argv[5] || 'reduce', argv[6] || 'agenda.html'];
+const INIT = `(() => { const L = window.__tl = []; L.push('0 START state=' + JSON.stringify(history.state) + ' sr=' + history.scrollRestoration); const t = () => Math.round(performance.now());
+  new PerformanceObserver(l => l.getEntries().forEach(e => L.push(Math.round(e.startTime) + ' PAINT ' + e.name))).observe({ type: 'paint', buffered: true });
+  new PerformanceObserver(l => l.getEntries().forEach(e => L.push(Math.round(e.startTime) + ' SHIFT ' + e.value.toFixed(3)))).observe({ type: 'layout-shift', buffered: true });
+  let lastY = -1; const poll = () => { const hs = ['.agenda-hero','#terdekat','#jadwal .section-head','#jadwal .agenda-toolbar','#jadwal .agenda-status','#agenda-list','.agenda-cross'].map(q => { const e = document.querySelector(q); return e ? Math.round(e.getBoundingClientRect().height) : '-'; }).join('/'); if (hs !== poll.hs) { L.push(t() + ' H ' + hs); poll.hs = hs; } if (scrollY !== lastY) { L.push(t() + ' scrollY=' + Math.round(scrollY) + ' docH=' + (document.documentElement ? document.documentElement.scrollHeight : '-') + ' ph=' + !!document.querySelector('.agenda-list__ph') + ' rows=' + document.querySelectorAll('#agenda-list .agenda-row').length); lastY = scrollY; } if (performance.now() < 3000) requestAnimationFrame(poll); }; requestAnimationFrame(poll);
+  document.addEventListener('DOMContentLoaded', () => L.push(t() + ' DCL ph=' + !!document.querySelector('.agenda-list__ph') + ' y=' + Math.round(scrollY)));
+  addEventListener('load', () => L.push(t() + ' LOAD y=' + Math.round(scrollY) + ' sr=' + history.scrollRestoration));
+  const mo = new MutationObserver(() => { const ph = !!document.querySelector('.agenda-list__ph'), rows = document.querySelectorAll('#agenda-list .agenda-row').length; const k = ph + '/' + rows; if (k !== mo.k) { mo.k = k; L.push(t() + ' DOM ph=' + ph + ' rows=' + rows + ' y=' + Math.round(scrollY)); } });
+  document.addEventListener('readystatechange', () => { if (document.readyState === 'interactive' || document.readyState === 'loading') { const l = document.getElementById('agenda-list'); if (l) mo.observe(l, { childList: true, subtree: true }); } });
+  const iv = setInterval(() => { const l = document.getElementById('agenda-list'); if (l) { mo.observe(l, { childList: true, subtree: true }); L.push(t() + ' list-parsed y=' + Math.round(scrollY)); clearInterval(iv); } }, 1);
+})();`;
+const { BASE, close } = await startServer();
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: w, height: hgt }, reducedMotion: motion });
+await ctx.addInitScript(INIT);
+const FC = new Map();
+if (process.argv.includes('--fontroute')) await ctx.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\//, async route => { const u = route.request().url(); let hit = FC.get(u); if (!hit) { const r = await fetch(u, { headers: { 'user-agent': route.request().headers()['user-agent'] } }); hit = { s: r.status, b: Buffer.from(await r.arrayBuffer()), t: r.headers.get('content-type') || '' }; FC.set(u, hit); } await new Promise(r => setTimeout(r, 60)); return route.fulfill({ status: hit.s, body: hit.b, headers: { 'content-type': hit.t, 'access-control-allow-origin': '*' } }); });
+const page = await ctx.newPage();
+await page.goto(`${BASE}/${p}`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(800);
+await page.evaluate((s) => { const el = document.querySelector(s); window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 120); }, spot);
+await page.waitForTimeout(400);
+await page.reload({ waitUntil: 'load' });
+await page.waitForTimeout(2500);
+const tl = await page.evaluate(() => window.__tl);
+console.log(tl.sort((a, b) => parseInt(a) - parseInt(b)).join('\n'));
+await browser.close(); await close();

@@ -1,0 +1,141 @@
+{
+  "start": "https://ppapiid.vercel.app/",
+  "pages": [
+    {
+      "url": "https://ppapiid.vercel.app/",
+      "title": "PPAPI Scaffold — Inspeksi Perancah Tubular/Frame/Modular",
+      "metaDesc": "Inspeksi keandalan perancah tubular/frame/modular dengan verdict tiga warna — PPAPI.",
+      "h": [
+        "H1: SCAFFOLD INSPEKSI",
+        "H2: SCAFFOLD INSPEKSI",
+        "H2: INSPEKSI KEANDALAN PERANCAH TUBULAR",
+        "H2: TIGA WARNA KELAYAKAN",
+        "H2: 10 KATEGORI PEMERIKSAAN",
+        "H2: 8 TAHAP PERENCANAAN PERANCAH",
+        "H2: TENTANG PPAPI",
+        "H2: JENIS PERANCAH & PERBANDINGANNYA"
+      ],
+      "anchors": [],
+      "buttons": [
+        "BERANDA",
+        "MASUK",
+        "MULAI PERENCANAAN →",
+        "LANGSUNG KE CHECKLIST",
+        "1 Data Proyek",
+        "2 Perhitungan Beban Hidup",
+        "3 Duty & Stabilitas",
+        "4 Gambar Rencana",
+        "5 Material, Gross Load & Self Weight",
+        "6 Analisis Struktur Lainnya",
+        "7 Job Safety Analysis",
+        "8 Checklist Inspeksi",
+        "9 Laporan & Tagging",
+        "SIMULATOR 3D"
+      ],
+      "inputs": [
+        {
+          "type": "text",
+          "name": "lg-user",
+          "ph": "Masukkan ID",
+          "label": ""
+        },
+        {
+          "type": "password",
+          "name": "lg-pass",
+          "ph": "Masukkan kata sandi",
+          "label": ""
+        }
+      ],
+      "canvas": 0,
+      "text": "SCAFFOLD INSPEKSI\nSistem Inspeksi Keandalan Perancah\nLOKAL\nBELUM LENGKAP\nBERANDA\nSCAFFOLD INSPEKSI\nSistem Inspeksi Keandalan Perancah\nID PENGGUNA\nKATA SANDI\nMASUK\nAkses dikelola oleh Admin PPAPI. Hubungi admin untuk mendapatkan akun.\nPPAPI · PERKUMPULAN PRAKTISI & AHLI PERANCAH INDONESIA\nINSPEKSI KEANDALAN\nPERANCAH TUBULAR\nLembar periksa terstruktur berbasis elemen untuk perancah tube & coupler, frame, dan modular. Mengacu BS 5973, BS 1139, BS EN 74-1, AS 1576, AS 4576, BS EN 1004, dan NASC TG20/SG4. Verdict otomatis tiga warna menentukan kelayakan pakai.\nMULAI PERENCANAAN →\nLANGSUNG KE CHECKLIST\nSISTEM VERDICT\nTIGA WARNA KELAYAKAN\nHIJAU — Aman\nSeluruh item sesuai. Perancah layak dan aman digunakan.\nKUNING — Bersyarat\nItem kritis lolos, namun ada temuan non-kritis. Perbaiki dulu sebelum dipakai penuh.\nMERAH — Tidak Aman\nAda item kritis gagal. Dilarang digunakan sampai diperbaiki & diperiksa ulang.\nLogika: 1 item kritis gagal → MERAH. Semua kritis lolos tapi ada non-kritis gagal → KUNING. Semua item sesuai → HIJAU.\nCAKUPAN\n10 KATEGORI PEMERIKSAAN\nDisusun berbasis elemen (bukan zona) sehingga tidak ada item ganda. Pemeriksaan klem kini menjadi kategori tersendiri: Coupler / Sambungan Klem.\nALUR KERJA\n8 TAHAP PERENCANAAN PERANCAH\nIkuti alur perencanaan dari kiri ke kanan. Klik tahap untuk langsung menuju halamannya.\n1\nData Proyek\n2\nPerhitungan Beban Hidup\n3\nDuty & Stabilitas\n4\nGambar Rencana\n5\nMaterial, Gross Load & Self Weight\n6\nAnalisis Struktur Lainnya\n7\nJob Safety Analysis\n8\nChecklist Inspeksi\n9\nLaporan & Tagging\nORGANISASI\nTENTANG PPAPI\nPerkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI) adalah wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia.\nPPAPI mendorong peningkatan kompetensi tenaga kerja perancah, penerapan keselamatan kerja (K3), serta praktik pemasangan dan inspeksi yang sesuai regulasi nasional (PermenNaker No.01/MEN/1980 dan KEP-74/PPK/XII/2013) maupun pedoman internasional (BS 5973, BS 1139, AS/NZS 1576, BS EN 74, NASC). Aplikasi inspeksi ini bagian dari upaya tersebut: menstandarkan penilaian keandalan perancah sehingga setiap struktur dinyatakan AMAN, BERSYARAT, atau TIDAK AMAN berdasarkan kriteria yang jelas dan terdokumentasi.\nProfil resmi (visi, misi, kepengurusan, dan logo) dapat ditampilkan di sini setelah datanya dilampirkan.\nEDUKASI\nJENIS PERANCAH & PERBANDINGANNYA\nTiga jenis perancah yang umum dipakai, beserta fungsi serta kelebihan dan kekurangannya. Aplikasi ini saat ini berfokus pada perancah tubular; frame dan modular memiliki standarisasi dan teknik perhitungan yang berbeda sehingga akan ditangani terpisah.\nTUBULAR\nTUBE & COUPLER\nPipa lurus dirakit manual dengan klem. Paling fleksibel — mengikuti bentuk struktur rumit, akses tak beraturan, dan kondisi offshore.\nKELEBIHAN\nSangat adaptif untuk geometri kompleks\nKomponen sederhana, murah, mudah didapat\nDapat dibentuk sesuai kebutuhan lapangan\nKEKURANGAN\nPemasangan lambat, butuh skill tinggi\nBanyak sambungan klem: titik lemah & rawan salah pasang\nKekuatan sangat bergantung kualitas pemasangan\nFRAME\nH-FRAME / WALK-THROUGH\nRangka pabrikan (main frame + cross brace) yang ditumpuk. Ideal untuk pekerjaan lurus dan berulang seperti fasad gedung.\nKELEBIHAN\nPemasangan cepat dan mudah\nButuh sedikit pelatihan, ringan\nStabil untuk bentang lurus\nKEKURANGAN\nKurang fleksibel untuk bentuk tidak beraturan\nUkuran tetap (modular terbatas)\nKurang ideal untuk beban sangat berat\nMODULAR\nRINGLOCK / CUPLOCK / KWIKSTAGE\nSistem node/rosette pabrikan dengan sambungan cepat terkunci. Untuk proyek besar, beban berat, dan bentuk kompleks yang terstandar.\nKELEBIHAN\nCepat dipasang, sambungan kuat & konsisten\nKapasitas beban tinggi\nFleksibel pada node banyak arah\nKEKURANGAN\nBiaya awal mahal\nKomponen proprietary (tergantung merk/sistem)\nKurang adaptif dibanding tubular pada geometri ekstrem\nPPAPI Scaffold · [atribusi lama, dihapus] build · Mengacu BS 5973 / BS 1139 / BS EN 74-1 / AS 1576 / AS 4576 / BS EN 1004 / NASC TG20-SG4\nSIMULATOR 3D",
+      "bodyBg": "rgb(236, 238, 241)",
+      "fonts": [
+        "Inter, system-ui, sans-serif",
+        "Oswald",
+        "Arial"
+      ],
+      "shot": "C:\\Users\\mreza\\AppData\\Local\\Packages\\Claude_pzs8sxrjxfjjc\\LocalCache\\Roaming\\Claude\\scratch-workspaces\\0d05c4b6-d00e-4d02-8c51-b670e22791eb\\9df56f33-af98-4be8-96f7-7046b594b3f2\\scratch-2026-10-07-3ab25b\\devtools\\shots\\app-home.png",
+      "tag": "home"
+    }
+  ],
+  "network": [
+    "GET https://ppapiid.vercel.app/",
+    "GET https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap",
+    "GET https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+  ],
+  "consoleErrors": [],
+  "clicks": [
+    {
+      "label": "BERANDA",
+      "skipped": "not visible"
+    },
+    {
+      "label": "MASUK",
+      "skipped": "not visible"
+    },
+    {
+      "label": "MULAI PERENCANAAN →",
+      "skipped": "not visible"
+    },
+    {
+      "label": "LANGSUNG KE CHECKLIST",
+      "skipped": "not visible"
+    },
+    {
+      "label": "1 Data Proyek",
+      "skipped": "not visible"
+    },
+    {
+      "label": "2 Perhitungan Beban Hidup",
+      "skipped": "not visible"
+    },
+    {
+      "label": "3 Duty & Stabilitas",
+      "skipped": "not visible"
+    },
+    {
+      "label": "4 Gambar Rencana",
+      "skipped": "not visible"
+    },
+    {
+      "label": "5 Material, Gross Load & Self Weight",
+      "skipped": "not visible"
+    },
+    {
+      "label": "6 Analisis Struktur Lainnya",
+      "skipped": "not visible"
+    },
+    {
+      "label": "7 Job Safety Analysis",
+      "skipped": "not visible"
+    },
+    {
+      "label": "8 Checklist Inspeksi",
+      "skipped": "not visible"
+    },
+    {
+      "label": "9 Laporan & Tagging",
+      "skipped": "not visible"
+    },
+    {
+      "label": "SIMULATOR 3D",
+      "skipped": "not visible"
+    }
+  ],
+  "candidates": [
+    "BERANDA",
+    "MASUK",
+    "MULAI PERENCANAAN →",
+    "LANGSUNG KE CHECKLIST",
+    "1 Data Proyek",
+    "2 Perhitungan Beban Hidup",
+    "3 Duty & Stabilitas",
+    "4 Gambar Rencana",
+    "5 Material, Gross Load & Self Weight",
+    "6 Analisis Struktur Lainnya",
+    "7 Job Safety Analysis",
+    "8 Checklist Inspeksi",
+    "9 Laporan & Tagging",
+    "SIMULATOR 3D"
+  ]
+}

@@ -1,0 +1,84 @@
+name: Uji & Terbitkan (GitHub Pages)
+
+# Setiap push ke main: jalankan pemeriksaan otomatis (label, aturan klien, pemuatan semua halaman
+# di Chromium headless, uji kontrak & keamanan), lalu terbitkan folder site/ ke GitHub Pages.
+# Bila ada pemeriksaan yang gagal, situs TIDAK diterbitkan (versi sebelumnya tetap tayang).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  uji:
+    name: Pemeriksaan otomatis
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: devtools/package-lock.json
+      - name: Pasang Playwright + Chromium
+        working-directory: devtools
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Pagar label & aturan klien
+        working-directory: devtools
+        run: |
+          node flows/branding-guard.mjs
+          node flows/release-v2-client-rules.mjs
+      - name: Pemuatan semua halaman (Mode Demo, desktop + mobile)
+        run: |
+          node devtools/check.mjs all | tee /tmp/check-all.txt
+          grep -q "Done. 0 issue(s)." /tmp/check-all.txt
+      - name: Halaman anggota & admin (sesi demo)
+        run: |
+          node devtools/check.mjs dashboard anggota pendaftaran pustaka aplikasi/perencanaan/index aplikasi/simulator/index --auth --desktop | tee /tmp/check-auth.txt
+          grep -q "Done. 0 issue(s)." /tmp/check-auth.txt
+          node devtools/check.mjs admin dashboard --admin --desktop | tee /tmp/check-admin.txt
+          grep -q "Done. 0 issue(s)." /tmp/check-admin.txt
+      - name: Halaman publik dalam mode Firebase sungguhan
+        env:
+          PPAPI_REAL_FIREBASE: "1"
+        run: |
+          node devtools/check.mjs index masuk pustaka dashboard --desktop | tee /tmp/check-fb.txt
+          grep -q "Done. 0 issue(s)." /tmp/check-fb.txt
+      - name: Uji kontrak & keamanan (Mode Demo + cermin aturan Firestore)
+        working-directory: devtools
+        run: |
+          node flows/contract-v2.mjs
+          node flows/firebase-v2-stub.mjs
+          node flows/sec-v2-firebase-attacks.mjs
+          node flows/auth-demo.mjs
+      - name: Siapkan artefak situs (alamat situs disisipkan ke config.js)
+        run: |
+          rm -rf /tmp/site && cp -r site /tmp/site
+          sed -i "s|siteUrl: ''|siteUrl: 'https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/'|" /tmp/site/assets/js/config.js
+          grep -n "siteUrl:" /tmp/site/assets/js/config.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+
+  terbitkan:
+    name: Terbitkan ke GitHub Pages
+    needs: uji
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

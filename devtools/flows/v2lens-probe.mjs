@@ -1,0 +1,22 @@
+// quick timing probe: where does a page load spend its time (review only)
+import { chromium } from 'playwright';
+import { startServer } from './qa-lib.mjs';
+const { BASE, close } = await startServer();
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: process.argv[3] === 'reduce' ? 'reduce' : 'no-preference' });
+const page = await ctx.newPage();
+const t0 = Date.now();
+const log = (m) => console.log(String(Date.now() - t0).padStart(6), m);
+page.on('request', r => { if (!r.url().startsWith(BASE)) log('REQ ' + r.url().slice(0, 90)); });
+page.on('requestfinished', r => { if (!r.url().startsWith(BASE)) log('FIN ' + r.url().slice(0, 90)); });
+page.on('requestfailed', r => log('FAIL ' + r.url().slice(0, 90)));
+await page.goto(`${BASE}/${process.argv[2] || 'index.html'}`, { waitUntil: 'domcontentloaded' }); log('DCL');
+await page.waitForLoadState('load'); log('load');
+await page.waitForLoadState('networkidle'); log('networkidle');
+await page.waitForFunction(() => window.PPAPI && PPAPI.isReady && PPAPI.isReady()).catch(() => {}); log('PPAPI ready');
+log('busy: ' + await page.evaluate(() => [...document.querySelectorAll('main [aria-busy="true"]')].map(e => e.id || e.className).join(',')));
+const lcp = await page.evaluate(() => new Promise(r => { let last = null; new PerformanceObserver(l => { const e = l.getEntries(); last = e[e.length - 1]; }).observe({ type: 'largest-contentful-paint', buffered: true }); setTimeout(() => r(last ? { t: Math.round(last.startTime), el: last.element && (last.element.className || last.element.tagName), size: last.size } : null), 300); }));
+log('LCP ' + JSON.stringify(lcp));
+const fcp = await page.evaluate(() => performance.getEntriesByName('first-contentful-paint')[0]?.startTime);
+log('FCP ' + fcp);
+await browser.close(); await close();

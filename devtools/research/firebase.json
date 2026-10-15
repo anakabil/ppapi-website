@@ -1,0 +1,375 @@
+{
+  "meta": {
+    "verified_on": "2026-10-08",
+    "sdk": "Firebase JS compat 12.4.0 (gstatic). The bundles report SDK_VERSION 12.4.0, @firebase/auth-compat 0.6.0 and @firebase/firestore-compat 0.4.2. I read the bundles directly to confirm signatures.",
+    "note": "The Firebase console now names the sections 'Security > Authentication' and 'Databases & Storage > Firestore', per the current docs."
+  },
+  "compat_api_notes": {
+    "sdk_loading": {
+      "text": "Load the three scripts in order: firebase-app-compat.js, then firebase-auth-compat.js, then firebase-firestore-compat.js, all from https://www.gstatic.com/firebasejs/12.4.0/. If app-compat is not loaded first, auth-compat throws 'Cannot instantiate firebase-auth-compat.js - be sure to load firebase-app.js first.' Release 12.4.0 is dated 2025-10-09 and lists no Auth changes. Release 13.0.0 (2026-10-07) only has breaking changes in AI Logic and Firestore types. Neither release deprecates or removes the compat packages. The docs still say the namespaced API 'does not benefit from ongoing new feature support', so new apps are steered to the modular API.",
+      "sources": [
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js",
+        "https://firebase.google.com/support/release-notes/js",
+        "https://firebase.google.com/docs/web/learn-more"
+      ]
+    },
+    "initializeApp": {
+      "code": "if (!firebase.apps.length) firebase.initializeApp({ apiKey, authDomain /* PROJECT_ID.firebaseapp.com */, projectId, storageBucket, messagingSenderId, appId }); const auth = firebase.auth(); const db = firebase.firestore();",
+      "text": "The config object holds 'unique, but non-secret identifiers', so it is safe to publish in config.js. Rules protect the data. The docs say not to edit apiKey, projectId or appId by hand. storageBucket is 'PROJECT_ID.firebasestorage.app' for buckets created after September 2024. It is unused here, but keep whatever the console gives. The compat RecaptchaVerifier constructor asserts app.options.apiKey ('invalid-api-key'), so it cannot work with an empty config.",
+      "sources": [
+        "https://firebase.google.com/docs/web/learn-more",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js",
+        "https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024"
+      ]
+    },
+    "persistence_ingat_saya": {
+      "code": "const P = firebase.auth.Auth.Persistence; await firebase.auth().setPersistence(remember ? P.LOCAL : P.SESSION); const cred = await firebase.auth().signInWithEmailAndPassword(email, password);",
+      "text": "The enum is LOCAL='local', SESSION='session', NONE='none'; the bundle confirms the compat static firebase.auth.Auth.Persistence. LOCAL survives closing the browser, and the web default is 'local'. SESSION 'will only persist in the current session or tab', so with 'Ingat saya' unchecked, a link opened in a new tab starts signed out. setPersistence changes the stored session and applies to future sign-ins, including Google and phone. If a user is already signed in, that user switches to the new persistence. Call it right before each sign-in method.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/auth-state-persistence",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "signup_email": {
+      "code": "const cred = await firebase.auth().createUserWithEmailAndPassword(email, password); await cred.user.updateProfile({ displayName: name }); /* then refresh own cached user + notify */",
+      "text": "The new user 'is signed in automatically'. onAuthStateChanged therefore fires before updateProfile finishes, and its first callback has displayName = null. The bundle's notifyAuthListeners only fires authState listeners when the uid changes, so updateProfile never re-triggers onAuthStateChanged. auth.js must patch its cached user, or re-read firebase.auth().currentUser, after awaiting updateProfile and then emit its own onChange. Projects created on or after 2023-09-15 have email enumeration protection on by default. Sign-up still returns email-already-in-use (EMAIL_EXISTS). The console password policy defaults to a minimum length of 6.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/password-auth",
+        "https://firebase.google.com/docs/auth/web/manage-users",
+        "https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "signin_email": {
+      "code": "const cred = await firebase.auth().signInWithEmailAndPassword(email, password); // cred.user",
+      "text": "With email enumeration protection on (the default for new projects), a wrong password or unknown email returns INVALID_LOGIN_CREDENTIALS. The SDK maps that to auth/invalid-credential, not wrong-password or user-not-found. Show one generic message for all three codes.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/password-auth",
+        "https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "password_reset": {
+      "code": "firebase.auth().languageCode = 'id'; await firebase.auth().sendPasswordResetEmail(email);",
+      "text": "The docs say: 'you can localize the password reset email by updating the language code on the Auth instance'. useDeviceLanguage() is the alternative. With enumeration protection on, the reset email 'is sent only if the email address exists' and no error says otherwise. Always show a neutral message such as 'Jika email terdaftar, tautan telah dikirim'. Limits: 150 reset emails per day on Spark and 10,000 per day on Blaze.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/manage-users",
+        "https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection",
+        "https://firebase.google.com/docs/auth/limits"
+      ]
+    },
+    "google_popup": {
+      "code": "const provider = new firebase.auth.GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' }); const result = await firebase.auth().signInWithPopup(provider); // result.user, result.additionalUserInfo.isNewUser, result.credential",
+      "text": "The v8 reference lists 'prompt' among the valid setCustomParameters keys, and client_id, redirect_uri, scope, response_type and state are reserved and ignored. Google OAuth defines prompt=select_account as 'Prompt the user to select an account.' The compat result contains {operationType, credential, additionalUserInfo, user}. On error, read error.code, error.email and error.credential. Turn on the Google provider in Security > Authentication > Sign-in method.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/google-signin",
+        "https://firebase.google.com/docs/reference/js/v8/firebase.auth.GoogleAuthProvider",
+        "https://developers.google.com/identity/protocols/oauth2/web-server",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "recaptcha_verifier": {
+      "code": "firebase.auth().languageCode = 'id'; window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(buttonEl /* element or element id */, { size: 'invisible', callback: function (token) {}, 'expired-callback': function () {} });",
+      "text": "The compat signature is new firebase.auth.RecaptchaVerifier(container: Element | string, parameters?: Object | null, app?: firebase.app.App). The bundle shows constructor(e,t,r=firebase.app()). The modular v10+ order is (auth, container, params), so do not copy modular snippets. For invisible reCAPTCHA the doc says to set size 'invisible' and pass the sign-in button. A string container must be an element id that already exists in the DOM. Do not pass a sitekey. Methods: render() returns Promise<widgetId>, verify() returns Promise<token>, clear() destroys the instance. In the bundle, render() waits for document.readyState==='complete' (window load), loads reCAPTCHA in auth.languageCode, and fetches the site key from /v1/recaptchaParams. Set languageCode before the first render. The SDK first tries reCAPTCHA Enterprise config and falls back to v2, which can console.log 'Failed to initialize reCAPTCHA Enterprise config. Triggering the reCAPTCHA v2 verification.' This is harmless.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/phone-auth",
+        "https://firebase.google.com/docs/reference/js/v8/firebase.auth.RecaptchaVerifier",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "phone_signin": {
+      "code": "const confirmation = await firebase.auth().signInWithPhoneNumber(e164Phone /* '+62812…' */, window.recaptchaVerifier); /* later */ const cred = await confirmation.confirm(code); if (cred.additionalUserInfo && cred.additionalUserInfo.isNewUser && name) await cred.user.updateProfile({ displayName: name });",
+      "text": "phoneNumber must be E.164, for example +6281234567890. signInWithPhoneNumber issues the reCAPTCHA challenge and, if it passes, sends the SMS. It resolves to a ConfirmationResult {verificationId, confirm(code)}. In compat, confirm() returns a UserCredential with additionalUserInfo.isNewUser. Alternative: firebase.auth.PhoneAuthProvider.credential(verificationId, code) followed by signInWithCredential.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/phone-auth",
+        "https://firebase.google.com/docs/reference/js/auth",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "recaptcha_reset_after_error": {
+      "code": "catch (err) { try { window.recaptchaVerifier.render().then(function (id) { grecaptcha.reset(id); }); } catch (_) {} /* or, more robust: */ try { window.recaptchaVerifier.clear(); } catch (_) {} window.recaptchaVerifier = null; /* recreate lazily on next attempt */ }",
+      "text": "The doc says: 'If signInWithPhoneNumber results in an error, reset the reCAPTCHA so the user can try again', using grecaptcha.reset(window.recaptchaWidgetId) or recaptchaVerifier.render().then(widgetId => grecaptcha.reset(widgetId)). In 12.4.0 the SDK already calls verifier._reset() in a finally block after sendVerificationCode. After clear(), the instance is destroyed: any further call throws auth/internal-error, so create a new verifier. For invisible, clear() does not remove the button's child nodes, and a new verifier can be bound to the same button. Also clear and recreate when the 'Kirim ulang' countdown ends or the phone number changes.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/phone-auth",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "on_auth_state_changed": {
+      "code": "const unsub = firebase.auth().onAuthStateChanged(function (user) { /* user or null */ });",
+      "text": "The docs recommend this observer over reading currentUser during init. It fires once initial state is known, then only when the signed-in uid changes. For profile or token changes use onIdTokenChanged, or emit manually.",
+      "sources": [
+        "https://firebase.google.com/docs/auth/web/manage-users",
+        "https://firebase.google.com/docs/auth/web/start",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+      ]
+    },
+    "sign_out": {
+      "code": "await firebase.auth().signOut();",
+      "text": "The compat Auth exposes signOut(), as shown in the bundle. LOCAL persistence requires an explicit sign-out to clear.",
+      "sources": [
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js",
+        "https://firebase.google.com/docs/auth/web/auth-state-persistence"
+      ]
+    },
+    "firestore": {
+      "code": "const db = firebase.firestore(); const ref = db.collection('members').doc(uid); const snap = await ref.get(); const member = snap.exists ? snap.data() : null; await ref.set({ ...patch, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); const docRef = await db.collection('feedback').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); docRef.id;",
+      "text": "Namespaced docs: set({...}, { merge: true }) is used 'to avoid overwriting entire documents', and add() returns docRef with .id. The bundle exposes FieldValue.serverTimestamp() under firebase.firestore.FieldValue. In compat, DocumentSnapshot.exists is a getter property (get exists(){return this._delegate.exists()}), not the modular exists() function. Firestore rejects undefined values ('Unsupported field value: undefined'). Strip them, or call db.settings({ ignoreUndefinedProperties: true }) before any other Firestore call, since settings freeze after first use. Until the server confirms a pending write, serverTimestamp fields read as null. This is the default serverTimestamps behavior in the bundle; data({serverTimestamps:'estimate'}) returns an estimate instead. Store dates you need immediately (joinedAt) as ISO strings.",
+      "sources": [
+        "https://firebase.google.com/docs/firestore/manage-data/add-data",
+        "https://firebase.google.com/docs/firestore/quickstart",
+        "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"
+      ]
+    },
+    "v12_compat_gotchas": [
+      "The compat RecaptchaVerifier argument order is (container, params, app). Modular is (auth, container, params). Mixing the two silently binds the wrong element or throws argument-error. [bundle + v8 reference]",
+      "Firebase Auth popup, redirect and phone flows require location.protocol http(s) and working web storage. Otherwise the SDK throws auth/operation-not-supported-in-this-environment. Firebase mode cannot work from file://; Demo mode must remain the file:// fallback. [bundle error map]",
+      "Phone auth does not work on localhost: 'localhost is not allowed as a hosted domain for the purposes of phone auth.' Test on the real github.io URL, using fictional test numbers. [phone-auth doc]",
+      "signInWithPopup must run inside the click handler's transient user activation. If the compat SDK is lazy-loaded inside the click handler, or other awaits come first, browsers block window.open and the SDK throws auth/popup-blocked. Make sure PPAPI.auth.ready() has loaded the SDK before the user can click, and call signInWithPopup as the first async step. [MDN transient activation + bundle: window.open → popup-blocked]",
+      "Do not use signInWithRedirect on github.io. Browsers that block third-party storage (Firefox 109+, Safari 16.1+, Chrome M115+ since 2024-06-24) break it unless authDomain is your own Firebase Hosting domain, which is impossible on GitHub Pages. Use popup (Option 2). [redirect-best-practices]",
+      "Email enumeration protection (default for projects created on or after 2023-09-15) replaces user-not-found and wrong-password with invalid-credential, and sendPasswordResetEmail gives no error for unknown emails.",
+      "Account linking: email/password without verification is an 'untrusted' provider. When a user signs up with email/password and later signs in with Google using the same @gmail.com address, 'the trusted provider overwrites the untrusted provider'. The password then stops working for that account. Consider sendEmailVerification, or tell users to keep one method. [docs/auth/users]",
+      "onAuthStateChanged does not fire after updateProfile, because it only fires on uid change. Update the cached user manually.",
+      "Set firebase.auth().languageCode = 'id' once after init. It localizes the reCAPTCHA, SMS and auth emails, and the reCAPTCHA reads it at first render.",
+      "Unmapped backend errors become codes via serverCode.toLowerCase().replace(/[_\\s]+/g,'-'), so BILLING_NOT_ENABLED → auth/billing-not-enabled. That code is not in the official AuthErrorCodes list but is still thrown. Map unknown codes to a generic Indonesian message. [bundle]",
+      "The invisible reCAPTCHA shows a floating badge (bottom-right). reCAPTCHA FAQ: 'You are allowed to hide the badge as long as you include the reCAPTCHA branding visibly in the user flow', with the text 'This site is protected by reCAPTCHA.' Hide it via .grecaptcha-badge { visibility: hidden; }. [reCAPTCHA FAQ]",
+      "Firestore compat: settings() and enablePersistence() must run before any other Firestore call ('Firestore has already been started...'). [bundle]",
+      "Firestore allows 'exactly one free database per project' (the default database). Do not create a second database. [firestore/quotas]"
+    ]
+  },
+  "phone_auth_requirements": {
+    "billing_plan": "SMS phone sign-in requires the Blaze plan, meaning a linked Cloud Billing account. Auth FAQ: 'Starting September 2024, to improve the security and service quality of Phone Authentication, Firebase projects must be linked to a Cloud Billing account to enable and use the SMS Service.' The pricing page lists Phone Auth as 'Not applicable' on Spark and per-SMS on Blaze. Without billing, the backend returns BILLING_NOT_ENABLED, surfaced as auth/billing-not-enabled.",
+    "pricing": "Identity Platform pricing (fetched 2026-10-08) charges per SMS sent. Indonesia (ID) is $0.35 per SMS. The page also says 'The first ten SMS that you send per day are not billed.' The Firebase FAQ notes that 'no-cost usage on the Blaze pricing plan is calculated monthly' for phone auth. Check the live price before launch.",
+    "budget": "Upgrading to Blaze in the console prompts for an alerts-only budget. 'Budget alerts do not pause services.' Spend-cap budgets exist only for AI Logic, App Hosting, Cloud Functions and Extensions, not for Auth SMS. Use an SMS region allowlist plus monitoring.",
+    "sms_region_policy": "From the phone-auth doc: 'For new projects, the default policy allows no regions.' Set it in Security > Authentication > Settings > SMS region policy, choose Allow, and select only Indonesia (ID). Allowlist and denylist are mutually exclusive, and changes apply immediately. Indonesia (ID) is on the Auth FAQ list of regions with good delivery rates, with no carrier exclusions noted. Community reports (unverified by Google docs) say a blocked region surfaces as auth/operation-not-allowed.",
+    "quotas": "From docs/auth/limits: verification SMS is limited to 900 sent per minute and 3,000 per day per project ('Firebase Authentication: 3000 sent SMS/day limit', Blaze only; Identity Platform upgrade removes it). Per IP: 50 SMS per minute and 500 per hour. Verification requests: 150 per IP per hour. Phone sign-ins: 1,600 per minute. New accounts: 100 per hour per IP. Firebase also 'enforces a limit on the number of SMS messages that can be sent to a single phone number' within a period, and requests 'might be throttled'. Expect auth/too-many-requests. FAQ: healthy verified/sent success rates are 70–85%, and below 50% suggests SMS pumping.",
+    "test_numbers": "Add fictional numbers in Security > Authentication > Sign-in method > Phone > 'Phone numbers for testing', with up to 10 numbers and a 6-digit code each. No real SMS is sent, quota is not consumed and there is no throttling. Numbers must be fictional and valid in format; Indonesian +62 numbers must pass the same validation. Use hard-to-guess codes and rotate them. Google docs do not say whether test numbers work on Spark without billing, and community reports conflict. Assume Blaze may be required even for testing.",
+    "indonesia_plus62": "Send E.164 format, for example +6281234567890, normalised from 08…, 628… or +628… (PPAPI.util.normalizePhoneID). Set languageCode 'id' so the SMS and reCAPTCHA are localized. Localhost cannot be used for phone auth.",
+    "sources": [
+      "https://firebase.google.com/docs/auth/faq-and-troubleshooting",
+      "https://firebase.google.com/pricing",
+      "https://cloud.google.com/identity-platform/pricing",
+      "https://firebase.google.com/support/faq",
+      "https://firebase.google.com/docs/projects/billing/avoid-surprise-bills",
+      "https://firebase.google.com/docs/auth/web/phone-auth",
+      "https://cloud.google.com/identity-platform/docs/admin/sms-regions",
+      "https://firebase.google.com/docs/auth/limits",
+      "https://firebase.google.com/docs/reference/js/auth",
+      "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+    ]
+  },
+  "google_popup_notes": {
+    "popup_vs_redirect": "Use signInWithPopup on GitHub Pages. signInWithRedirect relies on a cross-origin iframe to the authDomain, and the doc says this 'doesn't work with browsers that block third-party storage access'. That includes Firefox 109+, Safari 16.1+ and Chrome M115+ (from 2024-06-24). Option 1, using your own domain as authDomain, requires Firebase Hosting, so GitHub Pages cannot use it. Option 2 is signInWithPopup, which is the minimal change. Options 3 (reverse proxy /__/auth/) and 4 (self-host helper files at /__/auth/) are impractical on static github.io, especially for project pages under a repo path; this is an inference. The google-signin doc says redirect is preferred on mobile, but on github.io popup is the only practical option.",
+    "third_party_cookies": "The popup flow is the documented workaround for third-party storage blocking, and it needs no extra cookies on github.io. Popups 'are occasionally blocked by the device or platform'. Call the method directly from the button click to keep transient activation, and handle auth/popup-blocked by asking the user to allow popups.",
+    "authDomain_on_github_io": "Keep authDomain = 'PROJECT_ID.firebaseapp.com' as given in the console config. The popup opens the Firebase-hosted handler https://PROJECT_ID.firebaseapp.com/__/auth/handler (bundle constant '__/auth/handler'). Leave authDomain as-is, because GitHub Pages cannot serve /__/auth/. Add '<user>.github.io' (and any custom domain) to Authorized domains, or signInWithPopup fails with auth/unauthorized-domain: 'This domain is not authorized for OAuth operations for your Firebase project. Edit the list of authorized domains from the Firebase console.'",
+    "select_account": "provider.setCustomParameters({ prompt: 'select_account' }) forces the Google account chooser. 'prompt' is a documented valid custom parameter.",
+    "errors_to_handle": [
+      "auth/popup-closed-by-user",
+      "auth/cancelled-popup-request (a second popup opened while the first is pending; disable the button while it is in progress)",
+      "auth/popup-blocked",
+      "auth/unauthorized-domain",
+      "auth/account-exists-with-different-credential",
+      "auth/operation-not-allowed (Google provider not enabled)",
+      "auth/network-request-failed"
+    ],
+    "sources": [
+      "https://firebase.google.com/docs/auth/web/redirect-best-practices",
+      "https://firebase.google.com/docs/auth/web/google-signin",
+      "https://firebase.google.com/docs/reference/js/v8/firebase.auth.GoogleAuthProvider",
+      "https://developer.mozilla.org/en-US/docs/Glossary/Transient_activation",
+      "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+    ]
+  },
+  "authorized_domains": {
+    "steps": "Firebase console > Security > Authentication > Settings tab > 'Authorized domains' > Add domain > enter '<user>.github.io' and save. Enter the host only, without https:// and without the /repo path. A GitHub Pages project site at <user>.github.io/<repo>/ uses the same host. Add any custom domain (e.g. ppapi.or.id plus its www variant) as separate entries.",
+    "localhost": "'In projects created after April 28, 2025, Firebase Authentication no longer includes localhost as an authorized domain by default.' Add it manually only for local testing, and consider removing it in production. Phone auth never works on localhost.",
+    "error_if_missing": "auth/unauthorized-domain on popup (and OAuth operations). The FAQ says that if the domain is listed but the error persists, check the API key.",
+    "sources": [
+      "https://firebase.google.com/docs/auth/web/phone-auth",
+      "https://firebase.google.com/docs/auth/faq-and-troubleshooting",
+      "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js"
+    ]
+  },
+  "firestore_free_tier": {
+    "spark_no_cost": "Standard edition, per day unless noted: 1 GiB stored, 50,000 document reads, 20,000 writes and 20,000 deletes. Outbound transfer is 10 GiB per month. 'Quotas are applied daily and reset around midnight Pacific time.' Firestore 'allows exactly one free database per project'. TTL deletes and some other features have no free usage. The quotas page says 'If you need more quota, you must enable billing', and on Blaze overages are billed at Google Cloud rates.",
+    "setup": "Console > Databases & Storage > Firestore > Create database. Choose Standard edition. Location asia-southeast2 (Jakarta) is available, and 'once you provision a database instance, you cannot change its location setting.' Choose Production mode (denies all client access until rules are published), then publish firestore.rules.",
+    "fit_for_ppapi": "Member docs (members/{uid}) and feedback writes for a small association are far below 50K reads and 20K writes per day. This is an estimate, not a sourced fact.",
+    "sources": [
+      "https://firebase.google.com/pricing",
+      "https://firebase.google.com/docs/firestore/quotas",
+      "https://firebase.google.com/docs/firestore/locations",
+      "https://firebase.google.com/docs/firestore/quickstart",
+      "https://firebase.google.com/support/faq"
+    ]
+  },
+  "storage_requirements": {
+    "summary": "Yes, Cloud Storage for Firebase now requires Blaze. Since September 2024, provisioning a new default bucket (PROJECT_ID.firebasestorage.app) requires the Blaze plan. From 2026-02-03, existing PROJECT_ID.appspot.com buckets also require Blaze to keep access. On Spark, Storage API calls return 402/403 and read/write access is lost. The pricing page lists Cloud Storage as 'Not applicable' on Spark. Blaze no-cost limits for firebasestorage.app buckets are 5 GB-months stored, 100 GB/month downloaded, 5K uploads and 50K downloads per month, only in us-central1, us-west1 and us-east1.",
+    "decision_for_ppapi": "Do not use Firebase Storage, as SPEC 2.6 already says. Certificates store metadata plus an optional external link (e.g. Google Drive).",
+    "sources": [
+      "https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024",
+      "https://firebase.google.com/pricing"
+    ]
+  },
+  "readme_setup_steps": [
+    "Buka https://console.firebase.google.com, klik **Add project / Buat proyek**, beri nama (mis. `ppapi-web`). Google Analytics boleh dinonaktifkan.",
+    "Di halaman *Project Overview*, klik ikon **Web (</>)**, isi nama aplikasi, lalu klik **Register app**. Salin nilai `firebaseConfig` (apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId) ke bagian `firebase` di `assets/js/config.js`. Nilai ini bukan rahasia. Keamanan data diatur oleh `firestore.rules`.",
+    "Buka **Security > Authentication**, klik **Get started**. Pada tab **Sign-in method**, aktifkan **Email/Password**, lalu simpan.",
+    "Pada tab yang sama, aktifkan **Google**, pilih *project support email*, lalu simpan.",
+    "Buka tab **Settings > Authorized domains**, klik **Add domain**, lalu tambahkan `<username>.github.io` tanpa `https://` dan tanpa nama repositori. Tambahkan juga domain kustom bila ada. Proyek yang dibuat setelah 28 April 2025 tidak lagi otomatis mengizinkan `localhost`.",
+    "(Opsional, untuk login nomor HP) Sejak September 2024, SMS OTP mewajibkan paket **Blaze** (akun penagihan Google Cloud). Upgrade proyek ke Blaze melalui menu penagihan di konsol. Tarif Indonesia saat ini sekitar US$0,35 per SMS. Pasang *budget alert*, tetapi perlu diingat bahwa alert tidak menghentikan layanan.",
+    "Aktifkan penyedia **Phone** di tab Sign-in method. Lalu buka **Settings > SMS region policy**, pilih **Allow**, dan centang hanya **Indonesia (ID)**. Pada proyek baru, secara bawaan tidak ada wilayah yang diizinkan.",
+    "Pada penyedia Phone, buka **Phone numbers for testing** dan tambahkan hingga 10 nomor fiktif beserta kode 6 digit untuk uji coba. Nomor uji tidak mengirim SMS dan tidak memakai kuota. Login nomor HP tidak dapat diuji dari `localhost`, jadi ujilah di alamat github.io.",
+    "Buka **Databases & Storage > Firestore**, lalu klik **Create database**. Pilih edisi **Standard** dan lokasi **asia-southeast2 (Jakarta)** (lokasi tidak dapat diubah kemudian), lalu pilih **Production mode**.",
+    "Pada tab **Rules** Firestore, ganti seluruh isi editor dengan isi berkas `firestore.rules` dari repositori ini, lalu klik **Publish**.",
+    "Jangan mengaktifkan Cloud Storage karena layanan ini kini mewajibkan paket Blaze. Sertifikat anggota cukup disimpan sebagai data dan tautan eksternal.",
+    "Pastikan `firebaseSdkVersion: '12.4.0'` di `config.js`, lalu *commit* dan *push* ke GitHub. Aktifkan **Settings > Pages** pada repositori (branch utama, folder root).",
+    "Uji di `https://<username>.github.io/<repo>/masuk.html`: daftar dengan email, masuk dengan Google (izinkan *pop-up*), dan uji OTP memakai nomor uji. Lalu periksa dokumen `members/{uid}` di Firestore.",
+    "Pantau pemakaian SMS di dasbor penggunaan (Usage) Authentication dan tagihan di Google Cloud Billing. Untuk kembali ke Mode Demo, kosongkan `apiKey` di `config.js`."
+  ],
+  "error_codes": [
+    {
+      "code": "auth/email-already-in-use",
+      "pesan": "Alamat email ini sudah terdaftar. Silakan masuk, atau gunakan fitur “Lupa kata sandi?”."
+    },
+    {
+      "code": "auth/invalid-email",
+      "pesan": "Format alamat email tidak valid. Periksa kembali penulisannya."
+    },
+    {
+      "code": "auth/weak-password",
+      "pesan": "Kata sandi terlalu lemah. Gunakan minimal 8 karakter dengan kombinasi huruf dan angka."
+    },
+    {
+      "code": "auth/invalid-credential",
+      "pesan": "Email atau kata sandi tidak sesuai. Silakan periksa kembali."
+    },
+    {
+      "code": "auth/wrong-password",
+      "pesan": "Email atau kata sandi tidak sesuai. Silakan periksa kembali."
+    },
+    {
+      "code": "auth/user-not-found",
+      "pesan": "Email atau kata sandi tidak sesuai. Jika belum memiliki akun, silakan daftar terlebih dahulu."
+    },
+    {
+      "code": "auth/user-disabled",
+      "pesan": "Akun ini telah dinonaktifkan. Silakan hubungi Sekretariat PPAPI."
+    },
+    {
+      "code": "auth/too-many-requests",
+      "pesan": "Terlalu banyak percobaan. Demi keamanan, silakan coba lagi beberapa saat lagi."
+    },
+    {
+      "code": "auth/network-request-failed",
+      "pesan": "Koneksi internet bermasalah. Periksa jaringan Anda, lalu coba lagi."
+    },
+    {
+      "code": "auth/popup-closed-by-user",
+      "pesan": "Jendela masuk Google ditutup sebelum proses selesai. Silakan coba lagi."
+    },
+    {
+      "code": "auth/cancelled-popup-request",
+      "pesan": "Permintaan masuk dibatalkan karena ada jendela masuk lain yang sedang terbuka."
+    },
+    {
+      "code": "auth/popup-blocked",
+      "pesan": "Jendela masuk Google diblokir oleh peramban. Izinkan pop-up untuk situs ini, lalu coba lagi."
+    },
+    {
+      "code": "auth/invalid-phone-number",
+      "pesan": "Nomor HP tidak valid. Gunakan format Indonesia, misalnya 0812-3456-7890."
+    },
+    {
+      "code": "auth/missing-phone-number",
+      "pesan": "Nomor HP wajib diisi."
+    },
+    {
+      "code": "auth/invalid-verification-code",
+      "pesan": "Kode OTP tidak sesuai. Periksa kembali 6 digit kode pada SMS Anda."
+    },
+    {
+      "code": "auth/code-expired",
+      "pesan": "Kode OTP sudah kedaluwarsa. Silakan kirim ulang kode."
+    },
+    {
+      "code": "auth/quota-exceeded",
+      "pesan": "Batas pengiriman SMS sedang tercapai. Silakan coba lagi nanti atau gunakan metode masuk lain."
+    },
+    {
+      "code": "auth/captcha-check-failed",
+      "pesan": "Verifikasi keamanan (reCAPTCHA) gagal. Muat ulang halaman, lalu coba lagi."
+    },
+    {
+      "code": "auth/operation-not-allowed",
+      "pesan": "Metode masuk ini belum tersedia. Silakan gunakan metode lain atau hubungi Sekretariat PPAPI."
+    },
+    {
+      "code": "auth/unauthorized-domain",
+      "pesan": "Domain situs ini belum diizinkan untuk proses masuk. Mohon hubungi pengelola situs."
+    },
+    {
+      "code": "auth/requires-recent-login",
+      "pesan": "Demi keamanan, silakan masuk kembali sebelum melanjutkan tindakan ini."
+    },
+    {
+      "code": "auth/account-exists-with-different-credential",
+      "pesan": "Email ini sudah terdaftar dengan metode masuk lain. Silakan masuk menggunakan metode yang pernah Anda gunakan."
+    },
+    {
+      "code": "auth/billing-not-enabled",
+      "pesan": "Layanan verifikasi melalui SMS belum aktif. Silakan masuk menggunakan email atau akun Google."
+    },
+    {
+      "code": "auth/missing-verification-code",
+      "pesan": "Kode OTP wajib diisi."
+    },
+    {
+      "code": "auth/operation-not-supported-in-this-environment",
+      "pesan": "Fitur masuk ini tidak didukung di lingkungan peramban saat ini. Buka situs melalui alamat https dan pastikan penyimpanan situs diizinkan."
+    },
+    {
+      "code": "auth/invalid-api-key",
+      "pesan": "Konfigurasi layanan masuk tidak valid. Mohon hubungi pengelola situs."
+    },
+    {
+      "code": "default",
+      "pesan": "Terjadi kendala saat memproses permintaan Anda. Silakan coba lagi."
+    }
+  ],
+  "sources": [
+    "https://firebase.google.com/docs/auth/web/phone-auth",
+    "https://firebase.google.com/docs/auth/limits",
+    "https://firebase.google.com/docs/auth/faq-and-troubleshooting",
+    "https://firebase.google.com/docs/auth/web/auth-state-persistence",
+    "https://firebase.google.com/docs/auth/web/password-auth",
+    "https://firebase.google.com/docs/auth/web/manage-users",
+    "https://firebase.google.com/docs/auth/web/google-signin",
+    "https://firebase.google.com/docs/auth/web/redirect-best-practices",
+    "https://firebase.google.com/docs/auth/web/start",
+    "https://firebase.google.com/docs/auth/users",
+    "https://firebase.google.com/docs/reference/js/auth",
+    "https://firebase.google.com/docs/reference/js/v8/firebase.auth.RecaptchaVerifier",
+    "https://firebase.google.com/docs/reference/js/v8/firebase.auth.GoogleAuthProvider",
+    "https://firebase.google.com/docs/web/learn-more",
+    "https://firebase.google.com/docs/web/setup",
+    "https://firebase.google.com/support/release-notes/js",
+    "https://firebase.google.com/pricing",
+    "https://firebase.google.com/support/faq",
+    "https://firebase.google.com/docs/projects/billing/firebase-pricing-plans",
+    "https://firebase.google.com/docs/projects/billing/avoid-surprise-bills",
+    "https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024",
+    "https://firebase.google.com/docs/firestore/quotas",
+    "https://firebase.google.com/docs/firestore/locations",
+    "https://firebase.google.com/docs/firestore/quickstart",
+    "https://firebase.google.com/docs/firestore/manage-data/add-data",
+    "https://cloud.google.com/identity-platform/pricing",
+    "https://cloud.google.com/identity-platform/docs/admin/sms-regions",
+    "https://cloud.google.com/identity-platform/docs/admin/email-enumeration-protection",
+    "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "https://developers.google.com/recaptcha/docs/faq",
+    "https://developer.mozilla.org/en-US/docs/Glossary/Transient_activation",
+    "https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth-compat.js",
+    "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore-compat.js"
+  ]
+}

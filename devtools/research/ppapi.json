@@ -1,0 +1,105 @@
+{
+  "found_official_presence": false,
+  "facts": [
+    {
+      "field": "full_name",
+      "value": "Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)",
+      "source": "https://ppapiid.vercel.app/",
+      "confidence": "high"
+    },
+    {
+      "field": "self_description",
+      "value": "Wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia; mendorong peningkatan kompetensi tenaga kerja perancah, penerapan K3, serta praktik pemasangan dan inspeksi perancah sesuai regulasi nasional (PermenNaker No. 01/MEN/1980, KEP-74/PPK/XII/2013) dan pedoman internasional (BS 5973, BS 1139, AS/NZS 1576, BS EN 74, NASC). Diambil dari bagian 'Tentang PPAPI' pada aplikasi milik klien.",
+      "source": "https://ppapiid.vercel.app/",
+      "confidence": "medium"
+    },
+    {
+      "field": "official_profile_status",
+      "value": "Aplikasi klien sendiri menyatakan bahwa profil resmi (visi, misi, kepengurusan, dan logo) baru akan ditampilkan setelah datanya dilampirkan, jadi belum ada profil resmi yang dipublikasikan di sana.",
+      "source": "https://ppapiid.vercel.app/",
+      "confidence": "high"
+    },
+    {
+      "field": "app_developer",
+      "value": "Menurut halaman 'Tentang Aplikasi', aplikasi PPAPI Scaffold dikembangkan oleh [atribusi lama, dihapus] bersama PPAPI.",
+      "source": "https://ppapiid.vercel.app/",
+      "confidence": "medium"
+    },
+    {
+      "field": "domain_ppapi.id",
+      "value": "Tidak terdaftar (DNS NXDOMAIN per 2026-10-08)",
+      "source": "https://dns.google/resolve?name=ppapi.id&type=A",
+      "confidence": "high"
+    },
+    {
+      "field": "domain_ppapi.or.id",
+      "value": "Tidak terdaftar (DNS NXDOMAIN per 2026-10-08)",
+      "source": "https://dns.google/resolve?name=ppapi.or.id&type=A",
+      "confidence": "high"
+    }
+  ],
+  "contact": {
+    "address": "",
+    "city": "",
+    "phone": "",
+    "whatsapp": "",
+    "email": "",
+    "sources": []
+  },
+  "social": {
+    "instagram": "",
+    "linkedin": "",
+    "youtube": "",
+    "facebook": ""
+  },
+  "app": {
+    "title": "PPAPI Scaffold — Inspeksi Perancah Tubular/Frame/Modular (judul di dalam aplikasi: 'Scaffold Inspeksi — Sistem Inspeksi Keandalan Perancah')",
+    "summary": "Aplikasi web satu halaman (bisa dipasang sebagai PWA) untuk perencanaan dan inspeksi perancah tubular (tube & coupler), dari data proyek hingga laporan PDF dan scaffold tag. Hasilnya berupa verdict tiga warna: HIJAU (aman), KUNING (bersyarat), atau MERAH (tidak aman). Aplikasi mengacu pada AS/NZS 1576, AS 4576, BS 5973, BS 1139/BS EN 74, BS EN 1004, NASC TG20/SG4, Permenaker 01/MEN/1980, dan KEP-74/PPK/XII/2013. Simulator 3D pemasangan perancah tertanam di dalamnya. Perhitungannya dinyatakan bersifat indikatif dan harus diverifikasi oleh engineer yang berkompeten.",
+    "features": [
+      "Login wajib; akun dikelola Admin PPAPI dan tidak ada pendaftaran mandiri",
+      "Alur 9 tahap: 1 Data Proyek, 2 Perhitungan Beban Hidup (AS 4576), 3 Duty & Stabilitas, 4 Gambar Rencana (editor drag & drop dengan pemeriksaan kaidah otomatis), 5 Material, Gross Load & Self Weight, 6 Analisis Struktur Lainnya, 7 Job Safety Analysis, 8 Checklist Inspeksi, 9 Laporan & Tagging",
+      "Checklist inspeksi berbasis elemen dalam 10 kategori, termasuk Coupler/Sambungan Klem, dengan verdict otomatis tiga warna",
+      "Analisis struktur: kapasitas rangkaian, tiang & tumpuan/pondasi, analisis klem (SWL slip Kelas A 6,3 kN / Kelas B 9,4 kN), analisis papan/platform, kekokohan (rigidity)",
+      "Laporan PDF (jsPDF) dan scaffold tag",
+      "Simulator 3D pemasangan perancah tube & coupler (three.js) yang dibuka lewat tombol mengambang 'Simulator 3D' sebagai pop-up, dengan opsi Layar Penuh",
+      "Arsip proyek per pengguna di penyimpanan peramban; opsi sinkronisasi cloud (Upstash Redis) dari Dashboard Admin",
+      "Halaman Tentang Aplikasi dengan changelog (versi terbaru 2.1.0, 19 Juli 2026)",
+      "Konten edukasi: perbandingan jenis perancah tubular, frame, dan modular"
+    ],
+    "routes": [
+      {
+        "path": "/",
+        "purpose": "Satu-satunya URL. Layar login muncul lebih dulu, lalu tampilan internal diganti lewat JavaScript go(view) tanpa mengubah URL atau hash. Tidak ada deep link."
+      },
+      {
+        "path": "/ (tampilan internal 'beranda')",
+        "purpose": "Beranda: pengenalan, sistem verdict, 10 kategori, 8/9 tahap perencanaan, Tentang PPAPI, jenis perancah"
+      },
+      {
+        "path": "/ (tampilan internal 'proyek','beban','duty','gambar','material')",
+        "purpose": "Tahap perencanaan 1–5"
+      },
+      {
+        "path": "/ (tampilan internal 'analisis')",
+        "purpose": "Tahap 6 Analisis Struktur Lainnya, yaitu fitur analisis struktur"
+      },
+      {
+        "path": "/ (tampilan internal 'jsa','checklist','laporan')",
+        "purpose": "Tahap 7–9: JSA, Checklist Inspeksi, Laporan & Tagging"
+      },
+      {
+        "path": "/ (tampilan internal 'tentang','admin')",
+        "purpose": "Tentang Aplikasi/changelog; Dashboard Admin (khusus admin)"
+      },
+      {
+        "path": "/ (modal 'Simulator 3D')",
+        "purpose": "Simulator 3D pemasangan perancah dalam iframe ber-URL blob: yang dibuat dari HTML tertanam, sehingga tidak bisa dijadikan tautan permanen"
+      }
+    ],
+    "simulator_url": "https://ppapiid.vercel.app/",
+    "analysis_url": "https://ppapiid.vercel.app/",
+    "style_notes": "Gaya utilitarian ala rambu keselamatan industri. Latar luar dan gerbang login berwarna charcoal gelap (#1b1f24). Area konten berlatar abu-abu terang (#eceef1) dengan kartu putih berbayang lembut dan sudut membulat. Aksen kuning keselamatan (#f5c518) dipakai pada tombol utama dan label eyebrow, ditambah pita garis hazard kuning-hitam diagonal di atas kartu login dan di footer. Judul memakai Oswald kondensasi huruf kapital, teks isi memakai Inter. Warna status verdict: hijau #1f9d57, kuning/amber #e0a200, merah #d6392f. Logo PPAPI berwarna kuning/hitam. Kesannya fungsional dan tidak mewah, jadi sangat berbeda dari arahan monokrom elegan situs baru.",
+    "requires_login": true
+  },
+  "notes": "Tugas A: Saya mencari dengan beberapa frasa ('Praktisi dan Ahli Perancah Indonesia', 'Perkumpulan Praktisi dan Ahli Perancah Indonesia', 'PPAPI perancah', 'asosiasi perancah Indonesia PPAPI', 'ppapi.id', 'ppapi.or.id', serta variasi untuk Instagram, LinkedIn, ketua umum/sekjen, AHU/SK Kemenkumham, dan nama dalam bahasa Inggris). Hasilnya, tidak ada situs resmi, media sosial, alamat atau telepon sekretariat, tanggal pendirian, nomor badan hukum AHU, maupun susunan pengurus yang dapat diverifikasi. Domain ppapi.id dan ppapi.or.id belum terdaftar (NXDOMAIN). Satu ringkasan mesin pencari menyebut ada 'Sekjen PPAPI' dalam dokumen Scribd (https://id.scribd.com/document/697043245/Seminar-APJII-Safety-in-Telecommunication), tetapi isi dokumen itu tidak dapat diambil sehingga klaimnya tidak terverifikasi dan TIDAK digunakan. Pencarian di registri AHU (ahu.go.id) tidak dilakukan karena memerlukan interaksi berproteksi CAPTCHA. Rekomendasi: biarkan semua kolom kontak, sosial, legalitas, dan pengurus kosong (gunakan fallback UI) sampai klien memberikan data resmi. Tugas B: Aplikasi diperiksa dengan Playwright dan analisis statis HTML publik. Saya tidak login dan tidak mencoba melewati gerbang login. Simulator dan analisis sama-sama berada di https://ppapiid.vercel.app/ karena tidak ada rute URL tersendiri. Tangkapan layar: devtools/shots/app-home.png, app-home-full.png, app-home-mobile.png. Data mentah: devtools/research/app-inspect.json."
+}

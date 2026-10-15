@@ -1,0 +1,4 @@
+devtools/node_modules/
+devtools/shots/
+devtools/legacy/asosiasi.ppapi-main/
+*.log
