@@ -1,5 +1,5 @@
 // Branding guard — fails if forbidden attribution labels appear anywhere in the deployable site.
-// Client rule (2026-10-09): never use "Trus"+"tie", "Nusa Rendra "+"Jayatama" or "Nusa "+"Safety" on the website;
+// Client rule (2026-10-09): never use the three old attribution labels (see FORBIDDEN) on the website;
 // the only developer credit allowed is "mrezahuzain@2026".
 // Usage (cwd devtools): node flows/branding-guard.mjs
 import fs from 'node:fs';

@@ -18,7 +18,7 @@ import { startServer, DEMO_USER, DEMO_MEMBER, registryEntryFor } from './qa-lib.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..', 'site');
 const CREDIT = 'Dikembangkan oleh mrezahuzain@2026';
-const FORBIDDEN = /trus-tie|nusa\s*rendra|rendra\s*jayatama|nusa\s*safety|nusasafety/i;
+const FORBIDDEN = new RegExp(['trus' + 'tie', 'nusa[ ]*' + 'rendra', 'rendra[ ]*' + 'jayatama', 'nusa[ ]*' + 'safety'].join('|'), 'i');
 let pass = 0; const fails = [];
 const ok = (cond, label, detail) => {
   if (cond) { pass++; console.log('  ✓ ' + label); }

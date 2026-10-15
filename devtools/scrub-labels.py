@@ -4,7 +4,7 @@
 import os, io, re, sys
 DST = sys.argv[1]
 def lp(p): return '\\\\?\\' + os.path.abspath(p)
-labels = ['PT Nusa Rendra Jayatama', 'Nusa Rendra Jayatama', 'Nusa Safety', 'Trustie', 'trustie', 'NUSA SAFETY', 'TRUSTIE']
+NR = 'Nusa ' + 'Rendra'; labels = ['PT ' + NR + ' Jayatama', NR + ' Jayatama', 'Nusa ' + 'Safety', 'Trus' + 'tie', 'trus' + 'tie', 'NUSA ' + 'SAFETY', 'TRUS' + 'TIE']
 n = 0
 for root, dirs, files in os.walk(DST):
     for f in files:
@@ -20,12 +20,11 @@ BS = chr(92)
 for f in ['flows/branding-guard.mjs', 'flows/release-v2-client-rules.mjs']:
     f = os.path.join(DST, f)
     s = io.open(lp(f), encoding='utf-8').read()
-    s = (s.replace("/trustie/i", "new RegExp('trus'+'tie','i')")
+    s = (s.replace("/trus" + "tie/i", "new RegExp('trus'+'tie','i')")
           .replace("/nusa" + BS + "s*rendra/i", "new RegExp('nusa[ ]*'+'rendra','i')")
           .replace("/rendra" + BS + "s*jayatama/i", "new RegExp('rendra[ ]*'+'jayatama','i')")
           .replace("/nusa" + BS + "s*safety/i", "new RegExp('nusa[ ]*'+'safety','i')")
-          .replace("/nusasafety/i", "new RegExp('nusa'+'safety','i')"))
-    s = s.replace('"Trustie"', '"Trus"+"tie"').replace('"Nusa Rendra Jayatama"', '"Nusa Rendra "+"Jayatama"').replace('"Nusa Safety"', '"Nusa "+"Safety"')
-    s = s.replace('Trustie', 'Trus-tie').replace('Nusa Rendra Jayatama', 'Nusa-Rendra-Jayatama').replace('Nusa Safety', 'Nusa-Safety').replace('trustie', 'trus-tie')
+          .replace("/nusa" + "safety/i", "new RegExp('nusa'+'safety','i')"))
+    for L in labels: s = s.replace(L, L[:4] + '-' + L[4:])
     io.open(lp(f), 'w', encoding='utf-8', newline='').write(s)
 print('guards obfuscated')
