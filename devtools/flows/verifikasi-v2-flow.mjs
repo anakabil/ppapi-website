@@ -77,8 +77,27 @@ function watch(page, tag) {
   page.on('console', m => { if (['error', 'warning'].includes(m.type())) errors.push(`${tag} console.${m.type()}: ${m.text()}`); });
   page.on('pageerror', e => errors.push(`${tag} pageerror: ${e.message}`));
 }
+/* 2026-10-15: registry.js is empty (sample people removed). The public list used by these flows is seeded the way
+   approvals write it (store.js registryEntry → localStorage ppapi_registry) — test fixtures, flagged contoh:true. */
+const REG_FIX = [
+  { kta: 'PPAPI-2026-000123', nama: 'Andika Prasetya', kategori: 'Praktisi', kompetensi: ['Teknisi Scaffolding'], kota: 'Jakarta Timur', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+  { kta: 'PPAPI-2026-001208', nama: 'Siti Rahmawati', kategori: 'Ahli', kompetensi: ['Inspektur Scaffolding'], kota: 'Surabaya', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+  { kta: 'PPAPI-2025-000457', nama: 'Yoga Pranata', kategori: 'Praktisi', kompetensi: ['Operator Scaffolding'], kota: 'Balikpapan', berlakuHingga: '2028-12-31', status: 'Aktif', contoh: true },
+  { kta: 'PPAPI-2025-000731', nama: 'Maria Kristina Sitorus', kategori: 'Ahli', kompetensi: ['Perancang Scaffolding'], kota: 'Medan', berlakuHingga: '2028-12-31', status: 'Aktif', contoh: true },
+  { kta: 'PPAPI-2023-000089', nama: 'Bayu Firmansyah', kategori: 'Praktisi', kompetensi: ['Kepala Tukang Pasang Perancah'], kota: 'Semarang', berlakuHingga: '2026-06-30', status: 'Nonaktif', contoh: true },
+  { kta: 'PPAPI-2026-002310', nama: 'Ni Kadek Ayu Lestari', kategori: 'Praktisi', kompetensi: ['Petugas K3 Konstruksi'], kota: 'Denpasar', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+];
 async function ctxFor(vp, seed) {
   const ctx = await browser.newContext({ viewport: vp.viewport, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch, deviceScaleFactor: vp.dpr || 1, reducedMotion: 'reduce', locale: 'id-ID' });
+  await ctx.addInitScript(fix => {
+    try {
+      if (sessionStorage.getItem('__vf_reg')) return;
+      sessionStorage.setItem('__vf_reg', '1');
+      const reg = JSON.parse(localStorage.getItem('ppapi_registry') || '{}');
+      fix.forEach(e => { if (!reg[e.kta]) reg[e.kta] = Object.assign({ namaCari: e.nama.toLowerCase(), updatedAt: '2026-10-01T00:00:00.000Z' }, e); });
+      localStorage.setItem('ppapi_registry', JSON.stringify(reg));
+    } catch (e) {}
+  }, REG_FIX);
   if (seed) await ctx.addInitScript(seed.fn, seed.arg);
   return ctx;
 }
@@ -122,7 +141,8 @@ try {
   });
   await search(page, 'PPAPI-2026-000123');
   ok(await page.evaluate(() => window.__lookups.length === 1 && window.__lookups[0] === 'PPAPI-2026-000123'), 'one lookup per search, with the typed query', await page.evaluate(() => window.__lookups));
-  ok(await page.locator('.vf-result--ok').isVisible() && /Andika Prasetya/.test(await txt(page, '.vf-result__name')), 'sample KTA → Terverifikasi (v1 kept)');
+  ok(await page.locator('.vf-result--ok').isVisible() && /Andika Prasetya/.test(await txt(page, '.vf-result__name')), 'registry entry (seeded like an approval) → Terverifikasi');
+  ok((await page.evaluate(() => (PPAPI.data.registry || []).length)) === 0, 'static registry.js is empty (sample people removed 2026-10-15)');
   await search(page, 'PPAPI-2025-000318');
   ok(await page.locator('.vf-result--ok').isVisible() && /Dimas Haryanto/.test(await txt(page, '.vf-result__name')), 'demo-approved member (seed, ppapi_registry) is verifiable', await txt(page, '.vf-result__name'));
   ok(await page.locator('.vf-result .badge--contoh').count() === 1, 'seeded approval keeps its Contoh badge');
@@ -134,10 +154,10 @@ try {
   ok(await page.locator('.vf-item').count() === 3, 'KTA prefix → list of 3 (v1 kept)');
   await search(page, 'ra');
   ok(/minimal 3 huruf/.test(await txt(page, '[data-vf="error"]')) && await page.evaluate(() => window.__lookups.filter(q => q === 'ra').length === 0), 'too-short query → inline error, no lookup');
-  ok(await page.locator('[data-vf="sample"]').isVisible() && await page.locator('[data-vf="demo-note"]').isVisible(), 'demo: sample notice + "approved in Konsol Admin are verifiable" note');
+  ok(await page.locator('[data-vf="sample"]').count() === 0, 'no sample-data notice on the page (removed with the sample registry)');
   await page.close();
   page = await open(ctx, '?kta=PPAPI-2023-000089', 'A2');
-  ok(await page.inputValue('#vf-q') === 'PPAPI-2023-000089' && await page.locator('.vf-result--warn').isVisible() && /Masa berlaku telah habis/.test(await txt(page, '.vf-result__state')), '?kta= expired sample → warn state (v1 kept)');
+  ok(await page.inputValue('#vf-q') === 'PPAPI-2023-000089' && await page.locator('.vf-result--warn').isVisible() && /Masa berlaku telah habis/.test(await txt(page, '.vf-result__state')), '?kta= expired entry → warn state');
   await page.close();
   page = await open(ctx, '?kta=PPAPI-2026-999999', 'A3');
   ok(/Belum tercantum/.test(await txt(page, '.vf-result__state')) && /diperbarui saat keanggotaan disetujui/.test(await txt(page, '.vf-result__desc')), 'unknown well-formed KTA → "Belum tercantum" (registry updated on approval)');
@@ -317,18 +337,18 @@ try {
     await page.goto(`${FB_BASE}/verifikasi.html`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => document.body.classList.contains('auth-ready'), null, { timeout: 15000 });
     ok(await page.evaluate(() => PPAPI.auth.mode === 'firebase' && PPAPI.store.mode === 'firebase'), 'page runs in Firebase mode');
-    ok(await page.locator('[data-vf="sample"]').isHidden(), 'sample-data notice hidden (samples are not served in Firebase mode)');
+    ok(await page.locator('[data-vf="sample"]').count() === 0, 'no sample-data notice (Firebase mode)');
     // the secretariat's approval wrote a public entry (simulated through the "console", bypassing rules)
     await page.evaluate(() => window.__fstub.console.set('registry/PPAPI-2026-000500', { kta: 'PPAPI-2026-000500', nama: 'Wahyu Setiawan', kategori: 'Ahli', kompetensi: ['Inspektur Scaffolding'], kota: 'Cilegon', berlakuHingga: '2029-12-31', status: 'Aktif', namaCari: 'wahyu setiawan' }));
     await search(page, 'ppapi 2026 000500');
     ok(await page.locator('.vf-result--ok').isVisible() && /Wahyu Setiawan/.test(await txt(page, '.vf-result__name')) && await page.locator('.vf-result .badge--contoh').count() === 0, 'Firestore registry entry → Terverifikasi (no Contoh badge)');
     ok(await page.evaluate(() => window.__fstub.log.some(l => /^registry\/PPAPI-2026-000500$/.test(l[1]) && l[2] === true)), 'exact KTA = one allowed read of registry/{kta} (signed out)');
     await search(page, 'PPAPI-2026-000123');
-    ok(/Belum tercantum/.test(await txt(page, '.vf-result__state')), 'static sample number is not verifiable in Firebase mode');
+    ok(/Belum tercantum/.test(await txt(page, '.vf-result__state')), 'a demo-only (localStorage) number is not verifiable in Firebase mode');
     await search(page, 'wahyu');
     ok(await page.locator('.vf-item').count() === 1 && /Wahyu/.test(await txt(page, '.vf-item__name')), 'name search over the registry collection');
     await search(page, 'andika');
-    ok(/Data tidak ditemukan/.test(await txt(page, '.vf-result__state')), 'sample names are not searchable in Firebase mode');
+    ok(/Data tidak ditemukan/.test(await txt(page, '.vf-result__state')), 'demo-only names are not searchable in Firebase mode');
     ok(fbErrors.length === 0, 'Firebase mode: no page / console errors', fbErrors);
     await page.close();
     await ctx.close();

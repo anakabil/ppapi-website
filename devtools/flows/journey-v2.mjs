@@ -377,16 +377,17 @@ await step('J2 pending applicant sees status centre + locks', async () => {
   await goto('pustaka.html');
   await sleep(400);
   ok('J2 pustaka: lock panel shown, no "Akses penuh" strip', (await page.locator('.pk-lockbar').count()) > 0 && (await page.locator('.pk-granted').count()) === 0);
-  ok('J2 pustaka: member documents locked', (await page.locator('[data-pk="results"] .doc-card--locked').count()) > 0);
+  ok('J2 pustaka: member-only items locked (the two apps; no PPAPI document published yet)', (await page.locator('.doc-card--locked').count()) >= 2 && (await page.locator('[data-pk="results"] .doc-card--locked').count()) === 0);
   ok('J2 pustaka: both app cards locked', (await page.locator('.pk-app.doc-card--locked').count()) === 2);
   ok('J2 pustaka: no link into aplikasi/ for a pending applicant', (await page.locator('main a[href^="aplikasi/"]').count()) === 0);
   const lockCta = await page.evaluate(() => [...document.querySelectorAll('.pk-lockbar a')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(', '));
   ok('J2 pustaka lock CTA: "Lihat Status Pendaftaran" → dashboard', /Lihat Status Pendaftaran→dashboard\.html/.test(lockCta), lockCta);
   const fu = await page.evaluate(async () => { try { await PPAPI.store.pustaka.fileUrl(PPAPI.data.pustaka[0]); return 'resolved'; } catch (e) { return e.code || e.message; } });
   ok('J2 store.pustaka.fileUrl refuses a pending applicant (store/forbidden)', fu === 'store/forbidden', fu);
-  await page.locator('[data-pk-open="d:cop-pemasangan-tube-coupler"]').first().click(); // akses: anggota
+  // 2026-10-15: no PPAPI documents published yet — the member-only items are the two apps (akses: anggota)
+  await page.locator('#app-perencanaan [data-pk-open]').first().click();
   await page.waitForSelector('.modal .modal__dialog', { timeout: 4000 }).catch(() => {});
-  ok('J2 pustaka detail modal (member-only document): locked panel, no "Buka Dokumen"', (await page.locator('.modal .locked').count()) > 0 && (await page.locator('.modal a', { hasText: 'Buka Dokumen' }).count()) === 0);
+  ok('J2 pustaka detail modal (member-only app): locked panel, no "Buka Aplikasi"/"Buka Dokumen"', (await page.locator('.modal .locked').count()) > 0 && (await page.locator('.modal a', { hasText: /Buka (Dokumen|Aplikasi)/ }).count()) === 0);
   await page.keyboard.press('Escape'); await sleep(300);
   await shot('j2-pustaka-locked');
 
@@ -689,7 +690,7 @@ await step('J6 admin content create → public pages', async () => {
   HIDDEN_NEWS = staticNews;
   // agenda
   await page.click('.adm-subnav__link[data-type="agenda"]');
-  await page.waitForSelector('#kt-list tbody tr');
+  await page.waitForSelector('#kt-list tbody tr, #kt-list .empty-state');   // agenda.js is empty since 2026-10-15 → "Belum ada agenda" state
   await page.click('#kt-add');
   await modalOpen();
   await page.fill('.modal [name="judul"]', AGENDA_TITLE);

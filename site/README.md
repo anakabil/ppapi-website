@@ -99,13 +99,13 @@ Aturan umum untuk semua berkas di `assets/js/config.js` dan `assets/data/*.js`:
 | Berkas | Isi | Catatan |
 | --- | --- | --- |
 | `assets/js/config.js` | Nama, slogan, deskripsi, `siteUrl`, kontak sekretariat (`contact`), media sosial (`social`), menu (`nav`), tautan footer (`footerLinks`), aplikasi anggota (`apps`), masa berlaku keanggotaan (`masaBerlakuTahun`), iuran (`iuran`), katalog Produk Pengetahuan (`pustaka.katalogPublik`), konfigurasi Firebase | Isian kontak/sosial yang kosong otomatis disembunyikan. `iuran.aktif: true` menampilkan langkah pembayaran pada formulir pendaftaran — isi hanya dengan data resmi. |
-| `assets/data/berita.js` | Berita (`PPAPI_DATA.berita`) dan pengumuman (`PPAPI_DATA.pengumuman`) | Berita terbaru di paling atas. Dapat juga dikelola dari Konsol Admin (bagian 7). |
-| `assets/data/agenda.js` | Agenda kegiatan | Kegiatan yang sudah lewat otomatis masuk "Telah Berlangsung". |
-| `assets/data/pustaka.js` | **Produk Pengetahuan** (standar, CoP, petunjuk teknis, modul pelatihan, formulir, kajian, aplikasi) | Lihat bagian 7.3 tentang tempat menaruh berkas. Butir contoh bertanda `contoh: true`. |
+| `assets/data/berita.js` | Berita (`PPAPI_DATA.berita`) dan pengumuman (`PPAPI_DATA.pengumuman`) | Berisi artikel edukasi/regulasi/organisasi tulisan Redaksi PPAPI dengan sitasi dan "Daftar Pustaka" bergaya APA 7 (teks di antara `*bintang*` dicetak miring; paragraf setelah `## Daftar Pustaka` ditata sebagai rujukan). Berita terbaru di paling atas. `pengumuman` masih kosong (`[]`). Dapat juga dikelola dari Konsol Admin (bagian 7). |
+| `assets/data/agenda.js` | Agenda kegiatan | **Kosong (`[]`)** sampai ada kegiatan resmi — halaman Agenda, Beranda, Berita, dan Dasbor menampilkan keadaan kosong yang rapi. Format butir ada di komentar berkas. Kegiatan yang sudah lewat otomatis masuk "Telah Berlangsung". |
+| `assets/data/pustaka.js` | **Produk Pengetahuan** (standar, CoP, petunjuk teknis, modul pelatihan, formulir, kajian, aplikasi) | Saat ini hanya berisi dua aplikasi anggota; koleksi dokumen terisi setelah dokumen resmi terbit (di sini atau lewat Konsol Admin). Lihat bagian 7.3 tentang tempat menaruh berkas. |
 | `assets/data/regulasi.js` | Pustaka regulasi & standar (tampil juga sebagai kategori "Peraturan Perundangan" di Produk Pengetahuan) | Isi awal telah diverifikasi dari sumber resmi (isian `sumber`). `kunci: true` tampil di dasbor. |
-| `assets/data/organisasi.js` | Tentang, visi-misi, nilai, layanan, sejarah, pengurus, legalitas, makna logo, angka, FAQ, kategori & alur keanggotaan | Bagian yang masih rumusan sementara ditandai `contoh`/`bagianContoh`. Kategori dengan `bisaDiajukan: false` (Kehormatan) tidak dapat dipilih di formulir pendaftaran. |
+| `assets/data/organisasi.js` | Tentang, visi-misi, nilai, layanan, sejarah, pengurus, legalitas, makna logo, angka, FAQ, kategori & alur keanggotaan | `sejarah`, `pengurus`, dan `legalitas` **kosong** (bagiannya disembunyikan) sampai data resmi tersedia. Rumusan visi, misi, nilai, makna logo, dan uraian kategori keanggotaan masih sementara dan ditandai `bagianContoh`/`contoh` (label "Contoh" tampil) — ubah menjadi `false` setelah ditetapkan pengurus. Kategori dengan `bisaDiajukan: false` (Kehormatan) tidak dapat dipilih di formulir pendaftaran. |
 | `assets/data/kompetensi.js` | Katalog kompetensi, tingkat, penerbit sertifikat | Dipakai pada formulir pendaftaran dan profil anggota. |
-| `assets/data/registry.js` | Contoh daftar verifikasi publik | Hanya data terbatas. Isi awal adalah data contoh (orang fiktif); data contoh **tidak** ditampilkan pada Mode Firebase. Anggota yang disetujui di Konsol Admin otomatis masuk daftar verifikasi. |
+| `assets/data/registry.js` | Daftar verifikasi publik statis | **Kosong (`[]`)**. Daftar verifikasi yang berlaku terisi otomatis dari persetujuan keanggotaan di Konsol Admin (Firestore `registry`). Isi berkas ini hanya bila perlu menambahkan anggota lama secara manual — data terbatas saja. |
 
 **Gambar**: simpan foto baru di `assets/img/` (format `.webp` atau `.jpg`, lebar ≤ 2000 px),
 lalu tulis alamatnya, misalnya `gambar: 'assets/img/nama-foto.webp'`.
@@ -119,11 +119,24 @@ menambahkan kredit, merek, atau nama pihak lain di situs maupun di aplikasi angg
 memiliki versi ringan `-sm.webp`; `logo-light-mark.webp` adalah logo tanpa tulisan kecil untuk
 header. Bila logo diganti, perbarui juga versi-versi tersebut.
 
-### Arti tanda "contoh"
+### Konten contoh telah dihapus (15 Oktober 2026)
 
-Butir dengan `contoh: true` adalah **konten contoh** untuk memperlihatkan tampilan situs.
-Situs menampilkan label kecil **"Contoh"** di dekat judulnya. Setelah diganti dengan data
-resmi, ubah menjadi `contoh: false` (atau hapus barisnya).
+Atas permintaan klien, seluruh konten contoh (berita, pengumuman, agenda, daftar verifikasi,
+rancangan dokumen Produk Pengetahuan, tonggak sejarah, dan nama pengurus sementara) telah
+dihapus dari berkas data. Yang tersisa dengan label **"Contoh"** hanyalah rumusan
+sementara visi, misi, nilai, makna logo, dan uraian kategori keanggotaan di `organisasi.js`
+(`bagianContoh` dan `contoh: true` pada `keanggotaan.kategori`), supaya halaman tidak
+kosong sambil menunggu rumusan resmi. Setelah rumusan resmi ditetapkan, ubah nilainya menjadi
+`false` agar label hilang. Butir baru yang ditambahkan dengan `contoh: true` (termasuk dari
+Konsol Admin) akan kembali menampilkan label "Contoh".
+
+**Menambah berita.** Dua cara: (1) tempel blok baru di paling atas `PPAPI_DATA.berita` pada
+`assets/data/berita.js` mengikuti petunjuk di kepala berkas — gunakan `'## '` untuk
+subjudul, `'- '` untuk butir, `*teks*` untuk judul karya yang dicetak miring, dan akhiri
+dengan `'## Daftar Pustaka'` diikuti entri rujukan bila artikel memakai sitasi; atau
+(2) Konsol Admin › Konten › Berita (tanpa menyunting berkas; lihat bagian 7). Hal yang sama
+berlaku untuk pengumuman dan agenda — selama daftar kosong, halaman menampilkan keadaan
+kosong, bukan ruang kosong.
 
 Informasi yang **belum diketahui secara resmi sengaja dikosongkan**: alamat dan kontak
 sekretariat, media sosial, nama pengurus, tanggal pendirian, nomor legalitas, dan besaran

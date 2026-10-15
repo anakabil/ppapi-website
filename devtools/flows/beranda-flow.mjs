@@ -132,7 +132,7 @@ console.log('\n[1] Pengunjung (belum masuk), reduced motion, desktop 1440');
       appNote: !$('#apps-note').hidden && $('#apps-note').textContent.trim(),
       news: $$('#news-list .news-card').map(n => ({ href: $('.news-card__title a', n).getAttribute('href'), contoh: !!$('.badge--contoh', n), img: !!$('img.img-mono', n) })),
       agenda: $$('#agenda-list .event-row').map(e => ({ day: $('.date-block__day', e).textContent, month: $('.date-block__month', e).textContent, href: $('.event-row__title a', e).getAttribute('href'), contoh: !!$('.badge--contoh', e) })),
-      agendaCount: $('#agenda-count').textContent,
+      agendaCount: $('#agenda-count').textContent, agendaCountHidden: $('#agenda-count').hidden, agendaEmpty: !!$('#agenda-list .home-agenda__empty'),
       reg: $$('#reg-list .home-reg__item').map(li => ({ code: $('.home-reg__code', li).textContent, href: $('a', li).getAttribute('href'), badge: !!$('.badge', li) })),
       regText: $('#reg-text').textContent,
       regLinks: $$('.home-reg__actions a').map(a => a.getAttribute('href')),
@@ -166,8 +166,8 @@ console.log('\n[1] Pengunjung (belum masuk), reduced motion, desktop 1440');
   ok(info.pkList === 'UL/list/8' && info.pk.map(t => t.kat).join('|') === kats.join('|'), 'Produk Pengetahuan: 8 category tiles in a list, standard order', info.pk.map(t => t.kat));
   const slugs = ['standar', 'code-of-practice', 'peraturan-perundangan', 'petunjuk-teknis', 'modul-pelatihan', 'formulir-dan-daftar-periksa', 'kajian-teknis'];
   ok(info.pk.every((t, i) => t.href === (i === 7 ? 'pustaka.html#aplikasi' : 'pustaka.html?kategori=' + slugs[i] + '#katalog')), 'tiles link to pustaka.html?kategori=<slug>#katalog (apps → pustaka.html#aplikasi), same URLs as pustaka.html', info.pk.map(t => t.href));
-  ok(info.pk.map(t => t.count).join('|') === '10 dokumen|2 rancangan|19 regulasi|2 rancangan|3 rancangan|1 rancangan|1 rancangan|2 aplikasi', 'tile counts grouped like pustaka.html (SNI + standar internasional under Standar)', info.pk.map(t => t.count));
-  ok(info.pk.map(t => t.contoh === true ? 'c' : t.contoh === 'dup' ? '!' : '-').join('') === '-c-cccc-', 'exactly one visible Contoh badge on tiles whose documents are all samples (not on Standar / regulasi / aplikasi)', info.pk.map(t => t.contoh));
+  ok(info.pk.map(t => t.count).join('|') === '9 dokumen|Segera tersedia|19 regulasi|Segera tersedia|Segera tersedia|Segera tersedia|Segera tersedia|2 aplikasi', 'tile counts grouped like pustaka.html (9 SNI + standar internasional under Standar; empty PPAPI collections say "Segera tersedia")', info.pk.map(t => t.count));
+  ok(info.pk.map(t => t.contoh === true ? 'c' : t.contoh === 'dup' ? '!' : '-').join('') === '--------', 'no Contoh badge on any tile (sample documents removed 2026-10-15)', info.pk.map(t => t.contoh));
   ok(info.pk[4].name === 'Modul & Panduan Pelatihan' && info.pk[7].name === 'Aplikasi Anggota' && info.pk[7].dark && info.pk.filter(t => t.dark).length === 1, 'labels "Modul & Panduan Pelatihan" / "Aplikasi Anggota"; the app tile is the dark plate');
   ok(info.pk.every((t, i) => t.num === String(i + 1).padStart(2, '0') + ' / 08' && t.icon && t.desc > 20), 'tiles numbered 01 / 08 … with icon + description');
   ok(/Katalog terbuka untuk umum/.test(s.pkAccess) && !s.pkOpen && s.pkActions.length === 2 && s.pkActions[0][0] === 'pustaka.html' && /Jelajahi Produk Pengetahuan/.test(s.pkActions[0][1]) && s.pkActions[1][0] === 'masuk.html?next=pendaftaran.html#daftar' && s.pkActions[1][1] === 'Daftar Anggota', 'knowledge access note (guest) + Jelajahi → pustaka.html, Daftar Anggota', s);
@@ -180,10 +180,9 @@ console.log('\n[1] Pengunjung (belum masuk), reduced motion, desktop 1440');
   ok(s.appsAccess.every(t => t === 'Khusus anggota berstatus Aktif') && s.appsLocked === 2, 'Apps (guest): locked access line', s.appsAccess);
   ok(info.appNote && /Aktif/.test(info.appNote), 'apps note (config.appNote) shown');
 
-  ok(info.news.length === 3 && info.news.every(n => /^berita\.html\?id=[a-z0-9-]+$/.test(n.href) && n.contoh && n.img), '3 latest news → berita.html?id=…, contoh badge, mono image', info.news);
-  ok(info.news[0].href === 'berita.html?id=situs-resmi-dan-layanan-anggota-daring', 'newest berita is first');
-  ok(info.agenda.length === 3 && info.agenda[0].day === '21–23' && info.agenda[0].month === 'Okt' && info.agenda[2].day === '12–13' && info.agenda.every(a => /^agenda\.html\?id=[a-z0-9-]+$/.test(a.href) && a.contoh), 'Agenda: next 3 upcoming with date blocks → agenda.html?id=… (opens the detail)', info.agenda);
-  ok(/^6 kegiatan terjadwal hingga Januari 2027$/.test(info.agendaCount), 'agenda count line', info.agendaCount);
+  ok(info.news.length === 3 && info.news.every(n => /^berita\.html\?id=[a-z0-9-]+$/.test(n.href) && !n.contoh && n.img), '3 latest news → berita.html?id=…, no Contoh badge (editorial articles), mono image', info.news);
+  ok(info.news[0].href === 'berita.html?id=kerangka-hukum-pekerjaan-perancah-indonesia', 'newest berita (sorotan) is first');
+  ok(info.agenda.length === 0 && info.agendaEmpty && info.agendaCountHidden && info.agendaCount === '', 'Agenda: no activities yet → calm empty message in the dark card, count line hidden', [info.agenda, info.agendaEmpty, info.agendaCount]);
   ok(info.reg.length === 4 && info.reg[0].code === 'UU 1/1970' && info.reg.every(r => r.href.startsWith('regulasi.html?q=') && r.badge), 'Regulasi: 4 kunci rows → regulasi.html?q=…', info.reg);
   ok(/memuat 28 peraturan/.test(info.regText) && info.regLinks.join('|') === 'regulasi.html|pustaka.html?kategori=peraturan-perundangan#katalog', 'regulasi count from data + links to regulasi.html and Produk Pengetahuan', [info.regText, info.regLinks]);
   ok(info.gallery.length === 4 && info.gallery.every(g => g.alt && g.cap), 'Galeri: 4 images with alt + captions');
@@ -319,16 +318,14 @@ console.log('\n[5] Konten kelolaan admin (store.content.list) tampil di Beranda'
         const meta = { updatedAt: '2026-10-08T01:00:00.000Z', updatedBy: 'demo-admin-0001' };
         localStorage.setItem('ppapi_content_berita', JSON.stringify([
           Object.assign({ id: 'kabar-kelolaan-admin', judul: 'Kabar <b>Kelolaan</b> Admin', kategori: 'Organisasi', tanggal: '2026-10-08', ringkasan: 'Ringkasan berita baru dari Konsol Admin.', isi: ['Isi.'], gambar: '', penulis: 'Sekretariat', sorot: false, contoh: false }, meta),
-          Object.assign({ id: 'situs-resmi-dan-layanan-anggota-daring', hidden: true }, meta),
+          Object.assign({ id: 'kerangka-hukum-pekerjaan-perancah-indonesia', hidden: true }, meta),
         ]));
         localStorage.setItem('ppapi_content_agenda', JSON.stringify([
-          Object.assign({ id: 'agenda-kelolaan-admin', judul: 'Rapat Teknis Kelolaan Admin', jenis: 'Rapat', mulai: '2026-10-15', selesai: '2026-10-15', waktu: '09.00 – 11.00 WIB', lokasi: 'Daring', mode: 'Daring', kuota: null, deskripsi: 'Uji.', tautanDaftar: '', contoh: false }, meta),
-          Object.assign({ id: 'pelatihan-inspeksi-tube-coupler-okt-2026', hidden: true }, meta),
+          Object.assign({ id: 'agenda-kelolaan-admin', judul: 'Rapat Teknis Kelolaan Admin', jenis: 'Rapat', mulai: '2027-03-10', selesai: '2027-03-10', waktu: '09.00 – 11.00 WIB', lokasi: 'Daring', mode: 'Daring', kuota: null, deskripsi: 'Uji.', tautanDaftar: '', contoh: false }, meta),
         ]));
         localStorage.setItem('ppapi_content_regulasi', JSON.stringify([Object.assign({ id: 'uu-1-1970', hidden: true }, meta)]));
         localStorage.setItem('ppapi_content_pustaka', JSON.stringify([
           Object.assign({ id: 'standar-baru-kelolaan', judul: 'Standar Baru', kategori: 'Standar', kode: 'PPAPI-STD-02', versi: 'Revisi 0', tanggal: '2026-10-01', status: 'Berlaku', ringkasan: 'Uji.', penyusun: 'PPAPI', format: 'PDF', halaman: '', akses: 'publik', tautan: '', tag: [], app: '', contoh: false }, meta),
-          Object.assign({ id: 'kajian-kapasitas-klem', hidden: true }, meta),
         ]));
       } catch (e) {}
     },
@@ -351,13 +348,13 @@ console.log('\n[5] Konten kelolaan admin (store.content.list) tampil di Beranda'
       pk: $$('#pk-grid .home-pk__tile').map(t => [t.dataset.kategori, $('.home-pk__count', t).textContent.trim(), $$('.badge--contoh', t).some(b => b.offsetParent !== null)]),
     };
   });
-  ok(r.news[0] === 'berita.html?id=kabar-kelolaan-admin' && !r.news.includes('berita.html?id=situs-resmi-dan-layanan-anggota-daring'), 'managed berita appears first; the hidden static berita disappears', r.news);
+  ok(r.news[0] === 'berita.html?id=kabar-kelolaan-admin' && !r.news.includes('berita.html?id=kerangka-hukum-pekerjaan-perancah-indonesia'), 'managed berita appears first; the hidden static berita disappears', r.news);
   ok(r.leadTitle === 'Kabar <b>Kelolaan</b> Admin' && !r.leadBold && !r.leadContoh && r.leadFallback, 'managed berita: title escaped, no Contoh badge, graphite fallback instead of a photo', r);
-  ok(r.agenda[0] === 'agenda.html?id=agenda-kelolaan-admin' && !r.agenda.includes('agenda.html?id=pelatihan-inspeksi-tube-coupler-okt-2026') && r.agendaCount === '6 kegiatan terjadwal hingga Januari 2027', 'managed agenda appears; hidden static agenda disappears', r);
+  ok(r.agenda.length === 1 && r.agenda[0] === 'agenda.html?id=agenda-kelolaan-admin' && r.agendaCount === '1 kegiatan terjadwal hingga Maret 2027', 'managed agenda appears (the only activity) with its count line', r);
   ok(regStatic === 'ada' && !r.reg.includes('UU 1/1970') && r.reg.length === 4 && /memuat 27 peraturan/.test(r.regText), 'hidden regulation leaves the key list + count (27)', r);
   const std = r.pk.find(t => t[0] === 'Standar'), kaj = r.pk.find(t => t[0] === 'Kajian Teknis'), reg = r.pk.find(t => t[0] === 'Peraturan Perundangan');
-  ok(std[1] === '11 dokumen' && std[2] === false, 'managed Standar doc counted (11 dokumen incl. 9 SNI/international standards)', std);
-  ok(kaj[1] === 'Segera tersedia' && kaj[2] === false && reg[1] === '18 regulasi', 'hidden Kajian Teknis doc → "Segera tersedia"; hidden UU → regulasi tile 18', [kaj, reg]);
+  ok(std[1] === '10 dokumen' && std[2] === false, 'managed Standar doc counted (10 dokumen incl. 9 SNI/international standards)', std);
+  ok(kaj[1] === 'Segera tersedia' && kaj[2] === false && reg[1] === '18 regulasi', 'empty Kajian Teknis → "Segera tersedia"; hidden UU → regulasi tile 18', [kaj, reg]);
   ok(errors.length === 0, 'no console/page errors', errors);
   await ctx.close();
 }
@@ -421,7 +418,7 @@ for (const vp of [{ w: 390, h: 844, m: true }, { w: 560, h: 900, m: true }, { w:
   const pkCols = vp.w >= 1024 ? 4 : vp.w >= 560 ? 2 : 1;
   ok(r.pilarCols === pilarCols && r.pkCols === pkCols, `@${vp.w}: pilar ${pilarCols} / knowledge tiles ${pkCols} column(s)`, [r.pilarCols, r.pkCols]);
   ok(r.numWrap === 0, `@${vp.w}: tile numerals stay on one line`, r.numWrap);
-  ok(r.visBadges === '01011110', `@${vp.w}: one visible Contoh badge per sample tile`, r.visBadges);
+  ok(r.visBadges === '00000000', `@${vp.w}: no Contoh badge on knowledge tiles`, r.visBadges);
   if (pkCols === 4) ok(new Set(r.metaTops).size === 1, `@${vp.w}: tile footers align across the row (with or without a Contoh badge)`, r.metaTops);
   ok(r.trackRow === (vp.w >= 640), `@${vp.w}: membership track ${vp.w >= 640 ? 'horizontal' : 'vertical'}`, r.trackRow);
   if (vp.w === 1024 || vp.w === 768) await page.screenshot({ path: path.join(SHOTS, `index-flow-${vp.w}.png`), fullPage: false });
@@ -477,7 +474,7 @@ console.log('\n[8] Escaping, data kosong, dan cadangan bila store gagal');
   await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle' });
   await settle(page);
   const r = await page.evaluate(() => ({ news: document.querySelectorAll('#news-list .news-card').length, agenda: document.querySelectorAll('#agenda-list .event-row').length, reg: document.querySelectorAll('#reg-list li').length, pk: document.querySelectorAll('#pk-grid .home-pk__tile').length }));
-  ok(r.news === 3 && r.agenda === 3 && r.reg === 4 && r.pk === 8 && warns.length === 4, 'content.list failure → static data used, one warning per type', [r, warns.length]);
+  ok(r.news === 3 && r.agenda === 0 && r.reg === 4 && r.pk === 8 && warns.length === 4, 'content.list failure → static data used (3 berita, no agenda, 4 regulasi, 8 tiles), one warning per type', [r, warns.length]);
   ok(errors.length === 0, 'no other console/page errors', errors);
   await ctx.close();
 }

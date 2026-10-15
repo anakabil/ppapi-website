@@ -458,21 +458,31 @@ Admin PPAPI; results indicative), `firebaseSdkVersion '12.4.0'`, `firebase{…}`
 phone, whatsapp, email, hours[]}` — **all empty (nothing verified)** → show fallbacks ("Alamat sekretariat akan segera diperbarui."),
 `social{instagram, linkedin, youtube, facebook}` — all empty, `nav[]` (7 items), `footerLinks{ 'Group title': [{label, href}] }`.
 
-`PPAPI_DATA`:
-- `berita` (10, 2026-03-12 … 2026-10-07, newest first, all `contoh:true`, one `sorot:true`) + `pengumuman` (4, one `penting`).
-- `agenda` (10, sorted by `mulai`; 6 upcoming 2026-10-21 … 2027-01-21, 4 past; `kuota` may be `null`; `tautanDaftar` all `''`).
+`PPAPI_DATA` (**2026-10-15: all sample content removed on the client's instruction** — see Changelog):
+- `berita` (9 editorial articles by `penulis:'Redaksi PPAPI'`, 2026-07-29 … 2026-10-14, newest first, **no `contoh` key**, one
+  `sorot:true`; kategori Edukasi 6 / Regulasi 2 / Organisasi 1; each `isi[]` ends with `'## Daftar Pustaka'` + APA-7 reference
+  paragraphs; `*text*` inside `isi` renders as `<em>` and paragraphs after that heading get `p.berita-ref` — renderer in
+  `pages/berita.js renderIsi()`, styles in `pages/berita.css`). `pengumuman` is `[]`.
+- `agenda` is `[]` (no activities yet) → agenda.html hides the next-event panel + hero meta and shows the calm empty state;
+  index/berita/dashboard show their empty states. Tests seed managed agendas through `ppapi_content_agenda` instead.
 - `regulasi` (28 verified items; 6 `kunci`; `status` Berlaku / Berlaku (diubah) / Dicabut; `tautan` may be `''`; extra `sumber[]`;
   international standards use `jenis:'Standar Internasional'`). No `contoh` flags (factual).
 - `organisasi`: `tentang[]` (verified), `fakta[{label,nilai}]`, `visi`, `misi[]`, `nilai[{judul,teks,ikon}]`, `layanan[{ikon,judul,teks}]` (6),
-  `sejarah[{tahun,judul,teks,contoh?}]`, `pengurus[]` (8 placeholders "Nama Pengurus", `contoh:true`), `legalitas: []` (omit the section),
+  `sejarah: []` and `pengurus: []` (both sections hidden by profil.js until official data exists), `legalitas: []` (omit the section),
   `maknaLogo[{judul,teks}]`, `stats[{angka,akhiran,label}]` (factual counts of site/app content: 28, 16, 9, 10),
   `faq[{kelompok:'umum'|'keanggotaan', q, a}]`, `keanggotaan{kategori[{nama,ringkas,syarat[],manfaat[],contoh:true}],
   manfaatUmum[{ikon,judul,teks}], langkah[{judul,teks}] (5), biaya:''}`, and **`bagianContoh{visi,misi,nilai,maknaLogo,keanggotaan}`**
-  → show a contoh badge for those sections with `util.contohBadge({contoh: org.bagianContoh.visi})`.
+  → show a contoh badge for those sections with `util.contohBadge({contoh: org.bagianContoh.visi})`. These five flags and
+  `keanggotaan.kategori[].contoh` are the ONLY contoh flags left in the data (provisional wording the client has not replaced);
+  `flows/contoh-audit.mjs` enforces that.
 - `kompetensi{katalog[{kode,nama,kelompok,deskripsi,sumber[]}] (16; kelompok: Pelaksana, Pengawas, Inspeksi, Perencanaan & Desain, K3),
   level[4], penerbit[5]}`.
-- `registry[{kta,nama,kategori,kompetensi[],kota,berlakuHingga,status,contoh:true}]` (6 fictional; `PPAPI-2026-000123` valid/active;
-  `PPAPI-2023-000089` expired 2026-06-30 + Nonaktif).
+- `registry` is `[]` (the public list comes from approvals: `ppapi_registry` in demo / Firestore `registry`). Shape when filled by hand:
+  `{kta,nama,kategori,kompetensi[],kota,berlakuHingga,status}`. verifikasi.html no longer carries the sample-data notice block;
+  flows seed fixture entries into `ppapi_registry` (regulasi-verifikasi-flow, verifikasi-v2-flow).
+- `pustaka` holds only the two real app items (`aplikasi-perencanaan` "(Beta)", `aplikasi-simulator`, `contoh:false`); the ten sample
+  drafts were removed — pustaka-flow seeds them as admin-managed `ppapi_content_pustaka` to keep exercising the catalogue UI, and also
+  checks the empty catalogue (tiles 9/0/19/0/0/0/0/2, "Belum ada dokumen", no Contoh note).
 
 check.mjs `--auth` seeds user `demo-uji-0001` / member `PPAPI-2026-004821` (Aktif) as an approval leaves it, including its
 `ppapi_registry` entry (updated 2026-10-09; one shared fixture, see §9.6).
@@ -516,6 +526,15 @@ check.mjs `--auth` seeds user `demo-uji-0001` / member `PPAPI-2026-004821` (Akti
 - `--full` screenshots: lazy images below ~3000px look empty → use `flows/fullshot.mjs`.
 
 ## 8. Changelog
+
+- **2026-10-15 — sample content removed, editorial articles added.** Client instruction: "hapus semua konten contoh … buatkan artikel
+  baru … APA style … untuk kegiatan hapus seluruh kontennya." `berita.js` → 9 APA-cited articles (no `contoh`), `pengumuman []`;
+  `agenda.js []`; `registry.js []`; `pustaka.js` → 2 apps only; `organisasi.js` → `sejarah []`, `pengurus []` (bagianContoh +
+  keanggotaan.kategori contoh flags kept on purpose). `pages/berita.js renderIsi()` gained `*em*` + `## Daftar Pustaka` reference
+  styling (`.berita-ref`, hanging indent in `pages/berita.css`); `verifikasi.html` sample notice removed (`pages/verifikasi.js`
+  keeps a no-op branch). Flows updated: contoh-audit (rewritten), beranda, berita-agenda (agenda tests now run on managed agendas),
+  dashboard, pustaka (managed DOCS fixture + empty-catalogue checks), regulasi-verifikasi, verifikasi-v2 (registry fixture),
+  profil, contract-v2, journey-v2. README §4 updated.
 
 ### 2026-10-08 — shared-foundation fixes after the 13 pages were built
 Gaps that page authors had worked around inside their own files are now fixed at the source. All fixes are additive/compatible:

@@ -74,14 +74,6 @@
         <script>/* ?kta= (kode QR): catatan & penjelasan di bawah hasil disembunyikan sampai hasil pertama tampil, agar tata letak tidak bergeser */(function (d) { if (!/[?&]kta=[^&]/.test(location.search)) return; var c = d.documentElement; c.classList.add('vf-pending'); setTimeout(function () { c.classList.remove('vf-pending'); }, 4000); })(document);</script>
 
         <div class="vf-notes">
-          <div class="alert alert--info vf-sample" data-vf="sample" hidden>
-            <span data-icon="info" data-icon-size="20"></span>
-            <div>
-              <p class="alert__title">Data contoh untuk demonstrasi. Daftar resmi dikelola sekretariat.</p>
-              <p class="vf-sample__demo" data-vf="demo-note" hidden>Pada Mode Demo, anggota yang disetujui melalui Konsol Admin juga dapat diperiksa di peramban ini.</p>
-              <p class="vf-sample__try" data-vf="try"></p>
-            </div>
-          </div>
           <p class="vf-privacy">
             <span data-icon="lock" data-icon-size="18"></span>
             <span>Demi pelindungan data pribadi, halaman ini hanya menampilkan data terbatas: nama, nomor KTA, kategori, kompetensi utama, kota, masa berlaku, dan status keanggotaan. Selengkapnya dalam <a class="link" href="kebijakan-privasi.html">Kebijakan Privasi</a>.</span>

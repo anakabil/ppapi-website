@@ -83,18 +83,21 @@ console.log('\n[B1] Berita — daftar (desktop)');
     agendaHref: document.querySelector('.berita-agenda__item')?.getAttribute('href'),
     detailGone: !document.querySelector('#berita-detail'),
     cardImgs: [...document.querySelectorAll('#berita-grid img')].every(i => i.getAttribute('width') && i.getAttribute('loading') === 'lazy' && i.getAttribute('alt') !== null),
-    featuredInGrid: [...document.querySelectorAll('#berita-grid .news-card__title')].some(t => t.textContent.includes('Situs Resmi')),
+    featuredInGrid: [...document.querySelectorAll('#berita-grid .news-card__title')].some(t => t.textContent.includes('Kerangka Hukum')),
+    pengumumanHidden: document.getElementById('pengumuman')?.hidden === true,
+    agendaEmpty: !!document.querySelector('#berita-agenda-list .empty-state'),
   }));
-  ok(info.featured === 'PPAPI Menghadirkan Situs Resmi dan Layanan Anggota Daring', 'sorotan utama = berita sorot terbaru', info.featured);
-  ok(info.featuredContoh, 'sorotan menampilkan lencana Contoh');
-  ok(info.notices === 4 && info.important === 1, '4 pengumuman, 1 penting', [info.notices, info.important]);
-  ok(info.chips.length === 6 && /^Semua \(?10/.test(info.chips[0]), 'chip: Semua + 5 kategori dengan jumlah', info.chips);
+  /* 2026-10-15: konten contoh dihapus; 9 artikel redaksi (Edukasi 6, Regulasi 2, Organisasi 1), pengumuman & agenda kosong */
+  ok(info.featured === 'Kerangka Hukum Pekerjaan Perancah di Indonesia: Kewajiban bagi Pemasang, Pengawas, dan Pemeriksa', 'sorotan utama = berita sorot terbaru', info.featured);
+  ok(!info.featuredContoh, 'sorotan tanpa lencana Contoh (artikel redaksi, bukan contoh)');
+  ok(info.notices === 0 && info.important === 0 && info.pengumumanHidden, 'tanpa pengumuman → bagian Pengumuman disembunyikan', [info.notices, info.pengumumanHidden]);
+  ok(info.chips.length === 4 && /^Semua \(?9/.test(info.chips[0]) && info.chips.slice(1).map(c => c.split(' ')[0]).join() === 'Edukasi,Regulasi,Organisasi', 'chip: Semua (9) + 3 kategori yang ada, urutan baku', info.chips);
   ok(info.cards === 6, 'kisi awal 6 kartu', info.cards);
   ok(!info.featuredInGrid, 'sorotan tidak diulang di kisi saat tanpa filter');
-  ok(/^9 artikel/.test(info.count), 'status: 9 artikel di luar sorotan', info.count);
-  ok(info.moreHidden === false && info.moreText === 'Menampilkan 6 dari 9 artikel', 'tombol muat lebih banyak + teks', info.moreText);
-  ok(/10 artikel/.test(info.heroMeta) && /5 kategori/.test(info.heroMeta), 'meta hero dari data', info.heroMeta);
-  ok(info.agendaItems === 3 && /^agenda\.html\?id=/.test(info.agendaHref), 'pita agenda: 3 agenda terdekat ber-tautan ?id=', info);
+  ok(/^8 artikel/.test(info.count), 'status: 8 artikel di luar sorotan', info.count);
+  ok(info.moreHidden === false && info.moreText === 'Menampilkan 6 dari 8 artikel', 'tombol muat lebih banyak + teks', info.moreText);
+  ok(/9 artikel/.test(info.heroMeta) && /3 kategori/.test(info.heroMeta) && /14 Oktober 2026/.test(info.heroMeta), 'meta hero dari data (9 artikel, 3 kategori, terbit terakhir 14 Okt 2026)', info.heroMeta);
+  ok(info.agendaItems === 0 && info.agendaEmpty && !info.agendaHref, 'pita agenda: belum ada agenda → keadaan kosong yang tenang', info);
   ok(info.detailGone, 'kontainer detail dihapus di mode daftar');
   ok(info.cardImgs, 'gambar kartu: width/height, lazy, alt');
   const hi = await headingInfo(page);
@@ -104,7 +107,7 @@ console.log('\n[B1] Berita — daftar (desktop)');
   await page.click('#berita-more-btn');
   await page.waitForTimeout(100);
   const more = await page.evaluate(() => ({ cards: document.querySelectorAll('#berita-grid .news-card').length, hidden: document.querySelector('#berita-more').hidden, focus: document.activeElement?.closest('.news-card') === document.querySelectorAll('#berita-grid .news-card')[6] }));
-  ok(more.cards === 9 && more.hidden, 'muat lebih banyak → 9 kartu, tombol tersembunyi', more);
+  ok(more.cards === 8 && more.hidden, 'muat lebih banyak → 8 kartu, tombol tersembunyi', more);
   ok(more.focus, 'fokus pindah ke kartu baru pertama');
 
   // Chip kategori
@@ -115,7 +118,7 @@ console.log('\n[B1] Berita — daftar (desktop)');
     pressed: document.querySelector('#berita-chips .chip[aria-pressed="true"]')?.dataset.kategori,
     reset: !document.querySelector('#berita-reset').hidden,
   }));
-  ok(st.tags.length === 3 && st.tags.every(t => t === 'Edukasi'), 'filter Edukasi → 3 kartu Edukasi', st.tags);
+  ok(st.tags.length === 6 && st.tags.every(t => t === 'Edukasi'), 'filter Edukasi → 6 kartu Edukasi', st.tags);
   ok(st.pressed === 'Edukasi' && st.reset, 'chip aria-pressed + tombol hapus filter tampil', st);
   ok(qsOf(page).get('kategori') === 'Edukasi', 'URL ?kategori=Edukasi', page.url());
 
@@ -182,11 +185,11 @@ console.log('\n[B2] Berita — status dari URL + escaping');
   ok(st.pressed === '', 'kategori tak dikenal → Semua', st.pressed);
   ok(errors.filter(e => e.startsWith('dialog')).length === 0, 'tidak ada dialog alert (XSS)', errors);
 
-  // Kategori dengan featured: filter Organisasi menampilkan sorotan juga
-  await page.goto(`${BASE}/berita.html?kategori=Organisasi`, { waitUntil: 'networkidle' });
+  // Kategori dengan featured: filter Regulasi menampilkan sorotan juga
+  await page.goto(`${BASE}/berita.html?kategori=Regulasi`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(200);
   const n = await page.locator('#berita-grid .news-card').count();
-  ok(n === 2, 'filter Organisasi menyertakan berita sorotan (2 hasil)', n);
+  ok(n === 2, 'filter Regulasi menyertakan berita sorotan (2 hasil)', n);
   ok(errors.filter(e => !e.startsWith('dialog')).length === 0, 'tanpa galat konsol', errors);
   await ctx.close();
 }
@@ -197,9 +200,18 @@ console.log('\n[B3] Berita — detail artikel');
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
   const errors = [];
   const page = await newPage(ctx, errors);
-  await page.goto(`${BASE}/berita.html?id=memahami-penandaan-perancah`, { waitUntil: 'networkidle' });
+  const ID = 'inspeksi-perancah-dan-penandaan-hijau-kuning-merah';
+  await page.goto(`${BASE}/berita.html?id=${ID}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(300);
   const d = await page.evaluate(() => ({
+    refsTitle: document.querySelector('.berita-article__prose h2.berita-refs__title')?.textContent,
+    refs: document.querySelectorAll('.berita-article__prose p.berita-ref').length,
+    refsLast: [...document.querySelectorAll('.berita-article__prose > *')].slice(-8).every(e => e.classList.contains('berita-ref')),
+    refEm: document.querySelectorAll('.berita-article__prose p.berita-ref em').length,
+    refAlpha: (() => { const t = [...document.querySelectorAll('.berita-article__prose p.berita-ref')].map(e => e.textContent); return t.every((x, i) => i === 0 || t[i - 1].localeCompare(x, 'id') <= 0); })(),
+    refStar: /\*/.test(document.querySelector('.berita-article__prose').textContent),
+    hanging: getComputedStyle(document.querySelector('.berita-article__prose p.berita-ref')).textIndent,
+    cite: /\(Kementerian Pekerjaan Umum dan Perumahan Rakyat, 2022\)/.test(document.querySelector('.berita-article__prose').textContent),
     title: document.title,
     h1: document.querySelector('h1')?.textContent.trim(),
     listGone: !document.querySelector('#berita-list'),
@@ -219,18 +231,23 @@ console.log('\n[B3] Berita — detail artikel');
     desc: document.querySelector('meta[name="description"]').content,
     contohNote: !!document.querySelector('.berita-article__note'),
   }));
-  ok(d.title === 'Memahami Penandaan Hijau, Kuning, dan Merah pada Perancah — PPAPI', 'document.title diperbarui', d.title);
-  ok(d.h1 === 'Memahami Penandaan Hijau, Kuning, dan Merah pada Perancah' && d.listGone, 'h1 = judul; mode daftar dihapus', d.h1);
+  const TITLE = 'Inspeksi Perancah dan Sistem Penandaan Hijau–Kuning–Merah: Praktik Nasional dan Internasional';
+  ok(d.title === TITLE + ' — PPAPI', 'document.title diperbarui', d.title);
+  ok(d.h1 === TITLE && d.listGone, 'h1 = judul; mode daftar dihapus', d.h1);
   ok(d.crumbs.length === 3 && d.crumbs[0] === 'Beranda' && d.crumbs[1] === 'Berita', 'breadcrumb Beranda › Berita › judul', d.crumbs);
-  ok(d.h2s.length === 2 && d.uls === 1 && d.lis === 3 && d.ps === 4, "isi: '## '→h2, '- '→ul berkelompok, paragraf", d);
-  ok(d.standfirst && d.contohNote, 'ringkasan sebagai standfirst + catatan konten contoh');
+  ok(d.h2s.length === 6 && d.h2s[d.h2s.length - 1] === 'Daftar Pustaka' && d.uls === 1 && d.lis === 4 && d.ps >= 12, "isi: '## '→h2 (6, terakhir Daftar Pustaka), '- '→ul berkelompok, paragraf", d);
+  ok(d.standfirst && !d.contohNote, 'ringkasan sebagai standfirst; tanpa catatan konten contoh');
+  /* penulisan ilmiah: sitasi (Penulis, Tahun) di teks + Daftar Pustaka APA 7 (urut abjad, judul miring, indentasi gantung) */
+  ok(d.cite, 'sitasi dalam teks bergaya APA (Penulis, Tahun)');
+  ok(d.refsTitle === 'Daftar Pustaka' && d.refs === 8 && d.refsLast, 'Daftar Pustaka: 8 entri rujukan di akhir artikel (p.berita-ref)', [d.refsTitle, d.refs, d.refsLast]);
+  ok(d.refAlpha && d.refEm >= 8 && !d.refStar && /-/.test(d.hanging), 'rujukan urut abjad, judul karya <em> (tanpa sisa tanda *), indentasi gantung', [d.refAlpha, d.refEm, d.refStar, d.hanging]);
   ok(d.related.length === 3 && d.related[0] === 'Edukasi' && d.related[1] === 'Edukasi', 'berita lainnya: kategori sama didahulukan', d.related);
-  ok(d.prev === 'berita.html?id=skkni-operasi-scaffolding-kepmenaker-46-2022' && d.next === 'berita.html?id=pelatihan-inspeksi-perancah-pipa-klem', 'navigasi sebelumnya/berikutnya kronologis', [d.prev, d.next]);
-  ok(d.wa && decodeURIComponent(d.wa).includes('berita.html?id=memahami-penandaan-perancah'), 'tautan WhatsApp memuat URL artikel', d.wa);
-  ok(d.li && decodeURIComponent(d.li).includes('berita.html?id=memahami-penandaan-perancah'), 'tautan LinkedIn memuat URL artikel', d.li);
+  ok(d.prev === 'berita.html?id=kelas-beban-perancah-en-12811-tg20-duty' && d.next === 'berita.html?id=angka-kecelakaan-kerja-2025-pelajaran-perancah', 'navigasi sebelumnya/berikutnya kronologis', [d.prev, d.next]);
+  ok(d.wa && decodeURIComponent(d.wa).includes('berita.html?id=' + ID), 'tautan WhatsApp memuat URL artikel', d.wa);
+  ok(d.li && decodeURIComponent(d.li).includes('berita.html?id=' + ID), 'tautan LinkedIn memuat URL artikel', d.li);
   ok(d.extRel, 'tautan eksternal rel=noopener');
   ok(d.heroImg, 'gambar utama eager + fetchpriority + alt');
-  ok(d.desc.startsWith('Penandaan (tagging)'), 'meta description = ringkasan');
+  ok(d.desc.startsWith('Kapan perancah harus diperiksa'), 'meta description = ringkasan');
   const hi = await headingInfo(page);
   ok(hi.h1 === 1 && !hi.jump, 'detail: satu h1, heading berurutan', hi);
 
@@ -238,13 +255,13 @@ console.log('\n[B3] Berita — detail artikel');
   await page.waitForTimeout(250);
   const clip = await page.evaluate(async () => { try { return await navigator.clipboard.readText(); } catch (e) { return 'ERR ' + e.message; } });
   const toast = await page.locator('.toast').last().textContent().catch(() => '');
-  ok(clip.endsWith('/berita.html?id=memahami-penandaan-perancah'), 'Salin tautan → clipboard berisi URL artikel', clip);
+  ok(clip.endsWith('/berita.html?id=' + ID), 'Salin tautan → clipboard berisi URL artikel', clip);
   ok(/berhasil disalin/.test(toast), 'toast konfirmasi salin', toast);
   ok(/Tautan tersalin/.test(await page.locator('[data-share-copy]').textContent()), 'label tombol berubah sementara');
   ok(await overflow(page) <= 1, 'tanpa overflow horizontal');
 
   // berita paling awal: tautan "sebelumnya" kembali ke arsip
-  await page.goto(`${BASE}/berita.html?id=pemeriksaan-sederhana-sebelum-naik-perancah`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/berita.html?id=perawatan-dan-pemeriksaan-material-perancah`, { waitUntil: 'networkidle' });
   ok(await page.locator('.berita-pager__link--prev.is-index').count() === 1, 'berita terlama: tautan sebelumnya → arsip');
 
   // id tak dikenal
@@ -264,7 +281,7 @@ console.log('\n[B4] Berita — seluler 390');
   const ctx = await newCtx({ mobile: true });
   const errors = [];
   const page = await newPage(ctx, errors);
-  for (const q of ['', '?kategori=Kegiatan', '?id=situs-resmi-dan-layanan-anggota-daring', '?id=x-tidak-ada']) {
+  for (const q of ['', '?kategori=Edukasi', '?id=kerangka-hukum-pekerjaan-perancah-indonesia', '?id=x-tidak-ada']) {
     await page.goto(`${BASE}/berita.html${q}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(200);
     ok(await overflow(page) <= 1, `tanpa overflow horizontal (berita.html${q})`);
@@ -274,7 +291,7 @@ console.log('\n[B4] Berita — seluler 390');
 }
 
 /* ======================================================================= */
-console.log('\n[A1] Agenda — daftar, penyaring, URL');
+console.log('\n[A1] Agenda — belum ada kegiatan (data bawaan kosong)');
 {
   const ctx = await newCtx();
   const errors = [];
@@ -282,7 +299,66 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
   await page.goto(`${BASE}/agenda.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(300);
   let s = await page.evaluate(() => ({
+    data: (PPAPI.data.agenda || []).length,
+    nextHidden: document.querySelector('#agenda-next')?.parentElement?.hidden === true,
+    heroMeta: document.querySelector('#agenda-hero-meta').textContent.trim(),
+    tabCounts: [...document.querySelectorAll('[data-count-for]')].map(e => e.textContent).join('/'),
+    rows: document.querySelectorAll('.agenda-row').length,
+    empty: document.querySelector('#agenda-list .empty-state')?.textContent.replace(/\s+/g, ' ').trim() || '',
+    emptyAction: document.querySelectorAll('#agenda-list .empty-state .btn').length,
+    count: document.querySelector('#agenda-count').textContent,
+    chips: [...document.querySelectorAll('#agenda-chips .chip')].map(c => c.dataset.jenis),
+    cross: document.querySelectorAll('.agenda-cross__card').length,
+    placeholder: !!document.querySelector('.agenda-list__ph'),
+  }));
+  ok(s.data === 0, 'PPAPI_DATA.agenda kosong (konten contoh dihapus 2026-10-15)', s.data);
+  ok(s.nextHidden && s.heroMeta === '', 'tanpa agenda: panel "agenda terdekat" dan meta hero disembunyikan', [s.nextHidden, s.heroMeta]);
+  ok(s.tabCounts === '0/0' && s.rows === 0 && !s.placeholder, 'tab 0 / 0, tanpa baris maupun kerangka sisa', s);
+  ok(/Belum ada agenda terjadwal/.test(s.empty) && /diumumkan oleh sekretariat/.test(s.empty) && s.emptyAction === 0, 'keadaan kosong yang tenang (tanpa tombol pindah tab karena arsip juga kosong)', s.empty);
+  ok(s.count === 'Tidak ada agenda akan datang.' && s.chips.join(',') === '', 'status + hanya chip "Semua"', [s.count, s.chips]);
+  ok(s.cross === 3, 'tiga tautan lanjutan tetap tampil', s.cross);
+  await page.screenshot({ path: path.join(SHOTS, 'flow-agenda-empty-desktop.png') });
+  await page.click('#agenda-tabs .segmented__option[data-value="telah-berlangsung"]');
+  await page.waitForTimeout(100);
+  s = await page.evaluate(() => ({ empty: document.querySelector('#agenda-list .empty-state')?.textContent.replace(/\s+/g, ' ').trim() || '', count: document.querySelector('#agenda-count').textContent }));
+  ok(/Belum ada kegiatan yang tercatat/.test(s.empty) && s.count === 'Tidak ada agenda telah berlangsung.', 'tab Telah Berlangsung: keadaan kosong arsip', s);
+  ok(qsOf(page).get('tab') === 'telah-berlangsung', 'URL ?tab=telah-berlangsung');
+  await page.goto(`${BASE}/agenda.html?id=tidak-ada`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(250);
+  s = await page.evaluate(() => ({ modal: !!document.querySelector('.modal'), toast: document.querySelector('.toast')?.textContent || '' }));
+  ok(!s.modal && /tidak ditemukan/.test(s.toast) && !qsOf(page).has('id'), 'id tak dikenal → toast info, id dihapus', s);
+  const hi = await headingInfo(page);
+  ok(hi.h1 === 1 && !hi.jump, 'satu h1, heading berurutan', hi);
+  ok(await overflow(page) <= 1, 'tanpa overflow horizontal');
+  ok(errors.length === 0, 'tanpa galat konsol/halaman', errors);
+  await ctx.close();
+}
+
+/* Agenda kelolaan admin (Konsol Admin › Konten › Agenda) — satu-satunya sumber agenda saat data bawaan kosong.
+   Tanggal relatif terhadap CLOCK (8 Okt 2026 10.00 WIB). */
+const AGENDA_META = { updatedAt: '2026-10-08T01:00:00.000Z', updatedBy: 'demo-admin-0001' };
+const AGENDA_SET = [
+  Object.assign({ id: 'pelatihan-inspeksi-kelolaan', judul: 'Pelatihan Inspeksi Perancah Pipa dan Klem (Tube & Coupler)', jenis: 'Pelatihan', mulai: '2026-10-21', selesai: '2026-10-23', waktu: '08.00 – 16.00 WIB', lokasi: 'Jakarta (lokasi rinci diinformasikan kepada peserta)', mode: 'Luring', kuota: 30, deskripsi: 'Pelatihan tiga hari tentang pemeriksaan perancah berbasis elemen, ditutup dengan praktik pengisian checklist dan penandaan.', tautanDaftar: '', contoh: false }, AGENDA_META),
+  Object.assign({ id: 'webinar-smkk-kelolaan', judul: 'Webinar: SMKK dan Analisis Keselamatan Konstruksi untuk Pekerjaan Perancah', jenis: 'Webinar', mulai: '2026-10-29', selesai: '2026-10-29', waktu: '13.30 – 15.30 WIB', lokasi: 'Daring (Zoom)', mode: 'Daring', kuota: 300, deskripsi: 'Mengulas Permen PUPR 10/2021.', tautanDaftar: '', contoh: false }, AGENDA_META),
+  Object.assign({ id: 'seminar-nasional-kelolaan', judul: 'Seminar Nasional Keselamatan Perancah 2026', jenis: 'Seminar', mulai: '2026-11-26', selesai: '2026-11-26', waktu: '08.30 – 15.00 WIB', lokasi: 'Jakarta & daring', mode: 'Hybrid', kuota: 250, deskripsi: 'Seminar praktisi, ahli, pelaku usaha, dan regulator.', tautanDaftar: '', contoh: false }, AGENDA_META),
+  Object.assign({ id: 'webinar-penandaan-kelolaan', judul: 'Webinar: Penerapan Penandaan (Tagging) Perancah di Lapangan', jenis: 'Webinar', mulai: '2026-09-17', selesai: '2026-09-17', waktu: '14.00 – 15.30 WIB', lokasi: 'Daring (Zoom)', mode: 'Daring', kuota: 300, deskripsi: 'Membahas tag hijau, kuning, dan merah.', tautanDaftar: '', contoh: false }, AGENDA_META),
+];
+async function agendaCtx(opts = {}) {
+  const ctx = await newCtx(opts);
+  await ctx.addInitScript(data => { try { if (sessionStorage.getItem('__ag')) return; sessionStorage.setItem('__ag', '1'); localStorage.setItem('ppapi_content_agenda', JSON.stringify(data)); } catch (e) {} }, AGENDA_SET);
+  return ctx;
+}
+
+console.log('\n[A2] Agenda — daftar, penyaring, URL, modal, .ics (agenda kelolaan admin)');
+{
+  const ctx = await agendaCtx();
+  const errors = [];
+  const page = await newPage(ctx, errors);
+  await page.goto(`${BASE}/agenda.html`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
+  let s = await page.evaluate(() => ({
     feature: document.querySelector('.agenda-feature__title')?.textContent.trim(),
+    featureContoh: !!document.querySelector('.agenda-feature .badge--contoh'),
     cd: [...document.querySelectorAll('[data-cd="d"],[data-cd="h"],[data-cd="m"]')].map(e => e.textContent),
     timer: document.querySelector('#agenda-cd')?.getAttribute('role'),
     tabCounts: [...document.querySelectorAll('[data-count-for]')].map(e => e.textContent),
@@ -291,19 +367,19 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
     next: document.querySelectorAll('.agenda-row.is-next').length,
     ranges: [...document.querySelectorAll('.agenda-row .date-block__day')].map(e => e.textContent),
     ics: document.querySelectorAll('.agenda-row [data-agenda-ics]').length,
+    contoh: document.querySelectorAll('.agenda-row .badge--contoh').length,
     count: document.querySelector('#agenda-count').textContent,
     chips: [...document.querySelectorAll('#agenda-chips .chip')].map(c => c.dataset.jenis),
-    contoh: document.querySelectorAll('.agenda-row .badge--contoh').length,
     heroMeta: document.querySelector('#agenda-hero-meta').textContent.replace(/\s+/g, ' ').trim(),
   }));
-  ok(s.feature === 'Pelatihan Inspeksi Perancah Pipa dan Klem (Tube & Coupler)', 'agenda terdekat disorot', s.feature);
+  ok(s.feature === 'Pelatihan Inspeksi Perancah Pipa dan Klem (Tube & Coupler)' && !s.featureContoh, 'agenda terdekat disorot (tanpa lencana Contoh)', s.feature);
   ok(s.timer === 'timer' && s.cd.join('/') === '12/22/00', 'hitung mundur 12 hari 22 jam 00 menit (10.00 WIB → 21 Okt 08.00 WIB)', s.cd);
-  ok(s.tabCounts.join('/') === '6/4', 'jumlah tab 6 / 4', s.tabCounts);
-  ok(s.months.join('|') === 'Oktober 2026|November 2026|Desember 2026|Januari 2027', 'dikelompokkan per bulan', s.months);
-  ok(s.rows === 6 && s.next === 1 && s.ics === 6 && s.contoh === 6, '6 baris, 1 terdekat, tombol kalender & contoh', s);
-  ok(s.ranges[0] === '21–23' && s.ranges[2] === '12–13', 'blok tanggal rentang "21–23"', s.ranges);
-  ok(s.chips.join(',') === ',Pelatihan,Sertifikasi,Seminar,Webinar,Rapat,Kunjungan Teknis', 'chip jenis lengkap', s.chips);
-  ok(/6 agenda akan datang/.test(s.heroMeta), 'meta hero dari data', s.heroMeta);
+  ok(s.tabCounts.join('/') === '3/1', 'jumlah tab 3 / 1', s.tabCounts);
+  ok(s.months.join('|') === 'Oktober 2026|November 2026', 'dikelompokkan per bulan', s.months);
+  ok(s.rows === 3 && s.next === 1 && s.ics === 3 && s.contoh === 0, '3 baris, 1 terdekat, tombol kalender, tanpa lencana Contoh', s);
+  ok(s.ranges[0] === '21–23', 'blok tanggal rentang "21–23"', s.ranges);
+  ok(s.chips.join(',') === ',Pelatihan,Seminar,Webinar', 'chip jenis dari data (urutan baku)', s.chips);
+  ok(/3 agenda akan datang/.test(s.heroMeta) && /1 telah berlangsung/.test(s.heroMeta), 'meta hero dari data', s.heroMeta);
   const hi = await headingInfo(page);
   ok(hi.h1 === 1 && !hi.jump, 'satu h1, heading berurutan', hi);
 
@@ -315,29 +391,27 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
     ics: document.querySelectorAll('.agenda-row [data-agenda-ics]').length,
     pressed: document.querySelector('#agenda-tabs [aria-pressed="true"]').dataset.value,
   }));
-  ok(s.rows === 4 && s.past === 4 && s.ics === 0, 'Telah Berlangsung: 4 baris redup, tanpa tombol kalender', s);
-  ok(s.months[0] === 'September 2026' && s.months[3] === 'Mei 2026', 'urutan bulan menurun untuk arsip', s.months);
+  ok(s.rows === 1 && s.past === 1 && s.ics === 0 && s.months[0] === 'September 2026', 'Telah Berlangsung: 1 baris redup, tanpa tombol kalender', s);
   ok(qsOf(page).get('tab') === 'telah-berlangsung' && s.pressed === 'telah-berlangsung', 'URL ?tab=telah-berlangsung', page.url());
 
-  await page.click('#agenda-chips .chip[data-jenis="Pelatihan"]');
+  await page.click('#agenda-chips .chip[data-jenis="Webinar"]');
   await page.waitForTimeout(100);
-  ok(await page.locator('.agenda-row').count() === 1 && qsOf(page).get('jenis') === 'Pelatihan', 'jenis Pelatihan → 1 baris, URL ?jenis=', page.url());
-  await page.click('#agenda-mode .segmented__option[data-value="Daring"]');
+  ok(await page.locator('.agenda-row').count() === 1 && qsOf(page).get('jenis') === 'Webinar', 'jenis Webinar → 1 baris, URL ?jenis=', page.url());
+  await page.click('#agenda-mode .segmented__option[data-value="Luring"]');
   await page.waitForTimeout(100);
   s = await page.evaluate(() => ({ empty: !!document.querySelector('#agenda-list .empty-state'), count: document.querySelector('#agenda-count').textContent, reset: !document.querySelector('#agenda-reset').hidden }));
-  ok(s.empty && s.reset && /Tidak ada agenda telah berlangsung untuk jenis Pelatihan dan mode Daring/.test(s.count), 'kombinasi kosong → empty state + status', s);
-  ok(qsOf(page).get('mode') === 'Daring', 'URL ?mode=Daring');
-  await page.screenshot({ path: path.join(SHOTS, 'flow-agenda-empty-desktop.png') });
+  ok(s.empty && s.reset && /Tidak ada agenda telah berlangsung untuk jenis Webinar dan mode Luring/.test(s.count), 'kombinasi kosong → empty state + status', s);
+  ok(qsOf(page).get('mode') === 'Luring', 'URL ?mode=Luring');
   await page.click('#agenda-list [data-agenda-reset]');
   await page.waitForTimeout(100);
-  ok(await page.locator('.agenda-row').count() === 4 && !qsOf(page).has('jenis') && !qsOf(page).has('mode'), 'hapus filter → 4 baris, URL bersih');
+  ok(await page.locator('.agenda-row').count() === 1 && !qsOf(page).has('jenis') && !qsOf(page).has('mode'), 'hapus filter → 1 baris, URL bersih');
 
   await page.click('#agenda-tabs .segmented__option[data-value="akan-datang"]');
   await page.click('#agenda-mode .segmented__option[data-value="Hybrid"]');
   await page.waitForTimeout(100);
   s = await page.evaluate(() => ({ titles: [...document.querySelectorAll('.agenda-row .event-row__title')].map(e => e.textContent), chipSeminar: document.querySelector('#agenda-chips .chip[data-jenis="Seminar"] [data-chip-n]').textContent, zero: document.querySelectorAll('#agenda-chips .chip.is-zero').length }));
-  ok(s.titles.length === 2 && s.titles[0].startsWith('Seminar Nasional') && s.titles[1] === 'Rapat Anggota Tahunan', 'mode Hybrid (akan datang) → 2 agenda', s.titles);
-  ok(s.chipSeminar === '1' && s.zero === 4, 'jumlah chip mengikuti tab + mode', s);
+  ok(s.titles.length === 1 && s.titles[0].startsWith('Seminar Nasional'), 'mode Hybrid (akan datang) → 1 agenda', s.titles);
+  ok(s.chipSeminar === '1' && s.zero === 2, 'jumlah chip mengikuti tab + mode', s);
   ok(!qsOf(page).has('tab') && qsOf(page).get('mode') === 'Hybrid', 'URL: tab default dihapus, mode=Hybrid', page.url());
   await page.click('#agenda-mode .segmented__option[data-value=""]');
 
@@ -348,7 +422,6 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
   await page.waitForTimeout(150);
   s = await page.evaluate(() => ({
     title: document.querySelector('.modal__title')?.textContent,
-    eyebrow: document.querySelector('.modal__eyebrow')?.textContent,
     kv: [...document.querySelectorAll('.agenda-modal__facts dt')].map(e => e.textContent),
     date: document.querySelector('.agenda-modal__date')?.textContent,
     rel: document.querySelector('.agenda-modal__rel')?.textContent,
@@ -356,29 +429,30 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
     regLabel: document.querySelector('.agenda-modal a.btn--primary')?.textContent.trim(),
     dialog: document.querySelector('.modal__dialog')?.getAttribute('aria-modal'),
     focusIn: !!document.activeElement?.closest('.modal'),
+    hint: document.querySelector('.agenda-modal__hint')?.textContent || '',
   }));
   ok(s.title === 'Pelatihan Inspeksi Perancah Pipa dan Klem (Tube & Coupler)' && s.dialog === 'true' && s.focusIn, 'modal detail terbuka (aria-modal, fokus di dalam)', s);
   ok(s.kv.join(',') === 'Waktu,Lokasi,Mode,Kuota,Pendaftaran', 'fakta kv lengkap', s.kv);
   ok(s.date === 'Rabu – Jumat, 21–23 Oktober 2026' && /^Dimulai dalam/.test(s.rel), 'tanggal panjang + relatif', [s.date, s.rel]);
   ok(s.reg === 'umpan-balik.html?kategori=Pertanyaan#formulir' && s.regLabel === 'Hubungi Sekretariat', 'tautanDaftar kosong → Hubungi Sekretariat', s);
-  ok(qsOf(page).get('id') === 'pelatihan-inspeksi-tube-coupler-okt-2026', 'URL ?id= saat modal terbuka');
+  ok(!/contoh/i.test(s.hint), 'modal tanpa petunjuk "agenda contoh"', s.hint);
+  ok(qsOf(page).get('id') === 'pelatihan-inspeksi-kelolaan', 'URL ?id= saat modal terbuka');
   await page.screenshot({ path: path.join(SHOTS, 'flow-agenda-modal-desktop.png') });
 
   // .ics dari modal (multi-hari, berjam)
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('.modal [data-agenda-ics]')]);
-  const icsPath = await dl.path();
-  const ics = fs.readFileSync(icsPath, 'utf8');
+  const ics = fs.readFileSync(await dl.path(), 'utf8');
   const lines = ics.split('\r\n');
   const unfolded = ics.replace(/\r\n /g, '');
-  ok(dl.suggestedFilename() === 'ppapi-agenda-pelatihan-inspeksi-tube-coupler-okt-2026.ics', 'nama berkas .ics', dl.suggestedFilename());
+  ok(dl.suggestedFilename() === 'ppapi-agenda-pelatihan-inspeksi-kelolaan.ics', 'nama berkas .ics', dl.suggestedFilename());
   ok(ics.startsWith('BEGIN:VCALENDAR\r\nVERSION:2.0\r\n') && ics.endsWith('END:VCALENDAR\r\n') && !/[^\r]\n/.test(ics), 'VCALENDAR dengan akhir baris CRLF');
   ok(lines.every(l => Buffer.byteLength(l, 'utf8') <= 75), 'setiap baris ≤ 75 oktet (dilipat)', lines.filter(l => Buffer.byteLength(l, 'utf8') > 75));
   ok(/\r\nBEGIN:VTIMEZONE\r\nTZID:Asia\/Jakarta\r\n/.test(ics) && /TZOFFSETTO:\+0700/.test(ics), 'VTIMEZONE Asia/Jakarta +0700');
   ok(unfolded.includes('DTSTART;TZID=Asia/Jakarta:20261021T080000') && unfolded.includes('DTEND;TZID=Asia/Jakarta:20261021T160000'), 'DTSTART/DTEND berzona 08.00–16.00');
   ok(unfolded.includes('RRULE:FREQ=DAILY;COUNT=3'), 'RRULE harian 3 hari untuk rentang 21–23');
-  ok(/UID:agenda-pelatihan-inspeksi-tube-coupler-okt-2026-20261021@ppapi/.test(unfolded) && /DTSTAMP:\d{8}T\d{6}Z/.test(unfolded), 'UID + DTSTAMP (UTC)');
+  ok(/UID:agenda-pelatihan-inspeksi-kelolaan-20261021@ppapi/.test(unfolded) && /DTSTAMP:\d{8}T\d{6}Z/.test(unfolded), 'UID + DTSTAMP (UTC)');
   ok(unfolded.includes('LOCATION:Jakarta (lokasi rinci diinformasikan kepada peserta)') && /DESCRIPTION:Pelatihan tiga hari[^\r]*\\,[^\r]*\\n/.test(unfolded), 'teks di-escape (koma \\, & baris \\n)');
-  ok(unfolded.includes('SUMMARY:[Contoh] Pelatihan Inspeksi') && unfolded.includes('STATUS:TENTATIVE') && unfolded.includes('TRIGGER:-P1D'), 'SUMMARY contoh, STATUS TENTATIVE, alarm H-1');
+  ok(unfolded.includes('SUMMARY:Pelatihan Inspeksi') && !unfolded.includes('[Contoh]') && unfolded.includes('STATUS:CONFIRMED') && unfolded.includes('TRIGGER:-P1D'), 'SUMMARY tanpa [Contoh], STATUS CONFIRMED, alarm H-1');
   const toastTxt = await page.locator('.toast').last().textContent().catch(() => '');
   ok(/diunduh/.test(toastTxt), 'toast unduhan', toastTxt);
 
@@ -390,33 +464,27 @@ console.log('\n[A1] Agenda — daftar, penyaring, URL');
   ok(!qsOf(page).has('id'), 'URL ?id= dihapus saat ditutup');
 
   // .ics dari baris (sehari)
-  const [dl2] = await Promise.all([page.waitForEvent('download'), page.locator('#agenda-webinar-smkk-pekerjaan-perancah-okt-2026 [data-agenda-ics]').click()]);
+  const [dl2] = await Promise.all([page.waitForEvent('download'), page.locator('#agenda-webinar-smkk-kelolaan [data-agenda-ics]').click()]);
   const ics2 = fs.readFileSync(await dl2.path(), 'utf8').replace(/\r\n /g, '');
   ok(ics2.includes('DTSTART;TZID=Asia/Jakarta:20261029T133000') && ics2.includes('DTEND;TZID=Asia/Jakarta:20261029T153000') && !ics2.includes('RRULE'), 'agenda sehari: 13.30–15.30, tanpa RRULE');
   ok(ics2.includes('LOCATION:Daring (Zoom)') && ics2.includes('CATEGORIES:Webinar'), 'LOCATION & CATEGORIES');
 
   // Klik judul membuka modal (bukan navigasi)
-  await page.locator('#agenda-seminar-keselamatan-perancah-2026 .event-row__title a').click();
+  await page.locator('#agenda-seminar-nasional-kelolaan .event-row__title a').click();
   await page.waitForSelector('.modal');
   ok(/Seminar Nasional/.test(await page.locator('.modal__title').textContent()), 'klik judul membuka modal detail');
   await page.click('.modal [data-modal-close].modal__close');
   await page.waitForTimeout(150);
   ok(await overflow(page) <= 1, 'tanpa overflow horizontal');
   ok(errors.length === 0, 'tanpa galat konsol/halaman', errors);
-  await ctx.close();
-}
 
-console.log('\n[A2] Agenda — tautan langsung & status dari URL');
-{
-  const ctx = await newCtx();
-  const errors = [];
-  const page = await newPage(ctx, errors);
-  await page.goto(`${BASE}/agenda.html?id=webinar-penandaan-perancah-sep-2026`, { waitUntil: 'networkidle' });
+  // tautan langsung & status dari URL
+  await page.goto(`${BASE}/agenda.html?id=webinar-penandaan-kelolaan`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.modal');
-  let s = await page.evaluate(() => ({
+  s = await page.evaluate(() => ({
     title: document.querySelector('.modal__title').textContent,
     tab: document.querySelector('#agenda-tabs [aria-pressed="true"]').dataset.value,
-    row: !!document.getElementById('agenda-webinar-penandaan-perancah-sep-2026'),
+    row: !!document.getElementById('agenda-webinar-penandaan-kelolaan'),
     pastHint: /telah berlangsung/i.test(document.querySelector('.agenda-modal__hint').textContent),
     ics: document.querySelectorAll('.modal [data-agenda-ics]').length,
     kv: [...document.querySelectorAll('.agenda-modal__facts dt')].map(e => e.textContent),
@@ -424,12 +492,6 @@ console.log('\n[A2] Agenda — tautan langsung & status dari URL');
   ok(/Penandaan \(Tagging\)/.test(s.title) && s.tab === 'telah-berlangsung' && s.row, '?id= agenda lampau → tab Telah Berlangsung + modal', s);
   ok(s.pastHint && s.ics === 0 && !s.kv.includes('Pendaftaran'), 'modal lampau: tanpa kalender/pendaftaran', s);
   await page.keyboard.press('Escape');
-
-  await page.goto(`${BASE}/agenda.html?id=tidak-ada`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(250);
-  s = await page.evaluate(() => ({ modal: !!document.querySelector('.modal'), toast: document.querySelector('.toast')?.textContent || '' }));
-  ok(!s.modal && /tidak ditemukan/.test(s.toast) && !qsOf(page).has('id'), 'id tak dikenal → toast info, id dihapus', s);
-
   await page.goto(`${BASE}/agenda.html?tab=telah-berlangsung&jenis=webinar&mode=DARING`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(200);
   s = await page.evaluate(() => ({ rows: [...document.querySelectorAll('.agenda-row .event-row__title')].map(e => e.textContent), jenis: document.querySelector('#agenda-chips [aria-pressed="true"]').dataset.jenis, mode: document.querySelector('#agenda-mode [aria-pressed="true"]').dataset.value }));
@@ -440,7 +502,7 @@ console.log('\n[A2] Agenda — tautan langsung & status dari URL');
 
 console.log('\n[A3] Agenda — hitung mundur (jam palsu, diperbarui tiap menit)');
 {
-  const ctx = await newCtx({ noFixedClock: true });
+  const ctx = await agendaCtx({ noFixedClock: true });
   await ctx.clock.install({ time: new Date('2026-10-08T09:59:05+07:00') });
   const errors = [];
   const page = await newPage(ctx, errors);
@@ -463,9 +525,19 @@ console.log('\n[A3] Agenda — hitung mundur (jam palsu, diperbarui tiap menit)'
   await ctx.close();
 }
 
-console.log('\n[A4] Agenda — seluler 390 (+ modal)');
+console.log('\n[A4] Agenda — seluler 390 (kosong + dengan agenda kelolaan + modal)');
 {
-  const ctx = await newCtx({ mobile: true });
+  const ctx0 = await newCtx({ mobile: true });
+  const errors0 = [];
+  const page0 = await newPage(ctx0, errors0);
+  await page0.goto(`${BASE}/agenda.html`, { waitUntil: 'networkidle' });
+  await page0.waitForTimeout(200);
+  ok(await overflow(page0) <= 1 && await page0.locator('#agenda-list .empty-state').isVisible(), 'seluler kosong: tanpa overflow, keadaan kosong tampil');
+  await page0.screenshot({ path: path.join(SHOTS, 'flow-agenda-empty-mobile.png'), fullPage: false });
+  ok(errors0.length === 0, 'tanpa galat (seluler kosong)', errors0);
+  await ctx0.close();
+
+  const ctx = await agendaCtx({ mobile: true });
   const errors = [];
   const page = await newPage(ctx, errors);
   await page.goto(`${BASE}/agenda.html`, { waitUntil: 'networkidle' });
@@ -493,16 +565,17 @@ console.log('\n[A5] Gerak aktif — konten tetap tampil setelah reveal');
   const ctx = await newCtx({ motion: true });
   const errors = [];
   const page = await newPage(ctx, errors);
-  for (const pg of ['agenda.html', 'berita.html', 'berita.html?id=rapat-kerja-program-2026-2027']) {
+  for (const pg of ['agenda.html', 'berita.html', 'berita.html?id=perawatan-dan-pemeriksaan-material-perancah']) {
     await page.goto(`${BASE}/${pg}`, { waitUntil: 'networkidle' });
     await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 500) { scrollTo(0, y); await new Promise(r => setTimeout(r, 90)); } });
     await page.waitForTimeout(1600);
-    const hidden = await page.evaluate(() => [...document.querySelectorAll('main [data-reveal], main [data-reveal-stagger] > *')].filter(e => getComputedStyle(e).opacity === '0').length);
+    /* elemen di dalam bagian yang disembunyikan (panel agenda terdekat / pengumuman saat datanya kosong) tidak dihitung */
+    const hidden = await page.evaluate(() => [...document.querySelectorAll('main [data-reveal], main [data-reveal-stagger] > *')].filter(e => e.offsetParent !== null && getComputedStyle(e).opacity === '0').length);
     ok(hidden === 0, `semua elemen reveal terlihat setelah gulir (${pg})`, hidden);
   }
   // filter berganti dengan animasi kartu
   await page.goto(`${BASE}/berita.html`, { waitUntil: 'networkidle' });
-  await page.click('#berita-chips .chip[data-kategori="Kegiatan"]');
+  await page.click('#berita-chips .chip[data-kategori="Regulasi"]');
   await page.waitForTimeout(900);
   const op = await page.evaluate(() => [...document.querySelectorAll('#berita-grid .news-card')].map(c => getComputedStyle(c).opacity));
   ok(op.length === 2 && op.every(o => o === '1'), 'kartu hasil filter beranimasi lalu tampil penuh', op);
@@ -515,15 +588,14 @@ console.log('\n[A5] Gerak aktif — konten tetap tampil setelah reveal');
 const META = { updatedAt: '2026-10-08T01:00:00.000Z', updatedBy: 'demo-admin-0001' };
 const MANAGED = {
   ppapi_content_berita: [
-    Object.assign({ id: 'pengumuman-hasil-rapat-pengurus', judul: 'Hasil Rapat Pengurus <i>Oktober</i>', kategori: 'Organisasi', tanggal: '2026-10-08', ringkasan: 'Ringkasan hasil rapat pengurus yang dimuat sekretariat melalui Konsol Admin.', isi: ['## Pokok bahasan', 'Paragraf pertama hasil rapat.', '- Butir satu', '- Butir dua', 'Paragraf penutup.'], gambar: '', penulis: 'Sekretariat PPAPI', sorot: true, contoh: false }, META),
-    Object.assign({ id: 'memahami-penandaan-perancah', hidden: true }, META),
+    Object.assign({ id: 'pengumuman-hasil-rapat-pengurus', judul: 'Hasil Rapat Pengurus <i>Oktober</i>', kategori: 'Organisasi', tanggal: '2026-10-15', ringkasan: 'Ringkasan hasil rapat pengurus yang dimuat sekretariat melalui Konsol Admin.', isi: ['## Pokok bahasan', 'Paragraf pertama hasil rapat.', '- Butir satu', '- Butir dua', 'Paragraf penutup.'], gambar: '', penulis: 'Sekretariat PPAPI', sorot: true, contoh: false }, META),
+    Object.assign({ id: 'inspeksi-perancah-dan-penandaan-hijau-kuning-merah', hidden: true }, META),
   ],
   ppapi_content_pengumuman: [
     Object.assign({ id: 'pengumuman-kelolaan', judul: 'Pengumuman Kelolaan Admin', isi: 'Isi pengumuman dari Konsol Admin.', tanggal: '2026-10-08', penting: false, contoh: false }, META),
   ],
   ppapi_content_agenda: [
     Object.assign({ id: 'rapat-teknis-kelolaan', judul: 'Rapat Teknis Kelolaan Admin', jenis: 'Rapat', mulai: '2026-10-15', selesai: '2026-10-15', waktu: '09.00 – 11.00 WIB', lokasi: 'Daring (Zoom)', mode: 'Daring', kuota: 40, deskripsi: 'Rapat teknis yang dijadwalkan sekretariat melalui Konsol Admin.', tautanDaftar: '', contoh: false }, META),
-    Object.assign({ id: 'webinar-smkk-pekerjaan-perancah-okt-2026', hidden: true }, META),
   ],
 };
 async function managedCtx(opts = {}) {
@@ -551,13 +623,13 @@ console.log('\n[C1] Berita — konten kelolaan admin (tambah, sembunyikan, detai
     agenda: [...document.querySelectorAll('.berita-agenda__item')].map(a => a.getAttribute('href')),
   }));
   ok(s.featured === 'Hasil Rapat Pengurus <i>Oktober</i>' && !s.italic && !s.featuredContoh && s.featuredFallback, 'berita kelolaan (sorot, terbaru) menjadi sorotan; judul di-escape; tanpa lencana Contoh; pelat cadangan tanpa gambar', s);
-  ok(s.notices.length === 5 && s.notices.includes('Pengumuman Kelolaan Admin'), 'pengumuman kelolaan ikut tampil (5)', s.notices);
-  ok(/^Semua \(?10/.test(s.chipAll) && /^9 artikel/.test(s.count), 'jumlah: 10 artikel (1 tambah, 1 disembunyikan), 9 di luar sorotan', [s.chipAll, s.count]);
+  ok(s.notices.length === 1 && s.notices[0] === 'Pengumuman Kelolaan Admin', 'pengumuman kelolaan tampil (satu-satunya pengumuman → bagian muncul)', s.notices);
+  ok(/^Semua \(?9/.test(s.chipAll) && /^8 artikel/.test(s.count), 'jumlah: 9 artikel (1 tambah, 1 disembunyikan), 8 di luar sorotan', [s.chipAll, s.count]);
   await page.click('#berita-more-btn');
   await page.waitForTimeout(100);
   const all = await page.$$eval('#berita-grid .news-card__title', e => e.map(x => x.textContent));
-  ok(!all.some(t => /Memahami Penandaan/.test(t)), 'berita bawaan yang disembunyikan admin tidak tampil di arsip', all);
-  ok(s.agenda[0] === 'agenda.html?id=rapat-teknis-kelolaan' && !s.agenda.includes('agenda.html?id=webinar-smkk-pekerjaan-perancah-okt-2026'), 'pita agenda memuat agenda kelolaan; agenda tersembunyi hilang', s.agenda);
+  ok(!all.some(t => /Inspeksi Perancah dan Sistem Penandaan/.test(t)), 'berita bawaan yang disembunyikan admin tidak tampil di arsip', all);
+  ok(s.agenda.length === 1 && s.agenda[0] === 'agenda.html?id=rapat-teknis-kelolaan', 'pita agenda memuat agenda kelolaan (satu-satunya agenda)', s.agenda);
 
   await page.goto(`${BASE}/berita.html?id=pengumuman-hasil-rapat-pengurus`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
@@ -569,7 +641,7 @@ console.log('\n[C1] Berita — konten kelolaan admin (tambah, sembunyikan, detai
   }));
   ok(s.h1 === 'Hasil Rapat Pengurus <i>Oktober</i>' && s.title === 'Hasil Rapat Pengurus <i>Oktober</i> — PPAPI', 'detail berita kelolaan: h1 + judul dokumen (teks, tidak dieksekusi)', s);
   ok(s.h2.join() === 'Pokok bahasan' && s.lis === 2 && !s.note && s.fallback && s.author === 'Sekretariat PPAPI' && s.next, 'detail: isi terformat, tanpa catatan contoh, pelat cadangan, terbaru → pager ke arsip', s);
-  await page.goto(`${BASE}/berita.html?id=memahami-penandaan-perancah`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/berita.html?id=inspeksi-perancah-dan-penandaan-hijau-kuning-merah`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
   ok(await page.locator('h1').textContent() === 'Berita tidak ditemukan.', 'berita yang disembunyikan admin → "Berita tidak ditemukan" pada tautan langsung');
   ok(errors.length === 0, 'tanpa galat', errors);
@@ -592,7 +664,7 @@ console.log('\n[C2] Agenda — konten kelolaan admin');
     rapat: document.querySelector('#agenda-chips .chip[data-jenis="Rapat"] [data-chip-n]').textContent,
   }));
   ok(s.feature === 'Rapat Teknis Kelolaan Admin' && !s.featureContoh && s.cd === '06/23/00', 'agenda kelolaan terdekat disorot + hitung mundur 6/23/00 (15 Okt 09.00 WIB)', s);
-  ok(s.tabCounts === '6/4' && s.rows[0] === 'agenda-rapat-teknis-kelolaan' && !s.rows.includes('agenda-webinar-smkk-pekerjaan-perancah-okt-2026') && s.rapat === '2', 'daftar: +1 kelolaan, −1 tersembunyi (tetap 6 akan datang); chip Rapat = 2', s);
+  ok(s.tabCounts === '1/0' && s.rows.length === 1 && s.rows[0] === 'agenda-rapat-teknis-kelolaan' && s.rapat === '1', 'daftar: hanya agenda kelolaan (1 akan datang); chip Rapat = 1', s);
   await page.locator('#agenda-rapat-teknis-kelolaan button[data-agenda-open]').click();
   await page.waitForSelector('.modal .agenda-modal');
   s = await page.evaluate(() => ({ title: document.querySelector('.modal__title').textContent, kuota: [...document.querySelectorAll('.agenda-modal__facts dd')].map(e => e.textContent).join('|') }));
@@ -601,10 +673,10 @@ console.log('\n[C2] Agenda — konten kelolaan admin');
   const ics = fs.readFileSync(await dl.path(), 'utf8').replace(/\r\n /g, '');
   ok(ics.includes('DTSTART;TZID=Asia/Jakarta:20261015T090000') && ics.includes('STATUS:CONFIRMED') && ics.includes('SUMMARY:Rapat Teknis Kelolaan Admin — PPAPI'), '.ics agenda kelolaan: waktu berzona, CONFIRMED (bukan contoh)');
   await page.keyboard.press('Escape');
-  await page.goto(`${BASE}/agenda.html?id=webinar-smkk-pekerjaan-perancah-okt-2026`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/agenda.html?id=agenda-yang-tidak-ada`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
   s = await page.evaluate(() => ({ modal: !!document.querySelector('.modal'), toast: document.querySelector('.toast')?.textContent || '' }));
-  ok(!s.modal && /tidak ditemukan/.test(s.toast), 'agenda yang disembunyikan admin → tautan langsung memberi toast "tidak ditemukan"', s);
+  ok(!s.modal && /tidak ditemukan/.test(s.toast), 'id agenda yang tidak ada → tautan langsung memberi toast "tidak ditemukan"', s);
   ok(errors.length === 0, 'tanpa galat', errors);
   await ctx.close();
 }
@@ -644,7 +716,7 @@ console.log('\n[C4] Cadangan bila store.content.list gagal');
   await page.goto(`${BASE}/agenda.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
   const a = await page.evaluate(() => document.querySelectorAll('.agenda-row').length);
-  ok(b.join() === '6,4,3' && a === 6 && warns.length === 4, 'gagal baca konten → data bawaan dipakai (berita 6, pengumuman 4, agenda 3 / 6), satu peringatan per jenis', [b, a, warns.length]);
+  ok(b.join() === '6,0,0' && a === 0 && warns.length === 4, 'gagal baca konten → data bawaan dipakai (berita 6, pengumuman & agenda kosong), satu peringatan per jenis', [b, a, warns.length]);
   ok(errors.length === 0, 'tanpa galat lain', errors);
   await ctx.close();
 }

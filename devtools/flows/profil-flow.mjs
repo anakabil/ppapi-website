@@ -113,12 +113,13 @@ console.log('\nprofil.html — desktop');
       nilaiIcons: $$('.profil-nilai__icon svg').length,
       sejarah: $$('[data-sejarah] .timeline__item').length,
       sejarahContoh: $$('[data-sejarah] .badge--contoh').length,
+      sejarahHidden: $('#sejarah').hidden, strukturHidden: $('#struktur').hidden,
       pengurus: $$('.profil-person').length,
       pengurusContoh: $$('.profil-person .badge--contoh').length,
       pengurusSectionBadge: $$('#struktur .eyebrow .badge--contoh').length,
       pengurusPending: $$('.profil-person--pending .profil-person__pending').length,
       pengurusNums: $$('.profil-person__num').map(n => n.textContent).join(','),
-      pengurusSampleName: /Nama Pengurus/.test($('[data-pengurus]').textContent),
+      pengurusSampleName: /Nama Pengurus|Nama menyusul/.test($('[data-pengurus]').textContent),
       pengurusNote: !$('[data-pengurus-note]').hidden,
       legalHidden: $('#legalitas').hidden,
       index: $$('.profil-index__link').map(a => a.textContent.trim()),
@@ -140,13 +141,13 @@ console.log('\nprofil.html — desktop');
   check('visi statement rendered', /rujukan profesi perancah/i.test(r.visi), r.visi);
   check('misi list has 5 items', r.misi === 5, r.misi);
   check('4 nilai cards with icons', r.nilai === 4 && r.nilaiIcons === 4, `${r.nilai}/${r.nilaiIcons}`);
-  check('sejarah timeline 4 items, 2 contoh badges', r.sejarah === 4 && r.sejarahContoh === 2, `${r.sejarah}/${r.sejarahContoh}`);
-  check('8 pengurus: one section-level contoh badge (none per tile) + placeholder note', r.pengurus === 8 && r.pengurusContoh === 0 && r.pengurusSectionBadge === 1 && r.pengurusNote, `${r.pengurus}/${r.pengurusContoh}/${r.pengurusSectionBadge}/${r.pengurusNote}`);
-  check('placeholder pengurus: numeral ring + "Nama menyusul", no sample name shown', r.pengurusPending === 8 && r.pengurusNums === '01,02,03,04,05,06,07,08' && !r.pengurusSampleName, `${r.pengurusPending} ${r.pengurusNums} ${r.pengurusSampleName}`);
+  /* 2026-10-15: sample sejarah + pengurus placeholders removed → both sections hidden until official data exists */
+  check('sejarah empty → section hidden, no timeline items', r.sejarah === 0 && r.sejarahHidden, `${r.sejarah}/${r.sejarahHidden}`);
+  check('pengurus empty → Struktur section hidden, no placeholder tiles / note / badge', r.pengurus === 0 && r.strukturHidden && r.pengurusSectionBadge === 0 && !r.pengurusNote && !r.pengurusSampleName, `${r.pengurus}/${r.strukturHidden}/${r.pengurusSectionBadge}/${r.pengurusNote}`);
   check('legalitas section omitted when empty', r.legalHidden === true);
-  check('bagianContoh badges on Visi/Misi/Makna Logo', r.visiBadge && r.misiBadge && r.logoBadge);
-  check('index lists the 6 visible chapters', r.index.length === 6 && /Makna Logo/.test(r.index[5]), JSON.stringify(r.index));
-  check('chapter numbers 01–06 in order', JSON.stringify(r.nums) === JSON.stringify(['01 —', '02 —', '03 —', '04 —', '05 —', '06 —']), JSON.stringify(r.nums));
+  check('bagianContoh badges on Visi/Misi/Makna Logo (wording still provisional)', r.visiBadge && r.misiBadge && r.logoBadge);
+  check('index lists the 4 visible chapters', r.index.length === 4 && /Makna Logo/.test(r.index[3]), JSON.stringify(r.index));
+  check('chapter numbers 01–04 in order', JSON.stringify(r.nums) === JSON.stringify(['01 —', '02 —', '03 —', '04 —']), JSON.stringify(r.nums));
   check('original colour logo used in Makna Logo', r.logoSrc === 'assets/img/logo-color.png', r.logoSrc);
   check('4 meanings, all anchored to the logo', r.notes === 4 && r.anchored === 4, `${r.notes}/${r.anchored}`);
   check('4 leader lines (+8 nodes) drawn on desktop', r.leaders === 4 && r.leaderNodes === 8, `${r.leaders}/${r.leaderNodes}`);
@@ -248,7 +249,7 @@ PPAPI_DATA.organisasi.pengurus = [{ nama: 'Nama Resmi', jabatan: 'Ketua Umum', f
   check('pengurus note + section badge hidden when no contoh items', r.pengurusNoteHidden && r.pengurusSectionBadge === 0, `${r.pengurusNoteHidden}/${r.pengurusSectionBadge}`);
   check('official pengurus shows the name as title', r.pengurusName === 'Nama Resmi', r.pengurusName);
   check('initials avatar from name', r.initials === 'NR', r.initials);
-  check('index renumbers (Sejarah out, Legalitas in)', !r.index.some(t => /Sejarah/.test(t)) && r.index.some(t => /06\s*Legalitas/.test(t)), JSON.stringify(r.index));
+  check('index renumbers (Struktur + Legalitas in → 6 chapters)', !r.index.some(t => /Sejarah/.test(t)) && r.index.some(t => /04\s*Struktur/.test(t)) && r.index.some(t => /06\s*Legalitas/.test(t)), JSON.stringify(r.index));
   check('no console errors/warnings', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }

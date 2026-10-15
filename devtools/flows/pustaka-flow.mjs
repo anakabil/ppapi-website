@@ -59,8 +59,31 @@ const VPS = [
   { name: 'mobile', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
 ].filter(v => !ONLY || v.name === ONLY);
 
-async function newCtx(vp, { status, admin, extra, katalogTertutup } = {}) {
+/* 2026-10-15: the static catalogue (assets/data/pustaka.js) holds only the two member apps — the sample drafts were
+   removed. This flow seeds the same ten draft documents as ADMIN-MANAGED content (Konsol Admin › Konten › Produk
+   Pengetahuan writes ppapi_content_pustaka), flagged contoh:true, so the catalogue UI — collections, shelves, locks,
+   Contoh badges, modals, sorting — is still exercised with a full catalogue. The empty catalogue is covered separately. */
+const DOC_META = { updatedAt: '2026-10-01T00:00:00.000Z', updatedBy: 'demo-admin-0001' };
+const doc = (id, judul, kategori, kode, ringkasan, akses, tag) => Object.assign({ id, judul, kategori, kode, versi: 'Rancangan', tanggal: '', status: 'Dalam Penyusunan', ringkasan, penyusun: 'Tim Penyusun PPAPI', format: 'PDF', halaman: '', akses, tautan: '', tag, app: '', contoh: true }, DOC_META);
+const DOCS = [
+  doc('standar-kompetensi-ppapi', 'Standar Kompetensi Praktisi dan Ahli Perancah PPAPI (Rancangan)', 'Standar', 'PPAPI-STD-01', 'Rancangan jenjang kompetensi anggota beserta unit kompetensi dan bukti yang dipersyaratkan.', 'publik', ['kompetensi', 'jenjang']),
+  doc('cop-pemasangan-tube-coupler', 'Code of Practice Pemasangan Perancah Tube & Coupler', 'Code of Practice', 'PPAPI-CoP-01', 'Pedoman praktik baik pemasangan dan pembongkaran perancah pipa dan klem.', 'anggota', ['tube & coupler', 'pemasangan']),
+  doc('cop-inspeksi-penandaan', 'Code of Practice Inspeksi dan Penandaan Perancah (Scafftag)', 'Code of Practice', 'PPAPI-CoP-02', 'Tata cara inspeksi dan penandaan status perancah hijau, kuning, merah.', 'anggota', ['inspeksi', 'scafftag']),
+  doc('pt-perancah-pekerjaan-ketinggian', 'Petunjuk Teknis Penggunaan Perancah pada Pekerjaan di Ketinggian', 'Petunjuk Teknis', 'PPAPI-PT-01', 'Petunjuk penerapan perancah sebagai sarana kerja di ketinggian.', 'anggota', ['bekerja di ketinggian']),
+  doc('pt-perancah-sistem', 'Petunjuk Teknis Perancah Sistem (Ringlock dan Cuplock)', 'Petunjuk Teknis', 'PPAPI-PT-02', 'Petunjuk perakitan dan batasan penggunaan perancah sistem modular jenis ringlock dan cuplock.', 'anggota', ['ringlock', 'cuplock']),
+  doc('modul-teknisi-perancah-dasar', 'Modul Pelatihan Teknisi Perancah Tingkat Dasar', 'Modul Pelatihan', 'PPAPI-MP-01', 'Materi pelatihan bagi teknisi pemula.', 'anggota', ['pelatihan', 'teknisi']),
+  doc('modul-inspektur-perancah', 'Modul Pelatihan Inspektur Perancah', 'Modul Pelatihan', 'PPAPI-MP-02', 'Materi bagi calon inspektur: metode inspeksi berbasis elemen.', 'anggota', ['pelatihan', 'inspektur']),
+  doc('panduan-aplikasi-anggota', 'Panduan Penggunaan Aplikasi PPAPI Scaffold dan Simulator Tube & Coupler', 'Modul Pelatihan', 'PPAPI-MP-03', 'Panduan langkah demi langkah memakai aplikasi anggota.', 'anggota', ['panduan', 'aplikasi']),
+  doc('formulir-daftar-periksa-inspeksi', 'Formulir Daftar Periksa Inspeksi Perancah', 'Formulir & Daftar Periksa', 'PPAPI-FR-01', 'Rancangan formulir cetak daftar periksa inspeksi.', 'anggota', ['formulir', 'daftar periksa']),
+  doc('kajian-kapasitas-klem', 'Kajian Teknis Kapasitas Sambungan Klem pada Perancah Tube & Coupler', 'Kajian Teknis', 'PPAPI-KT-01', 'Kajian tentang jenis klem dan kapasitas sambungan.', 'anggota', ['klem', 'kapasitas']),
+];
+async function newCtx(vp, { status, admin, extra, katalogTertutup, noDocs } = {}) {
   const ctx = await browser.newContext({ viewport: vp.viewport, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch, deviceScaleFactor: vp.deviceScaleFactor || 1, reducedMotion: 'reduce', locale: 'id-ID' });
+  if (!noDocs) {
+    await ctx.addInitScript(docs => {
+      try { if (!sessionStorage.getItem('__pk_docs')) { sessionStorage.setItem('__pk_docs', '1'); localStorage.setItem('ppapi_content_pustaka', JSON.stringify(docs)); } } catch (e) {}
+    }, DOCS);
+  }
   if (status) {
     await ctx.addInitScript(({ u, m }) => {
       try {
@@ -90,7 +113,8 @@ async function newCtx(vp, { status, admin, extra, katalogTertutup } = {}) {
   if (extra) await ctx.addInitScript(extra);
   if (katalogTertutup) {
     await ctx.route('**/assets/js/config.js', async route => {
-      const body = fs.readFileSync(path.join(ROOT, 'assets/js/config.js'), 'utf8').replace(/katalogPublik:[ \t]*true(?=[ \t]*\r?\n)/, 'katalogPublik: false');
+      // same as the test server: blank the Firebase apiKey so the page stays in Mode Demo (a live Firestore channel never reaches networkidle)
+      const body = fs.readFileSync(path.join(ROOT, 'assets/js/config.js'), 'utf8').replace(/katalogPublik:[ \t]*true(?=[ \t]*\r?\n)/, 'katalogPublik: false').replace(/apiKey:\s*'[^']*'/, "apiKey: ''");
       await route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body });
     });
   }
@@ -142,9 +166,24 @@ for (const vp of VPS) {
   };
 
   /* ------------------------------------------------------------------ */
-  console.log('-- signed out (katalog publik, isi terkunci)');
-  let ctx = await newCtx(vp);
-  let page = await open(ctx, '', 'out');
+  console.log('-- signed out, katalog kosong (data bawaan: hanya dua aplikasi)');
+  let ctx = await newCtx(vp, { noDocs: true });
+  let page = await open(ctx, '', 'empty');
+  const emptyTiles = await page.locator('.pk-tile__num').evaluateAll(els => els.map(e => parseInt(e.textContent, 10)));
+  ok(JSON.stringify(emptyTiles) === JSON.stringify([9, 0, 19, 0, 0, 0, 0, 2]), `empty catalogue: tiles = ${emptyTiles.join(',')} (9 standards + 19 regulations from regulasi.js, 2 apps)`);
+  ok(await page.locator('.pk-tile.is-empty').count() === 5 && (await page.locator('.pk-tile.is-empty .pk-tile__unit').allTextContents()).every(t => /^Belum ada/.test(t)), 'five empty collections say "Belum ada dokumen" (no PPAPI document published yet)');
+  ok(await page.locator('.pk-shelf').count() === 2 && await page.locator('.badge--contoh').count() === 0 && await page.locator('[data-pk="note"]').isHidden(), 'only Standar + Peraturan shelves; no Contoh badge, Contoh note hidden');
+  ok(!/\(contoh\)/.test(await page.locator('[data-pk="hero-meta"]').textContent()), 'hero meta no longer mentions sample drafts');
+  ok((await page.locator('[data-pk="count"]').textContent()).includes('28') && !/Contoh/.test(await page.locator('[data-pk="count"]').textContent()), 'count line: 28 documents (regulations + standards), no "bertanda Contoh"');
+  ok(await page.locator('.pk-app').count() === 2, '2 featured app cards still present');
+  ok(await overflow(page) <= 1, 'no horizontal overflow (empty catalogue)');
+  await fullshot(page, 'empty');
+  await page.close();
+  await ctx.close();
+
+  console.log('-- signed out (katalog publik, isi terkunci; dokumen kelolaan admin)');
+  ctx = await newCtx(vp);
+  page = await open(ctx, '', 'out');
   ok(await page.locator('h1').count() === 1, 'one h1');
   ok(await page.locator('.pk-tile').count() === 8, '8 collection tiles');
   const tileNums = await page.locator('.pk-tile__num').evaluateAll(els => els.map(e => parseInt(e.textContent, 10)));
@@ -326,8 +365,9 @@ for (const vp of VPS) {
         if (sessionStorage.getItem('__pk_files')) return;
         sessionStorage.setItem('__pk_files', '1');
         // what store.content.save writes for a member-only file (admin console): public override + private link
-        const d = (window.PPAPI_DATA && PPAPI_DATA.pustaka) || null;
-        localStorage.setItem('ppapi_content_pustaka', JSON.stringify([{ id: 'cop-pemasangan-tube-coupler', judul: 'Code of Practice Pemasangan Perancah Tube & Coupler', kategori: 'Code of Practice', kode: 'PPAPI-CoP-01', versi: 'Revisi 0', tanggal: '2026-09-01', status: 'Berlaku', ringkasan: 'Pedoman praktik baik pemasangan dan pembongkaran perancah pipa dan klem.', penyusun: 'Tim Penyusun PPAPI', format: 'PDF', halaman: '48 halaman', akses: 'anggota', tautan: '', tag: ['tube & coupler'], app: '', contoh: true, berkasAnggota: true, updatedAt: '2026-10-01T00:00:00.000Z', updatedBy: 'demo-admin-0001' }]));
+        const cur = JSON.parse(localStorage.getItem('ppapi_content_pustaka') || '[]').filter(x => x.id !== 'cop-pemasangan-tube-coupler');
+        cur.unshift({ id: 'cop-pemasangan-tube-coupler', judul: 'Code of Practice Pemasangan Perancah Tube & Coupler', kategori: 'Code of Practice', kode: 'PPAPI-CoP-01', versi: 'Revisi 0', tanggal: '2026-09-01', status: 'Berlaku', ringkasan: 'Pedoman praktik baik pemasangan dan pembongkaran perancah pipa dan klem.', penyusun: 'Tim Penyusun PPAPI', format: 'PDF', halaman: '48 halaman', akses: 'anggota', tautan: '', tag: ['tube & coupler'], app: '', contoh: true, berkasAnggota: true, updatedAt: '2026-10-01T00:00:00.000Z', updatedBy: 'demo-admin-0001' });
+        localStorage.setItem('ppapi_content_pustaka', JSON.stringify(cur));
         localStorage.setItem('ppapi_pustaka_files', JSON.stringify({ 'cop-pemasangan-tube-coupler': 'https://example.com/ppapi-cop-01.pdf' }));
       } catch (e) {}
     }
@@ -428,7 +468,7 @@ for (const vp of VPS) {
   ok(await kt.count() === 2, 'managed document appears in its collection');
   ok(await page.evaluate(() => window.__pkxss === undefined), 'markup in a managed title is escaped (no XSS)');
   ok((await page.locator('.pk-shelf[data-kat="Kajian Teknis"]').textContent()).includes('<img src=x'), 'escaped title shown as text');
-  ok(await page.locator('[data-key="d:formulir-daftar-periksa-inspeksi"]').count() === 0, 'hidden static document disappears');
+  ok(await page.locator('[data-key="d:formulir-daftar-periksa-inspeksi"]').count() === 0, 'removed managed document disappears');
   ok(await page.locator('.pk-tile[data-pk-kat="Formulir & Daftar Periksa"].is-empty').count() === 1, 'its tile shows the empty state');
   ok(await page.locator('.pk-shelf[data-kat="Formulir & Daftar Periksa"]').count() === 0, 'empty collection has no shelf');
   ok(parseInt(await page.locator('.pk-tile__num').nth(2).textContent(), 10) === 20, 'managed regulation counted under Peraturan Perundangan (20)');

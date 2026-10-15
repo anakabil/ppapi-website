@@ -197,26 +197,23 @@ for (const vp of ['desktop', 'mobile']) {
       check('apps: side by side on desktop', r.length === 2 && r[0] === r[1], r);
     }
 
-    check('agenda: 4 upcoming rows', (await count(page, '#dash-agenda .event-row')) === 4);
-    check('agenda: first row has dark date block', (await count(page, '#dash-agenda .event-row:first-child .date-block--dark')) === 1);
-    check('agenda: first is 21–23 Okt, 13 hari lagi', (await txt(page, '#dash-agenda .event-row:first-child .date-block__day')) === '21–23' &&
-      (await txt(page, '#dash-agenda .event-row:first-child .dash-countdown')) === '13 hari lagi');
-    check('agenda: no past event listed', !(await page.$$eval('#dash-agenda time[datetime]', ts => ts.some(t => t.getAttribute('datetime') < '2026-10-08'))));
-    check('agenda: title links to agenda.html?id=', (await page.$$eval('#dash-agenda .event-row__title a', as => as.every(a => /^agenda\.html\?id=[a-z0-9-]+$/.test(a.getAttribute('href'))))));
-    check('agenda: contoh badges shown', (await count(page, '#dash-agenda .badge--contoh')) === 4);
+    /* 2026-10-15: no activities yet (agenda.js empty) → calm empty state with a link to the agenda page */
+    check('agenda: no rows (no activities yet)', (await count(page, '#dash-agenda .event-row')) === 0);
+    check('agenda: calm empty state "Belum ada agenda terdekat" + link to agenda.html', /Belum ada agenda terdekat/.test(await txt(page, '#dash-agenda .empty-state') || '') &&
+      (await count(page, '#dash-agenda .empty-state a[href="agenda.html"]')) === 1);
 
     // Produk Pengetahuan terbaru
     const docs = await page.$$eval('#dash-pustaka .doc-card', cs => cs.map(c => ({
       kind: c.querySelector('.doc-card__kind')?.textContent.trim(), code: c.querySelector('.doc-card__code')?.textContent.trim(),
       href: c.querySelector('.doc-card__title a')?.getAttribute('href'), contoh: !!c.querySelector('.badge--contoh'), status: c.querySelector('.badge')?.textContent.trim(),
     })));
-    check('pustaka: 4 doc cards, newest first (catalog order when undated)', docs.length === 4 && docs[0].code === 'PPAPI-STD-01' && docs[1].code === 'PPAPI-CoP-01', docs);
-    check('pustaka: links pustaka.html?id=<id>', docs.every(d => /^pustaka\.html\?id=[a-z0-9-]+$/.test(d.href || '')), docs.map(d => d.href));
-    check('pustaka: no Aplikasi items (apps have their own band)', !docs.some(d => /Aplikasi/.test(d.kind)));
-    check('pustaka: sample items carry the Contoh badge + status badge', docs.every(d => d.contoh && d.status === 'Dalam Penyusunan'), docs);
-    check('pustaka: "Katalog lengkap" → pustaka.html', (await count(page, 'section[aria-labelledby="dash-h-pustaka"] a[href="pustaka.html"]')) === 1);
+    /* 2026-10-15: sample documents removed → the catalogue holds only the two apps (shown in their own band) */
+    check('pustaka: no doc cards (no PPAPI documents published yet); apps not listed here', docs.length === 0 && (await count(page, '#dash-pustaka .doc-card')) === 0, docs);
+    check('pustaka: calm empty state + "Buka katalog" link', /Katalog belum berisi dokumen/.test(await txt(page, '#dash-pustaka .empty-state') || '') && (await count(page, '#dash-pustaka .empty-state a[href="pustaka.html"]')) === 1);
+    check('pustaka: "Katalog lengkap" + empty-state "Buka katalog" → pustaka.html', (await count(page, 'section[aria-labelledby="dash-h-pustaka"] a[href="pustaka.html"]')) === 2);
 
-    check('berita: 3 newest cards', (await page.$$eval('#dash-berita .news-card time', ts => ts.map(t => t.getAttribute('datetime')).join())) === '2026-10-07,2026-09-26,2026-09-12');
+    check('berita: 3 newest cards (editorial articles, newest first)', (await page.$$eval('#dash-berita .news-card time', ts => ts.map(t => t.getAttribute('datetime')).join())) === '2026-10-14,2026-10-07,2026-09-30');
+    check('berita: no Contoh badge on the editorial articles', (await count(page, '#dash-berita .badge--contoh')) === 0);
     check('berita: links berita.html?id=', (await page.$$eval('#dash-berita .news-card__title a', as => as.every(a => /^berita\.html\?id=[a-z0-9-]+$/.test(a.getAttribute('href'))))));
     check('berita: grayscale thumbs with size attrs', (await page.$$eval('#dash-berita img', is => is.length === 3 && is.every(i => i.classList.contains('img-mono') && i.getAttribute('width') && i.getAttribute('loading') === 'lazy'))));
 
@@ -225,8 +222,8 @@ for (const vp of ['desktop', 'mobile']) {
     check('regulasi: external links new tab + noopener', await page.$$eval('#dash-regulasi a[target=_blank]', as => as.length === 5 && as.every(a => a.rel.includes('noopener') && /^https:\/\//.test(a.href))));
     check('regulasi: item without tautan → pustaka link', (await count(page, '#dash-regulasi .dash-reg__link a[href="regulasi.html"]')) === 1);
 
-    check('pengumuman: 4 items, penting first', (await count(page, '#dash-pengumuman .dash-notice')) === 4 && (await count(page, '#dash-pengumuman .dash-notice:first-child.is-important .badge--solid')) === 1);
-    check('pengumuman: count label', (await txt(page, '#dash-pengumuman-count')) === '4');
+    check('pengumuman: none yet → calm empty state', (await count(page, '#dash-pengumuman .dash-notice')) === 0 && /Belum ada pengumuman/.test(await txt(page, '#dash-pengumuman .empty-state') || ''));
+    check('pengumuman: count label empty', (await txt(page, '#dash-pengumuman-count')) === '');
 
     check('pengingat: one reminder, 43 hari lagi', (await count(page, '#dash-pengingat .dash-reminder')) === 1 && (await txt(page, '#dash-pengingat .dash-reminder__days')) === '43 hari lagi');
     check('admin card hidden for a member', await page.$eval('#dash-admin', el => el.hidden));
@@ -466,10 +463,10 @@ console.log('\n[desktop] F · live session change: Draf → approved → active 
     await PPAPI.session.refresh();
   });
   await page.waitForSelector('body[data-dash-view="active"]', { timeout: 6000 }).catch(() => {});
-  await page.waitForSelector('#dash-agenda .event-row', { timeout: 6000 }).catch(() => {});
+  await page.waitForSelector('#dash-agenda .empty-state, #dash-agenda .event-row', { timeout: 6000 }).catch(() => {});
   check('switched to the active dashboard', await page.$eval('#dash-active-view', el => !el.hidden) && await page.$eval('#dash-status-view', el => el.hidden));
   check('hero now shows the new KTA', (await txt(page, '#dash-meta')).includes('PPAPI-2026-000777'));
-  check('member content rendered after the switch', (await count(page, '#dash-agenda .event-row')) === 4 && (await count(page, '#dash-apps .dash-launch')) === 2);
+  check('member content rendered after the switch (agenda empty state + 2 app cards)', (await count(page, '#dash-agenda .empty-state')) === 1 && (await count(page, '#dash-apps .dash-launch')) === 2);
   check('no console errors', issues.length === 0, issues);
   await ctx.close();
 }
@@ -543,7 +540,7 @@ console.log('\n[desktop] K · admin-managed content appears on the dashboard');
   check('managed pengumuman has no Contoh badge', (await count(page, '#dash-pengumuman .dash-notice:first-child .badge--contoh')) === 0);
   check('managed pustaka item (dated) is the newest doc card', (await txt(page, '#dash-pustaka .doc-card:first-child .doc-card__code')) === 'PPAPI-PT-09' &&
     (await page.$eval('#dash-pustaka .doc-card:first-child .badge', b => b.className)).includes('badge--ok'));
-  check('hidden static berita no longer listed', (await page.$$eval('#dash-berita .news-card time', ts => ts.map(t => t.getAttribute('datetime')).join())) === '2026-09-26,2026-09-12,2026-08-28');
+  check('hidden static berita no longer listed', (await page.$$eval('#dash-berita .news-card time', ts => ts.map(t => t.getAttribute('datetime')).join())) === '2026-10-07,2026-09-30,2026-09-23');
   check('no console errors', issues.length === 0, issues);
   await ctx.close();
 }

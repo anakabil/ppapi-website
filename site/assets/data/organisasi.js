@@ -6,11 +6,11 @@
    FAKTA vs. CONTOH
    • Kalimat "tentang" dan "fakta" disusun dari deskripsi resmi PPAPI pada
      aplikasi PPAPI Scaffold (https://ppapiid.vercel.app/).
-   • Rumusan resmi visi, misi, kepengurusan, sejarah pendirian, dan legalitas
-     BELUM dipublikasikan. Bagian yang masih berupa rumusan sementara ditandai:
-       - pada butir daftar: contoh: true
-       - pada bagian berupa teks/daftar sederhana: lihat "bagianContoh" di bawah
-     Situs menampilkan label "Contoh" pada bagian tersebut.
+   • Rumusan resmi visi, misi, nilai, makna logo, dan uraian kategori keanggotaan
+     BELUM dipublikasikan; rumusan sementara di bawah tetap dipakai agar halaman
+     tidak kosong dan ditandai lewat "bagianContoh" (label "Contoh" tampil).
+   • Sejarah pendirian, susunan pengurus, dan legalitas sengaja DIKOSONGKAN —
+     bagian terkait di halaman Profil tidak ditampilkan sampai datanya resmi.
    • JANGAN mengisi nama pengurus, tanggal pendirian, atau nomor badan hukum
      sebelum datanya resmi dan dapat dipertanggungjawabkan.
 
@@ -79,24 +79,15 @@ PPAPI_DATA.organisasi = {
     { ikon: 'users', judul: 'Jejaring Profesi', teks: 'Wadah profesi yang menghimpun teknisi, supervisor, dan ahli perancah di Indonesia.' }
   ],
 
-  sejarah: [
-    { tahun: 'Pendirian', judul: 'Berhimpunnya praktisi dan ahli perancah', teks: 'Para praktisi dan ahli perancah berhimpun dalam satu wadah profesi untuk mengangkat kompetensi dan keselamatan kerja perancah di Indonesia. Tanggal dan riwayat pendirian resmi akan dilengkapi oleh sekretariat.', contoh: true },
-    { tahun: '2026', judul: 'Pembaruan aplikasi PPAPI Scaffold', teks: 'Aplikasi perencanaan dan inspeksi perancah — dengan penilaian tiga warna dan simulator 3D — terus dikembangkan; versi 2.1.0 dirilis pada 19 Juli 2026.' },
-    { tahun: '2026', judul: 'Situs resmi dan layanan anggota daring', teks: 'Peluncuran situs PPAPI dengan dasbor anggota, KTA digital, verifikasi anggota, dan pustaka regulasi perancah.' },
-    { tahun: 'Berikutnya', judul: 'Penguatan program kerja', teks: 'Pelatihan, fasilitasi sertifikasi, dan kolaborasi dengan pemangku kepentingan untuk memperluas praktik perancah yang aman.', contoh: true }
-  ],
+  /* Sejarah/tonggak perjalanan: KOSONG sampai riwayat pendirian resmi tersedia dari sekretariat
+     (bagian Sejarah di halaman Profil otomatis disembunyikan). Format butir:
+     { tahun: '2026', judul: 'Judul tonggak', teks: 'Uraian singkat.' } */
+  sejarah: [],
 
-  /* Nama pengurus akan diperbarui oleh sekretariat. foto: berkas di assets/img (opsional). */
-  pengurus: [
-    { nama: 'Nama Pengurus', jabatan: 'Ketua Umum', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Wakil Ketua Umum', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Sekretaris Jenderal', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Bendahara Umum', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Ketua Bidang Kompetensi & Sertifikasi', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Ketua Bidang K3 & Standar Teknis', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Ketua Bidang Keanggotaan', foto: '', contoh: true },
-    { nama: 'Nama Pengurus', jabatan: 'Ketua Bidang Hubungan Kelembagaan', foto: '', contoh: true }
-  ],
+  /* Susunan pengurus: KOSONG sampai kepengurusan resmi ditetapkan (bagian Struktur Organisasi di
+     halaman Profil otomatis disembunyikan). Format butir — foto: berkas di assets/img (opsional):
+     { nama: 'Nama Lengkap', jabatan: 'Ketua Umum', foto: '' } */
+  pengurus: [],
 
   /* Kosong = bagian Legalitas tidak ditampilkan. Isi hanya dengan data resmi. */
   legalitas: [],

@@ -452,17 +452,26 @@
     /* ======================================================================
        MODE DETAIL
        ====================================================================== */
+    /* Isi artikel: daftar string. '## ' subjudul, '### ' sub-subjudul, '- ' butir daftar,
+       lainnya paragraf. Penekanan sebaris *teks* → <em> (judul karya pada sitasi APA) diterapkan
+       SETELAH teks di-escape, sehingga tidak membuka celah HTML. Paragraf setelah subjudul
+       "Daftar Pustaka" dirender sebagai entri rujukan (indentasi gantung, berita.css). */
+    function inline(t) { return h(t).replace(/\*([^*\n]{1,300}?)\*/g, '<em>$1</em>'); }
     function renderIsi(isi) {
-      var out = [], list = null;
-      function flush() { if (list) { out.push('<ul>' + list.map(function (li) { return '<li>' + h(li) + '</li>'; }).join('') + '</ul>'); list = null; } }
+      var out = [], list = null, refs = false;
+      function flush() { if (list) { out.push('<ul>' + list.map(function (li) { return '<li>' + inline(li) + '</li>'; }).join('') + '</ul>'); list = null; } }
       (Array.isArray(isi) ? isi : [isi]).forEach(function (raw) {
         var t = String(raw === null || raw === undefined ? '' : raw).trim();
         if (!t) return;
         if (/^-\s+/.test(t)) { (list = list || []).push(t.replace(/^-\s+/, '')); return; }
         flush();
         if (/^###\s+/.test(t)) out.push('<h3>' + h(t.replace(/^###\s+/, '')) + '</h3>');
-        else if (/^##\s+/.test(t)) out.push('<h2>' + h(t.replace(/^##\s+/, '')) + '</h2>');
-        else out.push('<p>' + h(t) + '</p>');
+        else if (/^##\s+/.test(t)) {
+          var title = t.replace(/^##\s+/, '');
+          refs = /^daftar pustaka$/i.test(title.trim());
+          out.push('<h2' + (refs ? ' class="berita-refs__title"' : '') + '>' + h(title) + '</h2>');
+        }
+        else out.push('<p' + (refs ? ' class="berita-ref"' : '') + '>' + inline(t) + '</p>');
       });
       flush();
       return out.join('');

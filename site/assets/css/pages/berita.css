@@ -356,6 +356,12 @@ body[data-page="berita"] .berita-article__prose > p:first-child::first-letter {
   float: left; margin: .1em .14em 0 -.02em;
   font: 600 4.6em/.76 var(--f-display); font-variant-numeric: lining-nums; color: var(--text-strong);
 }
+/* Daftar Pustaka (APA): entri rujukan dengan indentasi gantung, ukuran sedikit lebih kecil */
+body[data-page="berita"] .berita-article__prose .berita-refs__title { padding-top: 28px; border-top: 1px solid var(--line); }
+body[data-page="berita"] .berita-article__prose .berita-ref {
+  padding-left: 2em; text-indent: -2em; font-size: .93em; line-height: 1.65; overflow-wrap: anywhere;
+}
+body[data-page="berita"] .berita-article__prose .berita-ref + .berita-ref { margin-top: .7em; }
 body[data-page="berita"] .berita-article__note { margin-top: 40px; }
 body[data-page="berita"] .berita-article__foot {
   display: grid; gap: 28px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--line);

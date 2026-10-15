@@ -2,8 +2,8 @@
    PPAPI — verifikasi.html · Verifikasi Anggota (publik)
    Sumber data: PPAPI.store.registry.lookup(query) — daftar verifikasi publik
    yang diperbarui otomatis saat sekretariat menyetujui keanggotaan (Firebase:
-   koleksi `registry`; Mode Demo: peramban ini) + data contoh registry.js
-   (hanya Mode Demo).
+   koleksi `registry`; Mode Demo: peramban ini). Daftar statis registry.js
+   kosong (hanya dipakai bila sekretariat menambahkan anggota secara manual).
    - ?kta=<nomor> dibaca saat halaman dibuka (kode QR pada KTA digital) → periksa otomatis.
    - Nomor KTA: cocok persis (tanpa peduli huruf besar-kecil, spasi, tanda hubung).
    - Sebagian nomor (≥ 4 angka) atau nama (≥ 3 huruf): daftar hasil, maksimal 10 tampil.
@@ -121,22 +121,13 @@
     }
     renderMine();
 
-    /* ---------- sample-data notice (Mode Demo only: samples are not served in Firebase mode) ---------- */
+    /* ---------- catatan data contoh (registry.js kosong; blok ini tidak dirender bila elemennya tidak ada) ----------
+       Dipertahankan hanya untuk berkas registry.js yang masih memuat butir contoh:true pada Mode Demo. */
     var samples = DEMO ? STATIC_REG.filter(function (r) { return r && r.contoh && r.kta; }) : [];
     if (sampleEl && samples.length) {
       sampleEl.hidden = false;
-      var tries = [];
       var okItem = samples.filter(function (r) { return verdict(r) === 'ok'; })[0];
-      var expItem = samples.filter(function (r) { return verdict(r) === 'expired'; })[0];
-      var tryItem = function (it, note) {
-        return '<span class="vf-try__item"><button type="button" class="vf-try" data-vf-kta="' + h(it.kta) + '">' + h(it.kta) + '</button><span class="vf-try__note">' + note + '</span></span>';
-      };
-      if (okItem) tries.push(tryItem(okItem, 'aktif'));
-      if (expItem) tries.push(tryItem(expItem, 'masa berlaku habis'));
-      if (tryEl) {
-        if (tries.length) tryEl.innerHTML = '<span class="vf-try__label">Coba nomor contoh:</span>' + tries.join('');
-        else tryEl.hidden = true;
-      }
+      if (tryEl && okItem) tryEl.innerHTML = '<span class="vf-try__label">Coba nomor contoh:</span><span class="vf-try__item"><button type="button" class="vf-try" data-vf-kta="' + h(okItem.kta) + '">' + h(okItem.kta) + '</button></span>';
       if (demoNoteEl) demoNoteEl.hidden = false;
     }
 

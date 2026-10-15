@@ -175,8 +175,28 @@ for (const vp of VPS) {
   page = await ctx.newPage(); watch(page);
   await page.goto(`${BASE}/verifikasi.html`, { waitUntil: 'networkidle' });
   ok(await page.locator('[data-vf="results"] > *').count() === 0, 'no result before searching');
-  ok(await page.locator('[data-vf="sample"]').isVisible(), 'sample-data notice visible');
-  ok((await page.locator('[data-vf="sample"]').textContent()).includes('Data contoh untuk demonstrasi. Daftar resmi dikelola sekretariat.'), 'sample notice copy');
+  /* 2026-10-15: registry.js is empty and the sample notice was removed from the page; the public list comes from
+     approvals (ppapi_registry in demo / Firestore `registry`). */
+  ok(await page.locator('[data-vf="sample"]').count() === 0 && (await page.evaluate(() => (PPAPI.data.registry || []).length)) === 0, 'no sample-data notice; static registry empty');
+  await page.fill('#vf-q', 'PPAPI-2026-000123');
+  await page.press('#vf-q', 'Enter');
+  await page.waitForTimeout(200);
+  ok(/Belum tercantum/.test(await page.locator('.vf-result__state').textContent()), 'well-formed KTA with an empty registry → "Belum tercantum" (never "verified")');
+  // seed the public list exactly as approvals write it (store.js registryEntry → ppapi_registry) — test fixtures, not site data
+  await page.evaluate(() => {
+    const reg = {};
+    [
+      { kta: 'PPAPI-2026-000123', nama: 'Andika Prasetya', kategori: 'Praktisi', kompetensi: ['Teknisi Scaffolding', 'Tenaga Kerja pada Ketinggian (TKPK) Tingkat 1, 2, dan 3'], kota: 'Jakarta Timur', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+      { kta: 'PPAPI-2026-001208', nama: 'Siti Rahmawati', kategori: 'Ahli', kompetensi: ['Inspektur Scaffolding'], kota: 'Surabaya', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+      { kta: 'PPAPI-2025-000457', nama: 'Yoga Pranata', kategori: 'Praktisi', kompetensi: ['Operator Scaffolding'], kota: 'Balikpapan', berlakuHingga: '2028-12-31', status: 'Aktif', contoh: true },
+      { kta: 'PPAPI-2025-000731', nama: 'Maria Kristina Sitorus', kategori: 'Ahli', kompetensi: ['Perancang Scaffolding'], kota: 'Medan', berlakuHingga: '2028-12-31', status: 'Aktif', contoh: true },
+      { kta: 'PPAPI-2023-000089', nama: 'Bayu Firmansyah', kategori: 'Praktisi', kompetensi: ['Kepala Tukang Pasang Perancah dan Acuan/Cetakan Beton'], kota: 'Semarang', berlakuHingga: '2026-06-30', status: 'Nonaktif', contoh: true },
+      { kta: 'PPAPI-2026-002310', nama: 'Ni Kadek Ayu Lestari', kategori: 'Praktisi', kompetensi: ['Petugas K3 Konstruksi'], kota: 'Denpasar', berlakuHingga: '2029-12-31', status: 'Aktif', contoh: true },
+    ].forEach(e => { reg[e.kta] = Object.assign({ namaCari: e.nama.toLowerCase(), updatedAt: '2026-10-01T00:00:00.000Z' }, e); });
+    localStorage.setItem('ppapi_registry', JSON.stringify(reg));
+  });
+  await page.goto(`${BASE}/verifikasi.html`, { waitUntil: 'networkidle' });   // clean URL (no ?kta=) for the form tests below
+  await page.waitForTimeout(200);
   ok(await page.locator('.vf-privacy a[href="kebijakan-privasi.html"]').count() === 1, 'privacy note links kebijakan-privasi.html');
   ok(await page.locator('.vf-steps > li').count() === 3, '3-step explainer');
   ok(await page.locator('[data-vf="mine"]').isHidden(), 'no own-KTA shortcut when signed out');
@@ -191,7 +211,7 @@ for (const vp of VPS) {
   ok(await page.locator('.vf-result--ok').isVisible(), 'KTA with spaces/lowercase → verified');
   ok((await page.locator('.vf-result__state').textContent()).includes('Terverifikasi'), '"Terverifikasi" label');
   ok((await page.locator('.vf-result__name').textContent()).includes('Andika Prasetya'), 'name shown');
-  ok(await page.locator('.vf-result .badge--contoh').count() === 1, 'contoh badge on sample record');
+  ok(await page.locator('.vf-result .badge--contoh').count() === 1, 'contoh badge on a record flagged contoh (test fixture)');
   ok(await page.locator('.vf-comps li').count() === 2, 'kompetensi tags listed');
   ok(page.url().includes('kta='), 'URL synced with ?kta=');
   ok(!(await page.locator('[data-vf="field"]').getAttribute('class')).includes('is-invalid'), 'error cleared');
