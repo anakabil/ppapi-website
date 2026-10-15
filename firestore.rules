@@ -385,9 +385,9 @@ service cloud.firestore {
       allow update: if (isOwner(uid) && ownerUpdate(request.resource.data, resource.data, uid))
                     || (isAdmin() && adminUpdate(request.resource.data, resource.data, uid));
 
-      // Data anggota tidak dihapus dari situs (penghapusan atas permintaan pemilik data
-      // dilakukan sekretariat melalui Firebase Console).
-      allow delete: if false;
+      // Penghapusan data anggota hanya oleh admin (atas permintaan pemilik data atau untuk
+      // membersihkan akun uji). Anggota tidak dapat menghapus datanya sendiri dari situs.
+      allow delete: if isAdmin();
     }
 
     // ---------------------------------------------------------------------
