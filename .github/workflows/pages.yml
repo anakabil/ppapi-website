@@ -66,7 +66,7 @@ jobs:
       - name: Siapkan artefak situs (alamat situs disisipkan ke config.js)
         run: |
           rm -rf /tmp/site && cp -r site /tmp/site
-          sed -i "s|siteUrl: ''|siteUrl: 'https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/'|" /tmp/site/assets/js/config.js
+          sed -i "s|siteUrl: ''|siteUrl: 'https://ppapi.or.id/'|" /tmp/site/assets/js/config.js
           grep -n "siteUrl:" /tmp/site/assets/js/config.js
       - uses: actions/upload-pages-artifact@v3
         with:
