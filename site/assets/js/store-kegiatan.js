@@ -1110,11 +1110,11 @@
     await audit(adm, st === 'Dicabut' ? 'sertifikat.dicabut' : 'sertifikat.dipulihkan', id, certDisplay(id), patch.alasan);
     return verify(id);
   }
-  /** contoh PDF untuk pratinjau admin (tanpa menerbitkan nomor) → {blob, fileName} */
+  /** PDF pratinjau untuk admin (tanpa menerbitkan nomor) → {blob, fileName} */
   async function adminSamplePdf(ev, design) {
     var no = certNumber(ev, 1);
-    var doc = await buildPdf(ev, design, { nama: 'Nama Peserta Contoh', no: no, verifyUrl: verifyUrl(no) });
-    return { blob: doc.output('blob'), fileName: 'contoh-' + certFileName(certDisplay(no)) };
+    var doc = await buildPdf(ev, design, { nama: 'Nama Peserta', no: no, verifyUrl: verifyUrl(no) });
+    return { blob: doc.output('blob'), fileName: 'pratinjau-' + certFileName(certDisplay(no)) };
   }
   function csvCell(v) {
     var s = String(v === null || v === undefined ? '' : v);

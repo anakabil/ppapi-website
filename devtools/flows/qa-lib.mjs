@@ -8,6 +8,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { galleryFile, GALLERY } from './dev-gallery.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(__dirname, '..', '..', 'site');
@@ -32,10 +33,10 @@ export async function startServer({ prefix = '' } = {}) {
       p = p.slice(prefix.length);
     }
     if (p.endsWith('/')) p += 'index.html';
-    let file = path.join(ROOT, p);
+    let file = galleryFile(p) || path.join(ROOT, p);
     // GitHub Pages also serves "/berita" as "/berita.html"
     if (!fs.existsSync(file) && fs.existsSync(file + '.html')) file = file + '.html';
-    if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    if (!(file.startsWith(ROOT) || file.startsWith(GALLERY)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       const nf = path.join(ROOT, '404.html');
       res.writeHead(404, { 'content-type': MIME['.html'] });
       return res.end(fs.existsSync(nf) ? fs.readFileSync(nf) : 'Not found');

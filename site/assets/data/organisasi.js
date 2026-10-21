@@ -3,12 +3,13 @@
    --------------------------------------------------------------------------
    Isi halaman Profil, Keanggotaan, FAQ, dan beberapa bagian Beranda.
 
-   FAKTA vs. CONTOH
+   ISI & SUMBER
    • Kalimat "tentang" dan "fakta" disusun dari deskripsi resmi PPAPI pada
      aplikasi PPAPI Scaffold (https://ppapiid.vercel.app/).
-   • Rumusan resmi visi, misi, nilai, makna logo, dan uraian kategori keanggotaan
-     BELUM dipublikasikan; rumusan sementara di bawah tetap dipakai agar halaman
-     tidak kosong dan ditandai lewat "bagianContoh" (label "Contoh" tampil).
+   • Visi, misi, nilai, makna logo, dan uraian kategori keanggotaan dirumuskan
+     sebagai komitmen umum perkumpulan profesi (kompetensi, keselamatan,
+     integritas) tanpa menyebut fakta yang belum resmi. Bila pengurus menetapkan
+     rumusan resmi, cukup ganti teksnya di bawah.
    • Sejarah pendirian, susunan pengurus, dan legalitas sengaja DIKOSONGKAN —
      bagian terkait di halaman Profil tidak ditampilkan sampai datanya resmi.
    • JANGAN mengisi nama pengurus, tanggal pendirian, atau nomor badan hukum
@@ -16,8 +17,6 @@
 
    CARA MENGUBAH
    • Teks: ubah isi di antara tanda kutip '…'.
-   • Setelah rumusan resmi tersedia, ubah nilai di "bagianContoh" menjadi
-     false dan ubah contoh: true menjadi false pada butir terkait.
    • legalitas: isi dengan { label: 'Akta Pendirian', nilai: 'Nomor … tanggal …' }
      hanya jika sudah resmi; bila kosong, bagian Legalitas tidak ditampilkan.
    • ikon: nama ikon yang tersedia di situs, misalnya 'shield-check', 'award',
@@ -26,15 +25,6 @@
 window.PPAPI_DATA = window.PPAPI_DATA || {};
 
 PPAPI_DATA.organisasi = {
-
-  /* Bagian yang masih berupa rumusan sementara (true = tampilkan label "Contoh") */
-  bagianContoh: {
-    visi: true,
-    misi: true,
-    nilai: true,
-    maknaLogo: true,
-    keanggotaan: true
-  },
 
   tentang: [
     'Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI) adalah wadah profesi bagi teknisi, supervisor, dan ahli perancah di Indonesia.',
@@ -50,21 +40,21 @@ PPAPI_DATA.organisasi = {
     { label: 'Anggota', nilai: 'Praktisi dan ahli perancah Indonesia' }
   ],
 
-  visi: 'Menjadi rujukan profesi perancah Indonesia yang kompeten, berintegritas, dan mengutamakan keselamatan.',
+  visi: 'Menjadi wadah profesi perancah Indonesia yang kompeten, berintegritas, dan mengutamakan keselamatan kerja.',
 
   misi: [
-    'Meningkatkan kompetensi praktisi dan ahli perancah melalui pelatihan, sertifikasi, dan berbagi pengetahuan.',
-    'Mendorong penerapan K3 serta praktik pemasangan dan inspeksi perancah yang sesuai regulasi dan standar.',
-    'Menyediakan rujukan regulasi, standar, dan alat bantu digital bagi anggota dan pemangku kepentingan.',
-    'Membangun jejaring dan kolaborasi antara praktisi, ahli, pelaku usaha, akademisi, dan pemerintah.',
-    'Menjaga integritas profesi melalui pencatatan keanggotaan dan verifikasi yang transparan.'
+    'Mendorong peningkatan kompetensi praktisi dan ahli perancah melalui pembelajaran berkelanjutan dan berbagi pengetahuan.',
+    'Mendorong penerapan keselamatan dan kesehatan kerja (K3) serta praktik pemasangan dan inspeksi perancah yang sesuai regulasi dan standar.',
+    'Menyediakan rujukan regulasi, standar, dan alat bantu digital bagi anggota.',
+    'Membangun jejaring dan kerja sama antara praktisi, ahli, pelaku usaha, akademisi, dan pemerintah.',
+    'Menjaga integritas profesi melalui pencatatan keanggotaan dan verifikasi yang terbuka.'
   ],
 
   nilai: [
-    { judul: 'Keselamatan', teks: 'Keselamatan manusia menjadi pertimbangan pertama dalam setiap keputusan teknis — tanpa kompromi.', ikon: 'shield-check' },
-    { judul: 'Kompetensi', teks: 'Keahlian dibangun melalui pembelajaran berkelanjutan, praktik yang benar, dan pengakuan yang sah.', ikon: 'award' },
-    { judul: 'Integritas', teks: 'Jujur dalam memeriksa, mencatat, dan melaporkan kondisi perancah apa adanya.', ikon: 'scale' },
-    { judul: 'Kolaborasi', teks: 'Praktisi, ahli, dan pelaku usaha saling berbagi untuk mengangkat standar profesi bersama.', ikon: 'users' }
+    { judul: 'Keselamatan', teks: 'Keselamatan manusia menjadi pertimbangan utama dalam setiap keputusan teknis.', ikon: 'shield-check' },
+    { judul: 'Kompetensi', teks: 'Keahlian dibangun melalui pembelajaran berkelanjutan dan praktik kerja yang benar.', ikon: 'award' },
+    { judul: 'Integritas', teks: 'Jujur dan cermat dalam memeriksa, mencatat, serta melaporkan kondisi perancah.', ikon: 'scale' },
+    { judul: 'Kolaborasi', teks: 'Praktisi, ahli, dan pelaku usaha saling berbagi untuk meningkatkan mutu profesi bersama.', ikon: 'users' }
   ],
 
   /* Pilar layanan: rumusan mengikuti deskripsi resmi PPAPI (mendorong kompetensi, K3, serta
@@ -93,10 +83,10 @@ PPAPI_DATA.organisasi = {
   legalitas: [],
 
   maknaLogo: [
-    { judul: 'Huruf tebal yang condong ke depan', teks: 'Huruf PPAPI yang tebal dan condong ke depan melambangkan profesi yang bergerak maju dengan sikap tegas dan percaya diri.' },
-    { judul: 'Pipa dan klem perancah', teks: 'Batang pipa yang dijepit klem pada huruf terakhir menegaskan identitas perancah pipa dan klem — sambungan yang benar adalah kunci keselamatan.' },
-    { judul: 'Elips yang melingkupi', teks: 'Garis elips yang mengitari huruf menggambarkan kesatuan anggota dan cakupan kerja yang utuh, dari perencanaan hingga inspeksi.' },
-    { judul: 'Praktisi & Ahli Perancah Indonesia', teks: 'Menegaskan dua pilar keanggotaan — praktisi di lapangan dan ahli di bidang perancah — dalam satu wadah nasional.' }
+    { judul: 'Huruf tebal yang condong ke depan', teks: 'Huruf PPAPI ditulis tebal dan condong ke depan, selaras dengan tekad perkumpulan untuk terus bergerak maju.' },
+    { judul: 'Pipa dan klem perancah', teks: 'Batang pipa yang dijepit klem pada huruf terakhir menunjukkan bidang yang ditekuni perkumpulan dan mengingatkan bahwa sambungan yang benar adalah kunci keselamatan.' },
+    { judul: 'Elips yang melingkupi', teks: 'Garis elips yang mengitari huruf menggambarkan kebersamaan anggota dalam satu wadah profesi.' },
+    { judul: 'Praktisi & Ahli Perancah Indonesia', teks: 'Tulisan nama perkumpulan menegaskan dua kelompok anggota, yaitu praktisi di lapangan dan ahli di bidang perancah.' }
   ],
 
   /* Angka faktual tentang isi situs/aplikasi (perbarui bila isi berubah). */
@@ -128,23 +118,20 @@ PPAPI_DATA.organisasi = {
       {
         nama: 'Praktisi',
         ringkas: 'Bagi tenaga kerja yang terlibat langsung dalam pemasangan, pembongkaran, dan pengawasan perancah di lapangan.',
-        syarat: ['Bekerja atau pernah bekerja di bidang perancah', 'Mengisi profil dan riwayat kompetensi dengan benar', 'Menyetujui ketentuan dan kode etik perkumpulan'],
-        manfaat: ['KTA digital yang dapat diverifikasi publik', 'Akses aplikasi perencanaan & analisis struktur serta simulator pemasangan', 'Akses Produk Pengetahuan dan informasi pelatihan, sertifikasi, serta agenda kegiatan'],
-        contoh: true
+        syarat: ['Bekerja atau pernah bekerja di bidang perancah', 'Mengisi data diri dan riwayat kompetensi dengan benar', 'Menyetujui ketentuan dan kode etik perkumpulan'],
+        manfaat: ['KTA digital yang dapat diverifikasi publik', 'Akses aplikasi perencanaan & analisis struktur serta simulator pemasangan', 'Akses Produk Pengetahuan dan informasi pelatihan, sertifikasi, serta agenda kegiatan']
       },
       {
         nama: 'Ahli',
         ringkas: 'Bagi perancang, inspektur, ahli K3, dan tenaga ahli yang menangani perencanaan, analisis, atau pemeriksaan perancah.',
         syarat: ['Memiliki sertifikat kompetensi bidang perancah, K3, atau konstruksi yang masih berlaku', 'Pengalaman profesional yang relevan', 'Bersedia berbagi pengetahuan dalam kegiatan perkumpulan'],
-        manfaat: ['Seluruh manfaat kategori Praktisi', 'Kesempatan menjadi narasumber atau fasilitator kegiatan teknis', 'Keterlibatan dalam kajian standar dan praktik baik'],
-        contoh: true
+        manfaat: ['Seluruh manfaat kategori Praktisi', 'Kesempatan berbagi keahlian dalam kegiatan perkumpulan', 'Kesempatan terlibat dalam pembahasan standar dan praktik kerja yang baik']
       },
       {
         nama: 'Mitra Korporat',
         ringkas: 'Bagi badan usaha penyedia jasa, produsen, atau penyewaan perancah yang mendukung peningkatan standar keselamatan.',
-        syarat: ['Badan usaha yang bergerak di bidang terkait perancah', 'Menunjuk narahubung resmi', 'Komitmen pada praktik kerja yang aman'],
-        manfaat: ['Jejaring dengan praktisi dan ahli perancah', 'Kesempatan berkolaborasi dalam pelatihan dan kegiatan', 'Informasi regulasi dan standar terbaru'],
-        contoh: true
+        syarat: ['Badan usaha yang bergerak di bidang terkait perancah', 'Menunjuk narahubung resmi', 'Berkomitmen pada praktik kerja yang aman'],
+        manfaat: ['Jejaring dengan praktisi dan ahli perancah', 'Kesempatan bekerja sama dalam pelatihan dan kegiatan', 'Informasi regulasi dan standar terbaru']
       },
       {
         nama: 'Kehormatan',
@@ -152,8 +139,7 @@ PPAPI_DATA.organisasi = {
         syarat: ['Ditetapkan oleh pengurus berdasarkan pertimbangan khusus'],
         // false = kategori ini tidak dapat dipilih pada Formulir Pendaftaran (ditetapkan pengurus)
         bisaDiajukan: false,
-        manfaat: ['Pengakuan atas kontribusi bagi profesi', 'Undangan pada kegiatan perkumpulan'],
-        contoh: true
+        manfaat: ['Pengakuan atas kontribusi bagi profesi', 'Undangan pada kegiatan perkumpulan']
       }
     ],
     /* Manfaat yang tersedia melalui situs ini */

@@ -17,6 +17,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { galleryFile, GALLERY } from './dev-gallery.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..', 'site');
@@ -33,8 +34,8 @@ const MIME = {
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
-  const file = path.join(ROOT, p);
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+  const file = galleryFile(p) || path.join(ROOT, p);
+  if (!(file.startsWith(ROOT) || file.startsWith(GALLERY)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     res.writeHead(404, { 'content-type': MIME['.html'] });
     return res.end('<!doctype html><title>404</title><p>Not found (flow stub)</p>');
   }

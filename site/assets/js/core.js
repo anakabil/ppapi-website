@@ -279,7 +279,10 @@
     return { key: 'aktif', label: 'Aktif', days: days, tone: 'ok' };
   };
 
+  /* Lencana "Contoh" hanya untuk data uji Mode Demo (apiKey kosong). Situs produksi (Mode Firebase)
+     tidak pernah menampilkannya, sekalipun ada butir lama yang masih membawa tanda contoh. */
   util.contohBadge = function (item) {
+    if (PPAPI.auth && PPAPI.auth.mode === 'firebase') return '';
     return item && item.contoh ? '<span class="badge badge--contoh">Contoh</span>' : '';
   };
 

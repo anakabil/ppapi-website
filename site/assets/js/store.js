@@ -1329,6 +1329,8 @@
       if (/[";,\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
       return s;
     }
+    /* kolom penanda data uji hanya relevan di Mode Demo; ekspor produksi (Firebase) tanpa kolom itu */
+    if (mode() === 'firebase') cols = cols.filter(function (c) { return c[0] !== 'Data contoh'; });
     var rows = [cols.map(function (c) { return cell(c[0]); }).join(';')];
     (members || []).forEach(function (raw) {
       var m = normalize(raw);
@@ -1446,7 +1448,9 @@
     var list = order.map(function (id) { return byId[id]; }).filter(function (x) { return opts.includeHidden || !x.hidden; });
     anchorItems(type, list);
     list.sort(function (a, b) { return compareContent(type, a, b); });
-    return list.map(function (x) { var y = Object.assign({}, x); delete y._i; delete y._pos; return y; });
+    /* Mode Firebase (produksi): tanda "contoh" tidak pernah diteruskan ke halaman */
+    var prod = mode() === 'firebase';
+    return list.map(function (x) { var y = Object.assign({}, x); delete y._i; delete y._pos; if (prod) y.contoh = false; return y; });
   }
   async function contentGet(type, id) {
     var all = await contentList(type, { includeHidden: true });

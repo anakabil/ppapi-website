@@ -180,7 +180,7 @@ let idA, idB;
   await page.click('.drawer [data-kgd="sample"]');
   const sample = await dl;
   const sbuf = fs.readFileSync(await sample.path());
-  ok(sbuf.slice(0, 5).toString() === '%PDF-' && /Nama Peserta Contoh/.test(sbuf.toString('latin1')), 'contoh PDF dari perancang (jsPDF + SRI dari cdnjs)', sample.suggestedFilename());
+  ok(sbuf.slice(0, 5).toString() === '%PDF-' && /Nama Peserta/.test(sbuf.toString('latin1')) && !/Contoh/.test(sbuf.toString('latin1')), 'PDF pratinjau dari perancang (jsPDF + SRI dari cdnjs)', sample.suggestedFilename());
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
 

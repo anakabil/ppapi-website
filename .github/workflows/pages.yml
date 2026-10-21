@@ -56,6 +56,9 @@ jobs:
         run: |
           node devtools/check.mjs index masuk pustaka dashboard --desktop | tee /tmp/check-fb.txt
           grep -q "Done. 0 issue(s)." /tmp/check-fb.txt
+      - name: Situs produksi bersih dari istilah demo/contoh/pratinjau
+        working-directory: devtools
+        run: node flows/produksi-bersih.mjs
       - name: Uji kontrak & keamanan (Mode Demo + cermin aturan Firestore)
         working-directory: devtools
         run: |

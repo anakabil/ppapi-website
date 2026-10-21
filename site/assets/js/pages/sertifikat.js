@@ -50,7 +50,7 @@
       var id = K.certDocId(q);
       if (!id) {
         out.innerHTML = '';
-        showError('Format nomor belum sesuai. Contoh: PPAPI/SERT/2026/WEB1025/0001.');
+        showError('Format nomor belum sesuai. Gunakan format seperti PPAPI/SERT/2026/WEB1025/0001.');
         status.textContent = 'Format nomor belum sesuai.';
         if (!fromUrl) input.focus();
         return;

@@ -476,7 +476,6 @@
        and benefits sit in a disclosure that is open only on the selected card (syncCats) */
     function bodyKategori() {
       var opts = kategoriOptions();
-      var anyContoh = opts.some(function (n) { var k = kategoriInfo(n); return !!(k && k.contoh); });
       var cards = opts.map(function (nama, i) {
         var k = kategoriInfo(nama) || { nama: nama };
         var id = 'cat-' + i;
@@ -501,10 +500,7 @@
       var renewalHint = isRenewal() && member.approvedAt
         ? '<p class="daf-hint-line">' + icon('info', { size: 16 }) + '<span>Kategori Anda saat ini: <strong>' + h(member.memberType) + '</strong>. Pilih kategori lain hanya bila Anda ingin mengajukan perubahan kategori.</span></p>'
         : '';
-      var contohNote = anyContoh
-        ? '<p class="daf-cat-note">' + util.contohBadge({ contoh: true }) + '<span>Uraian kategori beserta persyaratan dan manfaatnya masih berupa contoh dan menunggu penetapan resmi pengurus.</span></p>'
-        : '';
-      return '<form class="daf-form" data-form="kategori" novalidate>' + renewalHint + contohNote +
+      return '<form class="daf-form" data-form="kategori" novalidate>' + renewalHint +
         '<fieldset class="field daf-cats" id="f-kategori" role="radiogroup" aria-required="true">' +
           '<legend class="sr-only">Kategori keanggotaan (wajib dipilih)</legend>' +
           '<div class="daf-cats__grid">' + cards + '</div>' +
@@ -1116,7 +1112,7 @@
       } else if (key === 'dokumen') {
         readDok().forEach(function (x, i) {
           var uEl = d.getElementById('dok-url-' + x.id);
-          var um = !x.url ? 'Tempel tautan dokumen, atau hapus baris ini.' : (isHttps(x.url) ? '' : 'Tautan harus diawali https:// (contoh: https://drive.google.com/…).');
+          var um = !x.url ? 'Tempel tautan dokumen, atau hapus baris ini.' : (isHttps(x.url) ? '' : 'Tautan harus diawali https:// (misalnya https://drive.google.com/…).');
           setError(uEl, um);
           if (um) list.push({ el: uEl, msg: um, label: 'Dokumen ' + (i + 1) + ' — tautan' });
         });

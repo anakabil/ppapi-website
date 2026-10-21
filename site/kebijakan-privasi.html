@@ -252,11 +252,9 @@
             <!-- 05 -->
             <section class="prose kp-section" id="penyimpanan" aria-labelledby="h-simpan">
               <h2 id="h-simpan"><span class="kp-num">05</span>Penyimpanan data</h2>
-              <h3>Mode operasional</h3>
+              <h3>Tempat penyimpanan</h3>
               <p>Data akun dikelola oleh <strong>Firebase Authentication</strong>. Data anggota — profil, kompetensi, sertifikat, formulir pendaftaran beserta pas foto dan tautan dokumen, serta catatan dan riwayat penelaahan — bersama umpan balik, daftar verifikasi publik, dan log aktivitas admin disimpan di <strong>Cloud Firestore</strong>. Keduanya merupakan layanan Google Firebase. Lokasi pusat data mengikuti pengaturan proyek Firebase yang dipilih pengelola situs dan dapat berada di luar wilayah Indonesia. Dalam hal terjadi transfer data pribadi ke luar wilayah hukum Indonesia, PPAPI berupaya memastikan tingkat pelindungan yang setara sesuai ketentuan UU PDP.</p>
               <p>Berkas dokumen pendukung tetap berada di layanan penyimpanan awan milik Anda; situs hanya menyimpan tautannya. Data aplikasi anggota tidak disimpan di Firebase, melainkan di peramban perangkat yang Anda gunakan (lihat bagian 10).</p>
-              <h3>Mode Demo</h3>
-              <p>Selama situs belum terhubung ke Firebase, situs berjalan dalam <strong>Mode Demo</strong> yang ditandai pemberitahuan pada halaman masuk dan halaman khusus akun. Pada mode ini, akun, data anggota, pengajuan, umpan balik, dan data Konsol Admin hanya disimpan di penyimpanan lokal peramban (<em>localStorage</em>) pada perangkat Anda dan <strong>tidak dikirim ke server PPAPI</strong>. Data tersebut dapat dilihat oleh siapa pun yang menggunakan peramban yang sama — termasuk melalui akun admin demo yang kata sandinya ditampilkan pada halaman masuk — dan akan hilang apabila data situs dihapus dari peramban. Karena itu, mohon tidak memasukkan data pribadi yang sebenarnya selama situs berjalan dalam Mode Demo.</p>
             </section>
 
             <!-- 06 -->
@@ -316,7 +314,6 @@
                 <li>Berkas dokumen di layanan penyimpanan awan Anda sepenuhnya berada dalam kendali Anda dan tidak terhapus bersama data di situs ini.</li>
                 <li>Umpan balik disimpan selama diperlukan untuk penanganan dan evaluasi layanan.</li>
                 <li>Data aplikasi anggota tersimpan di peramban perangkat Anda hingga Anda menghapusnya. Berakhirnya status Aktif tidak menghapus data tersebut secara otomatis.</li>
-                <li>Pada Mode Demo, data tersimpan di peramban hingga Anda menghapus data situs melalui pengaturan peramban.</li>
               </ul>
             </section>
 
@@ -328,17 +325,16 @@
                 <table class="table">
                   <thead><tr><th scope="col">Kegunaan</th><th scope="col">Penyimpanan</th><th scope="col">Masa simpan</th></tr></thead>
                   <tbody>
-                    <tr><td data-label="Kegunaan">Sesi masuk akun</td><td data-label="Penyimpanan">Penyimpanan peramban oleh Firebase Authentication; hanya selama sesi bila <em>Ingat saya</em> tidak dipilih. Pada Mode Demo:<span class="kp-keys"><code>ppapi_demo_session</code></span></td><td data-label="Masa simpan">Hingga Anda keluar</td></tr>
-                    <tr><td data-label="Kegunaan">Akun, data anggota, pengajuan, umpan balik, konten, dan data Konsol Admin pada Mode Demo</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_demo_*</code> <code>ppapi_member_*</code> <code>ppapi_feedback</code> <code>ppapi_registry</code> <code>ppapi_counters</code> <code>ppapi_audit_log</code> <code>ppapi_content_*</code> <code>ppapi_pustaka_files</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
+                    <tr><td data-label="Kegunaan">Sesi masuk akun</td><td data-label="Penyimpanan">Penyimpanan peramban oleh Firebase Authentication; hanya selama sesi bila <em>Ingat saya</em> tidak dipilih.</td><td data-label="Masa simpan">Hingga Anda keluar</td></tr>
                     <tr><td data-label="Kegunaan">Data aplikasi <em>PPAPI Scaffold — Perencanaan &amp; Analisis Struktur</em>, terpisah per anggota</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_app_perencanaan_*</code></span></td><td data-label="Masa simpan">Hingga Anda menghapusnya</td></tr>
                     <tr><td data-label="Kegunaan">Kemajuan latihan <em>Simulator Pemasangan Perancah Tube &amp; Coupler</em>, terpisah per anggota</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_progress_*_simulator</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
-                    <tr><td data-label="Kegunaan">Preferensi tampilan: pemberitahuan Mode Demo yang telah ditutup dan tampilan katalog Produk Pengetahuan (kisi atau daftar)</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_demo_ribbon_dismissed</code> <code>ppapi_pustaka_tampilan</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
+                    <tr><td data-label="Kegunaan">Preferensi tampilan katalog Produk Pengetahuan (kisi atau daftar)</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_pustaka_tampilan</code></span></td><td data-label="Masa simpan">Hingga data situs dihapus</td></tr>
                     <tr><td data-label="Kegunaan">Penanda langkah <em>Lengkapi profil</em> yang belum selesai setelah pendaftaran akun</td><td data-label="Penyimpanan"><em>localStorage</em><span class="kp-keys"><code>ppapi_profile_pending</code></span></td><td data-label="Masa simpan">Hingga langkah selesai</td></tr>
                     <tr><td data-label="Kegunaan">Pesan notifikasi sementara antarhalaman</td><td data-label="Penyimpanan"><em>sessionStorage</em><span class="kp-keys"><code>ppapi_flash</code></span></td><td data-label="Masa simpan">Hingga tab ditutup</td></tr>
                   </tbody>
                 </table>
               </div>
-              <p>Data aplikasi anggota dan data Mode Demo dapat dilihat oleh siapa pun yang memakai peramban yang sama. Apabila Anda menggunakan perangkat bersama, keluarlah dari akun setelah selesai dan hapus data aplikasi Anda bila tidak lagi diperlukan.</p>
+              <p>Data aplikasi anggota yang tersimpan di peramban dapat dilihat oleh siapa pun yang memakai peramban yang sama. Apabila Anda menggunakan perangkat bersama, keluarlah dari akun setelah selesai dan hapus data aplikasi Anda bila tidak lagi diperlukan.</p>
               <p>Layanan pihak ketiga yang disebutkan pada bagian 02 dapat menggunakan cookie atau teknologi serupa sesuai kebijakannya masing-masing. Anda dapat menghapus atau memblokir penyimpanan tersebut melalui pengaturan peramban; namun, beberapa fitur — seperti tetap dalam keadaan masuk — mungkin tidak berfungsi.</p>
             </section>
 

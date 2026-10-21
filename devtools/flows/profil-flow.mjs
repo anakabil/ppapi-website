@@ -120,7 +120,8 @@ console.log('\nprofil.html — desktop');
       pengurusPending: $$('.profil-person--pending .profil-person__pending').length,
       pengurusNums: $$('.profil-person__num').map(n => n.textContent).join(','),
       pengurusSampleName: /Nama Pengurus|Nama menyusul/.test($('[data-pengurus]').textContent),
-      pengurusNote: !$('[data-pengurus-note]').hidden,
+      pengurusNote: !!$('[data-pengurus-note]'),
+      anyContoh: $$('main .badge--contoh').length,
       legalHidden: $('#legalitas').hidden,
       index: $$('.profil-index__link').map(a => a.textContent.trim()),
       nums: $$('main [data-num]').filter(n => n.textContent).map(n => n.textContent.trim()),
@@ -138,14 +139,14 @@ console.log('\nprofil.html — desktop');
   check('Tentang pull-quote rendered', r.quote);
   check('fakta card rows from data (4)', r.fakta === 4, r.fakta);
   check('legal/founding note shown while legalitas is empty', r.faktaNote);
-  check('visi statement rendered', /rujukan profesi perancah/i.test(r.visi), r.visi);
+  check('visi statement rendered', /wadah profesi perancah/i.test(r.visi), r.visi);
   check('misi list has 5 items', r.misi === 5, r.misi);
   check('4 nilai cards with icons', r.nilai === 4 && r.nilaiIcons === 4, `${r.nilai}/${r.nilaiIcons}`);
   /* 2026-10-15: sample sejarah + pengurus placeholders removed → both sections hidden until official data exists */
   check('sejarah empty → section hidden, no timeline items', r.sejarah === 0 && r.sejarahHidden, `${r.sejarah}/${r.sejarahHidden}`);
   check('pengurus empty → Struktur section hidden, no placeholder tiles / note / badge', r.pengurus === 0 && r.strukturHidden && r.pengurusSectionBadge === 0 && !r.pengurusNote && !r.pengurusSampleName, `${r.pengurus}/${r.strukturHidden}/${r.pengurusSectionBadge}/${r.pengurusNote}`);
   check('legalitas section omitted when empty', r.legalHidden === true);
-  check('bagianContoh badges on Visi/Misi/Makna Logo (wording still provisional)', r.visiBadge && r.misiBadge && r.logoBadge);
+  check('2026-10-21: no Contoh badge on Visi/Misi/Makna Logo or anywhere on the page (production wording)', !r.visiBadge && !r.misiBadge && !r.logoBadge && r.anyContoh === 0, r.anyContoh);
   check('index lists the 4 visible chapters', r.index.length === 4 && /Makna Logo/.test(r.index[3]), JSON.stringify(r.index));
   check('chapter numbers 01–04 in order', JSON.stringify(r.nums) === JSON.stringify(['01 —', '02 —', '03 —', '04 —']), JSON.stringify(r.nums));
   check('original colour logo used in Makna Logo', r.logoSrc === 'assets/img/logo-color.png', r.logoSrc);
@@ -236,7 +237,7 @@ PPAPI_DATA.organisasi.pengurus = [{ nama: 'Nama Resmi', jabatan: 'Ketua Umum', f
     legalHasTags: !!document.querySelector('[data-legalitas] b, [data-legalitas] img'),
     xss: !!window.__xss,
     faktaNoteHidden: document.querySelector('[data-fakta-note]').hidden,
-    pengurusNoteHidden: document.querySelector('[data-pengurus-note]').hidden,
+    pengurusNoteHidden: !document.querySelector('[data-pengurus-note]'),
     pengurusSectionBadge: document.querySelectorAll('#struktur .eyebrow .badge--contoh').length,
     pengurusName: (document.querySelector('.profil-person .person__name') || {}).textContent,
     initials: document.querySelector('.profil-person .person__avatar').textContent,
@@ -246,7 +247,7 @@ PPAPI_DATA.organisasi.pengurus = [{ nama: 'Nama Resmi', jabatan: 'Ketua Umum', f
   check('legalitas shown when data present', r.legalShown && /Uji <b>label<\/b>/.test(r.legalText), r.legalText);
   check('data strings are escaped (no injected tags / script)', !r.legalHasTags && !r.xss);
   check('fakta note hidden once legalitas exists', r.faktaNoteHidden);
-  check('pengurus note + section badge hidden when no contoh items', r.pengurusNoteHidden && r.pengurusSectionBadge === 0, `${r.pengurusNoteHidden}/${r.pengurusSectionBadge}`);
+  check('no pengurus "contoh" note element and no section badge', r.pengurusNoteHidden && r.pengurusSectionBadge === 0, `${r.pengurusNoteHidden}/${r.pengurusSectionBadge}`);
   check('official pengurus shows the name as title', r.pengurusName === 'Nama Resmi', r.pengurusName);
   check('initials avatar from name', r.initials === 'NR', r.initials);
   check('index renumbers (Struktur + Legalitas in → 6 chapters)', !r.index.some(t => /Sejarah/.test(t)) && r.index.some(t => /04\s*Struktur/.test(t)) && r.index.some(t => /06\s*Legalitas/.test(t)), JSON.stringify(r.index));
@@ -294,7 +295,7 @@ console.log('\nkeanggotaan.html — desktop');
   check('4 kategori cards', r.cats.length === 4, JSON.stringify(r.cats));
   check('signed out: no "Kategori Anda / Pilihan Anda" highlight', r.mine === 0, r.mine);
   check('kategori footers: 3 chosen on the form, Kehormatan set by the board', r.catNotes.filter(t => /Dipilih pada formulir/.test(t)).length === 3 && /Ditetapkan pengurus/.test(r.catNotes[3] || ''), JSON.stringify(r.catNotes));
-  check('contoh badges on kategori (section + 4 cards)', r.sectionContoh && r.catContoh === 4, r.catContoh);
+  check('2026-10-21: no Contoh badge on kategori (section or cards)', !r.sectionContoh && r.catContoh === 0, r.catContoh);
   check('syarat lists rendered', r.syarat >= 10, r.syarat);
   check('5 alur steps from data.langkah (v2 flow), last is final', r.steps.length === 5 && r.final === 1 && r.steps[0] === 'Buat akun' && r.steps[1] === 'Isi formulir pendaftaran' && r.steps[2] === 'Verifikasi sekretariat' && r.steps[4] === 'Akses fitur anggota', JSON.stringify(r.steps));
   check('alur is horizontal on desktop (same top)', new Set(r.stepTops).size === 1, JSON.stringify(r.stepTops));

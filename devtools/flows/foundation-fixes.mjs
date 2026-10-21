@@ -7,6 +7,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { galleryFile, GALLERY } from './dev-gallery.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..', 'site');
@@ -73,8 +74,8 @@ const TEST_PAGE = `<!doctype html>
 const server = http.createServer((req, res) => {
   const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p === '/__fixes.html') { res.writeHead(200, { 'content-type': MIME['.html'] }); return res.end(TEST_PAGE); }
-  const file = path.join(ROOT, p);
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end(); }
+  const file = galleryFile(p) || path.join(ROOT, p);
+  if (!(file.startsWith(ROOT) || file.startsWith(GALLERY)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
   (String(file).replace(/\\/g, '/').endsWith('assets/js/config.js') && !process.env.PPAPI_REAL_FIREBASE ? res.end(fs.readFileSync(file, 'utf8').replace(/apiKey:\s*'[^']*'/, "apiKey: ''")) /* test server: Mode Demo unless PPAPI_REAL_FIREBASE=1 */ : fs.createReadStream(file).pipe(res));
 });
@@ -263,7 +264,7 @@ try {
   /* 2026-10-09: no Disallow lines any more — a blocked page cannot show its noindex to crawlers, and
      "/*anggota.html" also matched keanggotaan.html. The members/styleguide pages carry meta noindex. */
   const rbRules = rb.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  const noindex = ['dashboard', 'anggota', 'styleguide'].every(p => /<meta name="robots" content="noindex/.test(fs.readFileSync(path.join(ROOT, p + '.html'), 'utf8')));
+  const noindex = ['dashboard', 'anggota', 'styleguide'].every(p => /<meta name="robots" content="noindex/.test(fs.readFileSync(galleryFile('/' + p + '.html') || path.join(ROOT, p + '.html'), 'utf8')));
   /* later on 2026-10-09: Disallow only for NON-HTML support files (README.md, aplikasi/*.md, firestore.rules),
      which cannot carry a noindex tag — never for a page */
   const dis = rbRules.filter(l => /^Disallow:/i.test(l)).map(l => l.replace(/^Disallow:\s*/i, ''));

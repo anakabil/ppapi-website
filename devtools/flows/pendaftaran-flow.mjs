@@ -201,7 +201,7 @@ if (run('A')) {
   check(page.url().endsWith('#kategori'), 'hash synced to #kategori', page.url());
   const cats = await page.$$eval('.daf-cat', els => els.map(e => e.getAttribute('data-value')));
   check(JSON.stringify(cats) === JSON.stringify(['Praktisi', 'Ahli', 'Mitra Korporat']), 'kategori cards = APPLY_TYPES (no Kehormatan)', cats);
-  check(await page.locator('#daf-step-kategori .daf-cat-note .badge--contoh').count() === 1 && await page.locator('.daf-cat .badge--contoh').count() === 0, 'sample kategori texts: one Contoh note above the cards (not a badge per card)');
+  check(await page.locator('#daf-step-kategori .daf-cat-note').count() === 0 && await page.locator('#daf-step-kategori .badge--contoh').count() === 0, '2026-10-21: kategori step has no Contoh note and no Contoh badge (production wording)');
   check(await page.locator('.stepper__item').count() === 7, 'stepper has 7 steps');
   check(await page.locator('.daf-foot__back').isHidden(), 'step 1: "Kembali" hidden');
   check(/Isian tersimpan otomatis/.test(await page.textContent('.daf-save--foot')), 'autosave indicator idle text');
@@ -715,6 +715,7 @@ if (run('L')) {
   const { ctx, page } = await newPage(DESKTOP, seedFor('Draf', { profile: Object.assign(demoMember('Draf').profile, { birthDate: '1990-01-01' }) }));
   await ctx.route('**/assets/js/config.js', async route => {
     const src = fs.readFileSync(path.join(ROOT, 'assets/js/config.js'), 'utf8')
+      .replace(/apiKey:\s*'[^']*'/, "apiKey: ''")   /* keep Mode Demo (the route bypasses the test server) */
       .replace(/iuran:\s*\{[\s\S]*?\}/, "iuran: { aktif: true, nominal: 'Rp 250.000 / tahun (contoh)', keterangan: 'Transfer iuran tahunan, lalu lampirkan tautan bukti pembayarannya. <b>tebal</b>', rekening: 'Bank Contoh 000-000-0000 a.n. PPAPI (contoh)' }");
     await route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: src });
   });

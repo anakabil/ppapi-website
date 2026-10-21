@@ -8,6 +8,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { galleryFile, GALLERY } from './dev-gallery.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..', '..', 'site');
@@ -25,8 +26,8 @@ const server = http.createServer((req, res) => {
   if (p === '/__dash.html') { res.writeHead(200, { 'content-type': MIME['.html'] }); return res.end(REQ); }
   if (p === '/__bare.html') { res.writeHead(200, { 'content-type': MIME['.html'] }); return res.end(`<!doctype html><html lang="id" class="no-js"><head><meta charset="utf-8"><title>Bare</title><link rel="stylesheet" href="assets/css/main.css"><script>document.documentElement.classList.replace('no-js','js')</script></head><body data-page="beranda" data-auth="public"><div id="site-header"></div><main id="main"><p data-reveal>Halo</p><span data-icon="check"></span></main><div id="site-footer"></div><script src="assets/js/core.js" defer></script><script>document.addEventListener('DOMContentLoaded',()=>PPAPI.onReady(()=>{window.__bareReady=true;}))</script></body></html>`); }
   if (p === '/__hero.html') { res.writeHead(200, { 'content-type': MIME['.html'] }); return res.end(REQ.replace('data-auth="required"', 'data-auth="public"').replace('<section class="page-hero page-hero--compact">', `<section class="page-hero" data-hero-img="assets/img/facade-bw.webp">`)); }
-  const file = path.join(ROOT, p.endsWith('/') ? p + 'index.html' : p);
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('nf'); }
+  const file = galleryFile(p) || path.join(ROOT, p.endsWith('/') ? p + 'index.html' : p);
+  if (!(file.startsWith(ROOT) || file.startsWith(GALLERY)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('nf'); }
   res.writeHead(200, { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
   (String(file).replace(/\\/g, '/').endsWith('assets/js/config.js') && !process.env.PPAPI_REAL_FIREBASE ? res.end(fs.readFileSync(file, 'utf8').replace(/apiKey:\s*'[^']*'/, "apiKey: ''")) /* test server: Mode Demo unless PPAPI_REAL_FIREBASE=1 */ : fs.createReadStream(file).pipe(res));
 });

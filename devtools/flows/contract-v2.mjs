@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { galleryFile, GALLERY } from './dev-gallery.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEV = path.resolve(__dirname, '..');
@@ -99,7 +100,7 @@ function nodeChecks() {
   ok(!miss.length, `all ${V2.length} v2 class names exist`, miss.length ? miss : undefined);
   ok(/body:is\(\[data-auth="required"\], \[data-auth="active"\], \[data-auth="admin"\]\):not\(\.auth-ready\) main/.test(css), 'gated main hidden for required/active/admin before auth-ready');
   ok(/prefers-reduced-motion: reduce[\s\S]*\.doc-card:hover/.test(css), 'reduced motion neutralises doc-card/kpi hover lift');
-  const sg = fs.readFileSync(path.join(ROOT, 'styleguide.html'), 'utf8');
+  const sg = fs.readFileSync(path.join(GALLERY, 'styleguide.html'), 'utf8');
   ok(['status-track', 'stepper', 'locked', 'locked-veil', 'kpi', 'doc-card', 'doc-card--feature', 'data-sg-drawer', 'data-sg="status-badges"'].every(c => sg.includes(c)), 'styleguide shows every v2 component');
 
   sect('firestore.rules v2 (§3.4) vs store.js');
@@ -180,7 +181,7 @@ function writeTestPage(name, { key = 'beranda', auth = 'public', main = '', inli
   <script src="assets/js/store.js" defer></script>
 </body>
 </html>`;
-  const file = path.join(ROOT, name);
+  const file = galleryFile(name) || path.join(ROOT, name);
   fs.writeFileSync(file, html);
   TEST_FILES.push(file);
 }
@@ -219,7 +220,7 @@ async function browserChecks() {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (p.endsWith('/')) p += 'index.html';
     const file = path.join(ROOT, p);
-    if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404, { 'content-type': MIME['.html'] }); return res.end('<!doctype html><title>404</title><p>nf</p>'); }
+    if (!(file.startsWith(ROOT) || file.startsWith(GALLERY)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404, { 'content-type': MIME['.html'] }); return res.end('<!doctype html><title>404</title><p>nf</p>'); }
     res.writeHead(200, { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
     (String(file).replace(/\\/g, '/').endsWith('assets/js/config.js') && !process.env.PPAPI_REAL_FIREBASE ? res.end(fs.readFileSync(file, 'utf8').replace(/apiKey:\s*'[^']*'/, "apiKey: ''")) /* test server: Mode Demo unless PPAPI_REAL_FIREBASE=1 */ : fs.createReadStream(file).pipe(res));
   });

@@ -277,7 +277,8 @@
   function fieldsFor(type, it) {
     var v = it || {};
     var F = K.field, C = K.check;
-    var common = C({ name: 'contoh', label: 'Tandai sebagai konten contoh', hint: 'Menampilkan lencana "Contoh" agar pengunjung tahu isinya ilustratif.', checked: it ? !!v.contoh : false });
+    /* 2026-10-21: pilihan "Tandai sebagai konten contoh" dihapus — situs produksi tidak memuat konten contoh */
+    var common = '';
     switch (type) {
       case 'berita': {
         var imgs = IMAGES.slice();
@@ -306,8 +307,7 @@
               F({ name: 'kuota', label: 'Kuota peserta', type: 'number', optional: true, min: 1, max: 100000, value: v.kuota === null || v.kuota === undefined ? '' : v.kuota })) +
           F({ name: 'lokasi', label: 'Lokasi', required: true, value: v.lokasi, maxlength: 200, placeholder: 'Kota, nama tempat, atau "Daring (Zoom)"' }) +
           F({ name: 'deskripsi', label: 'Deskripsi', type: 'textarea', rows: 5, value: v.deskripsi, maxlength: 3000, counter: true, optional: true }) +
-          F({ name: 'tautanDaftar', label: 'Tautan pendaftaran', url: 'https', optional: true, value: v.tautanDaftar, placeholder: 'https://…', hint: 'Kosongkan bila pendaftaran melalui sekretariat.' }) +
-          '<div class="adm-checks">' + common + '</div>';
+          F({ name: 'tautanDaftar', label: 'Tautan pendaftaran', url: 'https', optional: true, value: v.tautanDaftar, placeholder: 'https://…', hint: 'Kosongkan bila pendaftaran melalui sekretariat.' });
       case 'pustaka': {
         var fileHint = 'Tautan berkas (mis. Google Drive "siapa saja yang memiliki tautan") atau jalur di situs. Untuk akses <strong>Khusus anggota</strong>, tautan disimpan terpisah dan hanya diberikan kepada anggota aktif serta admin.';
         return F({ name: 'judul', label: 'Judul dokumen', required: true, value: v.judul, maxlength: 200, counter: true }) +

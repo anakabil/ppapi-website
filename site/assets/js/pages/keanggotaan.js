@@ -23,7 +23,6 @@
     var cfg = PPAPI.config || {};
     var org = (PPAPI.data && PPAPI.data.organisasi) || {};
     var kea = org.keanggotaan || {};
-    var bagian = org.bagianContoh || {};
     var FORM = 'pendaftaran.html';
     var SIGNUP = 'masuk.html?next=' + encodeURIComponent(FORM) + '#daftar';
 
@@ -45,11 +44,6 @@
       }
       return list.map(function (x) { return String(x).toLowerCase(); });
     }
-
-    /* ---------- Label "Contoh" per bagian ---------- */
-    $$('[data-badge-bagian]').forEach(function (el) {
-      el.outerHTML = util.contohBadge({ contoh: !!bagian[el.getAttribute('data-badge-bagian')] });
-    });
 
     /* ---------- 01 · Manfaat umum ---------- */
     (function () {
@@ -95,7 +89,6 @@
         return '<article class="card kea-cat" data-kategori-nama="' + h(k.nama) + '" aria-labelledby="' + h(id) + '">' +
           '<div class="kea-cat__top">' +
             '<span class="index-num">' + pad(i + 1) + ' <span>/ ' + pad(n) + '</span></span>' +
-            util.contohBadge(k) +
           '</div>' +
           '<div class="kea-cat__head">' +
             '<h3 class="kea-cat__title" id="' + h(id) + '">' + h(k.nama) + '</h3>' +

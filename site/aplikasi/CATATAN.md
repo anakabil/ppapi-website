@@ -24,7 +24,7 @@ Dasar keputusan: `SPEC-v2.md` §4.4 serta analisis `devtools/legacy/ANALISIS_PER
 ## 1. Struktur berkas
 
 ```
-assets/js/store-apps.js   PPAPI.appData: data aplikasi per akun (Firestore app_data/{uid}/…; Mode Demo: localStorage)
+assets/js/store-apps.js   PPAPI.appData: data aplikasi per akun (Firestore app_data/{uid}/…; mode uji pengembang: localStorage)
 aplikasi/
   gate.js                 gerbang bersama: memuat skrip inti situs (+ store-apps.js), memeriksa status, memasang bilah portal
   gate.css                gaya layar gerbang, bilah portal, dan notifikasi (token warna situs, awalan --pp-)
@@ -57,11 +57,11 @@ Urutan kerja di setiap halaman aplikasi:
 
 Tidak ada `data-auth` pada `<body>` halaman aplikasi, karena pengalihan bawaan `core.js` memakai alamat relatif (`masuk.html`, `dashboard.html`) yang dari subfolder akan menjadi 404. `gate.js` mengurus pengalihannya sendiri.
 
-**Batasan yang perlu dipahami.** Di hosting statis (GitHub Pages) berkas aplikasi tetap dapat diunduh oleh siapa pun yang mengetahui alamatnya. Gerbang mengatur *pengalaman portal*: siapa yang diarahkan ke aplikasi dan siapa yang diminta melengkapi keanggotaan. Gerbang tidak merahasiakan kode. Di Mode Demo, status tersimpan di `localStorage` sehingga dapat diubah lewat DevTools. Di mode Firebase, status anggota dilindungi aturan Firestore. Bila kelak kerahasiaan kode diwajibkan, aplikasi perlu disajikan dari hosting yang memeriksa token (mis. Firebase Hosting + Cloud Functions).
+**Batasan yang perlu dipahami.** Di hosting statis (GitHub Pages) berkas aplikasi tetap dapat diunduh oleh siapa pun yang mengetahui alamatnya. Gerbang mengatur *pengalaman portal*: siapa yang diarahkan ke aplikasi dan siapa yang diminta melengkapi keanggotaan. Gerbang tidak merahasiakan kode. Di mode uji pengembang (Mode Demo, hanya bila `apiKey` kosong), status tersimpan di `localStorage` sehingga dapat diubah lewat DevTools. Di mode Firebase, status anggota dilindungi aturan Firestore. Bila kelak kerahasiaan kode diwajibkan, aplikasi perlu disajikan dari hosting yang memeriksa token (mis. Firebase Hosting + Cloud Functions).
 
 ## 3. Bilah portal
 
-Bilah hitam tipis di atas setiap aplikasi: **← Portal Anggota** (ke `dashboard.html`) · judul aplikasi (dari `config.apps`) · nama anggota dengan lencana *Aktif* atau *Admin* (tautan ke Profil Anggota) · **Keluar**. Di Mode Demo ada penanda "Mode Demo" berwarna perak (monokrom, sejak v2.4.0; sebelumnya kuning peringatan).
+Bilah hitam tipis di atas setiap aplikasi: **← Portal Anggota** (ke `dashboard.html`) · judul aplikasi (dari `config.apps`) · nama anggota dengan lencana *Aktif* atau *Admin* (tautan ke Profil Anggota) · **Keluar**. Di mode uji pengembang (tidak pernah di situs produksi) ada penanda "Mode Demo" berwarna perak (monokrom, sejak v2.4.0; sebelumnya kuning peringatan).
 
 - Berupa `<nav aria-label="Portal Anggota PPAPI">`, diawali tautan lompat "Lewati ke aplikasi"; semua kontrol dapat dipakai dengan keyboard dan memiliki cincin fokus.
 - Tinggi 48 px (44 px di ponsel). Bilah menempel di atas; tata letak aplikasi digeser sebesar `--pbar-h` sehingga bilah tidak menutupi apa pun.
@@ -210,7 +210,7 @@ Arahan klien: *"ubah user interface aplikasi (simulator pemasangan dan perhitung
 | Mode | Dokumen proyek | Media (foto, unggahan, gambar besar) |
 |---|---|---|
 | Firebase | `app_data/{uid}/perencanaan/{pid}` | `app_data/{uid}/perencanaan_media/{pid}__ph_<butir>` · `…__pl_<sidik>` · `…__dwg` |
-| Demo | `localStorage['ppapi_appdata/{uid}/perencanaan/{pid}']` (hanya peramban ini) | `localStorage['ppapi_appdata/{uid}/perencanaan_media/…']` |
+| Uji pengembang (Mode Demo) | `localStorage['ppapi_appdata/{uid}/perencanaan/{pid}']` (hanya peramban ini) | `localStorage['ppapi_appdata/{uid}/perencanaan_media/…']` |
 
 Bentuk dokumen: `{ v:1, meta, data, size, updatedAt, parent }`. `data` berisi teks JSON dengan isi yang sama seperti **Ekspor Data (.json)** (isian Data Proyek, jawaban checklist, alasan N/A, analisis, material, JSA, gambar rencana); foto dan unggahan dirujuk dengan id media. `meta` memuat nama proyek, nomor tag, lokasi, tanggal inspeksi, inspektor, model, status akhir (HIJAU/KUNING/MERAH/BELUM LENGKAP), dan jumlah foto/unggahan, sehingga daftar Proyek Saya tampil tanpa memuat seluruh isi. **Rumus dan perhitungan tidak disentuh.**
 
@@ -232,7 +232,7 @@ Proyek baru dibuat di akun saat isian pertama diketik (layar kosong tidak disimp
 
 **Aturan Firestore.** Blok DATA APLIKASI ANGGOTA di `firestore.rules` (digabung 21 Oktober 2026; Publish ulang di Firebase Console): pemilik membaca, menulis, dan menghapus `app_data/{uid}/…` miliknya sendiri. Status Aktif tidak disyaratkan agar data inspeksi tetap dapat diambil kembali; gerbang aplikasi tetap mensyaratkan Aktif untuk *memakai* aplikasi. Admin PPAPI hanya dapat membaca. Koleksi dibatasi `perencanaan`, `perencanaan_media`, `simulator`, dan `simulator_media`. Bentuk dokumen diperiksa (kunci, `data` teks ≤ 800.000 karakter, `updatedAt` angka, `meta` ≤ 24 kunci). Setiap penulisan memakai sekitar 20 ekspresi, jauh di bawah anggaran 1.000.
 
-**Pengujian:** `node devtools/flows/appdata-flow.mjs` (Mode Demo: buat inspeksi, muat ulang, konteks peramban kedua, konflik, ganti nama/gandakan/hapus, berkas besar, proyek baru, ponsel, migrasi, simulator, axe) dan `node devtools/flows/appdata-firebase-stub.mjs` (jalur Firestore dengan stub SDK, cermin aturan, dua perangkat, antrean luring, akses anggota lain/admin).
+**Pengujian:** `node devtools/flows/appdata-flow.mjs` (mode uji pengembang: buat inspeksi, muat ulang, konteks peramban kedua, konflik, ganti nama/gandakan/hapus, berkas besar, proyek baru, ponsel, migrasi, simulator, axe) dan `node devtools/flows/appdata-firebase-stub.mjs` (jalur Firestore dengan stub SDK, cermin aturan, dua perangkat, antrean luring, akses anggota lain/admin).
 
 ## 5. Simulator Pemasangan Perancah Tube & Coupler
 
@@ -241,7 +241,7 @@ Proyek baru dibuat di akun saat isian pertama diketik (layar kosong tidak disimp
 - `index.html` memuat `simulator.js` (mendefinisikan `PPAPI_APP_START`) dan `../gate.js`. Sebelum gerbang lolos, **three.js tidak dimuat sama sekali** (diuji: anggota non-Aktif tidak pernah meminta `three.min.js`).
 - three.js **r128** dimuat dari cdnjs dengan Subresource Integrity (`sha512-dLxUelAp…`). Versi tidak dinaikkan karena r128 adalah build UMD terakhir yang dipakai kode lama; peningkatan versi menunggu fase berikutnya (lihat analisis §5.7).
 - Adegan 3D dibuat saat anggota menekan **Mulai Simulasi** (layar pembuka). Tanpa WebGL atau bila pustaka 3D gagal dimuat, tampil pesan yang jelas (B6). Konteks WebGL yang hilang/pulih juga ditangani (B7).
-- **Kemajuan latihan** disimpan per anggota **di akun PPAPI** (sejak 21 Oktober 2026: `PPAPI.appData`, dokumen kecil `app_data/{uid}/simulator/progress`; Mode Demo `localStorage['ppapi_appdata/{uid}/simulator/progress']`) dan sebagai salinan di peramban: `localStorage['ppapi_progress_<uid>_simulator']` = `{ v: 2, seq: 'tc-2026.10-r2', total, current, completedAt, updatedAt, tools{vert,horz,dist,square,edge,stab}, libSeen[], runs[{completedAt, seq}] }` (`runs` = riwayat perakitan yang selesai, maks. 20). Saat dibuka, versi dengan `updatedAt` terbaru (akun atau peramban) yang dipakai; perubahan dikirim ke akun 1,2 detik kemudian. Latihan dapat dilanjutkan dari perangkat lain. `seq` adalah versi urutan perakitan; kemajuan dari urutan lain (sebelum koreksi Oktober 2026) tidak dapat dipetakan sehingga perakitan dimulai ulang, dengan alat ukur dan katalog yang sudah dilihat tetap tercatat. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
+- **Kemajuan latihan** disimpan per anggota **di akun PPAPI** (sejak 21 Oktober 2026: `PPAPI.appData`, dokumen kecil `app_data/{uid}/simulator/progress`; mode uji pengembang `localStorage['ppapi_appdata/{uid}/simulator/progress']`) dan sebagai salinan di peramban: `localStorage['ppapi_progress_<uid>_simulator']` = `{ v: 2, seq: 'tc-2026.10-r2', total, current, completedAt, updatedAt, tools{vert,horz,dist,square,edge,stab}, libSeen[], runs[{completedAt, seq}] }` (`runs` = riwayat perakitan yang selesai, maks. 20). Saat dibuka, versi dengan `updatedAt` terbaru (akun atau peramban) yang dipakai; perubahan dikirim ke akun 1,2 detik kemudian. Latihan dapat dilanjutkan dari perangkat lain. `seq` adalah versi urutan perakitan; kemajuan dari urutan lain (sebelum koreksi Oktober 2026) tidak dapat dipetakan sehingga perakitan dimulai ulang, dengan alat ukur dan katalog yang sudah dilihat tetap tercatat. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
 - Geometri, urutan 20 tahap, dan mode inspeksi yang mengukur model dikoreksi pada 9 Oktober 2026: lihat **`KOREKSI-SIMULATOR.md`** (§2–§5).
 
 ### 5.2 Perbaikan

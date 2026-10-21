@@ -6,7 +6,7 @@
    • Panel kelola: Peserta (CSV, tandai hadir, hapus), Daftar Hadir,
      Sertifikat (perancang tata letak: unggah desain PNG/JPEG, geser kolom
      nama/judul/tanggal/nomor/QR, ukuran/warna/perataan, pratinjau langsung,
-     contoh PDF) dan daftar sertifikat terbit (cabut/pulihkan).
+     PDF pratinjau) dan daftar sertifikat terbit (cabut/pulihkan).
    Butuh store-kegiatan.js (PPAPI.kegiatan) dan assets/css/kegiatan.css
    (dipasang otomatis bila belum ditautkan). Semua teks data di-escape.
    ========================================================================== */
@@ -405,7 +405,7 @@
     try { qrSvg = K().qr.svg(K().verifyUrl(sampleNo)); } catch (e) { qrSvg = ''; }
     var api = { ready: null };
 
-    function sampleTexts() { return K().fieldTexts(ev, { nama: 'Nama Peserta Contoh', no: sampleNo }, design); }
+    function sampleTexts() { return K().fieldTexts(ev, { nama: 'Nama Peserta', no: sampleNo }, design); }
     function stageHtml() {
       var pg = K().pageSize(design), t = sampleTexts();
       var tpl = design.bg ? '<img class="kga-stage__bg" src="' + h(design.bg) + '" alt="">'
@@ -452,7 +452,7 @@
       slot.innerHTML =
         '<div class="kga-designer kga-designer--split">' +
           '<div class="kga-stage-wrap"><h3 class="form__section-title mt-0">Pratinjau sertifikat</h3>' + stageHtml() +
-            '<p class="kga-hint mt-2">Geser kolom pada pratinjau, atau pilih kolom lalu atur di samping. Contoh: nama "Nama Peserta Contoh", nomor ' + h(K().certDisplay(sampleNo)) + '.</p></div>' +
+            '<p class="kga-hint mt-2">Geser kolom pada pratinjau, atau pilih kolom lalu atur di samping. Pratinjau memakai nama "Nama Peserta" dan nomor ' + h(K().certDisplay(sampleNo)) + '.</p></div>' +
           '<div class="kga-controls">' +
             '<div><h3 class="form__section-title mt-0">Desain latar</h3>' +
               '<div class="kga-upload"><label class="btn btn--ghost btn--sm" for="kgd-file">' + icon('upload', { size: 16 }) + '<span>' + (design.bg ? 'Ganti Desain' : 'Unggah Desain') + '</span></label>' +
@@ -464,7 +464,7 @@
             '</div>' +
             '<div><h3 class="form__section-title mt-0">Kolom: ' + h(K().FIELD_LABEL[sel]) + '</h3>' + propsHtml() + '</div>' +
             '<div class="cluster"><button type="button" class="btn btn--primary btn--sm" data-kgd="save">' + icon('check', { size: 16 }) + '<span>Simpan Desain</span></button>' +
-              '<button type="button" class="btn btn--ghost btn--sm" data-kgd="sample">' + icon('download', { size: 16 }) + '<span>Unduh Contoh PDF</span></button>' +
+              '<button type="button" class="btn btn--ghost btn--sm" data-kgd="sample">' + icon('download', { size: 16 }) + '<span>Unduh PDF Pratinjau</span></button>' +
               '<button type="button" class="btn btn--link btn--sm" data-kgd="reset"><span>Tata letak bawaan</span></button></div>' +
             '<p class="kga-hint" data-kgd-state aria-live="polite">' + (dirty ? 'Ada perubahan yang belum disimpan.' : (design.updatedAt ? 'Tersimpan.' : 'Belum disimpan — peserta memakai tata letak bawaan.')) + '</p>' +
           '</div>' +
@@ -571,7 +571,7 @@
         } else if (kind === 'sample') {
           var s = await K().admin.samplePdf(ev, design);
           K().saveBlob(s.blob, s.fileName);
-          ui().toast('Contoh PDF diunduh.', { type: 'success' });
+          ui().toast('PDF pratinjau diunduh.', { type: 'success' });
           ui().setLoading(b, false);
         }
       } catch (err) { console.error(err); ui().toast(err.message || 'Gagal.', { type: 'error' }); if (b.isConnected) ui().setLoading(b, false); }

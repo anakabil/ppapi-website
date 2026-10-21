@@ -791,7 +791,7 @@
               '<div class="adm-add__main">' +
                 '<p class="adm-panel__text">Masukkan email akun yang sudah terdaftar di situs. Data akun tersebut ditampilkan untuk Anda periksa sebelum peran admin diberikan.</p>' +
                 '<form class="adm-form adm-add__form" id="adm-add-form" novalidate>' +
-                  K.field({ name: 'email', id: 'adm-add-email', label: 'Email akun', type: 'email', required: true, placeholder: 'nama@contoh.id' }) +
+                  K.field({ name: 'email', id: 'adm-add-email', label: 'Email akun', type: 'email', required: true, placeholder: 'nama@domain.id' }) +
                   '<button type="submit" class="btn btn--primary btn--sm" id="adm-add-check"><span>Periksa Akun</span>' + icon('arrow-right', { size: 16, cls: 'btn__icon' }) + '</button>' +
                 '</form>' +
                 '<div id="adm-add-result" aria-live="polite"></div>' +

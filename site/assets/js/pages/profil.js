@@ -2,8 +2,6 @@
    PPAPI — Profil Perkumpulan (profil.html)
    Seluruh isi dirender dari PPAPI.data.organisasi (assets/data/organisasi.js).
    • Bagian tanpa data (mis. Sejarah, Legalitas) disembunyikan otomatis.
-   • Bagian yang masih berupa rumusan sementara (organisasi.bagianContoh) dan
-     butir bertanda contoh:true menampilkan label "Contoh".
    • Nomor bab (01, 02, …) dan indeks halaman dihitung dari bagian yang tampil.
    • Pita ajakan "Bergabung" mengikuti sesi (PPAPI.session): tamu → Daftar sekarang;
      akun yang sudah masuk → langkah keanggotaan berikutnya + baris status.
@@ -14,7 +12,6 @@
   PPAPI.onReady(function () {
     var util = PPAPI.util, ui = PPAPI.ui, h = util.h, $ = util.$, $$ = util.$$;
     var org = (PPAPI.data && PPAPI.data.organisasi) || {};
-    var bagian = org.bagianContoh || {};
     var cfg = PPAPI.config || {};
 
     function arr(v) { return Array.isArray(v) ? v.filter(function (x) { return x !== null && x !== undefined && x !== ''; }) : []; }
@@ -23,11 +20,6 @@
     function byId(id) { return document.getElementById(id); }
     function hide(id) { var s = byId(id); if (s) s.hidden = true; }
     function render(el, html) { if (!el) return; el.innerHTML = html; ui.reveal(el); }
-
-    /* ---------- Label "Contoh" per bagian ---------- */
-    $$('[data-badge-bagian]').forEach(function (el) {
-      el.outerHTML = util.contohBadge({ contoh: !!bagian[el.getAttribute('data-badge-bagian')] });
-    });
 
     /* ---------- 01 · Tentang ---------- */
     (function () {
@@ -103,7 +95,7 @@
       if (!items.length) { hide('sejarah'); return; }
       render($('[data-sejarah]'), items.map(function (s, i) {
         return '<li class="timeline__item" data-reveal="' + (i % 2 === 0 ? 'left' : 'right') + '">' +
-          '<p class="timeline__year"><span>' + h(s.tahun || '') + '</span>' + util.contohBadge(s) + '</p>' +
+          '<p class="timeline__year"><span>' + h(s.tahun || '') + '</span></p>' +
           '<h3 class="timeline__title">' + h(s.judul || '') + '</h3>' +
           (s.teks ? '<p class="timeline__text">' + h(s.teks) + '</p>' : '') +
         '</li>';
@@ -111,20 +103,15 @@
     })();
 
     /* ---------- 05 · Struktur organisasi ----------
-       Butir contoh:true (atau tanpa nama) adalah jabatan yang namanya belum resmi: nama contoh
-       TIDAK ditampilkan — jabatan menjadi baris utama, lingkaran berisi nomor urut, dan baris
-       "Nama menyusul" menggantikan nama. Label "Contoh" cukup satu kali pada judul bagian. */
+       Butir tanpa nama adalah jabatan yang namanya belum ditetapkan: jabatan menjadi baris utama,
+       lingkaran berisi nomor urut, dan baris "Nama menyusul" menggantikan nama. */
     (function () {
       var list = arr(org.pengurus).filter(function (p) { return p && (p.nama || p.jabatan); });
       if (!list.length) { hide('struktur'); return; }
-      var anyContoh = list.some(function (p) { return p.contoh; });
-      var badge = $('[data-badge-pengurus]');
-      if (badge) badge.outerHTML = util.contohBadge({ contoh: anyContoh });
-
       render($('[data-pengurus]'), list.map(function (p, i) {
         var nama = String(p.nama || '').trim();
         var jabatan = String(p.jabatan || '').trim();
-        var pending = !!p.contoh || !nama;
+        var pending = !nama;
         var avatar, lines;
         if (pending) {
           avatar = '<span class="person__avatar profil-person__avatar--num" aria-hidden="true">' +
@@ -144,8 +131,6 @@
       }).join(''));
       var grid = $('[data-pengurus]');
       grid.classList.toggle('profil-pengurus--few', list.length < 4);
-      var note = $('[data-pengurus-note]');
-      if (note) note.hidden = !anyContoh;
     })();
 
     /* ---------- 06 · Makna logo (logo warna asli + garis penunjuk) ---------- */

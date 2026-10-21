@@ -2,11 +2,13 @@
 
 Situs resmi **Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)**. Situs ini statis
 (HTML, CSS, JavaScript biasa) sehingga dapat diterbitkan gratis melalui **GitHub Pages**
-tanpa proses *build*. Login anggota dan penyimpanan data memakai **Firebase** (opsional);
-selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
+tanpa proses *build*. Login anggota dan penyimpanan data memakai **Firebase** (Mode Firebase,
+mode produksi yang dipakai situs). Untuk pengembangan dan pengujian tersedia **mode uji
+pengembang** ("Mode Demo"), yang hanya aktif bila `firebase.apiKey` di `config.js` dikosongkan
+dan tidak pernah tampil bagi pengunjung situs produksi.
 
-**Alamat situs saat ini:** <https://anakabil.github.io/ppapi-website/> (repositori publik
-`anakabil/ppapi-website`, GitHub Pages). Cara pembaruannya dijelaskan di bagian 13.
+**Alamat situs saat ini:** <https://ppapi.or.id/> (repositori `anakabil/ppapi-website`,
+GitHub Pages). Cara pembaruannya dijelaskan di bagian 13.
 
 ---
 
@@ -62,7 +64,6 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
 │  verifikasi.html, umpan-balik.html, kebijakan-privasi.html, 404.html
 ├─ aplikasi/              Aplikasi anggota (perencanaan/, simulator/, gate.js)
 ├─ pustaka/               (opsional) berkas PDF Produk Pengetahuan yang PUBLIK
-├─ styleguide.html        Galeri komponen internal (tidak tampil di menu)
 ├─ firestore.rules        Aturan keamanan database Firestore
 ├─ robots.txt             Izin perayapan mesin pencari
 ├─ README.md              Panduan ini
@@ -72,7 +73,7 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
    ├─ css/pages/*.css     Gaya khusus tiap halaman
    ├─ js/config.js        ★ PENGATURAN SITUS (boleh diubah)
    ├─ js/core.js          Mesin tampilan & sesi bersama (jangan diubah)
-   ├─ js/auth.js          Login: Firebase atau Mode Demo (jangan diubah)
+   ├─ js/auth.js          Login: Firebase (produksi) atau mode uji pengembang (jangan diubah)
    ├─ js/store.js         Data anggota, pendaftaran, admin, konten (jangan diubah)
    ├─ js/store-*.js       Data fitur tambahan: instruktur, kegiatan, toko, aplikasi (jangan diubah)
    ├─ js/kegiatan-saya.js Panel pendaftaran/daftar hadir/sertifikat + bagian "Kegiatan Saya" 
@@ -95,7 +96,7 @@ python -m http.server 8080
 
 Lalu buka `http://localhost:8080/` di peramban. Alternatif: ekstensi **Live Server** di
 Visual Studio Code. Membuka berkas langsung (klik ganda `index.html`) umumnya juga
-berfungsi untuk Mode Demo, tetapi **login Firebase hanya berjalan melalui alamat http/https**.
+berfungsi untuk mode uji pengembang, tetapi **login Firebase hanya berjalan melalui alamat http/https**.
 
 ## 4. Mengedit konten
 
@@ -116,7 +117,7 @@ Aturan umum untuk semua berkas di `assets/js/config.js` dan `assets/data/*.js`:
 | `assets/data/agenda.js` | Agenda kegiatan | **Kosong (`[]`)** sampai ada kegiatan resmi — halaman Agenda, Beranda, Berita, dan Dasbor menampilkan keadaan kosong yang rapi. Format butir ada di komentar berkas. Kegiatan yang sudah lewat otomatis masuk "Telah Berlangsung". |
 | `assets/data/pustaka.js` | **Produk Pengetahuan** (standar, CoP, petunjuk teknis, modul pelatihan, formulir, kajian, aplikasi) | Saat ini hanya berisi dua aplikasi anggota; koleksi dokumen terisi setelah dokumen resmi terbit (di sini atau lewat Konsol Admin). Lihat bagian 7.3 tentang tempat menaruh berkas. |
 | `assets/data/regulasi.js` | Pustaka regulasi & standar (tampil juga sebagai kategori "Peraturan Perundangan" di Produk Pengetahuan) | Isi awal telah diverifikasi dari sumber resmi (isian `sumber`). `kunci: true` tampil di dasbor. |
-| `assets/data/organisasi.js` | Tentang, visi-misi, nilai, layanan, sejarah, pengurus, legalitas, makna logo, angka, FAQ, kategori & alur keanggotaan | `sejarah`, `pengurus`, dan `legalitas` **kosong** (bagiannya disembunyikan) sampai data resmi tersedia. Rumusan visi, misi, nilai, makna logo, dan uraian kategori keanggotaan masih sementara dan ditandai `bagianContoh`/`contoh` (label "Contoh" tampil) — ubah menjadi `false` setelah ditetapkan pengurus. Kategori dengan `bisaDiajukan: false` (Kehormatan) tidak dapat dipilih di formulir pendaftaran. |
+| `assets/data/organisasi.js` | Tentang, visi-misi, nilai, layanan, sejarah, pengurus, legalitas, makna logo, angka, FAQ, kategori & alur keanggotaan | `sejarah`, `pengurus`, dan `legalitas` **kosong** (bagiannya disembunyikan) sampai data resmi tersedia. Visi, misi, nilai, makna logo, dan uraian kategori keanggotaan dirumuskan sebagai komitmen umum perkumpulan tanpa label apa pun; bila pengurus menetapkan rumusan resmi, cukup ganti teksnya. Kategori dengan `bisaDiajukan: false` (Kehormatan) tidak dapat dipilih di formulir pendaftaran. |
 | `assets/data/kompetensi.js` | Katalog kompetensi, tingkat, penerbit sertifikat | Dipakai pada formulir pendaftaran dan profil anggota. |
 | `assets/data/registry.js` | Daftar verifikasi publik statis | **Kosong (`[]`)**. Daftar verifikasi yang berlaku terisi otomatis dari persetujuan keanggotaan di Konsol Admin (Firestore `registry`). Isi berkas ini hanya bila perlu menambahkan anggota lama secara manual — data terbatas saja. |
 
@@ -132,16 +133,15 @@ menambahkan kredit, merek, atau nama pihak lain di situs maupun di aplikasi angg
 memiliki versi ringan `-sm.webp`; `logo-light-mark.webp` adalah logo tanpa tulisan kecil untuk
 header. Bila logo diganti, perbarui juga versi-versi tersebut.
 
-### Konten contoh telah dihapus (15 Oktober 2026)
+### Situs produksi tanpa konten contoh (15 dan 21 Oktober 2026)
 
 Atas permintaan klien, seluruh konten contoh (berita, pengumuman, agenda, daftar verifikasi,
 rancangan dokumen Produk Pengetahuan, tonggak sejarah, dan nama pengurus sementara) telah
-dihapus dari berkas data. Yang tersisa dengan label **"Contoh"** hanyalah rumusan
-sementara visi, misi, nilai, makna logo, dan uraian kategori keanggotaan di `organisasi.js`
-(`bagianContoh` dan `contoh: true` pada `keanggotaan.kategori`), supaya halaman tidak
-kosong sambil menunggu rumusan resmi. Setelah rumusan resmi ditetapkan, ubah nilainya menjadi
-`false` agar label hilang. Butir baru yang ditambahkan dengan `contoh: true` (termasuk dari
-Konsol Admin) akan kembali menampilkan label "Contoh".
+dihapus dari berkas data (15 Oktober). Pada 21 Oktober label **"Contoh"** terakhir (visi, misi,
+nilai, makna logo, dan kategori keanggotaan) juga dihapus; teksnya dirumuskan ulang sebagai
+komitmen umum perkumpulan. Pilihan "Tandai sebagai konten contoh" di Konsol Admin telah
+ditiadakan, dan pada Mode Firebase situs tidak pernah menampilkan lencana "Contoh" walaupun
+ada data lama yang masih membawa tanda itu.
 
 **Menambah berita.** Dua cara: (1) tempel blok baru di paling atas `PPAPI_DATA.berita` pada
 `assets/data/berita.js` mengikuti petunjuk di kepala berkas — gunakan `'## '` untuk
@@ -230,15 +230,16 @@ Buka **Konsol Admin** dari menu akun (hanya tampil bagi admin) atau `admin.html`
   bagian **Kegiatan**; kegiatan yang terbit otomatis tampil di halaman Agenda, Beranda, dan
   Dasbor.
 
-### 6.1 Admin pada Mode Demo
+### 6.1 Admin pada mode uji pengembang (Mode Demo)
 
-Mode Demo menyiapkan satu akun admin dan empat data contoh (bertanda "(Contoh)") agar konsol
-dapat dicoba:
+Bagian ini hanya untuk pengembang yang menjalankan salinan situs dengan `apiKey` kosong
+(misalnya di komputer sendiri atau oleh uji otomatis). Mode ini menyiapkan satu akun admin uji
+dan empat data uji agar konsol dapat dicoba tanpa Firebase:
 
 - Email **`admin@ppapi.demo`**, kata sandi **`AdminPPAPI2026`**.
 
-Data demo hanya tersimpan di peramban yang dipakai. Hapus data situs di peramban untuk
-memulai ulang.
+Data uji hanya tersimpan di peramban yang dipakai dan tidak pernah ada di situs produksi.
+Hapus data situs di peramban untuk memulai ulang.
 
 ### 6.2 Membuat admin PERTAMA pada Mode Firebase (sekali saja)
 
@@ -279,8 +280,8 @@ memulai ulang.
   menambah butir baru, **mengubah** butir bawaan (tersimpan sebagai pengganti), atau
   **menyembunyikan** butir bawaan (dapat **dipulihkan**). Pada Mode Firebase tersimpan di
   Firestore (`content_berita`, `content_pengumuman`, `content_agenda`, `content_pustaka`,
-  `content_regulasi`) dan langsung tampil bagi semua pengunjung. **Pada Mode Demo perubahan
-  hanya tersimpan di peramban admin.**
+  `content_regulasi`) dan langsung tampil bagi semua pengunjung. Pada mode uji pengembang perubahan
+  hanya tersimpan di peramban yang dipakai.
 
 Situs menggabungkan keduanya: butir dari konsol dengan `id` yang sama menggantikan butir
 bawaan.
@@ -344,18 +345,23 @@ dapat diunduh siapa saja yang mengetahui alamatnya. Penjaga akses mengatur **pen
 portal** (siapa yang diarahkan ke aplikasi), bukan kerahasiaan kode. Data anggota yang
 sebenarnya dilindungi oleh aturan Firestore (bagian 10).
 
-## 9. Mode Demo vs. Mode Firebase
+## 9. Mode uji pengembang (Mode Demo) vs. Mode Firebase (produksi)
 
-| | **Mode Demo** (bawaan) | **Mode Firebase** |
+Situs produksi <https://ppapi.or.id/> selalu berjalan dalam **Mode Firebase**. Mode Demo adalah
+mode uji untuk pengembang dan uji otomatis; pengunjung situs produksi tidak pernah melihatnya.
+
+| | **Mode Demo** (uji pengembang) | **Mode Firebase** (produksi) |
 | --- | --- | --- |
 | Aktif bila | `firebase.apiKey` di `config.js` kosong | `firebase.apiKey` terisi |
 | Akun, pendaftaran & data anggota | Tersimpan **hanya di peramban** yang dipakai | Tersimpan di Firebase (dapat diakses dari perangkat mana pun) |
-| Admin | `admin@ppapi.demo` / `AdminPPAPI2026` + 4 data contoh | Admin pertama dibuat di Firebase Console (bagian 6.2) |
+| Admin | `admin@ppapi.demo` / `AdminPPAPI2026` + 4 data uji | Admin pertama dibuat di Firebase Console (bagian 6.2) |
 | Kode OTP nomor HP | Selalu **123456** | Dikirim melalui SMS |
 | Masuk dengan Google | Simulasi (isi nama & Gmail) | Jendela resmi Google |
 | Konten dari Konsol Admin, umpan balik | Tersimpan di peramban | Tersimpan di Firestore, tampil bagi semua pengunjung |
 
-Pada Mode Demo, halaman masuk/anggota/admin menampilkan pita **"Mode Demo"** bagi pengunjung.
+Pada Mode Demo, halaman masuk/anggota/admin menampilkan pita **"Mode Demo"** sebagai pengingat
+bagi pengembang. Pita, catatan akun admin uji di halaman masuk, dan lencana "Contoh" tidak
+dirender sama sekali pada Mode Firebase (diperiksa oleh `devtools/flows/produksi-bersih.mjs`).
 
 ## 10. Mengaktifkan Firebase (login sebenarnya)
 
@@ -391,7 +397,8 @@ Pada Mode Demo, halaman masuk/anggota/admin menampilkan pita **"Mode Demo"** bag
 12. Uji di `https://<username>.github.io/<repo>/masuk.html`: daftar dengan email, isi dan
     ajukan formulir, lalu setujui dari akun admin; periksa dokumen `members/{uid}`,
     `registry/{kta}`, dan `audit_log` di Firestore.
-13. Untuk kembali ke Mode Demo, kosongkan `apiKey` di `config.js`.
+13. Untuk menguji tanpa Firebase di salinan lokal, kosongkan `apiKey` di `config.js` (mode uji
+    pengembang). Jangan menerbitkan situs dengan `apiKey` kosong.
 
 Email verifikasi: saat mendaftar dengan email & kata sandi, situs otomatis mengirim tautan
 verifikasi. Templat dan bahasa email dapat diatur di **Authentication › Templates › Email
@@ -550,7 +557,7 @@ Bila menerbitkan sendiri dari awal (repositori baru):
 
 Halaman `404.html` otomatis dipakai GitHub Pages untuk alamat yang tidak ditemukan. Berkas
 `robots.txt` mengizinkan perayapan semua halaman; halaman anggota (Dasbor, Profil Anggota,
-Formulir Pendaftaran), Konsol Admin, kedua aplikasi anggota, `404.html`, dan `styleguide.html`
+Formulir Pendaftaran), Konsol Admin, kedua aplikasi anggota, dan `404.html`
 dijauhkan dari hasil pencarian melalui tanda `noindex` di halamannya. Catatan: `robots.txt` hanya
 dibaca mesin pencari di **akar domain**; pada alamat proyek (`…github.io/ppapi-website/`) berkas
 itu tidak berpengaruh, sehingga berkas pendukung (README, `aplikasi/*.md`, `firestore.rules`)
@@ -581,7 +588,7 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   Kebijakan Keamanan Konten (bagian 10), dan pustaka CDN aplikasi dimuat dengan pemeriksaan
   integritas (SRI).
 - Mode Demo **bukan** sistem login yang aman (data tersimpan di peramban) — gunakan hanya
-  untuk demonstrasi.
+  untuk pengembangan dan pengujian, jangan untuk situs yang diterbitkan.
 - Kebijakan Privasi situs mengacu pada UU Nomor 27 Tahun 2022 tentang Pelindungan Data
   Pribadi; perbarui teksnya bila cara pengolahan data berubah (mis. pas foto dan dokumen
   pendaftaran kini diproses sekretariat untuk verifikasi).
@@ -597,7 +604,7 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
 | Data anggota tidak tersimpan (Firebase) | Database Firestore belum dibuat atau `firestore.rules` belum dipublikasikan. |
 | Menu "Konsol Admin" tidak muncul | Dokumen `admins/{UID}` belum ada atau UID salah ketik (bagian 6.2); keluar lalu masuk kembali. |
 | "Fitur ini khusus anggota berstatus Aktif." | Status keanggotaan belum Aktif atau masa berlaku habis — lihat Dasbor. |
-| Perubahan konten di Konsol Admin tidak terlihat di perangkat lain | Situs masih Mode Demo (data hanya di peramban). |
+| Perubahan konten di Konsol Admin tidak terlihat di perangkat lain | Salinan situs berjalan dalam mode uji pengembang (`apiKey` kosong; data hanya di peramban). |
 | "Refused to load …" di konsol peramban / layanan pihak ketiga tidak tampil | Alamat layanan belum diizinkan pada tag Content-Security-Policy (bagian 10). |
 | Anggota Aktif tidak dapat mengubah nama | Disengaja: nama yang disetujui tercantum pada KTA dan daftar verifikasi; koreksi oleh sekretariat (bagian 5). |
 | Calon admin "belum ditemukan" padahal sudah mendaftar | Emailnya belum diverifikasi — minta ia membuka tautan verifikasi (atau "Kirim Ulang Tautan" di Dasbor), lalu masuk kembali. |
@@ -672,12 +679,12 @@ Menunggu Pembayaran → (pembeli mengirim bukti) Menunggu Konfirmasi → (sekret
 
 ### 18.4 Firestore
 Aturan toko sudah tergabung di `firestore.rules` (bagian 11) — cukup Publish ulang berkas itu. Tidak memerlukan indeks komposit (kueri: `products where aktif == true`, `orders where uid == …`).
-Mode Demo: semua data toko tersimpan di localStorage peramban (`ppapi_toko_*`).
+Mode uji pengembang (Mode Demo): semua data toko tersimpan di localStorage peramban (`ppapi_toko_*`).
 
 ## 19. Data aplikasi di akun
 
 - Proyek **Perencanaan & Analisis Struktur** dan kemajuan **Simulator** tersimpan di akun
-  anggota (Mode Firebase: `app_data/{uid}/…`; Mode Demo: peramban ini), sehingga dapat dibuka
+  anggota (Mode Firebase: `app_data/{uid}/…`; mode uji pengembang: peramban ini), sehingga dapat dibuka
   dari perangkat lain dan tidak hilang bila peramban dibersihkan.
 - Penyimpanan bekerja juga saat luring: perubahan diantrekan di peramban dan dikirim ketika
   koneksi kembali. Bila versi di akun lebih baru (diubah dari perangkat lain), aplikasi
@@ -688,4 +695,5 @@ Mode Demo: semua data toko tersimpan di localStorage peramban (`ppapi_toko_*`).
 
 ---
 
-*Galeri komponen untuk pengembang tersedia di `styleguide.html`.*
+*Galeri komponen untuk pengembang ada di `devtools/styleguide/` (tidak ikut diterbitkan); uji otomatis
+menyajikannya di alamat `/styleguide.html` pada server uji lokal.*
