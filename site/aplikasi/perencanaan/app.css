@@ -501,6 +501,30 @@ table.jsa select { min-height: 40px; padding: 6px 32px 6px 10px; font-size: 13px
 .proj-item .pi-main { flex: 1; min-width: 0; }
 .proj-item .pi-name { font: 600 1.1rem/1.25 var(--f-display); letter-spacing: -.005em; color: var(--text); font-variant-numeric: lining-nums; }
 .proj-item .pi-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+/* Proyek Saya (data melekat ke akun, 2026-10-21) */
+.proj-ul { list-style: none; margin: 0; padding: 0; }
+.proj-item { flex-wrap: wrap; }
+.proj-item.is-open { box-shadow: inset 3px 0 0 var(--text); padding-left: 14px; }
+.pi-act { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.pi-link { display: inline-flex; align-items: center; min-height: 34px; padding: 0 6px; font: 500 .8rem/1 var(--f-body); color: var(--text); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; text-decoration-color: var(--line-strong); }
+.pi-link:hover { text-decoration-color: currentColor; }
+.pi-open { display: inline-flex; align-items: center; min-height: 34px; padding: 0 10px; font: 600 .66rem/1 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.pi-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pi-flag { display: inline-flex; align-items: center; padding: 3px 8px; font: 600 .62rem/1.1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
+.pi-flag--warn { color: #6b4f12; border-color: #c99a2e; }
+.pi-ren { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pi-ren input { flex: 1 1 220px; min-height: 38px; padding: 6px 10px; font: 500 .95rem/1.2 var(--f-body); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
+.mig-box { margin: 0 0 16px; padding: 16px 18px; border: 1px solid var(--line-strong); border-left: 3px solid var(--text); border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; line-height: 1.6; }
+.mig-h { margin: 0 0 4px; font: 600 .74rem/1.2 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--text); }
+.mig-list { margin: 8px 0 0; padding-left: 18px; }
+.mig-list span { color: var(--muted); }
+.mig-box .btn-row { margin-top: 12px; }
+.saved-ind.is-warn { color: #e2b453; }
+@media (max-width: 680px) {
+  .proj-item .pi-main { flex: 1 1 100%; }
+  .pi-act { flex: 1 1 auto; }
+  .pi-link, .pi-open { min-height: 36px; }
+}
 .upl-item { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 10px; font-size: 13px; }
 .upl-item img { width: 72px; height: 54px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line); }
 .upl-pdf { font: 600 .7rem/1 var(--f-cond); letter-spacing: .16em; background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; }

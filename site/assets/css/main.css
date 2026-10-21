@@ -1448,6 +1448,13 @@ html.menu-open .site-header [data-account] { visibility: hidden; opacity: 0; }
   .site-header__actions::before { content: ""; position: absolute; left: 0; top: 50%; height: 22px; width: 1px; background: rgba(255,255,255,.18); transform: translateY(-50%); }
   .menu-toggle { display: none !important; }
 }
+/* 9 menu items (since 21 Oct 2026: + Instruktur, Toko): slightly tighter rhythm on small laptops so the row
+   keeps clear air after the logo (flows/nav-fit.mjs measures 1120 / 1180 / 1280 / 1440, signed out and in) */
+@media (min-width: 1120px) and (max-width: 1279px) {
+  .site-nav__list { gap: 15px; }
+  .site-nav__link { letter-spacing: .11em; }
+  .site-header__actions { padding-left: 20px; }
+}
 
 /* account area */
 .account { position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px; }

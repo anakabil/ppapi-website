@@ -33,6 +33,12 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
 - **Aplikasi anggota (Beta)**: PPAPI Scaffold (Beta) — Perencanaan & Analisis Struktur v2.4.0, dan
   Simulator Pemasangan Perancah Tube & Coupler (folder `aplikasi/`). Metode perhitungan dan
   urutan simulator telah dikoreksi dan menunggu tinjauan Komite Teknis PPAPI (bagian 8).
+- **Fitur tambahan (21 Oktober 2026)** — rinciannya di bagian 16–19:
+  **Direktori Instruktur** dan formulir permintaan instruktur (`instruktur.html`);
+  **Kegiatan** (webinar, pelatihan, seminar) dengan pendaftaran, daftar hadir otomatis, dan
+  **sertifikat PDF** yang dapat diverifikasi (`sertifikat.html`); **Toko PPAPI** dengan
+  keranjang, transfer bank manual, dan soft file bertanda air (`toko.html`, `keranjang.html`,
+  `pesanan.html`); serta **data aplikasi anggota yang melekat ke akun**.
 - Desain monokrom yang konsisten; rapi di ponsel dan komputer, dapat dipakai dengan papan
   ketik, dan menghormati pengaturan "kurangi animasi".
 
@@ -47,6 +53,11 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
 ├─ anggota.html           Profil Anggota & KTA (khusus anggota Aktif)
 ├─ pustaka.html           Produk Pengetahuan (publik; berkas khusus anggota Aktif)
 ├─ admin.html             Konsol Admin (khusus admin)
+├─ instruktur.html        Direktori Instruktur + formulir permintaan instruktur
+├─ sertifikat.html        Verifikasi sertifikat kegiatan (nomor sertifikat / kode QR)
+├─ toko.html              Toko PPAPI (katalog)
+├─ keranjang.html         Keranjang belanja (noindex)
+├─ pesanan.html           Pesanan Saya (wajib masuk; noindex)
 ├─ profil.html, berita.html, agenda.html, regulasi.html, keanggotaan.html,
 │  verifikasi.html, umpan-balik.html, kebijakan-privasi.html, 404.html
 ├─ aplikasi/              Aplikasi anggota (perencanaan/, simulator/, gate.js)
@@ -63,6 +74,8 @@ selama Firebase belum dihubungkan, situs berjalan dalam **Mode Demo**.
    ├─ js/core.js          Mesin tampilan & sesi bersama (jangan diubah)
    ├─ js/auth.js          Login: Firebase atau Mode Demo (jangan diubah)
    ├─ js/store.js         Data anggota, pendaftaran, admin, konten (jangan diubah)
+   ├─ js/store-*.js       Data fitur tambahan: instruktur, kegiatan, toko, aplikasi (jangan diubah)
+   ├─ js/kegiatan-saya.js Panel pendaftaran/daftar hadir/sertifikat + bagian "Kegiatan Saya" 
    ├─ js/pages/*.js       Logika khusus tiap halaman
    ├─ data/*.js           ★ ISI KONTEN (boleh diubah) — lihat bagian 4
    └─ img/                Logo, foto, ikon situs
@@ -210,6 +223,12 @@ Buka **Konsol Admin** dari menu akun (hanya tampil bagi admin) atau `admin.html`
 - **Konten**, **Umpan Balik** (status Baru/Diproses/Selesai + catatan), **Admin** (tambah
   dengan email akun yang sudah terdaftar **dan terverifikasi**, hapus), dan **Log Aktivitas**
   (setiap keputusan tercatat: siapa, kapan, apa).
+- **Instruktur** (bagian 16), **Kegiatan** (bagian 17), dan **Toko** (bagian 18). Angka kecil di
+  menu konsol menandai permintaan instruktur baru dan pesanan yang perlu ditindaklanjuti.
+- **Konten › Agenda** kini disebut *agenda sederhana*: hanya pengumuman jadwal tanpa
+  pendaftaran. Kegiatan yang memerlukan pendaftaran, daftar hadir, atau sertifikat dibuat di
+  bagian **Kegiatan**; kegiatan yang terbit otomatis tampil di halaman Agenda, Beranda, dan
+  Dasbor.
 
 ### 6.1 Admin pada Mode Demo
 
@@ -313,8 +332,8 @@ Beta dicabut setelah Komite menyetujuinya. Dokumen yang perlu ditinjau:
 - [`aplikasi/CATATAN.md`](aplikasi/CATATAN.md) — catatan porting, keamanan, data per anggota,
   dependensi (jsPDF dan three.js dari cdnjs dengan pemeriksaan integritas), dan pengujian.
 
-Data kerja aplikasi (proyek perencanaan, kemajuan simulator) tersimpan **di peramban
-anggota** per akun, tidak dikirim ke PPAPI. Kredit pengembang pada aplikasi mengikuti arahan
+Data kerja aplikasi (proyek perencanaan, kemajuan simulator) **melekat ke akun** anggota
+sejak 21 Oktober 2026 (bagian 19). Kredit pengembang pada aplikasi mengikuti arahan
 klien ("Dikembangkan oleh mrezahuzain@2026"); isian `penyusun` aplikasi di
 `assets/data/pustaka.js` sengaja dikosongkan sampai klien memutuskan apakah isian itu diisi.
 Nama aplikasi perencanaan di `config.js` (`apps`) dan di katalog memuat tanda **"(Beta)"**;
@@ -394,6 +413,12 @@ di **semua** halaman (teksnya sama di setiap halaman; dua halaman aplikasi menam
 `https://cdnjs.cloudflare.com`). Pelanggaran tampil sebagai galat "Refused to load …" di konsol
 peramban.
 
+Pengecualian fitur tambahan: `agenda.html`, `dashboard.html`, dan `admin.html` juga mengizinkan
+`https://cdnjs.cloudflare.com` (jsPDF untuk sertifikat) dan bingkai `https://docs.google.com`
+(Google Form penyelenggara yang ditanam di halaman); `pesanan.html` dan `admin.html` mengizinkan
+`https://cdnjs.cloudflare.com` serta cadangan `https://cdn.jsdelivr.net` (pdf-lib untuk tanda
+air soft file). Semua pustaka itu dimuat dengan pemeriksaan integritas (SRI).
+
 ### Memperbarui versi Firebase SDK
 
 `assets/js/auth.js` memuat hash SRI (`sha384`) untuk setiap berkas SDK versi yang dipakai
@@ -432,9 +457,32 @@ Prinsip: setiap pihak hanya mendapat akses seminimal mungkin.
 | `feedback/{id}` | admin | kirim: siapa saja (isian divalidasi); ubah status & catatan: admin (tercatat atas nama admin tersebut); hapus: ditolak |
 | `counters/{id}` | admin | admin (nomor urut KTA) |
 | `audit_log/{id}` | admin | admin, hanya menambah (tidak dapat diubah/dihapus) |
+| `instructors/{id}` | siapa saja, **hanya profil yang diterbitkan** (`published == true`); admin: semua | admin |
+| `instructor_contacts/{id}` | admin | admin (email/telepon instruktur, akun tertaut, catatan) |
+| `instructor_requests/{id}` | admin | kirim: siapa saja (divalidasi, status Baru, waktu server); ubah status & catatan: admin; hapus: ditolak |
+| `events/{id}` | siapa saja bila **terbit**; admin: semua | admin; peserta hanya menambah/mengurangi jumlah terdaftar tepat 1 bersama pendaftarannya dan menaikkan nomor urut sertifikat tepat 1 |
+| `events/{id}/private/ruang` | admin, peserta terdaftar | admin |
+| `events/{id}/participants/{uid}` | pemilik, admin | pemilik sesuai akses kegiatan (semua akun / anggota Aktif); admin |
+| `events/{id}/attendance/{uid}` | pemilik, admin | peserta terdaftar, **hanya** antara 30 menit sebelum dan 3 jam sesudah kegiatan selesai (waktu server); admin |
+| `events/{id}/assets/certificate` | admin, peserta yang sudah hadir | admin |
+| `certificates/{nomor}` | siapa saja per nomor (daftar: admin) | dibuat peserta yang hadir, sekali; cabut/pulihkan: admin |
+| `products/{id}`, `product_media/{id}` | siapa saja (produk **aktif**); admin: semua | admin |
+| `product_files/{id}` | admin, pembeli yang memiliki hak unduh | admin |
+| `entitlements/{uid}_{produk}` | pemilik, admin | admin (saat mengonfirmasi pembayaran) |
+| `orders/{nomor}` | pemilik pesanan, admin | pembeli membuat pesanan atas namanya; selama belum dibayar hanya menambah bukti bayar atau membatalkan; admin memperbarui; hapus: ditolak |
+| `shop_settings/main` | siapa saja | admin |
+| `carts/{uid}` | pemilik | pemilik |
+| `app_data/{uid}/…` | pemilik, admin (baca saja, untuk bantuan teknis) | pemilik |
 | koleksi lain | ditolak | ditolak |
 
 Setiap kali berkas ini diubah, salin ulang ke Firebase Console › Firestore › Rules › **Publish**.
+
+> **Wajib setelah pembaruan 21 Oktober 2026:** `firestore.rules` kini memuat aturan Instruktur,
+> Kegiatan & sertifikat, Toko, dan data aplikasi. **Salin seluruh isi berkas ke Firebase Console
+> › Firestore › Rules, lalu klik Publish.** Sebelum aturan baru diterbitkan, pada Mode Firebase
+> fitur-fitur tersebut ditolak database (pesan "izin ditolak"), sedangkan fitur lama tetap
+> berjalan. Tidak ada indeks komposit yang perlu dibuat. Berkas tetap jauh di bawah batas ukuran
+> aturan Firestore (256 KB); setiap permintaan memakai beberapa puluh ekspresi saja (batas 1.000).
 
 ### Menahan kiriman otomatis (App Check) — disarankan setelah Firebase aktif
 
@@ -554,6 +602,89 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
 | Anggota Aktif tidak dapat mengubah nama | Disengaja: nama yang disetujui tercantum pada KTA dan daftar verifikasi; koreksi oleh sekretariat (bagian 5). |
 | Calon admin "belum ditemukan" padahal sudah mendaftar | Emailnya belum diverifikasi — minta ia membuka tautan verifikasi (atau "Kirim Ulang Tautan" di Dasbor), lalu masuk kembali. |
 | Perubahan tidak muncul | Muat ulang dengan Ctrl + F5; GitHub Pages butuh 1–2 menit setelah *push*. |
+
+
+## 16. Direktori Instruktur (`instruktur.html`)
+
+- Halaman publik berisi profil instruktur perancah yang **diterbitkan** sekretariat: foto,
+  gelar, bidang kompetensi, sertifikasi, pengalaman, wilayah layanan, bahasa, metode (luring/
+  daring), dan materi. Pengunjung dapat menyaring (bidang, kompetensi, wilayah, bahasa, metode,
+  pencarian) dan membuka profil lengkap (`instruktur.html?id=…`).
+- **Formulir permintaan instruktur** untuk mitra penyelenggara pelatihan (organisasi, penanggung
+  jawab, kontak, topik, metode, lokasi, rencana tanggal, jumlah peserta). Permintaan masuk ke
+  **Konsol Admin › Instruktur › Permintaan** (status Baru/Diproses/Selesai, catatan internal,
+  balas lewat email).
+- **Konsol Admin › Instruktur › Profil**: tambah, ubah, terbitkan/tarik, hapus. Foto JPEG
+  maksimal 150 KB. Profil dapat ditautkan ke akun anggota dan nomor KTA.
+- **Privasi:** email dan telepon instruktur disimpan terpisah (`instructor_contacts`) dan hanya
+  dapat dibaca admin; tidak pernah tampil di halaman publik.
+- Daftar bidang kompetensi diambil dari `assets/data/kompetensi.js`.
+
+## 17. Kegiatan & sertifikat
+
+- Sekretariat membuat kegiatan di **Konsol Admin › Kegiatan** (webinar, pelatihan, seminar,
+  sertifikasi, lokakarya, rapat, kunjungan teknis): jadwal (WIB), mode, lokasi atau tautan ruang
+  daring, kuota, siapa yang boleh mendaftar (**semua akun** yang masuk, atau **anggota Aktif**
+  saja), dan tautan Google Form penyelenggara bila ada. Kegiatan **terbit** tampil di Agenda,
+  Beranda, dan Dasbor.
+- **Pendaftaran** dari detail kegiatan di halaman Agenda. Peserta melihat kegiatannya di
+  **Dasbor › Kegiatan Saya** (menu akun › Kegiatan Saya) — untuk semua akun, termasuk yang
+  keanggotaannya belum Aktif.
+- **Daftar hadir otomatis**: tombol "Isi Daftar Hadir" aktif dari **30 menit sebelum** jadwal
+  selesai sampai **3 jam sesudahnya** (diperiksa dengan waktu server pada Mode Firebase).
+- **Sertifikat PDF** terbit untuk peserta yang hadir. Nomor sertifikat:
+  `PPAPI/SERT/<tahun>/<kode kegiatan>/<urut>`, dengan kode QR menuju **`sertifikat.html`**
+  (verifikasi publik per nomor; footer › Verifikasi Sertifikat). Sekretariat dapat mengunggah
+  desain sertifikat (PNG/JPEG ≤ 900 KB) dan mengatur letak nama, judul, tanggal, nomor, dan QR,
+  atau memakai templat bawaan; sertifikat dapat dicabut dan dipulihkan.
+- Panel kelola kegiatan juga menyediakan daftar peserta (ekspor CSV, tandai hadir manual).
+- PDF dibuat di peramban dengan jsPDF 2.5.1 dari cdnjs (dengan SRI).
+
+## 18. Toko PPAPI
+
+### 18.1 Halaman
+- **toko.html** — katalog (Suvenir, Pakaian, Aksesori, Klem & Komponen Perancah, Produk Pengetahuan). Katalog dimulai kosong; produk ditambahkan sekretariat di **Konsol Admin › Toko › Produk**.
+- **keranjang.html** — keranjang (tersimpan di peramban; untuk akun yang masuk juga tersinkron ke Firestore `carts/{uid}`), alamat pengiriman untuk barang fisik/cetak, ringkasan, buat pesanan (wajib masuk, status keanggotaan apa pun). Anggota berstatus **Aktif** mendapat harga anggota bila diisi.
+- **pesanan.html** — Pesanan Saya: status, instruksi transfer, kirim bukti bayar (tautan https), batalkan selama belum dibayar, resi pengiriman, unduh soft file bertanda air.
+
+### 18.2 Alur pembayaran (transfer bank manual)
+Menunggu Pembayaran → (pembeli mengirim bukti) Menunggu Konfirmasi → (sekretariat mengonfirmasi) Dibayar → Diproses → Dikirim (kurir + resi) → Selesai. Dibatalkan: oleh pembeli selama belum dibayar, atau oleh sekretariat sebelum dikirim (hak unduh dicabut, stok dikembalikan; pengembalian dana dilakukan di luar sistem).
+- Rekening, mode ongkos kirim (dikonfirmasi per pesanan atau tarif tetap), petunjuk pembayaran, dan kontak diatur di **Toko › Pengaturan**. Rekening kosong → pembeli melihat "Informasi rekening akan diumumkan sekretariat".
+- Bila ongkos kirim "dikonfirmasi sekretariat", tetapkan ongkir di detail pesanan sebelum mengonfirmasi pembayaran (sistem menolak konfirmasi sebelum total final).
+- Harga dicatat oleh peramban pembeli. Sebelum konfirmasi, detail pesanan di konsol menampilkan peringatan bila harga/total berbeda dengan katalog atau bila harga anggota dipakai oleh pembeli yang tidak lagi Aktif. **Periksa mutasi rekening sebelum menekan "Konfirmasi Pembayaran".**
+- Stok barang fisik dan cetak berkurang otomatis saat pembayaran dikonfirmasi (bukan saat checkout).
+
+### 18.3 Soft file: tautan privat + tanda air
+- Tautan berkas disimpan terpisah di `product_files/{id}` dan hanya dapat dibaca admin atau pembeli yang memiliki `entitlements/{uid}_{id}` — dokumen ini ditulis admin saat mengonfirmasi pembayaran.
+- Saat pembeli menekan **Unduh berkas**, peramban mengambil PDF dari tautan tersebut, membubuhkan tanda air (nama, email, nomor pesanan, tanggal) pada **setiap halaman** dengan pdf-lib 1.17.1 (cdnjs, SRI; cadangan jsDelivr), lalu menyimpan berkas hasilnya.
+- **Batasan yang perlu dipahami (jujur):**
+  1. Tanda air adalah pencegah penyebaran dan penanda asal, **bukan DRM/enkripsi**. Pembeli tetap menerima PDF utuh; berkas tidak dikunci kata sandi (pdf-lib tidak dapat mengenkripsi PDF). Unggah PDF **tanpa kata sandi** — PDF terenkripsi tidak dapat dibubuhi tanda air.
+  2. Tautan sumber pada akhirnya diketahui peramban pembeli yang berhak (terlihat di alat pengembang). Siapa pun yang memegang tautan itu dapat mengunduh berkas **tanpa** tanda air. Kerahasiaan sepenuhnya bergantung pada hosting.
+  3. Agar tanda air dapat dibubuhkan otomatis, hosting harus (a) mengirim berkas PDF langsung (bukan halaman pratinjau) dan (b) mengizinkan CORS (`Access-Control-Allow-Origin` untuk domain situs). **Tautan Google Drive biasa tidak memenuhi syarat ini** (pratinjau HTML + tanpa CORS): pembeli kemudian diberi penjelasan dan tombol "Buka tautan berkas" — berkas yang dibuka dengan cara ini **tidak** bertanda air.
+- **Pilihan hosting:**
+  | Hosting | CORS / tanda air otomatis | Privasi tautan |
+  | --- | --- | --- |
+  | Google Drive "siapa saja yang memiliki link" | Tidak (fallback buka tautan, tanpa tanda air) | Tautan sulit ditebak, tetapi dapat diteruskan |
+  | Rilis/aset GitHub publik, folder situs ini | Ya (GitHub Pages/raw) | **Tidak privat** — siapa pun yang tahu/menebak alamatnya dapat mengunduh; jangan dipakai untuk dokumen berbayar |
+  | Bucket penyimpanan objek (mis. Cloudflare R2, Backblaze B2, AWS S3) dengan nama berkas acak panjang + aturan CORS untuk domain situs | Ya | Cukup baik untuk kebutuhan ini (tautan rahasia; dapat diganti berkala) |
+  | Tautan bertanda tangan berumur pendek (signed URL) | Ya | Terbaik, tetapi memerlukan server/fungsi (Cloud Functions — paket Blaze), di luar cakupan situs statis |
+  Rekomendasi: bucket objek dengan CORS dan nama berkas acak; ganti tautan bila diduga bocor (cukup ubah di Konsol › Produk).
+
+### 18.4 Firestore
+Aturan toko sudah tergabung di `firestore.rules` (bagian 11) — cukup Publish ulang berkas itu. Tidak memerlukan indeks komposit (kueri: `products where aktif == true`, `orders where uid == …`).
+Mode Demo: semua data toko tersimpan di localStorage peramban (`ppapi_toko_*`).
+
+## 19. Data aplikasi di akun
+
+- Proyek **Perencanaan & Analisis Struktur** dan kemajuan **Simulator** tersimpan di akun
+  anggota (Mode Firebase: `app_data/{uid}/…`; Mode Demo: peramban ini), sehingga dapat dibuka
+  dari perangkat lain dan tidak hilang bila peramban dibersihkan.
+- Penyimpanan bekerja juga saat luring: perubahan diantrekan di peramban dan dikirim ketika
+  koneksi kembali. Bila versi di akun lebih baru (diubah dari perangkat lain), aplikasi
+  perencanaan menyimpan versi perangkat ini sebagai salinan — tidak ada data yang ditimpa diam-diam.
+- Setiap dokumen dibatasi ±800 KB; foto dan gambar dikompresi lalu disimpan terpisah.
+- Data tetap milik anggota: dapat dibaca kembali walaupun masa keanggotaan berakhir (memakai
+  aplikasi tetap mensyaratkan status Aktif). Admin hanya dapat **membaca** untuk bantuan teknis.
 
 ---
 

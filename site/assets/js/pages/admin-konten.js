@@ -145,6 +145,8 @@
         /* one demo notice per screen: from 1200 px the console rail already carries it (adm-nav__foot), so this
            line shows only where the rail is a tab strip */
         (K.isDemo() ? '<p class="adm-hint adm-demo-note">' + icon('info', { size: 15 }) + '<span><strong>Mode Demo.</strong> Perubahan konten hanya tersimpan di peramban ini dan tidak terlihat oleh pengunjung lain.</span></p>' : '') +
+        /* sejak 21 Oktober 2026 kegiatan dengan pendaftaran dikelola di bagian Kegiatan; editor ini tetap untuk jadwal saja */
+        (t.key === 'agenda' ? '<p class="adm-hint adm-legacy-note">' + icon('calendar', { size: 15 }) + '<span><strong>Agenda sederhana (lama).</strong> Hanya pengumuman jadwal, tanpa pendaftaran. Untuk webinar, pelatihan, atau seminar dengan pendaftaran peserta, daftar hadir, dan sertifikat, gunakan bagian <a class="link" href="#kegiatan">Kegiatan</a>.</span></p>' : '') +
         '<div class="adm-toolbar">' +
           '<div class="adm-toolbar__row">' + K.searchBox({ id: 'kt-q', label: 'Cari ' + t.label.toLowerCase(), placeholder: 'Cari judul, kategori, atau kata kunci', value: KT.q }) +
             K.select({ id: 'kt-src', label: 'Sumber', srLabel: true, value: KT.source, options: [{ value: '', label: 'Semua sumber' }, { value: 'bawaan', label: 'Bawaan' }, { value: 'diubah', label: 'Bawaan · Diubah' }, { value: 'dikelola', label: 'Dikelola' }, { value: 'tersembunyi', label: 'Disembunyikan' }] }) +

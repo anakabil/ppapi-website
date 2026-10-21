@@ -3,8 +3,11 @@
 #
 # Halaman yang memuat <meta name="robots" content="noindex"> TIDAK diblokir di sini:
 #   dashboard.html, anggota.html, pendaftaran.html, admin.html,
+#   keranjang.html, pesanan.html (Toko: keranjang & pesanan pribadi),
 #   aplikasi/perencanaan/index.html, aplikasi/simulator/index.html,
 #   halaman 404.html, dan galeri komponen internal styleguide.html.
+# Halaman publik toko.html, instruktur.html, dan sertifikat.html (verifikasi
+# sertifikat kegiatan) boleh diindeks.
 # Mesin pencari hanya dapat membaca tanda noindex itu bila halamannya boleh
 # dirayapi; jika diblokir dengan "Disallow", alamatnya justru tetap bisa muncul di
 # hasil pencarian tanpa isi. (Pola "Disallow: /*anggota.html" juga ikut memblokir

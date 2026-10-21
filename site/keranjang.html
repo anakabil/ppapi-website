@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Keranjang — PPAPI</title>
+  <meta name="description" content="Keranjang belanja Toko PPAPI: periksa produk, jumlah, dan alamat pengiriman, lalu buat pesanan dengan pembayaran transfer bank.">
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Keranjang — PPAPI">
+  <meta property="og:description" content="Keranjang belanja Toko PPAPI: periksa produk, jumlah, dan alamat pengiriman, lalu buat pesanan dengan pembayaran transfer bank.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/toko.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="keranjang" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+    <section class="page-hero page-hero--compact kr-hero">
+      <div data-scaffold data-cols="12" data-rows="3" data-braces="false"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li><a href="toko.html">Toko</a></li><li aria-current="page">Keranjang</li></ol>
+        </nav>
+        <p class="eyebrow">Toko PPAPI</p>
+        <h1 class="h1">Keranjang <em>belanja</em></h1>
+        <ol class="kr-steps" aria-label="Tahapan pemesanan">
+          <li class="is-current" aria-current="step"><span>01</span>Keranjang &amp; alamat</li>
+          <li><span>02</span>Transfer &amp; bukti bayar</li>
+          <li><span>03</span>Konfirmasi &amp; pengiriman</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section section--tight kr-body">
+      <div class="container">
+        <div class="kr-layout" data-kr="layout" aria-busy="true">
+          <div class="skeleton" role="status"><span class="sr-only">Memuat keranjang…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-toko.js" defer></script>
+  <script src="assets/js/pages/keranjang.js" defer></script>
+</body>
+</html>

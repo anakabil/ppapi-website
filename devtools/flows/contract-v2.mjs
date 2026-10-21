@@ -56,7 +56,7 @@ function nodeChecks() {
   ok(C.iuran && C.iuran.aktif === false && ['nominal', 'keterangan', 'rekening'].every(k => C.iuran[k] === ''), "iuran: { aktif:false, nominal:'', keterangan:'', rekening:'' }");
   ok(C.pustaka && C.pustaka.katalogPublik === true, 'pustaka.katalogPublik = true');
   eq(C.masaBerlakuTahun, 3, 'masaBerlakuTahun = 3');
-  eq(C.nav.map(n => n.key + ':' + n.label + ':' + n.href), ['beranda:Beranda:index.html', 'profil:Profil:profil.html', 'berita:Berita:berita.html', 'agenda:Agenda:agenda.html', 'pustaka:Pengetahuan:pustaka.html', 'keanggotaan:Keanggotaan:keanggotaan.html', 'umpan-balik:Kontak:umpan-balik.html'], 'nav: Beranda, Profil, Berita, Agenda, Pengetahuan (pustaka.html), Keanggotaan, Kontak');
+  eq(C.nav.map(n => n.key + ':' + n.label + ':' + n.href), ['beranda:Beranda:index.html', 'profil:Profil:profil.html', 'berita:Berita:berita.html', 'agenda:Agenda:agenda.html', 'pustaka:Pengetahuan:pustaka.html', 'instruktur:Instruktur:instruktur.html', 'keanggotaan:Keanggotaan:keanggotaan.html', 'toko:Toko:toko.html', 'umpan-balik:Kontak:umpan-balik.html'], 'nav (since 2026-10-21 + Instruktur, Toko): Beranda, Profil, Berita, Agenda, Pengetahuan (pustaka.html), Instruktur, Keanggotaan, Toko, Kontak');
   const foot = Object.values(C.footerLinks).flat().map(l => l.label + '|' + l.href);
   ok(['Produk Pengetahuan|pustaka.html', 'Regulasi & Standar|regulasi.html', 'Verifikasi Anggota|verifikasi.html', 'Formulir Pendaftaran|pendaftaran.html'].every(x => foot.includes(x)), 'footer: Produk Pengetahuan, Regulasi, Verifikasi, Formulir Pendaftaran', foot);
   const cfgSrc = fs.readFileSync(path.join(ROOT, 'assets/js/config.js'), 'utf8');
@@ -125,6 +125,26 @@ function nodeChecks() {
   const regEntry = /function registryEntry\(m, overrides\) \{[\s\S]*?var e = \{([\s\S]*?)\};/.exec(store)[1].match(/(\w+):/g).map(s => s.slice(0, -1)).concat(['contoh']);
   ok(regEntry.every(k => regKeys.includes(k)) && !regKeys.some(k => ['email', 'phone', 'uid', 'alamat'].includes(k)), 'registry entry keys ⊆ rules whitelist, no private fields', { regEntry, regKeys });
   ok(/runTransaction/.test(store) && /counters'\)\.doc\('kta-' \+ year\)/.test(store), 'Firebase KTA counter via runTransaction on counters/kta-YYYY');
+
+  /* integration 2026-10-21: the four feature fragments (devtools/rules-fragments/*.rules) are merged verbatim
+     (comments aside) before the closing deny-all; function names stay unique; the file stays far below 256 KB */
+  const strip = t => t.replace(/\/\/.*$/gm, '').replace(/\s+/g, ' ').trim();
+  const merged = strip(rules);
+  const FRAG = ['instruktur', 'kegiatan', 'toko', 'appdata'];
+  const fragDir = path.join(DEV, 'rules-fragments');
+  const fragMissing = FRAG.filter(f => { const fp = path.join(fragDir, f + '.rules'); return fs.existsSync(fp) && !merged.includes(strip(fs.readFileSync(fp, 'utf8'))); });
+  ok(!fragMissing.length, 'rules fragments merged verbatim: instruktur, kegiatan, toko, appdata', fragMissing);
+  const catchAll = rules.indexOf('match /{document=**}');
+  const NEWCOLL = ['instructors/{id}', 'instructor_contacts/{id}', 'instructor_requests/{id}', 'events/{eid}', 'certificates/{no}', 'products/{id}', 'product_media/{id}', 'product_files/{id}', 'entitlements/{eid}', 'orders/{id}', 'shop_settings/{id}', 'carts/{uid}', 'app_data/{uid}/{coll}/{docId}'];
+  const misplaced = NEWCOLL.filter(c => { const i = rules.indexOf('match /' + c + ' {'); return i < 0 || i > catchAll; });
+  ok(!misplaced.length && catchAll > 0 && rules.lastIndexOf('match /{document=**}') === catchAll, 'new collections matched before the single closing deny-all', misplaced);
+  const fnNames = [...rules.matchAll(/function (\w+)\(/g)].map(m => m[1]);
+  ok(new Set(fnNames).size === fnNames.length, 'firestore.rules: every function name is unique (' + fnNames.length + ')', fnNames.filter((f, i) => fnNames.indexOf(f) !== i));
+  const rulesBytes = Buffer.byteLength(rules, 'utf8');
+  ok(rulesBytes < 256 * 1024, 'firestore.rules size ' + Math.round(rulesBytes / 1024) + ' KB < 256 KB');
+  const code = rules.replace(/'(?:[^'\\]|\\.)*'/g, "''").replace(/\/\/.*$/gm, '');
+  const balanced = [['{', '}'], ['(', ')'], ['[', ']']].every(([o, c]) => code.split(o).length === code.split(c).length);
+  ok(balanced, 'firestore.rules: brackets balanced after the merge');
 }
 
 /* ============================================================= BROWSER SIDE */
@@ -312,7 +332,7 @@ async function browserChecks() {
     });
     eq(L1.m0, ['Draf', '', 'Praktisi', '', 'baru', 0, TODAY], "new account: status 'Draf', kta '', Praktisi placeholder, empty application/review");
     eq(L1.sess0, { uid: L1.uid, status: 'Draf', isAdmin: false, isActive: false, isMemberActive: false, label: 'Formulir pendaftaran belum diajukan' }, 'session after sign-up (refreshed automatically): Draf, not active');
-    eq(L1.menu0, ['Dasbor', 'Formulir Pendaftaran', 'Keluar'], 'account menu (non-active): Dasbor, Formulir Pendaftaran, Keluar');
+    eq(L1.menu0, ['Dasbor', 'Formulir Pendaftaran', 'Kegiatan Saya', 'Pesanan Saya', 'Keluar'], 'account menu (non-active): Dasbor, Formulir Pendaftaran, Kegiatan Saya, Pesanan Saya, Keluar');
     ok(Array.isArray(L1.inc) && L1.inc[0] === 'store/application-incomplete' && L1.inc[1].includes('Kategori keanggotaan') && L1.inc[1].includes('Nomor HP') && L1.inc[1].includes('Nama terang (tanda tangan)') && L1.inc[2].includes('pernyataan'), 'submitApplication incomplete → store/application-incomplete with Indonesian .missing[] + .fields[{step}]', L1.inc);
     eq([L1.photoBad, L1.photoBig], ['store/invalid-photo', 'store/photo-too-large'], 'pas foto: only JPEG/PNG/WebP data URLs ≤120 KB');
     eq(L1.sanitised, ['', 'Lainnya', '', 10, 1000, false, false], 'saveApplication whitelists + limits (kategori Kehormatan not stored — audit-v2, dokumen jenis, https-only url, pengalaman ≤10, catatan ≤1000, booleans, unknown keys dropped)');
@@ -378,7 +398,7 @@ async function browserChecks() {
       return r;
     }, L1.uid);
     eq(AD.sess, { uid: 'demo-admin-0001', status: 'Draf', isAdmin: true, isActive: true, isMemberActive: false, label: 'Formulir pendaftaran belum diajukan' }, 'admin session: isAdmin + isActive (admin sees everything), own member status Draf');
-    eq(AD.menu, ['Dasbor', 'Profil Anggota', 'Produk Pengetahuan', 'Aplikasi Anggota', 'Konsol Admin', 'Keluar'], 'account menu (admin): …, Konsol Admin, Keluar');
+    eq(AD.menu, ['Dasbor', 'Profil Anggota', 'Produk Pengetahuan', 'Aplikasi Anggota', 'Kegiatan Saya', 'Pesanan Saya', 'Konsol Admin', 'Keluar'], 'account menu (admin): …, Kegiatan Saya, Pesanan Saya, Konsol Admin, Keluar');
     ok(AD.isAdmin === true, 'auth.isAdmin() → true for demo-admin-0001');
     eq(AD.order, ['demo-contoh-0001', AD.uid], 'listMembers: Menunggu Verifikasi first, oldest submittedAt first');
     ok(AD.pendingFirst, 'listMembers: all pending applications precede the others');
@@ -403,7 +423,7 @@ async function browserChecks() {
       return r;
     });
     eq([MA.sess.status, MA.sess.isMemberActive, MA.sess.isActive, MA.sess.isAdmin], ['Aktif', true, true, false], 'session: Aktif member');
-    eq(MA.menu, ['Dasbor', 'Profil Anggota', 'Produk Pengetahuan', 'Aplikasi Anggota', 'Keluar'], 'account menu (active): Dasbor, Profil Anggota, Produk Pengetahuan, Aplikasi Anggota, Keluar');
+    eq(MA.menu, ['Dasbor', 'Profil Anggota', 'Produk Pengetahuan', 'Aplikasi Anggota', 'Kegiatan Saya', 'Pesanan Saya', 'Keluar'], 'account menu (active): Dasbor, Profil Anggota, Produk Pengetahuan, Aplikasi Anggota, Kegiatan Saya, Pesanan Saya, Keluar');
     eq(MA.badges, ['Aktif'], 'account menu shows the status badge');
     eq(MA.file, 'aplikasi/simulator/index.html', 'pustaka.fileUrl(app item) for an active member');
     ok(!/locked__actions/.test(MA.locked), 'ui.locked() for an active member has no CTA');

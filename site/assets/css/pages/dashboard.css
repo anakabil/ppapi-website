@@ -744,3 +744,10 @@ body[data-page="dashboard"] .dash-doc .doc-card__title { font-size: 1.22rem; }
   body[data-page="dashboard"] .dash-launch:hover { translate: none; }
   body[data-page="dashboard"] .dash-launch:hover .dash-launch__go svg { transform: none; }
 }
+
+/* ---------- KEGIATAN SAYA (kegiatan-saya.js; dipindahkan dashboard.js ke tampilan yang aktif) ---------- */
+body[data-page="dashboard"] .dash-kgs { padding: clamp(44px, 5vw, 72px) 0 0; scroll-margin-top: calc(var(--header-offset, 76px) + 12px); }
+body[data-page="dashboard"] .dash-kgs:focus { outline: none; }
+body[data-page="dashboard"] .dash-kgs + .dash-help { padding-top: clamp(44px, 5vw, 72px); }
+body[data-page="dashboard"] .dash-kgs__box { padding-bottom: clamp(8px, 1vw, 12px); }
+body[data-page="dashboard"] .dash-kgs__box .empty-state { margin: 0; }

@@ -698,9 +698,11 @@ admins, plus the status badge (left out for an admin whose own membership is not
 
 | viewer | items |
 | --- | --- |
-| member not active (Draf … Kedaluwarsa) | Dasbor · **Formulir Pendaftaran** (`pendaftaran.html`) · Keluar |
-| active member | Dasbor · **Profil Anggota** (`anggota.html`) · **Produk Pengetahuan** (`pustaka.html`) · **Aplikasi Anggota** (`anggota.html#aplikasi`) · Keluar |
-| admin (any own status) | Dasbor · Profil Anggota · Produk Pengetahuan · Aplikasi Anggota · **Konsol Admin** (`admin.html`) · Keluar |
+| member not active (Draf … Kedaluwarsa) | Dasbor · **Formulir Pendaftaran** (`pendaftaran.html`) · Kegiatan Saya · Pesanan Saya · Keluar |
+| active member | Dasbor · **Profil Anggota** (`anggota.html`) · **Produk Pengetahuan** (`pustaka.html`) · **Aplikasi Anggota** (`anggota.html#aplikasi`) · Kegiatan Saya · Pesanan Saya · Keluar |
+| admin (any own status) | Dasbor · Profil Anggota · Produk Pengetahuan · Aplikasi Anggota · Kegiatan Saya · Pesanan Saya · **Konsol Admin** (`admin.html`) · Keluar |
+
+(Since 2026-10-21 — §9.17: **Kegiatan Saya** = `dashboard.html#kegiatan-saya`, **Pesanan Saya** = `pesanan.html`.)
 | signed in, session not yet resolved (a few ms) | Dasbor · Keluar |
 
 The v1 external "Simulator ↗" item is gone. The mobile menu foot is unchanged (Dasbor + Keluar).
@@ -1264,3 +1266,39 @@ anything is copied) and the full matrix in `devtools/RELEASE_NOTES_V2.md` §6.
 **Tests changed intentionally**: beranda-flow, dashboard-flow, anggota-flow and contract-v2 expect the "(Beta)" title.
 New: `release-v2-client-rules.mjs`, `placeholder-fit.mjs`, `footer-credit-shot.mjs` (footer close-ups),
 `shot-overview.mjs` (one overview sheet per full-page screenshot, for the visual pass).
+
+### 9.17 Integration of Instruktur · Kegiatan · Toko · Data aplikasi (2026-10-21)
+
+Four features were built in parallel without touching shared files; this pass wires them in.
+
+- **Konsol Admin** — `admin.js` mounts every `window.PPAPI_ADMIN_SECTIONS` entry
+  `{ key, label, icon, title (trusted HTML, may hold <em>), lead, render(container, sub) → Promise?, badge() → Promise<number> | count() → number, countLabel? }`
+  (`mountExtraSections()`, called first in the admin boot): nav item appended (number = position in `K.SECTIONS`),
+  section shell `#sec-<key>` / `#h-<key>` / `#<key>-body` like the built-in ones, route `#key` and `#key/sub`, render on
+  open, on "Muat Ulang Data" and after `K.after()`; a returned promise that rejects shows `K.errorBox`. Nav counts:
+  `K.renderExtraCount(key)` (called from `K.renderCounts()`). Built-in keys cannot be overwritten. Instruktur keeps its
+  static markup in admin.html (08) and is only registered; Kegiatan (09) and Toko (10) are mounted. LOG_GROUPS gained
+  Instruktur and Kegiatan (`sertifikat.*` → Kegiatan). The mobile tab strip ends with a gutter spacer and re-aligns the
+  active tab after web fonts load. Konten › Agenda carries a note "Agenda sederhana (lama)" linking to #kegiatan.
+- **Header** — 9 items: … Pengetahuan · **Instruktur** · Keanggotaan · **Toko** (`aktifJuga: keranjang, pesanan`) ·
+  Kontak. No dropdown needed: between 1120 and 1279 px the row uses gap 15 px / letter-spacing .11em; measured by
+  `flows/nav-fit.mjs` (1120/1180/1280/1440, signed out and in: one row, ≥ 48 px clear after the logo — 125 px signed
+  out at 1120). Footer: Organisasi + Direktori Instruktur, Toko PPAPI; Anggota + Verifikasi Sertifikat.
+- **Dasbor** — `#kegiatan-saya` (store-kegiatan.js + kegiatan-saya.js) is moved by dashboard.js into the visible
+  view (Aktif: before `.dash-body`; status view: before `.dash-help`) and rendered once
+  (`PPAPI.kegiatanSaya.render(el, { next, headingId: 'dash-h-kegiatan' })`; new option `headingId`). Published kegiatan
+  are merged into the Beranda and Dasbor agenda strips through `PPAPI.kegiatan.asAgendaItems()` (same id → kegiatan
+  wins), as agenda.js already did. index.html now loads store-kegiatan.js.
+- **CSP** — admin.html + dashboard.html: `https://cdnjs.cloudflare.com` in script-src (jsPDF), `https://docs.google.com`
+  in frame-src; admin.html also `https://cdn.jsdelivr.net` (pdf-lib fallback, as pesanan.html).
+- **firestore.rules** — the four fragments merged verbatim before the closing deny-all (58 KB; 60 unique functions).
+  The fragments in `devtools/rules-fragments/` stay the source of the feature stubs (toko-rules, appdata-firebase-stub,
+  kegiatan-flow K10); contract-v2 checks that each is merged verbatim, every new collection precedes the deny-all,
+  names are unique, brackets balance and size < 256 KB. **The client must Publish the rules again.**
+- **robots** — keranjang/pesanan noindex (listed in robots.txt comments); toko, instruktur, sertifikat indexable.
+
+**Tests changed intentionally**: contract-v2 (nav 9 items, account menus, merged-rules checks), journey-v2 (menus),
+kegiatan-flow K10 (fragment merged exactly once instead of "no clash with the main file"), instruktur-flow (serves the
+real files; the in-memory admin integration was removed), admin-flow (A4 10 nav links; A62/A67 follow the real
+articles — contoh content was removed on 15 Oct; the test server appends one static pengumuman/agenda/pustaka fixture
+for the content-CRUD scenario). New: `flows/integrasi-flow.mjs`, `flows/nav-fit.mjs`.

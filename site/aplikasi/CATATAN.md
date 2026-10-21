@@ -16,14 +16,17 @@ Dasar keputusan: `SPEC-v2.md` §4.4 serta analisis `devtools/legacy/ANALISIS_PER
 > **v2.4.0 (Beta, 9 Oktober 2026):** revisi hasil tinjauan independen atas v2.3.0: lentur transom/ledger, 50 % beban layan pada lift berpapan berikutnya, pagar ujung, migrasi data v2.2.0, penegakan kelas Tahap 2, status tag yang mengikuti analisis, dan integrasi tampilan portal. Rinciannya di `KOREKSI-PERHITUNGAN.md` §19 dan bagian 4.7 di bawah.
 >
 > **Simulator:** geometri dan urutan perakitan dikoreksi (9 Oktober 2026) dan didokumentasikan di **`aplikasi/KOREKSI-SIMULATOR.md`**; bagian 5 dan 6 berkas ini merujuk ke sana.
+>
+> **Data melekat ke akun (21 Oktober 2026):** arahan klien *"Pastikan database untuk semua aplikasi melekat ke akun yang digunakan untuk login sehingga saat membutuhkan data hasil inspeksi yang sudah diinput, bisa dibuka kembali dan tidak hilang."* Proyek dan hasil inspeksi aplikasi perencanaan serta kemajuan simulator kini tersimpan ke akun PPAPI (Firestore `app_data/{uid}/…`) dan dapat dibuka dari perangkat mana pun. Rinciannya di bagian 4.9 dan 5.1.
 
 ---
 
 ## 1. Struktur berkas
 
 ```
+assets/js/store-apps.js   PPAPI.appData: data aplikasi per akun (Firestore app_data/{uid}/…; Mode Demo: localStorage)
 aplikasi/
-  gate.js                 gerbang bersama: memuat skrip inti situs, memeriksa status, memasang bilah portal
+  gate.js                 gerbang bersama: memuat skrip inti situs (+ store-apps.js), memeriksa status, memasang bilah portal
   gate.css                gaya layar gerbang, bilah portal, dan notifikasi (token warna situs, awalan --pp-)
   CATATAN.md              berkas ini
   KOREKSI-PERHITUNGAN.md  koreksi metode perhitungan v2.3.0–v2.4.0 (Beta) untuk tinjauan Komite Teknis PPAPI
@@ -45,7 +48,7 @@ Tidak disalin dari paket lama: `sw.js`, `manifest.webmanifest`, ikon PWA, `404.h
 Urutan kerja di setiap halaman aplikasi:
 
 1. Halaman dibuka dengan kelas `html.app-gate-pending`: seluruh isi disembunyikan, yang tampil hanya layar "Memverifikasi status keanggotaan…" (`#app-gate`). Tidak ada kilasan isi aplikasi. Logo layar ini memakai `assets/img/logo-light-mark.webp` (13 KB); master PNG 1200 px (132 KB) hanya untuk cetak.
-2. `gate.js` memuat `assets/js/config.js`, `core.js`, `auth.js`, dan `store.js` secara berurutan (alamat dihitung dari lokasi `gate.js`), lalu menunggu `PPAPI.session`.
+2. `gate.js` memuat `assets/js/config.js`, `core.js`, `auth.js`, `store.js`, dan `store-apps.js` secara berurutan (alamat dihitung dari lokasi `gate.js`), lalu menunggu `PPAPI.session`.
 3. Keputusan:
    - **belum masuk** → `masuk.html?next=aplikasi/<nama>/index.html`; setelah masuk, anggota kembali ke aplikasi;
    - **masuk tetapi status bukan Aktif** (Draf, Menunggu Verifikasi, Perlu Perbaikan, Ditolak, Nonaktif, Kedaluwarsa) → `dashboard.html` dengan notifikasi *"Fitur ini khusus anggota berstatus Aktif."*;
@@ -77,16 +80,23 @@ Bilah hitam tipis di atas setiap aplikasi: **← Portal Anggota** (ke `dashboard
 
 Saat aplikasi dimulai, kunci lama yang sensitif dibersihkan dari peramban: `ppapi_session`, `ppapi_users`, `ppapi_backend`, `ppapi_remote`.
 
-### 4.2 Data per anggota (di peramban ini)
+### 4.2 Data per anggota
+
+Sejak 21 Oktober 2026 **data proyek tersimpan ke akun PPAPI** (bagian 4.9). Kunci peramban di bawah tetap dipakai sebagai **salinan kerja proyek yang sedang terbuka** (aplikasi tetap berjalan tanpa internet) dan sebagai arsip lama yang menunggu dipindahkan ke akun.
 
 | Kunci `localStorage` | Isi |
 |---|---|
 | `ppapi_app_perencanaan_v1_u_<uid>` | `v:4`: jawaban checklist, **alasan N/A butir kritis** (`naNote`, v2.3.0), data proyek (termasuk `f-papan`, `f-pipa`, dan `f-transom` v2.4.0), **isian Tahap 2/3/5/6** (v2.4.0 menambah `an-sdpt`, `an-tie`, `an-kurva-why`), dan **rincian material beserta asalnya** (`matSrc`: auto/user/legacy; `matGeom`: kunci geometri; v2.4.0) |
 | `…_photos`, `…_plans`, `…_dwg`, `…_jsa` | foto bukti, unggahan, gambar rencana, JSA |
-| `ppapi_app_perencanaan_projects_u_<uid>` | arsip proyek |
+| `…_sync` | proyek akun yang sedang terbuka (`pid`), perubahan yang belum terkirim (`dirty`, `localTs`), waktu sinkron terakhir (`remoteTs`), sidik media yang sudah ada di akun, bagian yang hanya tersimpan di peramban ini |
+| `…_mig` | keputusan pemindahan data lama ke akun (`pending` / `done`) dan arsip lama yang sudah dipindahkan |
+| `…_stash_<pid>` | foto/unggahan yang terlalu besar untuk akun, disimpan per proyek saat berpindah proyek |
+| `ppapi_app_perencanaan_projects_u_<uid>` | arsip proyek lama (sebelum penyimpanan akun); dipindahkan ke akun setelah anggota menyetujui, lalu tetap ada sebagai cadangan sampai **Hapus data saya di perangkat ini** |
+| `ppapi_appdata_q_<uid>` (store-apps.js) | antrean penulisan ke akun yang belum terkirim (luring) |
+| `ppapi_appdata_idx_<uid>_<app>` (store-apps.js) | daftar proyek terakhir dari akun, untuk ditampilkan saat luring |
 | `ppapi_app_perencanaan_users`, `ppapi_app_perencanaan_log` | daftar pengguna di perangkat ini (nama, peran, waktu) dan log aktivitas (maks. 40) |
 
-Dua anggota yang memakai peramban yang sama tidak saling melihat data. Tombol **Hapus data saya di perangkat ini** (Data Proyek) menghapus seluruh data milik anggota tersebut. Admin dapat menghapus data anggota lain dari perangkat bersama.
+Dua anggota yang memakai peramban yang sama tidak saling melihat data. Tombol **Hapus data saya di perangkat ini** (Data Proyek) menghapus salinan di perangkat tersebut; proyek yang sudah tersimpan ke akun tetap aman. Admin dapat menghapus salinan data anggota lain dari perangkat bersama.
 
 **Pindah dari aplikasi lama** (ppapiid.vercel.app): buka aplikasi lama → *Ekspor Data (.json)* → di aplikasi baru, tahap *Laporan & Tagging* → **Muat Data**. Berkas impor divalidasi.
 
@@ -193,6 +203,37 @@ Arahan klien: *"ubah user interface aplikasi (simulator pemasangan dan perhitung
 - `node devtools/flows/aplikasi-perencanaan-retheme.mjs` (cwd `devtools`): membuka beranda, menu tahap, sembilan tahap, Tentang, Admin, modal konteks editor gambar, daftar periksa terjawab, laporan + pratinjau tag di desktop 1440 dan ponsel 390; memeriksa tidak ada hazard/Oswald/kuning, keluarga huruf, kontras chip status, chrome ≤ 110/100 px, fokus keyboard, overflow mendatar, dan tombol simulator. Tangkapan: `devtools/shots/retheme-pr-*.png`.
 - `aplikasi-flow.mjs` (C8) dan `aplikasi-perencanaan-temuan.mjs` (F2, F4) diperbarui: pita hazard tidak ada lagi, pita menu berlatar tinta dengan garis rambut, pembungkus `<aside>` tombol simulator yang `position: fixed`. Asersi perhitungan tidak disentuh.
 
+### 4.9 Proyek Saya — data melekat ke akun (21 Oktober 2026)
+
+**Lokasi data.** `assets/js/store-apps.js` (`PPAPI.appData`) menyimpan data aplikasi per akun:
+
+| Mode | Dokumen proyek | Media (foto, unggahan, gambar besar) |
+|---|---|---|
+| Firebase | `app_data/{uid}/perencanaan/{pid}` | `app_data/{uid}/perencanaan_media/{pid}__ph_<butir>` · `…__pl_<sidik>` · `…__dwg` |
+| Demo | `localStorage['ppapi_appdata/{uid}/perencanaan/{pid}']` (hanya peramban ini) | `localStorage['ppapi_appdata/{uid}/perencanaan_media/…']` |
+
+Bentuk dokumen: `{ v:1, meta, data, size, updatedAt, parent }`. `data` berisi teks JSON dengan isi yang sama seperti **Ekspor Data (.json)** (isian Data Proyek, jawaban checklist, alasan N/A, analisis, material, JSA, gambar rencana); foto dan unggahan dirujuk dengan id media. `meta` memuat nama proyek, nomor tag, lokasi, tanggal inspeksi, inspektor, model, status akhir (HIJAU/KUNING/MERAH/BELUM LENGKAP), dan jumlah foto/unggahan, sehingga daftar Proyek Saya tampil tanpa memuat seluruh isi. **Rumus dan perhitungan tidak disentuh.**
+
+**Batas ukuran.** Setiap dokumen ≤ 800.000 byte (batas Firestore 1 MiB). Foto bukti sudah dikecilkan saat diambil. Unggahan gambar yang lebih besar dikompresi menjadi JPEG di peramban untuk salinan akun. Unggahan PDF yang tetap terlalu besar **tidak dibuang**: berkas tetap ada di peramban ini, anggota diberi tahu (nama berkas disebut), dan Proyek Saya menandai "n berkas hanya di perangkat asal". Gambar rencana dipindah ke dokumen media tersendiri bila dokumen proyek melebihi batas.
+
+**Simpan otomatis.** Setiap perubahan disimpan dahulu ke salinan kerja di peramban, lalu dikirim ke akun 2,5 detik setelah perubahan terakhir. Penanda di bilah menu:
+- **Tersimpan ke akun · 14.32**: perubahan sudah ada di akun;
+- **Menyimpan ke akun…**: sedang dikirim;
+- **Belum tersinkron — akan dicoba lagi**: koneksi terputus; perubahan masuk antrean (`ppapi_appdata_q_<uid>`) dan dikirim otomatis (5 dtk sampai 60 dtk, saat perangkat kembali daring, atau saat halaman dibuka lagi);
+- **Tersimpan di peramban · 14.32**: data lama yang belum disetujui untuk dipindahkan ke akun.
+
+Proyek baru dibuat di akun saat isian pertama diketik (layar kosong tidak disimpan). **Simpan Proyek** mengirim seketika.
+
+**Proyek Saya** (Data Proyek; juga tombol di beranda): daftar proyek di akun, terbaru di atas, dengan nama · nomor tag, lokasi, tanggal inspeksi, waktu pembaruan, status akhir, serta tanda *Sedang dibuka* / *Belum tersinkron*. Tindakan: **Buka**, **Ganti nama** (sebaris; Enter untuk menyimpan), **Gandakan** (salinan beserta medianya), **Hapus** (dengan konfirmasi; dokumen dan seluruh medianya dihapus dari akun), dan **Mulai Proyek Baru** (proyek yang terbuka tetap di akun). Sebelum berpindah proyek, perubahan dikirim lebih dahulu. Bila belum dapat diamankan (luring dan antrean tidak dapat disimpan), perpindahan ditolak agar isian tidak tertimpa.
+
+**Konflik: last-write-wins dengan `updatedAt`.** Dokumen utama ditulis dalam transaksi yang membaca versi akun lebih dahulu. Versi akun yang lebih baru tidak pernah ditimpa versi lama, dan penghapusan yang lebih lama daripada versi akun juga ditolak. Bila perangkat ini mengirim perubahan yang lebih lama daripada versi akun (mis. proyek disunting di perangkat lain), versi akun dibuka dan isian perangkat ini disimpan sebagai proyek **"… (salinan perangkat ini)"**. Saat aplikasi dibuka, versi akun yang lebih baru dimuat otomatis dengan pemberitahuan.
+
+**Pemindahan data lama (sekali, dengan persetujuan).** Bila peramban ini berisi arsip proyek lama atau isian yang belum pernah disinkronkan, aplikasi memberi tahu saat dibuka dan menampilkan panel **Data lama di peramban ini** di Proyek Saya, lengkap dengan daftar datanya serta tombol **Simpan ke akun** dan **Nanti saja**. Tidak ada data yang dikirim sebelum anggota menyetujuinya. Arsip lama mempertahankan status, lokasi, foto, dan tanggal simpannya. Data di peramban tidak dihapus.
+
+**Aturan Firestore.** Blok DATA APLIKASI ANGGOTA di `firestore.rules` (digabung 21 Oktober 2026; Publish ulang di Firebase Console): pemilik membaca, menulis, dan menghapus `app_data/{uid}/…` miliknya sendiri. Status Aktif tidak disyaratkan agar data inspeksi tetap dapat diambil kembali; gerbang aplikasi tetap mensyaratkan Aktif untuk *memakai* aplikasi. Admin PPAPI hanya dapat membaca. Koleksi dibatasi `perencanaan`, `perencanaan_media`, `simulator`, dan `simulator_media`. Bentuk dokumen diperiksa (kunci, `data` teks ≤ 800.000 karakter, `updatedAt` angka, `meta` ≤ 24 kunci). Setiap penulisan memakai sekitar 20 ekspresi, jauh di bawah anggaran 1.000.
+
+**Pengujian:** `node devtools/flows/appdata-flow.mjs` (Mode Demo: buat inspeksi, muat ulang, konteks peramban kedua, konflik, ganti nama/gandakan/hapus, berkas besar, proyek baru, ponsel, migrasi, simulator, axe) dan `node devtools/flows/appdata-firebase-stub.mjs` (jalur Firestore dengan stub SDK, cermin aturan, dua perangkat, antrean luring, akses anggota lain/admin).
+
 ## 5. Simulator Pemasangan Perancah Tube & Coupler
 
 ### 5.1 Arsitektur
@@ -200,7 +241,7 @@ Arahan klien: *"ubah user interface aplikasi (simulator pemasangan dan perhitung
 - `index.html` memuat `simulator.js` (mendefinisikan `PPAPI_APP_START`) dan `../gate.js`. Sebelum gerbang lolos, **three.js tidak dimuat sama sekali** (diuji: anggota non-Aktif tidak pernah meminta `three.min.js`).
 - three.js **r128** dimuat dari cdnjs dengan Subresource Integrity (`sha512-dLxUelAp…`). Versi tidak dinaikkan karena r128 adalah build UMD terakhir yang dipakai kode lama; peningkatan versi menunggu fase berikutnya (lihat analisis §5.7).
 - Adegan 3D dibuat saat anggota menekan **Mulai Simulasi** (layar pembuka). Tanpa WebGL atau bila pustaka 3D gagal dimuat, tampil pesan yang jelas (B6). Konteks WebGL yang hilang/pulih juga ditangani (B7).
-- **Kemajuan latihan** disimpan per anggota di peramban ini: `localStorage['ppapi_progress_<uid>_simulator']` = `{ v: 2, seq: 'tc-2026.10-r2', total, current, completedAt, updatedAt, tools{vert,horz,dist,square,edge,stab}, libSeen[] }`. `seq` adalah versi urutan perakitan; kemajuan dari urutan lain (sebelum koreksi Oktober 2026) tidak dapat dipetakan sehingga perakitan dimulai ulang, dengan alat ukur dan katalog yang sudah dilihat tetap tercatat. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
+- **Kemajuan latihan** disimpan per anggota **di akun PPAPI** (sejak 21 Oktober 2026: `PPAPI.appData`, dokumen kecil `app_data/{uid}/simulator/progress`; Mode Demo `localStorage['ppapi_appdata/{uid}/simulator/progress']`) dan sebagai salinan di peramban: `localStorage['ppapi_progress_<uid>_simulator']` = `{ v: 2, seq: 'tc-2026.10-r2', total, current, completedAt, updatedAt, tools{vert,horz,dist,square,edge,stab}, libSeen[], runs[{completedAt, seq}] }` (`runs` = riwayat perakitan yang selesai, maks. 20). Saat dibuka, versi dengan `updatedAt` terbaru (akun atau peramban) yang dipakai; perubahan dikirim ke akun 1,2 detik kemudian. Latihan dapat dilanjutkan dari perangkat lain. `seq` adalah versi urutan perakitan; kemajuan dari urutan lain (sebelum koreksi Oktober 2026) tidak dapat dipetakan sehingga perakitan dimulai ulang, dengan alat ukur dan katalog yang sudah dilihat tetap tercatat. Data keanggotaan di portal tidak disentuh. Saat dibuka kembali, layar pembuka menawarkan **Lanjutkan Perakitan** atau **Mulai dari awal**.
 - Geometri, urutan 20 tahap, dan mode inspeksi yang mengukur model dikoreksi pada 9 Oktober 2026: lihat **`KOREKSI-SIMULATOR.md`** (§2–§5).
 
 ### 5.2 Perbaikan
@@ -256,6 +297,7 @@ Atribusi pengembang telah diseragamkan sesuai arahan klien (9 Oktober 2026): sel
   - `node devtools/flows/aplikasi-perencanaan-koreksi.mjs`: koreksi metode (kasus acuan, matriks skenario, Tahap 2, dasar keamanan, papan, klem, migrasi data lama, E11/E12, tanda Beta termasuk PDF, ponsel, axe);
   - `node devtools/flows/aplikasi-perencanaan-temuan.mjs`: setiap temuan tinjauan independen v2.4.0 (SRI, chrome portal, migrasi material v2.2.0, transom/ledger, beban terpusat, kelas Tahap 2, §6.2.9.2, tag/PDF, material vs geometri, batas kg, kurva a, pagar ujung, jenis pipa, teks rujukan, tie, ponsel, axe);
   - `node devtools/flows/aplikasi-simulator-flow.mjs`: simulator (urutan 20 tahap, ukuran dari adegan, inspeksi, memori, keyboard, axe, ponsel, migrasi kemajuan, tanpa WebGL);
+  - `node devtools/flows/appdata-flow.mjs` dan `node devtools/flows/appdata-firebase-stub.mjs`: data aplikasi melekat ke akun (bagian 4.9);
   - nilai harapan dari `node devtools/flows/aplikasi-perencanaan-ref.mjs` (perhitungan acuan independen);
   - `node devtools/check.mjs aplikasi/perencanaan/index aplikasi/simulator/index --auth` (serta tanpa `--auth`, dengan `--status=…`, dan `--admin`).
 - **Mengubah rumus:** setiap perubahan rumus atau konstanta wajib disetujui ahli PPAPI, dicatat di daftar perubahan aplikasi (menu *Tentang Aplikasi*, `CHANGELOG` di `app.js`) dan di `KOREKSI-PERHITUNGAN.md`, lalu modul acuan `aplikasi-perencanaan-ref.mjs` diperbarui **secara terpisah** dari `app.js` (jangan menyalin kode aplikasi ke modul acuan).

@@ -22,8 +22,10 @@
    • Ukuran kanvas mengikuti wadah, render hanya saat ada perubahan, bayangan
      dihitung ulang hanya saat isi adegan berubah, geometri & material dipakai
      bersama, objek sementara dibuang (dispose).
-   • Kemajuan latihan disimpan di peramban ini per anggota:
-     localStorage 'ppapi_progress_<uid>_simulator' (bukan di data keanggotaan).
+   • Kemajuan latihan disimpan per anggota: salinan kerja di peramban ini
+     (localStorage 'ppapi_progress_<uid>_simulator') DAN di akun PPAPI lewat
+     PPAPI.appData ('simulator' / 'progress' — Firestore app_data/{uid}/simulator/progress),
+     sehingga dapat dilanjutkan dari perangkat lain. Versi terbaru (updatedAt) yang dipakai.
    ========================================================================== */
 (function (w, d) {
   'use strict';
@@ -78,22 +80,71 @@
         updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt.slice(0, 40) : '',
         tools: tools,
         libSeen: Array.isArray(o.libSeen) ? o.libSeen.filter(function (x) { return typeof x === 'string' && /^[a-z]{2,16}$/.test(x); }).slice(0, 24) : [],
+        runs: cleanRuns(o.runs),
         migrated: !same && (parseInt(o.current, 10) || 0) > 0
       };
     } catch (e) { return null; }
   }
-  function writeProgress() {
-    try {
-      var o = {};
-      Object.keys(prog).forEach(function (k) { if (k !== 'migrated') o[k] = prog[k]; });
-      localStorage.setItem(PKEY, JSON.stringify(o));
-    } catch (e) { /* penyimpanan penuh/diblokir */ }
+  /* riwayat perakitan yang selesai: [{ completedAt, seq }] (maks. 20, terbaru di depan) */
+  function cleanRuns(a) {
+    return Array.isArray(a) ? a.filter(function (r) { return r && typeof r === 'object' && typeof r.completedAt === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(r.completedAt); })
+      .slice(0, 20).map(function (r) { return { completedAt: r.completedAt.slice(0, 40), seq: typeof r.seq === 'string' ? r.seq.slice(0, 40) : '' }; }) : [];
+  }
+  function progObj() {
+    var o = {};
+    Object.keys(prog).forEach(function (k) { if (k !== 'migrated') o[k] = prog[k]; });
+    return o;
+  }
+  function writeProgress(noCloud) {
+    try { localStorage.setItem(PKEY, JSON.stringify(progObj())); } catch (e) { /* penyimpanan penuh/diblokir */ }
+    if (!noCloud) cloudSoon();
+  }
+
+  /* ---------- kemajuan di akun PPAPI (PPAPI.appData) ---------- */
+  var cloudT = null;
+  function appD() { return w.PPAPI && PPAPI.appData && typeof PPAPI.appData.save === 'function' ? PPAPI.appData : null; }
+  function tsOf(o) { var t = o && o.updatedAt ? Date.parse(o.updatedAt) : 0; return isFinite(t) ? t : 0; }
+  function cloudSoon() {
+    if (!appD() || !prog) return;
+    clearTimeout(cloudT);
+    cloudT = setTimeout(cloudSave, 1200);
+  }
+  function cloudSave() {
+    clearTimeout(cloudT); cloudT = null;
+    var A = appD(); if (!A || !prog) return Promise.resolve(null);
+    var o = progObj();
+    return A.save('simulator', 'progress', {
+      meta: { current: o.current, total: o.total, seq: o.seq, completedAt: o.completedAt || '', runs: (o.runs || []).length },
+      data: o, updatedAt: tsOf(o) || Date.now()
+    }).then(function (r) {
+      /* akun memegang versi yang lebih baru (perangkat lain) → dipakai di sini */
+      if (r && r.conflict && r.remote && r.remote.data) adoptRemote(r.remote.data);
+      return r;
+    }, function (e) { if (w.console) console.warn('[PPAPI] Kemajuan simulator belum tersimpan ke akun:', e && (e.code || e.message)); return null; });
+  }
+  function adoptRemote(data) {
+    try { localStorage.setItem(PKEY, JSON.stringify(data)); } catch (e) { /* abaikan */ }
+    if (!SIM && !starting) setupIntro();
+  }
+  /* saat dibuka: bandingkan salinan peramban dengan akun; yang lebih baru dipakai */
+  function cloudSync() {
+    var A = appD(); if (!A) return Promise.resolve(null);
+    return A.get('simulator', 'progress').then(function (r) {
+      var local = readProgress();
+      var lt = tsOf(local), rt = r && r.data ? (tsOf(r.data) || r.updatedAt) : 0;
+      if (r && r.data && rt > lt) { adoptRemote(r.data); return 'remote'; }
+      if (local && lt > rt && (local.current > 0 || local.runs.length || Object.keys(local.tools).length || local.libSeen.length)) { prog = prog || local; return cloudSave().then(function () { return 'local'; }); }
+      return 'same';
+    }, function (e) { if (w.console) console.warn('[PPAPI] Kemajuan simulator di akun belum dapat dibaca:', e && (e.code || e.message)); return null; });
   }
   function onProgress(ev) {
     if (!prog || !ev) return;
     if (typeof ev.current === 'number') {
       prog.current = Math.max(0, Math.min(TOTAL, ev.current));
-      if (prog.current >= TOTAL && !prog.completedAt) prog.completedAt = new Date().toISOString();
+      if (prog.current >= TOTAL && !prog.completedAt) {
+        prog.completedAt = new Date().toISOString();
+        prog.runs = [{ completedAt: prog.completedAt, seq: SEQ }].concat(prog.runs || []).slice(0, 20);
+      }
     }
     if (ev.tool && TOOL_RE.test(ev.tool)) prog.tools[ev.tool] = true;
     if (ev.lib && /^[a-z]{2,16}$/.test(ev.lib) && prog.libSeen.indexOf(ev.lib) < 0) prog.libSeen.push(ev.lib);
@@ -122,7 +173,7 @@
 
   /* ---------- layar pembuka ---------- */
   function setupIntro() {
-    prog = readProgress() || { v: 2, seq: SEQ, total: TOTAL, current: 0, completedAt: '', updatedAt: '', tools: {}, libSeen: [], migrated: false };
+    prog = readProgress() || { v: 2, seq: SEQ, total: TOTAL, current: 0, completedAt: '', updatedAt: '', tools: {}, libSeen: [], runs: [], migrated: false };
     var start = $('startBtn'), restart = $('restartBtn'), note = $('introResume');
     var n = prog.current;
     if (n > 0) {
@@ -166,12 +217,15 @@
     }, function () { restore(); showMsg('nocdn'); });
   }
 
+  w.addEventListener('pagehide', function () { if (cloudT) cloudSave(); });
+
   /* dipanggil gate.js setelah status keanggotaan Aktif / admin dipastikan */
   w.PPAPI_APP_START = function (u) {
     if (USER) return;
     USER = u || {};
     PKEY = 'ppapi_progress_' + String(USER.uid || 'anon') + '_simulator';
     setupIntro();
+    cloudSync();
     /* pramuat three.js agar "Mulai Simulasi" terasa instan (adegan belum dibuat) */
     setTimeout(function () { loadThree().catch(function () { /* dicoba lagi saat tombol ditekan */ }); }, 900);
   };

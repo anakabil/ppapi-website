@@ -12,6 +12,9 @@
      waktu dalam zona Asia/Jakarta (WIB; WITA/WIT dikenali bila tertulis).
    • Agenda dibaca melalui PPAPI.store.content.list('agenda'): data bawaan
      + agenda kelolaan admin; agenda yang disembunyikan admin tidak tampil.
+   • Kegiatan terbit dari PPAPI.kegiatan (store-kegiatan.js — webinar,
+     pelatihan, seminar yang dikelola sekretariat) digabung ke jadwal; detailnya
+     memuat panel Pendaftaran · Daftar hadir · Sertifikat (kegiatan-saya.js).
    Seluruh teks data di-escape dengan PPAPI.util.h().
    ========================================================================== */
 (function () {
@@ -122,6 +125,11 @@
       '<span class="date-block__day">' + h(day) + '</span><span class="date-block__month">' + h(mon) + '</span><span class="date-block__year">' + h(yr) + '</span></div>';
   }
   function modeBadge(a) { return a.mode ? '<span class="badge badge--outline">' + h(a.mode) + '</span>' : ''; }
+  /* kegiatan kelolaan (PPAPI.kegiatan): siapa yang boleh mendaftar */
+  function aksesBadge(a) {
+    if (!a.kegiatan) return '';
+    return a.akses === 'aktif' ? '<span class="badge badge--metal">Anggota Aktif</span>' : '<span class="badge badge--outline">Semua akun</span>';
+  }
 
   /* ---------- baris & kelompok bulan ----------
      ph = true: salinan untuk kerangka — tanpa atribut id agar tidak bentrok
@@ -135,7 +143,7 @@
     return '<article class="event-row agenda-row' + (past ? ' is-past' : '') + (isNext ? ' is-next' : '') + '"' + (ph ? '' : ' id="agenda-' + h(ev.id) + '"') + '>' +
       dateBlock(ev, isNext ? 'date-block--dark' : '') +
       '<div class="event-row__body">' +
-        '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + badge + U.contohBadge(a) + '</div>' +
+        '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + aksesBadge(a) + badge + U.contohBadge(a) + '</div>' +
         '<h4 class="event-row__title"><a href="agenda.html?id=' + encodeURIComponent(ev.id) + '" data-agenda-open="' + h(ev.id) + '">' + h(a.judul) + '</a></h4>' +
         '<p class="event-row__info">' +
           '<span class="sr-only">' + h(dateLong(ev)) + '. </span>' +
@@ -146,7 +154,7 @@
         '</p>' +
       '</div>' +
       '<div class="event-row__aside">' +
-        '<button type="button" class="btn btn--ghost btn--sm" data-agenda-open="' + h(ev.id) + '" aria-haspopup="dialog"><span>Detail</span><span class="sr-only"> ' + h(a.judul) + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 16 }) + '</button>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-agenda-open="' + h(ev.id) + '" aria-haspopup="dialog"><span>' + (a.kegiatan && !past ? 'Detail &amp; Daftar' : 'Detail') + '</span><span class="sr-only"> ' + h(a.judul) + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 16 }) + '</button>' +
         (past ? '' : '<button type="button" class="btn btn--link btn--sm agenda-row__ics" data-agenda-ics="' + h(ev.id) + '">' + icon('calendar', { size: 16 }) + '<span>Tambahkan ke Kalender</span><span class="sr-only"> — ' + h(a.judul) + '</span></button>') +
       '</div>' +
     '</article>';
@@ -287,7 +295,18 @@
       }
       return (Array.isArray(data.agenda) ? data.agenda : []).filter(function (x) { return x && !x.hidden; });
     }
-    var agendaData = await loadAgenda();
+    /* kegiatan terbit (PPAPI.kegiatan) → bentuk agenda; _kg menyimpan data lengkapnya */
+    async function loadKegiatan() {
+      var K = PPAPI.kegiatan;
+      if (!K || typeof K.listPublished !== 'function') return [];
+      try {
+        return (await K.listPublished()).map(function (ev) { return Object.assign(K.toAgendaItem(ev), { _kg: ev }); });
+      } catch (e) { console.warn('[PPAPI] Kegiatan tidak dapat dimuat:', e && e.message); return []; }
+    }
+    var loaded = await Promise.all([loadAgenda(), loadKegiatan()]);
+    var kgIds = {};
+    loaded[1].forEach(function (x) { kgIds[x.id] = 1; });
+    var agendaData = loaded[0].filter(function (x) { return !(x && kgIds[x.id]); }).concat(loaded[1]);
 
     /* ---------- normalisasi data ---------- */
     var events = toEvents(agendaData);
@@ -346,7 +365,7 @@
           '<div class="agenda-feature__scaffold" aria-hidden="true">' + ui.scaffoldSVG({ cols: 5, rows: 4 }) + '</div>' +
           '<header class="agenda-feature__head">' +
             '<p class="eyebrow agenda-feature__eyebrow">Agenda terdekat</p>' +
-            '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + U.contohBadge(a) + '</div>' +
+            '<div class="event-row__meta"><span class="tag">' + h(a.jenis || 'Kegiatan') + '</span>' + modeBadge(a) + aksesBadge(a) + U.contohBadge(a) + '</div>' +
             '<h2 class="agenda-feature__title" id="agenda-next-title"><a href="agenda.html?id=' + encodeURIComponent(a.id) + '" data-agenda-open="' + h(a.id) + '">' + h(a.judul) + '</a></h2>' +
           '</header>' +
           '<div class="agenda-feature__aside">' +
@@ -371,7 +390,7 @@
             '</dl>' +
           '</div>' +
           '<div class="agenda-feature__actions">' +
-            '<button type="button" class="btn btn--primary" data-agenda-open="' + h(a.id) + '" aria-haspopup="dialog"><span>Lihat detail</span>' + icon('arrow-right', { cls: 'btn__icon', size: 18 }) + '</button>' +
+            '<button type="button" class="btn btn--primary" data-agenda-open="' + h(a.id) + '" aria-haspopup="dialog"><span>' + (a.kegiatan ? 'Detail &amp; Pendaftaran' : 'Lihat detail') + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 18 }) + '</button>' +
             '<button type="button" class="btn btn--ghost" data-agenda-ics="' + h(a.id) + '"><span>Tambahkan ke Kalender</span>' + icon('calendar', { cls: 'btn__icon', size: 18 }) + '</button>' +
           '</div>' +
         '</article>';
@@ -556,8 +575,13 @@
       if (!ev) return;
       var a = ev.raw, st = statusInfo(ev), reg = registerUrl(a), past = isPast(ev);
       var multi = dayCount(ev) > 1;
-      var hints = [], buttons;
-      if (past) {
+      var hints = [], buttons, kg = a.kegiatan && a._kg && PPAPI.kegiatanUI ? a._kg : null;
+      if (kg) {
+        hints.push(icon('info', { size: 16 }) + '<span>' + h(PPAPI.kegiatan.AKSES_DESC[kg.akses]) + ' Daftar hadir dibuka 30 menit sebelum kegiatan selesai dan ditutup 3 jam sesudahnya.</span>');
+        buttons = past
+          ? '<a class="btn btn--ghost" href="berita.html?kategori=Kegiatan"><span>Lihat liputan kegiatan</span>' + icon('arrow-right', { cls: 'btn__icon', size: 18 }) + '</a>'
+          : '<button type="button" class="btn btn--ghost" data-agenda-ics="' + h(a.id) + '"><span>Tambahkan ke Kalender</span>' + icon('calendar', { cls: 'btn__icon', size: 18 }) + '</button>';
+      } else if (past) {
         hints.push(icon('check-circle', { size: 16 }) + '<span>Kegiatan ini telah berlangsung. Rangkuman kegiatan dimuat di halaman Berita bila tersedia.</span>');
         buttons = '<a class="btn btn--ghost" href="berita.html?kategori=Kegiatan"><span>Lihat liputan kegiatan</span>' + icon('arrow-right', { cls: 'btn__icon', size: 18 }) + '</a>';
       } else {
@@ -587,8 +611,12 @@
             (a.lokasi ? '<div class="kv__row"><dt>Lokasi</dt><dd>' + h(a.lokasi) + '</dd></div>' : '') +
             '<div class="kv__row"><dt>Mode</dt><dd>' + h(MODE_DESC[a.mode] || a.mode || '—') + '</dd></div>' +
             '<div class="kv__row"><dt>Kuota</dt><dd>' + h(kuotaText(a.kuota)) + '</dd></div>' +
-            (past ? '' : '<div class="kv__row"><dt>Pendaftaran</dt><dd>' + (reg ? 'Melalui tautan pendaftaran daring' : 'Melalui sekretariat PPAPI') + '</dd></div>') +
+            (kg && kg.narasumber ? '<div class="kv__row"><dt>Narasumber</dt><dd>' + h(kg.narasumber) + '</dd></div>' : '') +
+            (kg ? '<div class="kv__row"><dt>Peserta</dt><dd>' + h(PPAPI.kegiatan.AKSES[kg.akses]) + (kg.kuota ? ' · sisa ' + h(U.formatNumber(kg.sisa)) + ' kursi' : '') + '</dd></div>' +
+              (kg.sertifikat ? '<div class="kv__row"><dt>Sertifikat</dt><dd>PDF bagi peserta yang mengisi daftar hadir</dd></div>' : '')
+              : (past ? '' : '<div class="kv__row"><dt>Pendaftaran</dt><dd>' + (reg ? 'Melalui tautan pendaftaran daring' : 'Melalui sekretariat PPAPI') + '</dd></div>')) +
           '</dl>' +
+          (kg ? '<div class="kg-slot" data-kg-slot></div>' : '') +
           '<div class="agenda-modal__actions">' +
             '<div class="agenda-modal__hints">' + hints.map(function (x) { return '<p class="agenda-modal__hint">' + x + '</p>'; }).join('') + '</div>' +
             '<div class="agenda-modal__buttons">' + buttons + '</div>' +
@@ -602,6 +630,8 @@
         size: 'lg',
         cls: 'agenda-modal-root',
         onOpen: function (el) {
+          var slot = kg && el.querySelector('[data-kg-slot]');
+          if (slot) PPAPI.kegiatanUI.panel(slot, kg, { next: 'agenda.html?id=' + encodeURIComponent(a.id) });
           el.addEventListener('click', function (e) {
             var b = e.target.closest('[data-agenda-ics]');
             if (b) { e.preventDefault(); downloadIcs(b.getAttribute('data-agenda-ics')); }

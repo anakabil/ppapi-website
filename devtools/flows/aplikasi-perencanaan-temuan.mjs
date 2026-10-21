@@ -89,7 +89,9 @@ for (const vp of ['desktop', 'mobile']) {
   const lim = vp === 'desktop' ? 110 : 100;
   T.ok(g.bottom <= lim, `${vp}: portal bar + menu band end at ${g.bottom} px (≤ ${lim})`, g);
   T.ok(!g.headInVisible && /PPAPI Scaffold/.test(g.h1), `${vp}: app brand row hidden under the portal (title only in the portal bar), h1 kept for screen readers`);
-  T.ok(g.savedInNav && g.chipInNav && /^Tersimpan \d{2}\.\d{2}$/.test(g.saved) && g.navLabel === 'Tahap aplikasi', `${vp}: "Tersimpan HH.MM" and checklist status sit in the menu band`, g.saved);
+  /* 2026-10-21 (data melekat ke akun): the label names where the data is — "Tersimpan ke akun · HH.MM" or, before the
+     first account save / for an empty screen, "Tersimpan di peramban · HH.MM" (flows/appdata-flow.mjs covers the states) */
+  T.ok(g.savedInNav && g.chipInNav && /^Tersimpan (ke akun|di peramban) · \d{2}\.\d{2}$/.test(g.saved) && g.navLabel === 'Tahap aplikasi', `${vp}: save status ("Tersimpan … · HH.MM") and checklist status sit in the menu band`, g.saved);
   T.ok(g.demoColor === 'rgb(185, 185, 191)' && g.hz === 0 && g.navBg === 'rgb(17, 17, 19)' && g.navLine === 'rgba(255, 255, 255, 0.1)', `${vp}: demo chip silver; no hazard stripe — ink menu band with a hairline bottom rule (retheme Oktober 2026)`, { demo: g.demoColor, hz: g.hz, navBg: g.navBg, navLine: g.navLine });
   T.ok(g.sw <= 1, `${vp}: no horizontal overflow`, g.sw);
   T.ok(/logo-light-mark\.webp$/.test(g.gateLogo) && !reqs.some(u => /logo-light\.png/.test(u)), `${vp}: gate logo is the 13 KB WebP; logo-light.png (132 KB) is not requested`, reqs.filter(u => /logo/.test(u)));

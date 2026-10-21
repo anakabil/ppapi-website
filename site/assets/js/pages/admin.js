@@ -6,6 +6,11 @@
    Umpan Balik, Admin and Log Aktivitas.
    admin-anggota.js → Permohonan + Anggota (detail drawer & decisions)
    admin-konten.js  → Konten (berita, pengumuman, agenda, pustaka, regulasi)
+   admin-instruktur.js → Instruktur (#instruktur/profil · #instruktur/permintaan)
+   Bagian tambahan: window.PPAPI_ADMIN_SECTIONS = [{ key, label, icon, title (HTML tepercaya,
+   boleh <em>), lead, render(container, sub) → (Promise), badge() → Promise<number> | count() → number,
+   countLabel? }] — admin.js memasang menu, kerangka bagian, dan penghitungnya (mountExtraSections).
+   Bagian yang sudah punya markup di admin.html (mis. Instruktur) hanya didaftarkan.
    Every data string is escaped with PPAPI.util.h().
    ========================================================================== */
 (function (w, d) {
@@ -17,7 +22,7 @@
   K.sections = K.sections || {};
 
   var util = PPAPI.util, ui = PPAPI.ui, h = util.h, icon = PPAPI.icon;
-  var SECTIONS = ['ringkasan', 'permohonan', 'anggota', 'konten', 'umpan-balik', 'admin', 'log'];
+  var SECTIONS = ['ringkasan', 'permohonan', 'anggota', 'konten', 'umpan-balik', 'admin', 'log', 'instruktur'];
   K.SECTIONS = SECTIONS;
 
   /* ---------------------------------------------------------------- state */
@@ -375,15 +380,31 @@
     var sec = K.sections[K.route.section];
     var body = K.body(K.route.section);
     if (!sec || !body) return;
-    try {
-      sec.render(body, K.route.sub);
-      body.removeAttribute('aria-busy');
-      ui.reveal(body);
-    } catch (err) {
+    function fail(err) {
       console.error(err);
+      body.removeAttribute('aria-busy');
       body.innerHTML = K.errorBox(err, 'Bagian ini belum dapat ditampilkan');
     }
+    try {
+      var res = sec.render(body, K.route.sub);
+      body.removeAttribute('aria-busy');
+      ui.reveal(body);
+      /* bagian tambahan boleh memuat datanya sendiri (render → Promise) */
+      if (res && typeof res.then === 'function') {
+        var key = K.route.section;
+        res.then(function () { ui.reveal(body); K.renderExtraCount(key); }, fail);
+      }
+    } catch (err) {
+      fail(err);
+    }
   };
+  /* phones/tablets: the nav is a horizontal tab strip — keep the active tab in view */
+  function keepTabInView() {
+    var active = d.querySelector('.adm-nav__link[aria-current="page"]');
+    if (!active || !w.matchMedia('(max-width: 1199px)').matches) return;
+    var list = active.closest('.adm-nav__list');
+    if (list) list.scrollLeft = Math.max(0, active.offsetLeft - 16);
+  }
   function show(route, opts) {
     opts = opts || {};
     K.route = route;
@@ -395,11 +416,7 @@
       if (a.getAttribute('data-section') === route.section) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
-    var active = d.querySelector('.adm-nav__link[aria-current="page"]');
-    if (active && active.scrollIntoView && w.matchMedia('(max-width: 1199px)').matches) {
-      var list = active.closest('.adm-nav__list');
-      if (list) list.scrollLeft = Math.max(0, active.offsetLeft - 16);
-    }
+    keepTabInView();
     K.renderCurrent();
     if (opts.focus) {
       var head = d.getElementById('h-' + route.section);
@@ -415,6 +432,7 @@
   K.show = show;
 
   K.renderCounts = function () {
+    Object.keys(EXTRA).forEach(function (key) { K.renderExtraCount(key); });
     var members = K.state.members || [], fb = K.state.feedback || [];
     var pending = members.filter(function (m) { return K.eff(m) === 'Menunggu Verifikasi'; }).length;
     var baru = fb.filter(function (x) { return x.status === 'Baru'; }).length;
@@ -425,6 +443,72 @@
       el.innerHTML = c[1] ? h(util.formatNumber(c[1])) + '<span class="sr-only">' + h(c[2]) + '</span>' : '';
     });
   };
+
+  /* ------------------------------------------- bagian tambahan (generik) */
+  var EXTRA = {};
+  K.extraSections = EXTRA;
+  var COUNT_LABELS = { instruktur: ' permintaan instruktur baru', toko: ' pesanan perlu ditindaklanjuti', kegiatan: ' kegiatan perlu ditindaklanjuti' };
+  function setCount(key, n, label) {
+    var el = d.querySelector('[data-count-for="' + key + '"]');
+    if (!el) return;
+    n = Number(n) || 0;
+    el.hidden = !n;
+    el.innerHTML = n ? h(util.formatNumber(n)) + '<span class="sr-only">' + h(label || COUNT_LABELS[key] || ' perlu ditindaklanjuti') + '</span>' : '';
+  }
+  /** penghitung menu sebuah bagian tambahan: badge() (Promise) atau count() (angka); galat diabaikan */
+  K.renderExtraCount = function (key) {
+    var sec = EXTRA[key];
+    if (!sec || (typeof sec.badge !== 'function' && typeof sec.count !== 'function')) return;
+    try {
+      var v = typeof sec.badge === 'function' ? sec.badge() : sec.count();
+      Promise.resolve(v).then(function (n) { setCount(key, n, sec.countLabel); }, function () { /* biarkan */ });
+    } catch (e) { /* biarkan */ }
+  };
+  /** Pasang setiap window.PPAPI_ADMIN_SECTIONS: tautan menu (sesudah yang terakhir), kerangka bagian
+      (judul/pengantar seperti bagian bawaan), rute (#key, #key/sub), dan penghitung menu.
+      Bagian yang markup-nya sudah ada di admin.html hanya didaftarkan. */
+  function mountExtraSections() {
+    var list = Array.isArray(w.PPAPI_ADMIN_SECTIONS) ? w.PPAPI_ADMIN_SECTIONS : [];
+    var navList = d.querySelector('.adm-nav__list'), main = d.querySelector('.adm-main');
+    list.forEach(function (sec) {
+      if (!sec || typeof sec.render !== 'function' || !/^[a-z][a-z0-9-]{1,30}$/.test(String(sec.key || ''))) return;
+      var key = sec.key;
+      if (EXTRA[key]) return;
+      /* nama bagian bawaan (ringkasan, anggota, …) tidak boleh ditimpa */
+      if (K.sections[key] && K.sections[key] !== sec) { console.warn('[PPAPI] Bagian konsol "' + key + '" sudah ada; lewati.'); return; }
+      EXTRA[key] = sec;
+      K.sections[key] = sec;
+      if (SECTIONS.indexOf(key) === -1) SECTIONS.push(key);
+      var num = util.pad(SECTIONS.indexOf(key) + 1);
+      var label = String(sec.label || key);
+      var counted = typeof sec.badge === 'function' || typeof sec.count === 'function';
+      if (navList && !navList.querySelector('.adm-nav__link[data-section="' + key + '"]')) {
+        var li = d.createElement('li');
+        li.innerHTML = '<a class="adm-nav__link" href="#' + h(key) + '" data-section="' + h(key) + '"><span class="adm-nav__num" aria-hidden="true">' + h(num) + '</span>' +
+          icon(sec.icon || 'grid', { size: 18, cls: 'adm-nav__icon' }) + '<span class="adm-nav__text">' + h(label) + '</span>' +
+          (counted ? '<span class="adm-nav__count" data-count-for="' + h(key) + '" hidden></span>' : '') + '</a>';
+        navList.appendChild(li);
+      }
+      if (main && !d.getElementById('sec-' + key)) {
+        var el = d.createElement('section');
+        el.className = 'adm-section';
+        el.id = 'sec-' + key;
+        el.setAttribute('data-section', key);
+        el.setAttribute('aria-labelledby', 'h-' + key);
+        el.hidden = true;
+        el.innerHTML = '<header class="adm-head"><div class="adm-head__text">' +
+            '<p class="eyebrow">' + h(num + ' — ' + label) + '</p>' +
+            /* title: HTML tepercaya dari berkas bagian (boleh <em>); teks lain di-escape */
+            '<h2 class="adm-head__title" id="h-' + h(key) + '" tabindex="-1">' + (sec.title || h(label)) + '</h2>' +
+            (sec.lead ? '<p class="adm-head__lead">' + h(sec.lead) + '</p>' : '') +
+          '</div></header>' +
+          '<div class="adm-section__body" id="' + h(key) + '-body" aria-busy="true"><div class="skeleton" role="status"><span class="sr-only">Memuat ' + h(label.toLowerCase()) + '…</span>' +
+            '<span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div></div>';
+        main.appendChild(el);
+      }
+    });
+  }
+  K.mountExtraSections = mountExtraSections;
 
   /* --------------------------------------------------------- hero meta */
   function renderMeta() {
@@ -531,9 +615,10 @@
   };
 
   /* audit entry (shared by Ringkasan + Log) */
-  var LOG_GROUPS = { anggota: 'Anggota', konten: 'Konten', 'umpan-balik': 'Umpan Balik', admin: 'Admin' };
-  var LOG_ICONS = { anggota: 'user', konten: 'file-text', 'umpan-balik': 'message', admin: 'shield' };
-  function logGroup(x) { var g = String(x.action || '').split('.')[0]; return LOG_GROUPS[g] ? g : 'lain'; }
+  var LOG_GROUPS = { anggota: 'Anggota', konten: 'Konten', 'umpan-balik': 'Umpan Balik', admin: 'Admin', instruktur: 'Instruktur', kegiatan: 'Kegiatan' };
+  var LOG_ICONS = { anggota: 'user', konten: 'file-text', 'umpan-balik': 'message', admin: 'shield', instruktur: 'award', kegiatan: 'calendar' };
+  var LOG_ALIAS = { sertifikat: 'kegiatan' }; /* sertifikat.dicabut / .dipulihkan → kelompok Kegiatan */
+  function logGroup(x) { var g = String(x.action || '').split('.')[0]; g = LOG_ALIAS[g] || g; return LOG_GROUPS[g] ? g : 'lain'; }
   var CONTENT_NAMES = { berita: 'Berita', pengumuman: 'Pengumuman', agenda: 'Agenda', pustaka: 'Produk Pengetahuan', regulasi: 'Regulasi' };
   K.CONTENT_NAMES = CONTENT_NAMES;
   K.auditItem = function (x) {
@@ -834,6 +919,7 @@
      ===================================================================== */
   PPAPI.onReady(async function () {
     if (!PPAPI.session.current().isAdmin) return; /* core redirects non-admins */
+    mountExtraSections();
     renderMeta();
     /* delegated: open details, presets, retry */
     d.addEventListener('click', function (e) {
@@ -874,6 +960,8 @@
     var route = parseHash();
     K.route = route;
     show(route); /* skeletons stay until the data arrives */
+    /* web fonts change the tab widths after the first layout */
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(keepTabInView, function () { /* ignore */ });
     await K.load('all');
     K.ready = true;
     K.renderCounts();

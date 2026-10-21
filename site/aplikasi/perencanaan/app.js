@@ -179,7 +179,7 @@ function go(v){
   document.querySelectorAll('.tab').forEach(t=>{ t.classList.toggle('active',t.dataset.v===v); if(t.dataset.v===v){ const sp=t.querySelector('span'); const mc=document.getElementById('menu-cur'); if(sp&&mc) mc.textContent=sp.textContent; } });
   closeMenu();
   if(v==='ringkasan') renderRingkasan();
-  if(v==='proyek') renderProyekBanner();
+  if(v==='proyek'){ renderProyekBanner(); refreshProjects(); }
   if(v==='analisis') renderAnalisis();
   if(v==='gambar'){ renderGambar(); renderPlans(); }
   if(v==='admin') renderAdmin();
@@ -891,11 +891,12 @@ const FIELDS=['f-proyek','f-lokasi','f-kontraktor','f-jenis','f-model','f-tinggi
 const GEOM_FIELDS=['f-model','f-tinggi','f-lift','f-nbay','f-lbay','f-lebar','f-hlift','f-papan','f-pipa','f-transom'];
 function collectFields(){const o={};FIELDS.forEach(id=>{const e=document.getElementById(id);if(e)o[id]=e.value;});return o;}
 function applyFields(o){if(!o)return;FIELDS.forEach(id=>{const e=document.getElementById(id);if(e&&o[id]!=null)e.value=String(o[id]);});}
-function showSaved(){const el=document.getElementById('saved-ind');if(el){const d=new Date();el.innerHTML='<span class="saved-k">Tersimpan </span>'+esc(d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}));}}
+/* penanda simpan: status sinkron akun (setSyncUI, bagian Proyek Saya) */
+function showSaved(){ setSyncUI(); }
 let saveT=null;
 /* Perbaikan B4: isian Tahap 2, 3, 5, dan 6 (kelas duty, parameter analisis, rincian material)
    ikut tersimpan bersama jawaban checklist dan data proyek. */
-function save(){ if(!KEY) return; clearTimeout(saveT); saveT=null; if(lsSet(KEY,JSON.stringify({v:4,answers:state.answers,naNote:state.naNote,fields:collectFields(),analisis:collectAnalisis(),ts:Date.now()}))) showSaved(); }
+function save(){ if(!KEY) return; clearTimeout(saveT); saveT=null; const ok=lsSet(KEY,JSON.stringify({v:4,answers:state.answers,naNote:state.naNote,fields:collectFields(),analisis:collectAnalisis(),ts:Date.now()})); markDirty(); if(ok) showSaved(); }
 function saveSoon(){ if(!KEY) return; clearTimeout(saveT); saveT=setTimeout(save,450); }
 function loadSaved(){ if(!KEY) return null; try{ const r=localStorage.getItem(KEY); if(!r) return null; const d=JSON.parse(r); if(!isObj(d)) return null; state.answers=cleanAnswers(d.answers); state.naNote=cleanNotes(d.naNote); return d; }catch(e){ return null; } }
 /* nilai bawaan formulir (atribut value / option selected di markup) */
@@ -904,6 +905,7 @@ function resetControl(e){ if(!e) return; if(e.tagName==='SELECT'){ let ix=0; for
    (jawaban, foto bukti, unggahan, gambar rencana, analisis, material, JSA). */
 function clearWorkingState(){
   ['','_photos','_plans','_dwg','_jsa'].forEach(function(s){ try{ localStorage.removeItem(KEY+s); }catch(e){} });
+  if(SYNC){ clearTimeout(syncT); SYNC=emptySync(); writeSync(); }   /* proyek di akun tidak terhapus; layar = proyek baru */
   state.answers={}; state.naNote={}; state.photos={}; state.plans=[]; state.jsa=jsaCopyTpl();
   DWG={depan:[],samping:[],atas:[],_w:2}; dwgSeq=1; dwgSel=null; dwgMode=null; dwgDim1=null;
   FIELDS.forEach(function(id){ resetControl(document.getElementById(id)); });
@@ -917,11 +919,13 @@ function clearWorkingState(){
   const v=document.querySelector('.view.active'); if(v&&v.id==='v-laporan') renderRingkasan();
   save();
 }
-function resetAll(){
-  if(!confirm('Mulai proyek baru?\n\nJawaban checklist, data proyek, analisis, material, gambar rencana, unggahan, foto bukti, dan JSA yang sedang terbuka akan dikosongkan. Proyek yang sudah disimpan di arsip tidak ikut terhapus.')) return;
+async function resetAll(){
+  if(!confirm('Mulai proyek baru?\n\nLayar akan dikosongkan untuk proyek baru. Proyek yang sedang terbuka tetap tersimpan di Proyek Saya (akun PPAPI Anda) dan dapat dibuka kembali kapan pun.')) return;
+  if(!(await leaveCurrent())) return;
   clearWorkingState();
   logAct('Proyek baru');
-  notify('Proyek baru siap. Isian sebelumnya telah dikosongkan.','success');
+  notify('Proyek baru siap. Proyek sebelumnya tetap tersimpan di Proyek Saya.','success');
+  renderProjects();
 }
 function exportJSON(){const data={v:4,app:'PPAPI Scaffold',appVersion:APP_VERSION,answers:state.answers,naNote:state.naNote,photos:state.photos,plans:state.plans||[],dwg:DWG,jsa:state.jsa||[],analisis:collectAnalisis(),fields:collectFields(),ts:Date.now()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Inspeksi_'+(((document.getElementById('f-tag')||{}).value)||'Perancah').replace(/[^a-z0-9]/gi,'_')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);}
 /* Impor JSON (juga dari aplikasi lama): setiap bagian divalidasi sebelum dipakai. */
@@ -1556,7 +1560,7 @@ const JSA_TPL=[
 ];
 function jsaCopyTpl(){ return JSON.parse(JSON.stringify(JSA_TPL)); }
 function loadJsa(){ try{ const r=localStorage.getItem(KEY+'_jsa'); const j=r?cleanJsa(JSON.parse(r)):null; state.jsa = j || jsaCopyTpl(); }catch(e){ state.jsa=jsaCopyTpl(); } }
-function saveJsa(){ if(!KEY) return; lsSet(KEY+'_jsa', JSON.stringify(state.jsa||[])); }
+function saveJsa(){ if(!KEY) return; lsSet(KEY+'_jsa', JSON.stringify(state.jsa||[])); markDirty(); }
 function setJsa(i,k,v){ if(state.jsa&&state.jsa[i]){ state.jsa[i][k]=v; saveJsa(); } }
 function renderJSA(){
   const b=document.getElementById('jsa-body'); if(!b) return;
@@ -1607,7 +1611,7 @@ function downscale(file,cb){
 function pickPhoto(key){ pendingPhotoKey=key; const inp=document.getElementById('photo-input'); if(inp){ inp.value=''; inp.click(); } }
 function removePhoto(key){ delete state.photos[key]; refreshItem(key); savePhotos(); updateScores(); }
 function refreshItem(key){ const row=document.getElementById('item-'+key); if(!row)return; const p=key.split('-'); const tmp=document.createElement('div'); tmp.innerHTML=itemHTML(parseInt(p[0],10),parseInt(p[1],10)); if(tmp.firstElementChild) row.replaceWith(tmp.firstElementChild); }
-function savePhotos(){ if(!KEY) return; lsSet(KEY+'_photos', JSON.stringify(state.photos)); }
+function savePhotos(){ if(!KEY) return; lsSet(KEY+'_photos', JSON.stringify(state.photos)); markDirty(); }
 function loadPhotos(){ state.photos={}; try{ const r=localStorage.getItem(KEY+'_photos'); if(r) state.photos=cleanPhotos(JSON.parse(r)); }catch(e){} }
 function photoCount(){ return Object.keys(state.photos).length; }
 
@@ -1759,7 +1763,12 @@ function renderChangelog(){
 /* Penyimpanan cloud Upstash, backend Supabase, dan manajemen akun lokal DIHAPUS (token di
    localStorage dan peran dari user_metadata tidak aman). Yang tersisa untuk admin: ringkasan
    data aplikasi di peramban ini, daftar anggota yang pernah memakainya, dan log aktivitas. */
-function userKeys(id){ const k='ppapi_app_perencanaan_v1_'+id; return [k,k+'_photos',k+'_plans',k+'_dwg',k+'_jsa',projStoreKey(id)]; }
+function userKeys(id){
+  const k='ppapi_app_perencanaan_v1_'+id;
+  const out=[k,k+'_photos',k+'_plans',k+'_dwg',k+'_jsa',k+'_sync',k+'_mig',projStoreKey(id)];
+  try{ for(let i=0;i<localStorage.length;i++){ const x=localStorage.key(i); if(x&&x.indexOf(k+'_stash_')===0) out.push(x); } }catch(e){}
+  return out;
+}
 function validUserId(id){ return /^u_[A-Za-z0-9_-]{1,64}$/.test(String(id||'')); }
 function deviceBytes(id){ let b=0; userKeys(id).forEach(function(k){ try{ const v=localStorage.getItem(k); if(v) b+=v.length; }catch(e){} }); return b; }
 function fmtSize(n){ if(n<1024) return n+' B'; if(n<1048576) return Math.round(n/1024)+' KB'; return (n/1048576).toFixed(1).replace('.',',')+' MB'; }
@@ -1771,7 +1780,7 @@ function renderAdmin(){
   let totProj=0; ids.forEach(function(i){ totProj+=getProjects(i).length; });
   const st=stats();
   const s=document.getElementById('adm-stats');
-  if(s) s.innerHTML=[[ids.length,'Pengguna aplikasi di peramban ini'],[totProj,'Proyek tersimpan'],[st.ans+'/'+st.total,'Butir dinilai (sesi Anda)'],[st.critFail,'Temuan kritis aktif']].map(function(x){return '<div class="adm-stat"><div class="n">'+esc(x[0])+'</div><div class="l">'+esc(x[1])+'</div></div>';}).join('');
+  if(s) s.innerHTML=[[ids.length,'Pengguna aplikasi di peramban ini'],[totProj,'Arsip lama di peramban ini'],[st.ans+'/'+st.total,'Butir dinilai (sesi Anda)'],[st.critFail,'Temuan kritis aktif']].map(function(x){return '<div class="adm-stat"><div class="n">'+esc(x[0])+'</div><div class="l">'+esc(x[1])+'</div></div>';}).join('');
   const rows=document.getElementById('user-rows');
   if(rows) rows.innerHTML=ids.map(function(i){
     const u=isObj(users[i])?users[i]:{};
@@ -1801,14 +1810,16 @@ function wipeUserData(id){
 /* setiap anggota: hapus data sendiri dari peramban ini (perangkat bersama) */
 function wipeMyData(){
   if(!CURRENT_USER) return;
-  if(!confirm('Hapus semua data aplikasi milik Anda di peramban ini?\n\nArsip proyek, isian yang sedang terbuka, foto bukti, gambar rencana, unggahan, dan JSA Anda di perangkat ini akan dihapus permanen. Simpan cadangan dengan Ekspor Data (.json) bila masih diperlukan.')) return;
+  if(!confirm('Hapus data aplikasi milik Anda dari peramban ini?\n\nSalinan di perangkat ini (isian yang sedang terbuka, arsip lama, foto bukti, gambar rencana, unggahan, dan JSA) akan dihapus. Proyek yang sudah tersimpan ke akun tetap aman dan dapat dibuka kembali dari Proyek Saya. Data lama yang belum disimpan ke akun akan hilang; simpan cadangan dengan Ekspor Data (.json) bila masih diperlukan.')) return;
+  if(SYNC&&SYNC.dirty&&SYNC.pid) doSync();     /* perubahan terakhir tetap dikirim (antrean akun) */
   clearWorkingState();                       /* layar kembali kosong … */
   clearTimeout(saveT);
   userKeys(CURRENT_USER).forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });   /* … lalu semua kuncinya dihapus */
+  SYNC=emptySync(); MIG={state:'none',working:false,done:[]};
   const el=document.getElementById('saved-ind'); if(el) el.textContent='';
   renderProjects();
   logAct('Hapus data sendiri dari perangkat');
-  notify('Data aplikasi Anda di peramban ini telah dihapus.','success');
+  notify('Data aplikasi Anda di peramban ini telah dihapus. Proyek di akun tetap tersimpan.','success');
 }
 
 /* ---------- arsip proyek per anggota ---------- */
@@ -1851,52 +1862,596 @@ function applyRecordFields(raw){
   FIELDS.forEach(function(id){ const e=document.getElementById(id); if(!e) return; if(f[id]!=null) e.value=String(f[id]); else if(id==='f-pipa') e.value=''; else resetControl(e); });
   return f;
 }
-function saveProject(){
-  if(!CURRENT_USER){ notify('Sesi belum siap. Muat ulang halaman.','error'); return; }
-  const name=val('f-proyek')||('Proyek '+new Date().toLocaleDateString('id-ID'));
-  const st=stats();
-  const rec={id:Date.now(), name:name, tag:val('f-tag')||'', status:st.status, fields:collectFields(), answers:state.answers, naNote:state.naNote, photos:state.photos, plans:state.plans||[], dwg:JSON.parse(JSON.stringify(DWG)), jsa:state.jsa||[], analisis:collectAnalisis(), ts:Date.now()};
-  const list=getProjects(CURRENT_USER);
-  const ix=list.findIndex(function(p){ return p.name===name && p.tag===rec.tag; });
-  if(ix>=0){ rec.id=list[ix].id; list[ix]=rec; } else { list.unshift(rec); }
-  let ok=setProjects(CURRENT_USER,list);
-  if(!ok){
-    const lite=list.map(function(p){ const q=Object.assign({},p); delete q.photos; delete q.plans; return q; });
-    ok=setProjects(CURRENT_USER,lite);
-    notify(ok?'Proyek "'+name+'" tersimpan TANPA foto/unggahan karena penyimpanan peramban penuh. Gunakan Ekspor Data (.json) untuk cadangan lengkap.':'Penyimpanan peramban penuh. Gunakan Ekspor Data (.json) untuk menyimpan proyek.', ok?'warn':'error');
-  } else {
-    notify('Proyek "'+name+'" tersimpan di arsip Anda.','success');
+/* ======================================================================
+   PROYEK SAYA — data proyek & inspeksi melekat ke akun PPAPI (2026-10-21)
+   ----------------------------------------------------------------------
+   Arahan klien: "Pastikan database untuk semua aplikasi melekat ke akun yang
+   digunakan untuk login sehingga saat membutuhkan data hasil inspeksi yang
+   sudah diinput, bisa dibuka kembali dan tidak hilang."
+   • Setiap proyek = dokumen 'perencanaan/<pid>' di akun lewat PPAPI.appData
+     (Firestore app_data/{uid}/perencanaan/{pid}); foto bukti, unggahan, dan
+     gambar rencana besar = 'perencanaan_media/<pid>__…' (masing-masing ≤ 800 KB;
+     gambar dikompresi JPEG bila perlu; yang tetap terlalu besar disimpan di
+     peramban ini saja dan anggota diberi tahu).
+   • Salinan kerja proyek yang terbuka tetap di peramban (KEY, KEY_photos, …)
+     sehingga aplikasi bekerja tanpa internet. KEY_sync mencatat proyek yang
+     terbuka (pid) dan apakah perubahan sudah sampai di akun.
+   • Simpan otomatis: setiap perubahan → dikirim ke akun 2,5 detik kemudian.
+     Penanda di bilah menu: "Tersimpan ke akun · 14.32" / "Belum tersinkron —
+     akan dicoba lagi" / "Tersimpan di peramban · 14.32".
+   • Konflik: last-write-wins memakai updatedAt. Bila akun memegang versi yang
+     lebih baru (perangkat lain), versi itu dibuka dan isian perangkat ini
+     disimpan sebagai salinan "(salinan perangkat ini)" — tidak ada yang dibuang.
+   • Data lama di peramban ini (arsip & isian sebelum fitur ini) dipindahkan ke
+     akun HANYA setelah anggota menyetujuinya (panel di Proyek Saya).
+   • Rumus dan perhitungan tidak disentuh: yang disimpan adalah isian yang sama
+     dengan Ekspor Data (.json).
+   ====================================================================== */
+const APPD='perencanaan', APPD_MEDIA='perencanaan_media';
+const SYNC_DELAY=2500;
+let SYNC=null;                 // {pid, dirty, localTs, remoteTs, media:{mid:hash}, localOnly:{photos:[],plans:[],dwg:false}}
+let MIG={state:'none', working:false};
+let syncT=null, syncBusy=null, syncAgain=false, syncSuppress=0, syncState='idle', syncMsg='';
+let PROJ_CACHE=null, PROJ_STALE=false, PROJ_ERR='', projLoading=null, renaming='';
+const largeWarned={};
+
+function appD(){ return (window.PPAPI&&PPAPI.appData&&typeof PPAPI.appData.save==='function')?PPAPI.appData:null; }
+function validPid(id){ return typeof id==='string' && /^p[a-z0-9]{6,40}$/.test(id); }
+function newPid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function fnv(s){ s=String(s); let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return (h>>>0).toString(36)+'-'+s.length.toString(36); }
+function hhmm(ms){ try{ return new Date(ms||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function syncKey(){ return KEY+'_sync'; }
+function emptySync(){ return {pid:'',dirty:false,localTs:0,remoteTs:0,media:{},localOnly:{photos:[],plans:[],dwg:false}}; }
+function readSync(){
+  try{
+    const o=JSON.parse(localStorage.getItem(syncKey())||'null'); if(!isObj(o)) return null;
+    const lo=isObj(o.localOnly)?o.localOnly:{};
+    return {pid:validPid(o.pid)?o.pid:'', dirty:!!o.dirty, localTs:numOr(o.localTs,0), remoteTs:numOr(o.remoteTs,0), media:isObj(o.media)?o.media:{},
+      localOnly:{photos:Array.isArray(lo.photos)?lo.photos.map(String):[], plans:Array.isArray(lo.plans)?lo.plans.map(String):[], dwg:!!lo.dwg}};
+  }catch(e){ return null; }
+}
+function writeSync(){ if(!KEY||!SYNC) return; try{ localStorage.setItem(syncKey(), JSON.stringify(SYNC)); }catch(e){ storeFail(); } }
+function readMig(){ try{ const m=JSON.parse(localStorage.getItem(KEY+'_mig')||'null'); return isObj(m)&&m.state?{state:String(m.state), working:!!m.working, done:Array.isArray(m.done)?m.done.map(String):[]}:null; }catch(e){ return null; } }
+function writeMig(){ if(!KEY) return; try{ localStorage.setItem(KEY+'_mig', JSON.stringify(MIG)); }catch(e){} }
+/* isian kerja dianggap berisi bila ada data yang diketik/dijawab (bukan sekadar nilai bawaan) */
+function hasContent(){
+  const f=collectFields();
+  if(['f-proyek','f-lokasi','f-kontraktor','f-tag','f-catatan','f-kesimpulan','f-tinggi','f-lift'].some(function(k){ return String(f[k]||'').trim()!==''; })) return true;
+  if(Object.keys(state.answers||{}).length || Object.keys(state.photos||{}).length || (state.plans||[]).length) return true;
+  return !!(DWG && ((DWG.depan||[]).length || (DWG.samping||[]).length || (DWG.atas||[]).length));
+}
+/* isian kerja lama (sebelum fitur ini) menunggu persetujuan pindah ke akun */
+function migBlocksDraft(){ return MIG.state==='pending' && MIG.working && !!SYNC && !SYNC.pid; }
+function legacyArchive(){ const done=MIG.done||[]; return getProjects(CURRENT_USER).filter(function(p){ return done.indexOf(String(p.id))<0; }); }
+
+/* ---------- penanda status simpan (bilah menu) ---------- */
+function setSyncUI(st, msg){
+  if(st) syncState=st;
+  if(msg!==undefined) syncMsg=msg;
+  const el=document.getElementById('saved-ind'); if(!el) return;
+  let h='', title='';
+  if(!appD()){ h='<span class="saved-k">Tersimpan </span>'+esc(hhmm()); }
+  else if(!SYNC){ h=''; }
+  else if(migBlocksDraft() || (!SYNC.pid && SYNC.dirty)){ h='<span class="saved-k">Tersimpan di peramban · </span>'+esc(hhmm(SYNC.localTs)); title='Isian ini tersimpan di peramban ini dan belum tersimpan ke akun. Lihat Data Proyek › Proyek Saya.'; }
+  else if(syncState==='saving' && SYNC.dirty){ h='Menyimpan ke akun…'; }
+  else if((syncState==='pending'||syncState==='error') && SYNC.dirty){ h='Belum tersinkron<span class="saved-k"> — akan dicoba lagi</span>'; title=syncMsg||'Perubahan tersimpan di peramban ini dan akan dikirim ke akun setelah tersambung.'; }
+  else if(SYNC.pid && SYNC.remoteTs){ h='<span class="saved-k">Tersimpan ke akun · </span>'+esc(hhmm(SYNC.dirty?SYNC.localTs:SYNC.remoteTs)); title=SYNC.dirty?'Perubahan terakhir akan dikirim ke akun dalam beberapa detik.':'Proyek ini tersimpan di akun PPAPI Anda.'; }
+  else if(SYNC.dirty){ h='<span class="saved-k">Tersimpan di peramban · </span>'+esc(hhmm(SYNC.localTs)); }
+  if(el.innerHTML!==h) el.innerHTML=h;
+  if(title) el.setAttribute('title',title); else el.removeAttribute('title');
+  el.classList.toggle('is-warn', /Belum tersinkron/.test(h));
+}
+/* perubahan lokal → kirim ke akun beberapa detik kemudian */
+function markDirty(){
+  if(!KEY||!SYNC||syncSuppress) return;
+  SYNC.dirty=true; SYNC.localTs=Date.now(); writeSync();
+  scheduleSync(SYNC_DELAY); setSyncUI();
+}
+function scheduleSync(ms){ if(!appD()) return; clearTimeout(syncT); syncT=setTimeout(function(){ doSync(); }, ms==null?SYNC_DELAY:ms); }
+
+/* ---------- rekaman proyek (bentuk sama dengan Ekspor Data .json) ---------- */
+function workingRecord(){
+  return {v:4, fields:collectFields(), answers:state.answers, naNote:state.naNote, analisis:collectAnalisis(), jsa:state.jsa||[],
+    dwg:JSON.parse(JSON.stringify(DWG)), dwgSeq:dwgSeq, photos:state.photos||{}, plans:state.plans||[]};
+}
+function recordMeta(rec, status){
+  const f=rec.fields||{};
+  return {name:str(f['f-proyek'],140), tag:str(f['f-tag'],60), lokasi:str(f['f-lokasi'],140), tanggal:str(f['f-tanggal'],10),
+    inspektor:str(f['f-inspektor'],140), model:str(f['f-model'],20), status:str(status,20),
+    nFoto:Object.keys(rec.photos||{}).length, nUnggah:(rec.plans||[]).length, ver:APP_VERSION};
+}
+function currentStatus(){ try{ return finalView().status; }catch(e){ try{ return stats().status; }catch(er){ return 'BELUM LENGKAP'; } } }
+function warnLocalOnly(items){
+  const fresh=items.filter(function(x){ if(largeWarned[x]) return false; largeWarned[x]=1; return true; });
+  if(!fresh.length) return;
+  notify('Sebagian data terlalu besar untuk disimpan ke akun (maksimal ±800 KB per berkas) dan hanya tersimpan di peramban ini: '+fresh.slice(0,4).join(', ')+(fresh.length>4?' dan '+(fresh.length-4)+' lainnya':'')+'. Perkecil berkas tersebut (mis. PDF di bawah 700 KB) agar ikut tersimpan ke akun.','warn');
+}
+/* Kirim satu rekaman proyek ke akun: media dulu (foto, unggahan, gambar besar), lalu dokumen utama.
+   media = {mid: hash} yang sudah ada di akun (tidak dikirim ulang bila sama). */
+async function pushRecord(pid, rec, ts, media, status){
+  const A=appD(), LIM=A.LIMIT-4000;
+  const keep={}, localOnly=[], lo={photos:[],plans:[],dwg:false};
+  let queued=false;
+  /* versi akun lebih baru (perangkat lain) → konflik SEBELUM media apa pun ditulis */
+  try{
+    const cur=await A.get(APPD,pid);
+    if(cur && !cur.pending && cur.updatedAt>ts) return {synced:false, queued:false, conflict:true, remote:cur, localOnly:lo, media:media};
+  }catch(e){ if(!(e&&e.code==='appdata/offline')) throw e; }
+  const tag=function(x){ return fnv(x).replace(/[^a-z0-9-]/g,''); };   /* id media mengikuti isi: versi lain tidak pernah tertimpa */
+  const known=Object.assign({}, media);
+  async function put(mid, kind, meta, payload){
+    const h=fnv(payload.d!=null?payload.d:JSON.stringify(payload));
+    keep[mid]=h;
+    if(media[mid]===h) return true;
+    let r;
+    try{ r=await A.save(APPD_MEDIA, mid, {meta:Object.assign({kind:kind},meta), data:payload, parent:pid, updatedAt:ts}); }
+    catch(e){ if(e&&e.code==='appdata/too-large'){ delete keep[mid]; return false; } throw e; }
+    if(r&&r.synced) media[mid]=h; else queued=true;
+    return true;
   }
-  logAct('Simpan proyek: '+name);
+  const out=Object.assign({}, rec); delete out.photos; delete out.plans;
+  out.photos={}; out.plans=[];
+  const photos=rec.photos||{};
+  for(const k of Object.keys(photos)){
+    let d=photos[k];
+    const mid=pid+'__ph_'+k.replace(/[^0-9-]/g,'')+'_'+tag(d);
+    if(A.bytes(d)>LIM) d=await A.compressImage(d,{maxBytes:LIM});
+    if(d && await put(mid,'photo',{key:k},{d:d})) out.photos[k]=mid;
+    else { out.photos[k]='local'; lo.photos.push(k); localOnly.push('foto bukti butir '+k); }
+  }
+  const plans=rec.plans||[];
+  for(let i=0;i<plans.length;i++){
+    const p=plans[i]; if(!isObj(p)) continue;
+    const mid=pid+'__pl_'+tag(str(p.name,140)+'|'+(p.ts||i)+'|'+String(p.data||'').length+'|'+String(p.data||'').slice(-64));
+    let d=String(p.data||''), type=str(p.type,60);
+    if(A.bytes(d)>LIM){
+      if(/^data:image\//.test(d)){ d=await A.compressImage(d,{maxBytes:LIM}); type='image/jpeg'; } else d='';
+    }
+    if(d && await put(mid,'plan',{name:str(p.name,140)},{d:d,name:str(p.name,140),type:type,ts:numOr(p.ts,0)})) out.plans.push({name:str(p.name,140),type:type,ts:numOr(p.ts,0),mid:mid});
+    else { out.plans.push({name:str(p.name,140),type:str(p.type,60),ts:numOr(p.ts,0),local:true}); lo.plans.push(String(p.ts||i)); localOnly.push('unggahan "'+str(p.name,80)+'"'); }
+  }
+  /* gambar rencana ikut dokumen utama; dipisah bila dokumen utama melebihi batas */
+  if(A.bytes(JSON.stringify(out))>LIM){
+    const mid=pid+'__dwg_'+tag(JSON.stringify(out.dwg));
+    if(await put(mid,'dwg',{},{dwg:out.dwg,q:out.dwgSeq})){ out.dwgMid=mid; out.dwg=null; }
+    else { out.dwg=null; out.dwgLocal=true; lo.dwg=true; localOnly.push('gambar rencana'); }
+  }
+  const meta=recordMeta(rec, status); meta.lokal=localOnly.length;
+  let r;
+  try{ r=await A.save(APPD, pid, {meta:meta, data:out, updatedAt:ts}); }
+  catch(e){
+    if(e&&e.code==='appdata/too-large'){ warnLocalOnly(['isian proyek "'+(meta.name||'tanpa nama')+'"']); }
+    throw e;
+  }
+  if(r&&r.conflict){
+    /* versi akun menang: media yang baru dikirim dan tidak dirujuk versi akun dibersihkan */
+    const ref=JSON.stringify((r.remote&&r.remote.data)||{});
+    for(const mid of Object.keys(keep)){ if(!(mid in known) && ref.indexOf(mid)<0){ try{ await A.remove(APPD_MEDIA, mid); }catch(e){} delete media[mid]; } }
+  } else {
+    for(const mid of Object.keys(media)){
+      if(!(mid in keep)){ try{ await A.remove(APPD_MEDIA, mid); }catch(e){ /* dihapus pada sinkron berikutnya */ } delete media[mid]; }
+    }
+  }
+  warnLocalOnly(localOnly);
+  return {synced:!!(r&&r.synced)&&!queued, queued:!!(r&&r.queued)||queued, conflict:!!(r&&r.conflict), remote:r&&r.remote, localOnly:lo, media:media};
+}
+/* ambil proyek dari akun → rekaman siap dimuat + hash media */
+async function fetchProject(pid){
+  const A=appD();
+  const r=await A.get(APPD,pid); if(!r||!isObj(r.data)) return null;
+  const d=r.data, hashes={};
+  const media=await A.listMedia(APPD,pid); const by={}; media.forEach(function(m){ by[m.id]=m; });
+  const photos={}; let missing=0;
+  Object.keys(isObj(d.photos)?d.photos:{}).forEach(function(k){
+    const m=by[d.photos[k]];
+    if(m&&isObj(m.data)&&typeof m.data.d==='string'){ photos[k]=m.data.d; hashes[m.id]=fnv(m.data.d); } else missing++;
+  });
+  const plans=[];
+  (Array.isArray(d.plans)?d.plans:[]).forEach(function(p){
+    const m=isObj(p)&&p.mid?by[p.mid]:null;
+    if(m&&isObj(m.data)&&typeof m.data.d==='string'){ plans.push({name:str(m.data.name||p.name,140),type:str(m.data.type||p.type,60),data:m.data.d,ts:numOr(m.data.ts,0)}); hashes[m.id]=fnv(m.data.d); }
+    else missing++;
+  });
+  let dwg=d.dwg;
+  if(!dwg && d.dwgMid && by[d.dwgMid] && isObj(by[d.dwgMid].data)){ dwg=by[d.dwgMid].data.dwg; hashes[d.dwgMid]=fnv(JSON.stringify(by[d.dwgMid].data)); }
+  else if(!dwg && (d.dwgMid||d.dwgLocal)) missing++;
+  return {rec:{fields:d.fields, answers:d.answers, naNote:d.naNote, photos:photos, plans:plans, dwg:dwg, jsa:d.jsa, analisis:d.analisis},
+    meta:isObj(r.meta)?r.meta:{}, updatedAt:r.updatedAt, hashes:hashes, missing:missing, data:d};
+}
+/* bagian yang hanya ada di peramban ini disimpan per proyek sebelum berpindah proyek */
+function stashKey(pid){ return KEY+'_stash_'+pid; }
+function stashLocalOnly(){
+  if(!SYNC||!SYNC.pid) return;
+  const lo=SYNC.localOnly||{}; if(!(lo.photos||[]).length && !(lo.plans||[]).length && !lo.dwg){ try{ localStorage.removeItem(stashKey(SYNC.pid)); }catch(e){} return; }
+  const o={photos:{},plans:[],dwg:null};
+  (lo.photos||[]).forEach(function(k){ if(state.photos[k]) o.photos[k]=state.photos[k]; });
+  (state.plans||[]).forEach(function(p,i){ if((lo.plans||[]).indexOf(String(p.ts||i))>=0) o.plans.push(p); });
+  if(lo.dwg) o.dwg=DWG;
+  lsSet(stashKey(SYNC.pid), JSON.stringify(o));
+}
+function mergeStash(pid, rec, data){
+  let o=null; try{ o=JSON.parse(localStorage.getItem(stashKey(pid))||'null'); }catch(e){}
+  if(!isObj(o)) return 0;
+  let n=0;
+  const ph=cleanPhotos(o.photos); Object.keys(ph).forEach(function(k){ if(isObj(data.photos)&&data.photos[k]==='local'&&!rec.photos[k]){ rec.photos[k]=ph[k]; n++; } });
+  cleanPlans(o.plans).forEach(function(p){ if(!rec.plans.some(function(q){ return q.name===p.name&&q.ts===p.ts; })){ rec.plans.push(p); n++; } });
+  if(!rec.dwg && o.dwg && data.dwgLocal){ rec.dwg=o.dwg; n++; }
+  return n;
+}
+
+/* ---------- memuat rekaman ke layar (dipakai arsip lama, akun, impor) ---------- */
+function applyRecord(p){
+  syncSuppress++;
+  try{
+    state.answers=cleanAnswers(p.answers); state.naNote=cleanNotes(p.naNote); state.photos=cleanPhotos(p.photos); state.plans=cleanPlans(p.plans);
+    const j=cleanJsa(p.jsa); state.jsa=j&&j.length?j:jsaCopyTpl(); saveJsa();
+    if(p.dwg){ DWG=migrateDwg(cleanDwg(p.dwg)); dwgSetSeqFrom(DWG); } else { DWG={depan:[],samping:[],atas:[],_w:2}; dwgSeq=1; }
+    dwgSel=null; dwgSaveLS(); if(dwgInited){ dwgRender(); dwgCheck(); }
+    applyRecordFields(p.fields); const mi=applyAnalisis(p.analisis);
+    renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); computeLL(); renderPlans(); renderJSA(); save(); savePhotos(); savePlans();
+    const v=document.querySelector('.view.active'); if(v&&v.id==='v-laporan') renderRingkasan();
+    return mi;
+  } finally { syncSuppress--; }
+}
+
+/* ---------- sinkron proyek yang terbuka ---------- */
+async function doSync(opts){
+  opts=opts||{};
+  clearTimeout(syncT); syncT=null;
+  const A=appD(); if(!A||!KEY||!SYNC) return null;
+  if(syncBusy){ syncAgain=true; return syncBusy; }
+  if(!SYNC.dirty && !opts.force) return {synced:true, idle:true};
+  if(!SYNC.pid){
+    if(migBlocksDraft()){ setSyncUI(); return {local:true}; }
+    if(!opts.create && !hasContent()){ SYNC.dirty=false; writeSync(); setSyncUI(); return {idle:true}; }
+    SYNC.pid=newPid(); SYNC.media={}; SYNC.remoteTs=0; if(!SYNC.localTs) SYNC.localTs=Date.now(); writeSync();
+  }
+  const pid=SYNC.pid, ts=SYNC.localTs||Date.now();
+  syncBusy=(async function(){
+    setSyncUI('saving');
+    try{
+      const r=await pushRecord(pid, workingRecord(), ts, Object.assign({}, SYNC.media), currentStatus());
+      if(!SYNC||SYNC.pid!==pid) return r;
+      SYNC.media=r.media; SYNC.localOnly=r.localOnly;
+      if(r.conflict){ writeSync(); await resolveConflict(pid, r.remote); return r; }
+      if(r.synced){ SYNC.remoteTs=ts; if(SYNC.localTs===ts) SYNC.dirty=false; }
+      writeSync();
+      setSyncUI(r.synced?'saved':'pending', r.synced?'':A.errorMessage('appdata/offline'));
+      return r;
+    }catch(e){
+      setSyncUI('error', (e&&e.message)||'');
+      return {error:e};
+    }
+  })();
+  let res;
+  try{ res=await syncBusy; } finally { syncBusy=null; }
+  refreshProjects();
+  if(syncAgain){ syncAgain=false; if(SYNC&&SYNC.dirty) scheduleSync(600); }
+  else if(SYNC&&SYNC.dirty&&res&&(res.queued||res.error)) scheduleSync(30000);
+  return res;
+}
+/* akun memegang versi yang lebih baru (perangkat lain): versi itu dibuka; isian perangkat ini disimpan sebagai salinan */
+async function resolveConflict(pid, remote){
+  const A=appD();
+  const rec=workingRecord();
+  const base=str((rec.fields||{})['f-proyek'],110)||'Proyek';
+  const copyName=base+' (salinan perangkat ini)';
+  rec.fields=Object.assign({}, rec.fields, {'f-proyek':copyName});
+  const keepPid=newPid(), ts=Date.now();
+  let kept=false;
+  try{ const r=await pushRecord(keepPid, rec, ts, {}, currentStatus()); kept=!!(r.synced||r.queued); }catch(e){ kept=false; }
+  if(!kept){
+    /* salinan belum dapat dikirim: tetap di layar sebagai proyek baru (akan dikirim saat tersambung) */
+    syncSuppress++; try{ const fp=document.getElementById('f-proyek'); if(fp) fp.value=copyName; save(); } finally { syncSuppress--; }
+    SYNC=emptySync(); SYNC.pid=keepPid; SYNC.dirty=true; SYNC.localTs=ts; writeSync(); setSyncUI('pending');
+    notify('Proyek ini telah diubah dari perangkat lain dengan waktu yang lebih baru. Isian di perangkat ini dipertahankan sebagai "'+copyName+'" dan akan dikirim ke akun setelah tersambung.','warn');
+    return;
+  }
+  let f=null; try{ f=await fetchProject(pid); }catch(e){ f=null; }
+  if(f){ openFetched(pid, f, true); }
+  else { SYNC=emptySync(); writeSync(); }
+  notify('Proyek ini telah diubah dari perangkat lain dengan waktu yang lebih baru. Versi terbaru dari akun kini dibuka; isian dari perangkat ini disimpan sebagai "'+copyName+'" di Proyek Saya.','warn');
+  refreshProjects();
+}
+function openFetched(pid, f, quiet){
+  const extra=mergeStash(pid, f.rec, f.data);
+  const mi=applyRecord(f.rec);
+  SYNC=emptySync(); SYNC.pid=pid; SYNC.localTs=f.updatedAt; SYNC.remoteTs=f.updatedAt; SYNC.media=f.hashes;
+  const dp=isObj(f.data.photos)?f.data.photos:{};
+  SYNC.localOnly={photos:Object.keys(dp).filter(function(k){ return dp[k]==='local'; }),
+    plans:(Array.isArray(f.data.plans)?f.data.plans:[]).filter(function(q){ return isObj(q)&&q.local; }).map(function(q){ return String(q.ts||0); }), dwg:!!f.data.dwgLocal};
+  writeSync(); setSyncUI('saved');
+  const name=str(f.meta.name,140)||'Proyek tanpa nama';
+  if(!quiet){ notify('Proyek "'+name+'" dibuka.','success'); matLoadNotice(mi); }
+  const miss=f.missing-extra;
+  if(miss>0) notify(miss+' foto/unggahan proyek ini hanya tersimpan di perangkat tempat data itu diinput (terlalu besar untuk akun). Bagian lain proyek tetap lengkap.','warn');
   renderProjects();
+  return mi;
+}
+/* sebelum berpindah proyek: kirim perubahan; data yang belum aman tidak boleh tertimpa */
+async function leaveCurrent(){
+  if(!appD()||!SYNC) return true;
+  if(migBlocksDraft() && hasContent()){
+    /* isian lama yang belum dipindahkan → masuk arsip lama agar tetap dapat dipindahkan ke akun */
+    const list=getProjects(CURRENT_USER);
+    const rec=workingRecord();
+    list.unshift({id:Date.now(), name:val('f-proyek')||('Isian '+new Date().toLocaleDateString('id-ID')), tag:val('f-tag')||'', status:currentStatus(), fields:rec.fields, answers:rec.answers, naNote:rec.naNote, photos:rec.photos, plans:rec.plans, dwg:rec.dwg, jsa:rec.jsa, analisis:rec.analisis, ts:Date.now()});
+    if(!setProjects(CURRENT_USER,list)){ notify('Isian yang terbuka belum tersimpan ke akun dan penyimpanan peramban penuh. Simpan isian ini ke akun lebih dahulu (panel Data lama di Proyek Saya).','error'); return false; }
+    MIG.working=false; writeMig();
+    SYNC.dirty=false; writeSync();                /* isian lama TIDAK dikirim ke akun tanpa persetujuan */
+  }
+  if(SYNC.dirty && (SYNC.pid || hasContent())){ await doSync(); }
+  if(SYNC.dirty && SYNC.pid){
+    const st=appD().status(), queued=appD().pending().some(function(o){ return o.app===APPD && o.id===SYNC.pid; });
+    if(!(queued && st.durable!==false)){
+      notify('Perubahan proyek yang terbuka belum tersimpan ke akun. Periksa koneksi internet, lalu coba lagi agar isian tidak tertimpa.','error');
+      return false;
+    }
+  }
+  try{ stashLocalOnly(); }catch(e){ /* penyimpanan penuh: bagian lokal tetap di salinan kerja sampai diganti */ }
+  return true;
+}
+
+/* ---------- daftar Proyek Saya ---------- */
+function refreshProjects(){
+  const A=appD(); if(!A||!CURRENT_USER) return Promise.resolve([]);
+  if(projLoading) return projLoading;
+  projLoading=A.list(APPD).then(function(l){ PROJ_CACHE=l; PROJ_STALE=!!l.stale; PROJ_ERR=''; return l; }, function(e){ PROJ_ERR=(e&&e.message)||'Daftar proyek belum dapat dimuat.'; if(!PROJ_CACHE) PROJ_CACHE=[]; return PROJ_CACHE; })
+    .then(function(l){ projLoading=null; renderProjects(); return l; });
+  return projLoading;
+}
+const VCOL={'HIJAU':'#3d7a52','KUNING':'#c99a2e','MERAH':'#b5443a','BELUM LENGKAP':'#5c5c63'};
+function fmtTanggal(s){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||'')); if(!m) return ''; try{ return localDate(s).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return s; } }
+function fmtWaktu(ms){ try{ return new Date(ms).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function projRow(p){
+  const m=isObj(p.meta)?p.meta:{}, id=String(p.id), open=!!(SYNC&&SYNC.pid===id);
+  const nm=str(m.name,140)||'Proyek tanpa nama', status=VCOL[m.status]?m.status:'BELUM LENGKAP';
+  const bits=[];
+  if(m.lokasi) bits.push(esc(str(m.lokasi,140)));
+  if(m.tanggal) bits.push('Inspeksi '+esc(fmtTanggal(m.tanggal)));
+  bits.push('Diperbarui '+esc(fmtWaktu(open&&SYNC.dirty?SYNC.localTs:p.updatedAt)));
+  let flags='';
+  if(open) flags+='<span class="pi-flag">Sedang dibuka</span>';
+  if(p.pending || (open&&SYNC.dirty&&(syncState==='pending'||syncState==='error'))) flags+='<span class="pi-flag pi-flag--warn">Belum tersinkron</span>';
+  if(numOr(m.lokal,0)>0) flags+='<span class="pi-flag" title="Sebagian foto/unggahan terlalu besar untuk akun dan hanya ada di perangkat asal.">'+esc(numOr(m.lokal,0))+' berkas hanya di perangkat asal</span>';
+  let main;
+  if(renaming===id){
+    main='<form class="pi-ren" onsubmit="return submitRename(event,\''+id+'\')"><label class="sr-only" for="ren-'+id+'">Nama proyek baru</label>'
+      +'<input id="ren-'+id+'" maxlength="140" value="'+esc(nm==='Proyek tanpa nama'?'':nm)+'" placeholder="Nama proyek">'
+      +'<button type="submit" class="photo-btn">Simpan</button><button type="button" class="pi-link" onclick="cancelRename()">Batal</button></form>';
+  } else {
+    main='<div class="pi-name">'+esc(nm)+(m.tag?' · '+esc(str(m.tag,60)):'')+'</div>';
+  }
+  return '<li class="proj-item'+(open?' is-open':'')+'" data-pid="'+id+'"><div class="pi-main">'+main+'<div class="pi-meta">'+bits.join(' · ')+'</div>'+(flags?'<div class="pi-flags">'+flags+'</div>':'')+'</div>'
+    +'<span class="pi-st" style="background:'+VCOL[status]+';color:'+inkOn(VCOL[status])+'">'+esc(status)+'</span>'
+    +'<div class="pi-act">'
+    +(open?'<span class="pi-open">Terbuka</span>':'<button type="button" class="photo-btn" onclick="openProject(\''+id+'\')" aria-label="Buka proyek '+esc(nm)+'">Buka</button>')
+    +'<button type="button" class="pi-link" onclick="startRename(\''+id+'\')" aria-label="Ganti nama proyek '+esc(nm)+'">Ganti nama</button>'
+    +'<button type="button" class="pi-link" onclick="duplicateProject(\''+id+'\')" aria-label="Gandakan proyek '+esc(nm)+'">Gandakan</button>'
+    +'<button type="button" class="thumb-x" onclick="deleteProject(\''+id+'\')" aria-label="Hapus proyek '+esc(nm)+' dari akun">Hapus</button>'
+    +'</div></li>';
+}
+function renderMigPanel(){
+  const box=document.getElementById('mig-panel'); if(!box) return;
+  let hide=false; try{ hide=sessionStorage.getItem(KEY+'_mig_later')==='1'; }catch(e){}
+  const arch=appD()&&MIG.state==='pending'?legacyArchive():[];
+  const working=migBlocksDraft()&&hasContent();
+  if(MIG.state!=='pending' || hide || (!arch.length && !working)){ box.innerHTML=''; box.hidden=true; return; }
+  const names=arch.slice(0,6).map(function(p){ return '<li>'+esc(str(p.name,140)||'Proyek tanpa nama')+(p.tag?' · '+esc(str(p.tag,60)):'')+' <span>· disimpan '+esc(fmtWaktu(numOr(p.ts,0)))+'</span></li>'; });
+  if(arch.length>6) names.push('<li>dan '+(arch.length-6)+' proyek lainnya</li>');
+  if(working) names.unshift('<li>Isian yang sedang terbuka'+(val('f-proyek')?' ('+esc(val('f-proyek'))+')':'')+'</li>');
+  box.hidden=false;
+  box.innerHTML='<div class="mig-box" role="region" aria-labelledby="mig-h"><p class="mig-h" id="mig-h">Data lama di peramban ini</p>'
+    +'<p>Data berikut tersimpan di peramban ini sebelum penyimpanan ke akun tersedia. Simpan ke akun PPAPI Anda agar dapat dibuka kembali dari perangkat lain dan tidak hilang bila data peramban dibersihkan.</p>'
+    +'<ul class="mig-list">'+names.join('')+'</ul>'
+    +'<div class="btn-row"><button type="button" class="btn btn-pri" id="mig-yes" onclick="importLegacy()">Simpan ke akun</button><button type="button" class="btn btn-ghost" onclick="migLater()">Nanti saja</button></div>'
+    +'<p class="note">Data di peramban ini tidak dihapus. Pertanyaan ini muncul lagi saat aplikasi dibuka berikutnya sampai data disimpan ke akun.</p></div>';
 }
 function renderProjects(){
-  const box=document.getElementById('proj-list'); if(!box)return;
-  const list=CURRENT_USER?getProjects(CURRENT_USER):[];
-  if(!list.length){ box.innerHTML='<p class="note">Belum ada proyek tersimpan. Isi data lalu tekan "Simpan Proyek".</p>'; return; }
-  const VC={'HIJAU':'#3d7a52','KUNING':'#c99a2e','MERAH':'#b5443a','BELUM LENGKAP':'#5c5c63'};
-  box.innerHTML=list.map(function(p){
-    const id=Number(p.id)||0, status=VC[p.status]?p.status:'BELUM LENGKAP', nm=str(p.name,140);
-    return '<div class="proj-item"><div class="pi-main"><div class="pi-name">'+esc(nm)+(p.tag?' · '+esc(str(p.tag,60)):'')+'</div><div class="pi-meta">Disimpan '+esc(new Date(numOr(p.ts,0)).toLocaleString('id-ID'))+'</div></div>'
-      +'<span class="pi-st" style="background:'+VC[status]+';color:'+inkOn(VC[status])+'">'+esc(status)+'</span>'
-      +'<button type="button" class="photo-btn" onclick="openProject('+id+')" aria-label="Buka proyek '+esc(nm)+'">Buka</button>'
-      +'<button type="button" class="thumb-x" onclick="deleteProject('+id+')" aria-label="Hapus proyek '+esc(nm)+' dari arsip">Hapus</button></div>';
-  }).join('');
+  const box=document.getElementById('proj-list'); if(!box) return;
+  renderMigPanel();
+  if(!appD()){ box.innerHTML='<p class="note">Penyimpanan akun belum tersedia. Muat ulang halaman.</p>'; return; }
+  if(PROJ_CACHE===null){ box.innerHTML='<p class="note">Memuat proyek dari akun Anda…</p>'; refreshProjects(); return; }
+  let list=PROJ_CACHE.slice();
+  if(SYNC&&SYNC.pid&&SYNC.dirty&&!list.some(function(p){ return p.id===SYNC.pid; })){
+    list.unshift({id:SYNC.pid, meta:recordMeta(workingRecord(), currentStatus()), updatedAt:SYNC.localTs, pending:true});
+  }
+  let head='';
+  if(PROJ_STALE) head+='<p class="note">Akun belum dapat dihubungi. Daftar ini adalah daftar terakhir yang tersimpan di peramban ini.</p>';
+  if(PROJ_ERR) head+='<p class="note">'+esc(PROJ_ERR)+'</p>';
+  if(!list.length){ box.innerHTML=head+'<p class="note">Belum ada proyek di akun Anda. Isi Data Proyek; proyek tersimpan otomatis ke akun.</p>'; return; }
+  box.innerHTML=head+'<ul class="proj-ul">'+list.map(projRow).join('')+'</ul>';
+  if(renaming){ const inp=document.getElementById('ren-'+renaming); if(inp&&document.activeElement!==inp){ inp.focus(); inp.select(); } }
 }
-function openProject(id){
-  const list=getProjects(CURRENT_USER); const p=list.find(function(x){return Number(x.id)===Number(id);}); if(!p)return;
-  state.answers=cleanAnswers(p.answers); state.naNote=cleanNotes(p.naNote); state.photos=cleanPhotos(p.photos); state.plans=cleanPlans(p.plans);
-  const j=cleanJsa(p.jsa); state.jsa=j&&j.length?j:jsaCopyTpl(); saveJsa();
-  if(p.dwg){ DWG=migrateDwg(cleanDwg(p.dwg)); dwgSetSeqFrom(DWG); dwgSaveLS(); if(dwgInited){ dwgRender(); dwgCheck(); } }
-  applyRecordFields(p.fields); const mi=applyAnalisis(p.analisis);
-  renderChecklist(); renderProyekBanner(); renderTag(); renderAnalisis(); computeLL(); renderPlans(); renderJSA(); renderProjects(); save(); savePhotos(); savePlans();
+function openMyProjects(){ go('proyek'); setTimeout(function(){ const c=document.getElementById('proyek-saya'); if(c&&c.scrollIntoView) c.scrollIntoView({behavior:reducedMotion()?'auto':'smooth',block:'start'}); },60); }
+
+/* ---------- tindakan pada proyek ---------- */
+/* Simpan Proyek: kirim sekarang ke akun (proyek baru dibuat bila belum ada) */
+function saveProject(){
+  if(!CURRENT_USER){ notify('Sesi belum siap. Muat ulang halaman.','error'); return Promise.resolve(null); }
+  if(!appD()||!SYNC){ notify('Penyimpanan akun belum siap. Muat ulang halaman.','error'); return Promise.resolve(null); }
+  if(migBlocksDraft()){ MIG.working=false; writeMig(); }       /* anggota memilih menyimpan isian ini ke akun */
+  const name=val('f-proyek')||'Proyek tanpa nama';
+  SYNC.dirty=true; SYNC.localTs=Date.now(); writeSync();
+  return doSync({force:true, create:true}).then(function(r){
+    if(r&&r.conflict) return r;
+    if(r&&r.synced) notify('Proyek "'+name+'" tersimpan ke akun Anda.','success');
+    else if(r&&r.queued) notify('Proyek "'+name+'" tersimpan di peramban ini dan akan dikirim ke akun setelah tersambung.','warn');
+    else if(r&&r.error) notify((r.error.message||'Gagal menyimpan ke akun.')+' Isian tetap tersimpan di peramban ini.','error');
+    logAct('Simpan proyek: '+name);
+    return r;
+  });
+}
+async function openProject(id){
+  if(typeof id==='number' || /^\d+$/.test(String(id))) return openLegacyProject(Number(id));
+  if(!validPid(id)||!appD()) return;
+  if(SYNC&&SYNC.pid===id){ notify('Proyek ini sedang terbuka.','info'); go('proyek'); return; }
+  if(!(await leaveCurrent())) return;
+  let f=null;
+  try{ f=await fetchProject(id); }catch(e){ notify('Proyek belum dapat dibuka. '+((e&&e.message)||''),'error'); return; }
+  if(!f){ notify('Proyek tidak ditemukan di akun Anda. Mungkin sudah dihapus dari perangkat lain.','warn'); refreshProjects(); return; }
+  clearTimeout(saveT);
+  openFetched(id, f);
+  logAct('Buka proyek: '+(str(f.meta.name,140)||id));
+  go('proyek');
+}
+/* arsip lama (peramban ini, sebelum penyimpanan akun): membuka = memindahkannya ke akun sebagai proyek baru */
+async function openLegacyProject(id){
+  const list=getProjects(CURRENT_USER); const p=list.find(function(x){return Number(x.id)===Number(id);}); if(!p) return;
+  if(!(await leaveCurrent())) return;
+  const mi=applyRecord(p);
+  SYNC=emptySync(); SYNC.dirty=true; SYNC.localTs=Date.now(); writeSync();
+  MIG.done=(MIG.done||[]).concat([String(p.id)]); writeMig();
   logAct('Buka proyek: '+str(p.name,140));
   notify('Proyek "'+str(p.name,140)+'" dimuat.','success'); matLoadNotice(mi);
+  if(appD()) doSync({create:true}); else renderProjects();
 }
-function deleteProject(id){
-  if(!confirm('Hapus proyek ini dari arsip?'))return;
-  const list=getProjects(CURRENT_USER).filter(function(x){return Number(x.id)!==Number(id);});
-  setProjects(CURRENT_USER,list); renderProjects(); logAct('Hapus proyek');
+function startRename(id){ renaming=String(id); renderProjects(); }
+function cancelRename(){ renaming=''; renderProjects(); }
+async function submitRename(ev, id){
+  if(ev) ev.preventDefault();
+  const inp=document.getElementById('ren-'+id); const name=str(inp?inp.value.trim():'',140);
+  if(!name){ notify('Nama proyek tidak boleh kosong.','error'); if(inp) inp.focus(); return false; }
+  renaming='';
+  if(SYNC&&SYNC.pid===id){
+    const fp=document.getElementById('f-proyek'); if(fp) fp.value=name;
+    save(); renderProyekBanner(); renderTag();
+    await doSync({force:true});
+  } else {
+    const A=appD();
+    try{
+      const r=await A.get(APPD,id); if(!r||!isObj(r.data)) throw new Error('Proyek tidak ditemukan.');
+      r.data.fields=Object.assign({}, r.data.fields, {'f-proyek':name});
+      await A.save(APPD,id,{meta:Object.assign({}, r.meta, {name:name}), data:r.data, updatedAt:Date.now()});
+    }catch(e){ notify('Nama proyek belum dapat diganti. '+((e&&e.message)||''),'error'); }
+  }
+  logAct('Ganti nama proyek: '+name);
+  notify('Nama proyek diganti menjadi "'+name+'".','success');
+  await refreshProjects();
+  return false;
+}
+async function duplicateProject(id){
+  const A=appD(); if(!A||!validPid(id)) return;
+  if(SYNC&&SYNC.pid===id&&SYNC.dirty) await doSync();
+  try{
+    const r=await A.get(APPD,id); if(!r||!isObj(r.data)) throw new Error('Proyek tidak ditemukan.');
+    const media=await A.listMedia(APPD,id);
+    const np=newPid(), ts=Date.now(), d=r.data;
+    const name=str((str(r.meta&&r.meta.name,120)||'Proyek')+' (salinan)',140);
+    d.fields=Object.assign({}, d.fields, {'f-proyek':name});
+    const remap=function(mid){ return typeof mid==='string'&&mid.indexOf(id+'__')===0 ? np+mid.slice(id.length) : mid; };
+    for(const m of media){ await A.save(APPD_MEDIA, remap(m.id), {meta:m.meta, data:m.data, parent:np, updatedAt:ts}); }
+    if(isObj(d.photos)) Object.keys(d.photos).forEach(function(k){ d.photos[k]=remap(d.photos[k]); });
+    if(Array.isArray(d.plans)) d.plans.forEach(function(p){ if(isObj(p)&&p.mid) p.mid=remap(p.mid); });
+    if(d.dwgMid) d.dwgMid=remap(d.dwgMid);
+    await A.save(APPD, np, {meta:Object.assign({}, r.meta, {name:name}), data:d, updatedAt:ts});
+    logAct('Gandakan proyek: '+name);
+    notify('Salinan "'+name+'" dibuat di Proyek Saya.','success');
+  }catch(e){ notify('Proyek belum dapat digandakan. '+((e&&e.message)||''),'error'); }
+  refreshProjects();
+}
+async function deleteProject(id){
+  if(typeof id==='number' || /^\d+$/.test(String(id))){
+    if(!confirm('Hapus proyek ini dari arsip lama di peramban ini?'))return;
+    const list=getProjects(CURRENT_USER).filter(function(x){return Number(x.id)!==Number(id);});
+    setProjects(CURRENT_USER,list); renderProjects(); logAct('Hapus proyek'); return;
+  }
+  const A=appD(); if(!A||!validPid(id)) return;
+  const p=(PROJ_CACHE||[]).find(function(x){ return x.id===id; });
+  const nm=str(p&&p.meta&&p.meta.name,140)||'Proyek tanpa nama';
+  if(!confirm('Hapus proyek "'+nm+'" dari akun Anda?\n\nData proyek, hasil inspeksi, foto bukti, unggahan, gambar rencana, dan JSA proyek ini akan dihapus dari akun dan tidak dapat dibuka lagi dari perangkat mana pun. Tindakan ini tidak dapat dibatalkan.')) return;
+  const isOpen=!!(SYNC&&SYNC.pid===id);
+  if(isOpen){ clearTimeout(syncT); }
+  try{
+    let media=[]; try{ media=await A.listMedia(APPD,id); }catch(e){ media=[]; }
+    await A.remove(APPD,id);
+    for(const m of media){ try{ await A.remove(APPD_MEDIA,m.id); }catch(e){} }
+    try{ localStorage.removeItem(stashKey(id)); }catch(e){}
+    if(isOpen){ clearWorkingState(); }
+    PROJ_CACHE=(PROJ_CACHE||[]).filter(function(x){ return x.id!==id; });
+    logAct('Hapus proyek: '+nm);
+    notify('Proyek "'+nm+'" telah dihapus dari akun Anda.','success');
+  }catch(e){ notify('Proyek belum dapat dihapus. '+((e&&e.message)||''),'error'); }
+  refreshProjects();
+}
+
+/* ---------- pindahkan data lama di peramban ini ke akun (setelah disetujui) ---------- */
+function legacyToRecord(p){
+  const j=cleanJsa(p.jsa);
+  return {v:4, fields:cleanFields(p.fields), answers:cleanAnswers(p.answers), naNote:cleanNotes(p.naNote), analisis:p.analisis||null, jsa:j&&j.length?j:jsaCopyTpl(),
+    dwg:p.dwg?migrateDwg(cleanDwg(p.dwg)):{depan:[],samping:[],atas:[],_w:2}, dwgSeq:1, photos:cleanPhotos(p.photos), plans:cleanPlans(p.plans)};
+}
+let migBusy=false;
+async function importLegacy(){
+  const A=appD(); if(!A||migBusy) return;
+  migBusy=true;
+  const btn=document.getElementById('mig-yes'); if(btn){ btn.disabled=true; btn.textContent='Menyimpan ke akun…'; }
+  let n=0, fail=0, queued=0;
+  for(const p of legacyArchive()){
+    try{
+      const rec=legacyToRecord(p);
+      if(!str(rec.fields['f-proyek'],140) && p.name) rec.fields['f-proyek']=str(p.name,140);
+      const r=await pushRecord(newPid(), rec, numOr(p.ts,0)>0?numOr(p.ts,0):Date.now(), {}, VCOL[p.status]?p.status:'BELUM LENGKAP');
+      if(r.queued) queued++;
+      MIG.done=(MIG.done||[]).concat([String(p.id)]); writeMig(); n++;
+    }catch(e){ fail++; }
+  }
+  if(migBlocksDraft()){
+    MIG.working=false; writeMig();
+    SYNC.dirty=true; SYNC.localTs=Date.now(); writeSync();
+    const r=await doSync({create:true, force:true});
+    if(r&&(r.synced||r.queued)){ n++; if(r.queued) queued++; } else { fail++; MIG.working=true; writeMig(); }
+  }
+  MIG.state=fail?'pending':'done'; writeMig();
+  migBusy=false;
+  logAct('Pindahkan data lama ke akun: '+n+' proyek');
+  if(fail) notify(n+' proyek tersimpan ke akun; '+fail+' belum berhasil dan tetap ada di peramban ini. Silakan coba lagi.','warn');
+  else if(queued) notify(n+' proyek tersimpan di antrean dan akan dikirim ke akun setelah tersambung.','warn');
+  else notify(n+' proyek dari peramban ini kini tersimpan ke akun Anda.','success');
+  await refreshProjects(); setSyncUI();
+}
+function migLater(){ try{ sessionStorage.setItem(KEY+'_mig_later','1'); }catch(e){} renderProjects(); notify('Baik. Data lama tetap tersimpan di peramban ini.','info'); }
+
+/* ---------- mulai: dipanggil setelah initApp() memuat salinan kerja ---------- */
+async function startSync(){
+  const A=appD();
+  /* data lama: salinan kerja tanpa catatan sinkron (sebelum fitur ini) atau arsip lama */
+  const hadSync=!!(function(){ try{ return localStorage.getItem(syncKey()); }catch(e){ return null; } })();
+  const mg=readMig();
+  if(mg) MIG=mg;
+  else { const working=!hadSync && hasContent(); const arch=getProjects(CURRENT_USER).length; MIG={state:(working||arch)?'pending':'none', working:working, done:[]}; writeMig(); }
+  if(MIG.state==='pending' && !legacyArchive().length && !MIG.working){ MIG.state='done'; writeMig(); }
+  SYNC=readSync() || emptySync();
+  writeSync();
+  if(!A){ setSyncUI(); return; }
+  A.onStatus(function(s){ if(s.state==='saved'&&SYNC&&!SYNC.dirty) return; if(s.state==='pending'&&SYNC&&SYNC.dirty) setSyncUI('pending', s.message); });
+  setSyncUI(SYNC.pid&&!SYNC.dirty?'saved':'idle');
+  if(MIG.state==='pending'){
+    let shown=false; try{ shown=sessionStorage.getItem(KEY+'_mig_toast')==='1'; sessionStorage.setItem(KEY+'_mig_toast','1'); }catch(e){}
+    if(!shown) notify('Ada data aplikasi di peramban ini yang belum tersimpan ke akun. Buka Data Proyek › Proyek Saya untuk menyimpannya ke akun.','info');
+  }
+  refreshProjects();
+  if(SYNC.pid){
+    let r=null;
+    try{ r=await A.get(APPD,SYNC.pid); }
+    catch(e){ setSyncUI(SYNC.dirty?'pending':'saved', (e&&e.message)||''); if(SYNC.dirty) scheduleSync(5000); return; }
+    if(!r){
+      if(SYNC.dirty || !SYNC.remoteTs){ scheduleSync(600); }
+      else {
+        notify('Proyek yang terakhir dibuka telah dihapus dari akun Anda (mungkin dari perangkat lain). Isiannya tetap ada di layar; tekan "Simpan Proyek" bila masih diperlukan.','warn');
+        SYNC=emptySync(); writeSync(); setSyncUI();
+      }
+      return;
+    }
+    if(r.updatedAt>SYNC.remoteTs && r.updatedAt>(SYNC.dirty?SYNC.localTs:SYNC.remoteTs)){
+      if(SYNC.dirty){ await resolveConflict(SYNC.pid, r); }
+      else {
+        let f=null; try{ f=await fetchProject(SYNC.pid); }catch(e){ f=null; }
+        if(f){ openFetched(SYNC.pid, f, true); notify('Versi terbaru proyek "'+(str(f.meta.name,140)||'tanpa nama')+'" dari akun Anda telah dimuat.','info'); }
+      }
+    } else if(SYNC.dirty) scheduleSync(800);
+    else { SYNC.remoteTs=Math.max(SYNC.remoteTs, r.updatedAt); writeSync(); setSyncUI('saved'); }
+  } else if(SYNC.dirty) scheduleSync(800);
 }
 
 /* ---------- gambar rencana ---------- */
@@ -1944,7 +2499,7 @@ function dwgAdd(t,x,y,opts){
 }
 function dwgFind(id){ return dwgItems().find(function(i){return i.id===id;}); }
 function dwgChanged(){ dwgRender(); dwgSaveLS(); if(typeof window!=='undefined'){ clearTimeout(window.__dwgT); window.__dwgT=setTimeout(dwgCheck,300); } }
-function dwgSaveLS(){ if(!KEY) return; lsSet(KEY+'_dwg', JSON.stringify({d:DWG,q:dwgSeq})); }
+function dwgSaveLS(){ if(!KEY) return; lsSet(KEY+'_dwg', JSON.stringify({d:DWG,q:dwgSeq})); markDirty(); }
 function loadDwg(){ DWG={depan:[],samping:[],atas:[],_w:2}; dwgSeq=1; try{ const r=localStorage.getItem(KEY+'_dwg'); if(r){ const o=JSON.parse(r); if(o&&o.d){ DWG=migrateDwg(cleanDwg(o.d)); dwgSetSeqFrom(DWG); dwgSeq=Math.max(dwgSeq, parseInt(o.q,10)||1); } } }catch(e){} }
 function migrateDwg(d){
   if(!d) return d;
@@ -2553,7 +3108,7 @@ function dwgInit(){
 }
 function renderGambar(){ dwgInit(); dwgRender(); dwgCheck(); }
 
-function savePlans(){ if(!KEY) return; lsSet(KEY+'_plans', JSON.stringify(state.plans||[])); }
+function savePlans(){ if(!KEY) return; lsSet(KEY+'_plans', JSON.stringify(state.plans||[])); markDirty(); }
 function loadPlans(){ try{ const r=localStorage.getItem(KEY+'_plans'); state.plans=r?cleanPlans(JSON.parse(r)):[]; }catch(e){ state.plans=[]; } }
 function renderPlans(){
   const box=document.getElementById('plan-list'); if(!box)return;
@@ -2632,7 +3187,7 @@ function appBoot(){
   if(hd&&window.ResizeObserver) new ResizeObserver(setH).observe(hd); else window.addEventListener('resize',setH);
   renderChangelog();
   /* simpanan tertunda (debounce 450 ms) ditulis segera saat halaman ditutup/dimuat ulang */
-  window.addEventListener('pagehide', function(){ if(saveT) save(); });
+  window.addEventListener('pagehide', function(){ if(saveT) save(); if(syncT) doSync(); });
 }
 function startSessionSSO(u){
   SSO={ uid:str(u.uid,128), name:str(u.name,120)||'Anggota PPAPI', kta:str(u.kta,40), email:str(u.email,200),
@@ -2645,6 +3200,7 @@ function startSessionSSO(u){
   const ta=document.getElementById('tab-admin'); if(ta) ta.hidden = CURRENT_ROLE!=='admin';
   touchAppUser();
   initApp();
+  startSync();                                   /* Proyek Saya: data melekat ke akun PPAPI */
   logAct('Membuka aplikasi');
 }
 window.PPAPI_APP_START=function(u){ if(SSO) return; appBoot(); startSessionSSO(u||{}); };

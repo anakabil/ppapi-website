@@ -79,6 +79,7 @@
         <div class="btn-row">
           <button type="button" class="btn btn-pri" onclick="go('proyek')">Mulai Perencanaan →</button>
           <button type="button" class="btn btn-ghost" onclick="go('checklist')">Langsung ke Checklist</button>
+          <button type="button" class="btn btn-ghost" onclick="openMyProjects()">Proyek Saya</button>
         </div>
         <p class="sso-line"><span>Masuk sebagai <b data-sso="name">—</b></span><span class="sso-pill" data-sso="role"></span><span class="sso-pill" data-sso="kta" hidden></span></p>
       </div>
@@ -187,14 +188,16 @@
       <div class="field"><label for="f-catatan">Catatan Umum</label><textarea id="f-catatan" rows="2" placeholder="Catatan tambahan inspektor..."></textarea></div>
       <div class="btn-row"><button type="button" class="btn btn-pri" onclick="go('beban')">Lanjut ke Beban Hidup →</button><button type="button" class="btn btn-ghost" onclick="saveProject()">Simpan Proyek</button></div>
     </div>
-    <div class="card">
-      <div class="eyebrow">Arsip</div>
-      <h2 class="sec">Proyek Tersimpan</h2>
-      <p class="lead">Proyek milik akun PPAPI Anda yang tersimpan di peramban ini. Buka kembali kapan pun untuk melanjutkan atau meninjau.</p>
+    <div class="card" id="proyek-saya">
+      <div class="eyebrow">Akun PPAPI</div>
+      <h2 class="sec">Proyek <em>Saya</em></h2>
+      <p class="lead">Setiap proyek dan hasil inspeksi tersimpan otomatis ke akun PPAPI Anda, sehingga dapat dibuka kembali dari perangkat mana pun dan tidak hilang bila data peramban dibersihkan.</p>
       <p class="owner-note"><span>Pemilik data: <b data-sso="name">—</b></span><span data-sso="kta" hidden></span></p>
-      <div id="proj-list"></div>
+      <div id="mig-panel" hidden></div>
+      <div id="proj-list" aria-live="polite"></div>
+      <div class="btn-row"><button type="button" class="btn btn-ghost" onclick="resetAll()">Mulai Proyek Baru</button></div>
       <div class="data-tools">
-        <span>Data aplikasi hanya tersimpan di peramban ini. Pindah dari aplikasi lama? Ekspor data (.json) di aplikasi lama, lalu pakai <b>Muat Data</b> di tahap Laporan &amp; Tagging.</span>
+        <span>Salinan proyek yang sedang terbuka juga disimpan di peramban ini agar aplikasi tetap dapat dipakai tanpa internet; perubahan dikirim ke akun begitu tersambung. Pindah dari aplikasi lama? Ekspor data (.json) di aplikasi lama, lalu pakai <b>Muat Data</b> di tahap Laporan &amp; Tagging.</span>
         <button type="button" class="btn btn-quiet" onclick="wipeMyData()">Hapus data saya di perangkat ini</button>
       </div>
     </div>

@@ -78,6 +78,14 @@
       return contentCache[type];
     }
 
+    /* Agenda + kegiatan terbit (PPAPI.kegiatan, dengan pendaftaran); id yang sama → versi kegiatan */
+    async function agendaWithKegiatan() {
+      var both = await Promise.all([content('agenda'), PPAPI.kegiatan ? PPAPI.kegiatan.asAgendaItems() : Promise.resolve([])]);
+      var kg = list(both[1]), ids = {};
+      kg.forEach(function (x) { ids[x.id] = 1; });
+      return both[0].filter(function (x) { return !ids[x.id]; }).concat(kg);
+    }
+
     /* ==================================================================
        BAGIAN UMUM
        ================================================================== */
@@ -233,7 +241,33 @@
       if (er) er.hidden = mode !== 'error';
       d.body.setAttribute('data-dash-view', mode);
       if (mode !== 'active') d.body.removeAttribute('data-dash-admin');
+      placeKegiatan(mode);
     }
+
+    /* Kegiatan Saya (kegiatan-saya.js) — untuk setiap akun: di tampilan Aktif sebelum isi dasbor,
+       di pusat status sebelum "Informasi keanggotaan". Dipasang sekali; kegiatan-saya.js menyegarkan
+       sendiri saat sesi berubah. Tautan menu akun: dashboard.html#kegiatan-saya. */
+    var kgsMounted = false;
+    function placeKegiatan(mode) {
+      var sec = byId('kegiatan-saya');
+      if (!sec) return;
+      var anchor = mode === 'active' ? d.querySelector('#dash-active-view .dash-body') : mode === 'status' ? d.querySelector('#dash-status-view .dash-help') : null;
+      if (!anchor || !PPAPI.kegiatanSaya) { sec.hidden = true; return; }
+      if (sec.nextElementSibling !== anchor) anchor.parentNode.insertBefore(sec, anchor);
+      sec.hidden = false;
+      if (!kgsMounted) {
+        kgsMounted = true;
+        PPAPI.kegiatanSaya.render(byId('dash-kegiatan'), { next: 'dashboard.html#kegiatan-saya', headingId: 'dash-h-kegiatan' })
+          .then(focusKegiatan, function (err) { console.error(err); });
+      }
+    }
+    function focusKegiatan() {
+      var sec = byId('kegiatan-saya');
+      if (w.location.hash !== '#kegiatan-saya' || !sec || sec.hidden) return;
+      sec.scrollIntoView({ block: 'start' });
+      try { sec.focus({ preventScroll: true }); } catch (e) { sec.focus(); }
+    }
+    w.addEventListener('hashchange', focusKegiatan);
 
     function showError(err) {
       showView('error');
@@ -580,7 +614,7 @@
     async function renderAgenda() {
       var box = byId('dash-agenda');
       var today = U.todayIso();
-      var items = (await content('agenda'))
+      var items = (await agendaWithKegiatan())
         .filter(function (a) { return a.mulai && String(a.selesai || a.mulai) >= today; })
         .sort(function (a, b) { return cmp(String(a.mulai), String(b.mulai)); })
         .slice(0, MAX_AGENDA);

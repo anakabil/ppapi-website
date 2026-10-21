@@ -3,20 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com https://docs.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Agenda Kegiatan — PPAPI</title>
-  <meta name="description" content="Jadwal pelatihan, sertifikasi, seminar, webinar, rapat, dan kunjungan teknis PPAPI — lengkap dengan detail kegiatan dan berkas pengingat kalender.">
+  <meta name="description" content="Jadwal webinar, pelatihan, seminar, dan kunjungan teknis PPAPI — daftar langsung, isi daftar hadir, dan unduh sertifikat kegiatan.">
   <meta name="theme-color" content="#0a0a0b">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Agenda Kegiatan — PPAPI">
-  <meta property="og:description" content="Jadwal pelatihan, sertifikasi, seminar, webinar, rapat, dan kunjungan teknis PPAPI — lengkap dengan detail kegiatan dan berkas pengingat kalender.">
+  <meta property="og:description" content="Jadwal webinar, pelatihan, seminar, dan kunjungan teknis PPAPI — daftar langsung, isi daftar hadir, dan unduh sertifikat kegiatan.">
   <meta property="og:image" content="assets/img/og-image.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/kegiatan.css" data-kegiatan-css>
   <link rel="stylesheet" href="assets/css/pages/agenda.css">
   <script>document.documentElement.classList.replace('no-js','js')</script>
 </head>
@@ -150,6 +151,8 @@
   <script src="assets/js/core.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-kegiatan.js" defer></script>
+  <script src="assets/js/kegiatan-saya.js" defer></script>
   <script src="assets/js/pages/agenda.js" defer></script>
 </body>
 </html>

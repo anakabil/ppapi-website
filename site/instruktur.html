@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Instruktur Perancah — PPAPI</title>
+  <meta name="description" content="Direktori instruktur perancah (scaffolding) PPAPI untuk lembaga pelatihan, perusahaan, dan mitra penyelenggara. Telusuri kompetensi, sertifikasi, dan wilayah layanan, lalu ajukan permintaan melalui sekretariat.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Instruktur Perancah — PPAPI">
+  <meta property="og:description" content="Direktori instruktur perancah PPAPI untuk mitra penyelenggara pelatihan. Permintaan instruktur disalurkan melalui sekretariat.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/instruktur.css">
+  <script>document.documentElement.classList.replace('no-js','js');
+    /* #direktori / #permintaan dari halaman lain: lompatan ditunda sampai direktori selesai dirender
+       (core.js deferredHashScroll), agar konten tidak bergeser. */
+    (function () { try { var h = location.hash; if (['#direktori', '#permintaan'].indexOf(h) !== -1 && history.replaceState) { window.__ppHash = h; history.replaceState(history.state, '', location.pathname + location.search); } } catch (e) {} })();</script>
+</head>
+<body data-page="instruktur" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero in-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/stage-silhouette.webp" srcset="assets/img/stage-silhouette-sm.webp 480w, assets/img/stage-silhouette.webp 1281w" sizes="100vw" alt="" width="1281" height="1920" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="7" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Instruktur</li></ol>
+        </nav>
+        <p class="eyebrow">Direktori Instruktur PPAPI</p>
+        <h1 class="display split-lines">Instruktur perancah<br>yang <em>teruji</em>.</h1>
+        <p class="lead">Bagi lembaga pelatihan, perusahaan, dan mitra penyelenggara yang membutuhkan instruktur perancah. Telusuri kompetensi, sertifikasi, dan wilayah layanan, lalu ajukan permintaan — sekretariat PPAPI akan menghubungkan Anda dengan instruktur yang sesuai.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#direktori"><span>Telusuri instruktur</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="#permintaan"><span>Ajukan permintaan</span></a>
+        </div>
+        <div class="page-hero__meta" data-in="hero-meta"></div>
+      </div>
+    </section>
+
+    <!-- ===================== CARA KERJA ===================== -->
+    <section class="section section--bone in-steps" aria-labelledby="in-steps-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Alur Permintaan</p>
+            <h2 class="h2" id="in-steps-title">Tiga langkah, <em>satu pintu</em></h2>
+            <p class="lead muted">Seluruh permintaan disalurkan melalui sekretariat PPAPI, sehingga kesesuaian kompetensi dapat diperiksa dan data pribadi instruktur tetap terlindungi.</p>
+          </div>
+        </header>
+        <ol class="in-steps__list" data-reveal-stagger>
+          <li class="feature in-step">
+            <div class="feature__head"><span class="index-num">01 <span>/ 03</span></span><span class="feature__icon" data-icon="search" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Telusuri profil</h3>
+            <p class="feature__text">Saring menurut bidang, kompetensi, wilayah, bahasa, dan metode pelatihan. Setiap profil memuat sertifikasi beserta masa berlakunya.</p>
+          </li>
+          <li class="feature in-step">
+            <div class="feature__head"><span class="index-num">02 <span>/ 03</span></span><span class="feature__icon" data-icon="send" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Ajukan permintaan</h3>
+            <p class="feature__text">Sampaikan topik, lokasi, rencana tanggal, dan jumlah peserta. Anda boleh menyebut instruktur tertentu atau menyerahkan pilihannya kepada sekretariat.</p>
+          </li>
+          <li class="feature in-step">
+            <div class="feature__head"><span class="index-num">03 <span>/ 03</span></span><span class="feature__icon" data-icon="users" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Sekretariat menghubungkan</h3>
+            <p class="feature__text">Sekretariat memeriksa ketersediaan instruktur, lalu menghubungi Anda melalui email atau telepon untuk membahas rincian pelaksanaan.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ===================== DIREKTORI ===================== -->
+    <section class="section in-directory" id="direktori" aria-labelledby="in-dir-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Direktori</p>
+            <h2 class="h2" id="in-dir-title">Instruktur <em>terdaftar</em></h2>
+            <p class="lead muted">Profil disusun dan diverifikasi oleh sekretariat PPAPI. Kontak pribadi instruktur tidak ditampilkan; gunakan formulir permintaan agar sekretariat dapat meneruskannya.</p>
+          </div>
+        </header>
+
+        <form class="in-toolbar" role="search" aria-label="Cari dan saring instruktur" data-in="toolbar" novalidate hidden>
+          <div class="field in-toolbar__search">
+            <label class="field__label" for="in-q">Cari instruktur</label>
+            <div class="search-box">
+              <span data-icon="search" data-icon-size="18"></span>
+              <input class="field__control" id="in-q" name="q" type="search" autocomplete="off" spellcheck="false" maxlength="120" placeholder="Nama, kompetensi, materi, atau wilayah" aria-describedby="in-q-hint">
+              <button type="button" class="search-box__clear" aria-label="Hapus pencarian" hidden><span data-icon="close" data-icon-size="16"></span></button>
+            </div>
+            <p class="sr-only" id="in-q-hint">Hasil diperbarui saat Anda mengetik.</p>
+          </div>
+          <div class="in-toolbar__selects">
+            <div class="field">
+              <label class="field__label" for="in-komp">Kompetensi</label>
+              <select class="field__control" id="in-komp" name="kompetensi"><option value="">Semua</option></select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="in-wil">Wilayah</label>
+              <select class="field__control" id="in-wil" name="wilayah"><option value="">Semua</option></select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="in-bhs">Bahasa</label>
+              <select class="field__control" id="in-bhs" name="bahasa"><option value="">Semua</option></select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="in-met">Metode</label>
+              <select class="field__control" id="in-met" name="metode">
+                <option value="">Semua</option>
+                <option value="Luring">Luring (tatap muka)</option>
+                <option value="Daring">Daring</option>
+              </select>
+            </div>
+          </div>
+          <div class="in-toolbar__chips">
+            <p class="field__label" id="in-bidang-label">Bidang</p>
+            <div class="filter-chips" role="group" aria-labelledby="in-bidang-label" data-in="chips"></div>
+          </div>
+        </form>
+
+        <div class="in-summary" data-in="summary" hidden>
+          <p class="in-count" data-in="count" role="status" aria-live="polite"></p>
+          <button type="button" class="btn btn--link btn--sm" data-in="reset" hidden><span>Atur ulang filter</span><span data-icon="refresh" data-icon-class="btn__icon" data-icon-size="16"></span></button>
+        </div>
+
+        <div class="in-results" data-in="results" aria-busy="true">
+          <div class="skeleton" role="status"><span class="sr-only">Memuat direktori instruktur…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PERMINTAAN ===================== -->
+    <section class="section section--bone in-request" id="permintaan" aria-labelledby="in-req-title">
+      <div class="container">
+        <div class="split split--wide-right split--top in-request__layout">
+
+          <div class="in-request__intro" data-reveal>
+            <p class="eyebrow">Untuk Mitra Penyelenggara</p>
+            <h2 class="h2" id="in-req-title">Ajukan permintaan <em>instruktur</em></h2>
+            <p class="lead muted">Isi kebutuhan pelatihan Anda. Permintaan diterima sekretariat PPAPI dan ditindaklanjuti pada hari kerja.</p>
+            <ul class="list-rule list-rule--compact list-rule--nodes in-request__points">
+              <li>Sebutkan topik atau kompetensi yang ingin dilatihkan, misalnya pemasangan perancah tube &amp; coupler atau inspeksi perancah.</li>
+              <li>Tanggal boleh berupa perkiraan; sekretariat akan menyesuaikannya dengan jadwal instruktur.</li>
+              <li>Data Anda hanya dipakai untuk menindaklanjuti permintaan ini, sesuai <a class="link" href="kebijakan-privasi.html">Kebijakan Privasi</a>.</li>
+            </ul>
+          </div>
+
+          <div class="card card--lg card--metal in-request__card" data-reveal data-reveal-delay="120">
+            <form class="form in-form" novalidate data-in="form" aria-labelledby="in-req-title">
+              <p class="in-form__note">Kolom bertanda <span class="field__req" aria-hidden="true">*</span><span class="sr-only">bintang</span> wajib diisi.</p>
+
+              <div class="in-picked" data-in="picked" hidden></div>
+
+              <fieldset class="in-group">
+                <legend class="in-legend"><span class="in-legend__num">01</span>Penyelenggara</legend>
+                <div class="field">
+                  <label class="field__label" for="in-organisasi">Nama organisasi atau perusahaan <span class="field__req" aria-hidden="true">*</span></label>
+                  <input class="field__control" id="in-organisasi" name="organisasi" type="text" autocomplete="organization" maxlength="160" required aria-required="true" aria-describedby="in-organisasi-err">
+                  <p class="field__error" id="in-organisasi-err"></p>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="in-namaPic">Nama penanggung jawab <span class="field__req" aria-hidden="true">*</span></label>
+                  <input class="field__control" id="in-namaPic" name="namaPic" type="text" autocomplete="name" maxlength="120" required aria-required="true" aria-describedby="in-namaPic-err">
+                  <p class="field__error" id="in-namaPic-err"></p>
+                </div>
+                <div class="form__row form__row--2">
+                  <div class="field">
+                    <label class="field__label" for="in-email">Email <span class="field__req" aria-hidden="true">*</span></label>
+                    <input class="field__control" id="in-email" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" maxlength="200" placeholder="nama@perusahaan.co.id" required aria-required="true" aria-describedby="in-email-err">
+                    <p class="field__error" id="in-email-err"></p>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="in-telepon">Telepon <span class="field__req" aria-hidden="true">*</span></label>
+                    <input class="field__control" id="in-telepon" name="telepon" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="0812-3456-7890" required aria-required="true" aria-describedby="in-telepon-hint in-telepon-err">
+                    <p class="field__hint" id="in-telepon-hint">Nomor seluler atau kantor.</p>
+                    <p class="field__error" id="in-telepon-err"></p>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset class="in-group">
+                <legend class="in-legend"><span class="in-legend__num">02</span>Kebutuhan pelatihan</legend>
+                <div class="field">
+                  <label class="field__label" for="in-topik">Topik atau kompetensi <span class="field__req" aria-hidden="true">*</span></label>
+                  <input class="field__control" id="in-topik" name="topik" type="text" list="in-topik-list" autocomplete="off" maxlength="200" placeholder="Misalnya: Inspeksi perancah" required aria-required="true" aria-describedby="in-topik-hint in-topik-err">
+                  <datalist id="in-topik-list" data-in="topik-list"></datalist>
+                  <p class="field__hint" id="in-topik-hint">Pilih dari saran yang muncul atau tulis sendiri.</p>
+                  <p class="field__error" id="in-topik-err"></p>
+                </div>
+                <fieldset class="field in-metode">
+                  <legend class="field__label">Metode pelatihan <span class="field__req" aria-hidden="true">*</span></legend>
+                  <div class="segmented segmented--block" role="radiogroup" aria-label="Metode pelatihan">
+                    <label><input type="radio" name="metode" value="Luring" checked><span class="segmented__option">Luring</span></label>
+                    <label><input type="radio" name="metode" value="Daring"><span class="segmented__option">Daring</span></label>
+                    <label><input type="radio" name="metode" value="Fleksibel"><span class="segmented__option">Fleksibel</span></label>
+                  </div>
+                </fieldset>
+                <div class="field" data-in="lokasi-field">
+                  <label class="field__label" for="in-lokasi">Lokasi pelatihan <span class="field__req" aria-hidden="true" data-in="lokasi-req">*</span><span class="opt" data-in="lokasi-opt" hidden>(opsional)</span></label>
+                  <input class="field__control" id="in-lokasi" name="lokasi" type="text" maxlength="160" placeholder="Kota dan provinsi" aria-describedby="in-lokasi-err">
+                  <p class="field__error" id="in-lokasi-err"></p>
+                </div>
+                <div class="form__row form__row--2">
+                  <div class="field">
+                    <label class="field__label" for="in-tanggal">Rencana tanggal mulai <span class="field__req" aria-hidden="true">*</span></label>
+                    <input class="field__control" id="in-tanggal" name="tanggal" type="date" required aria-required="true" aria-describedby="in-tanggal-err">
+                    <p class="field__error" id="in-tanggal-err"></p>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="in-peserta">Jumlah peserta <span class="field__req" aria-hidden="true">*</span></label>
+                    <input class="field__control" id="in-peserta" name="jumlahPeserta" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="20" required aria-required="true" aria-describedby="in-peserta-err">
+                    <p class="field__error" id="in-peserta-err"></p>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="in-catatan">Catatan <span class="opt">(opsional)</span><span class="field__counter" data-in="counter" aria-hidden="true">0 / 2.000</span></label>
+                  <textarea class="field__control" id="in-catatan" name="catatan" rows="4" maxlength="2000" placeholder="Durasi, jenis perancah di lokasi, kebutuhan sertifikasi peserta, atau hal lain yang perlu diketahui." aria-describedby="in-catatan-err"></textarea>
+                  <p class="field__error" id="in-catatan-err"></p>
+                </div>
+              </fieldset>
+
+              <div class="field in-consent">
+                <label class="check"><input type="checkbox" name="consent" id="in-consent" aria-describedby="in-consent-err"><span class="check__box"></span><span class="check__label">Saya menyetujui pemrosesan data pada formulir ini sesuai <a href="kebijakan-privasi.html">Kebijakan Privasi</a> PPAPI.</span></label>
+                <p class="field__error" id="in-consent-err"></p>
+              </div>
+
+              <div class="alert alert--err" aria-live="polite" data-in="alert"></div>
+
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary" data-in="submit"><span>Kirim permintaan</span><span data-icon="send" data-icon-class="btn__icon" data-icon-size="18"></span></button>
+              </div>
+            </form>
+
+            <div class="in-success" data-in="success" tabindex="-1" hidden></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== BAGI INSTRUKTUR ===================== -->
+    <section class="section section--tight section--graphite in-cta" aria-labelledby="in-cta-title">
+      <div data-scaffold data-cols="9" data-rows="2" data-nodes="false"></div>
+      <div class="container in-cta__inner">
+        <div class="in-cta__text">
+          <p class="eyebrow">Bagi Instruktur</p>
+          <h2 class="h3 in-cta__title" id="in-cta-title">Ingin profil Anda tercantum di direktori?</h2>
+          <p class="muted">Profil instruktur didaftarkan oleh sekretariat PPAPI setelah kompetensi dan sertifikat diperiksa. Anggota PPAPI berstatus Aktif dapat menautkan profilnya dengan Kartu Tanda Anggota.</p>
+        </div>
+        <div class="in-cta__actions">
+          <a class="btn btn--primary" href="umpan-balik.html"><span>Hubungi sekretariat</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="keanggotaan.html"><span>Keanggotaan PPAPI</span></a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/data/kompetensi.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-instruktur.js" defer></script>
+  <script src="assets/js/pages/instruktur.js" defer></script>
+</body>
+</html>

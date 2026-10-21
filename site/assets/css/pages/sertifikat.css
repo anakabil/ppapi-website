@@ -1,0 +1,38 @@
+/* ==========================================================================
+   PPAPI — sertifikat.css  (Verifikasi Sertifikat Kegiatan)
+   Hanya token main.css; selektor dibatasi body[data-page="sertifikat"].
+   ========================================================================== */
+body[data-page="sertifikat"] .sf-hero { --hero-pos: 50% 40%; }
+body[data-page="sertifikat"] .sf-section { padding-top: clamp(40px, 6vw, 72px); }
+
+body[data-page="sertifikat"] .sf-lookup__head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 22px; }
+body[data-page="sertifikat"] .sf-lookup__icon {
+  flex: none; width: 48px; height: 48px; display: grid; place-items: center;
+  border: 1px solid var(--line-strong); color: var(--text-strong);
+}
+body[data-page="sertifikat"] .sf-lookup__title { font-family: var(--f-display); font-weight: 600; font-size: 1.55rem; line-height: 1.15; margin: 0; }
+body[data-page="sertifikat"] .sf-lookup__sub { margin: 4px 0 0; color: var(--muted); font-size: .95rem; }
+body[data-page="sertifikat"] .sf-form__row { display: flex; gap: 10px; flex-wrap: wrap; }
+body[data-page="sertifikat"] .sf-form__input { flex: 1 1 260px; min-width: 0; }
+body[data-page="sertifikat"] .sf-form__btn { flex: none; }
+@media (max-width: 479px) { body[data-page="sertifikat"] .sf-form__btn { width: 100%; } }
+
+body[data-page="sertifikat"] .sf-result { margin-top: clamp(24px, 4vw, 40px); }
+body[data-page="sertifikat"] .sf-result:empty { margin: 0; }
+body[data-page="sertifikat"] .sf-card { position: relative; padding: clamp(22px, 4vw, 40px); }
+body[data-page="sertifikat"] .sf-card::before { content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 3px; background: var(--ok-fg); }
+body[data-page="sertifikat"] .sf-card--err::before { background: var(--err-fg); }
+body[data-page="sertifikat"] .sf-card__head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px 18px; align-items: start; margin-bottom: 20px; }
+body[data-page="sertifikat"] .sf-card__head .eyebrow { margin-bottom: 4px; }
+body[data-page="sertifikat"] .sf-card__icon { width: 52px; height: 52px; display: grid; place-items: center; background: var(--ok-bg); color: var(--ok-fg); }
+body[data-page="sertifikat"] .sf-card--err .sf-card__icon { background: var(--err-bg); color: var(--err-fg); }
+body[data-page="sertifikat"] .sf-card__title { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.12; margin: 0; overflow-wrap: anywhere; }
+body[data-page="sertifikat"] .sf-card__no { margin: 6px 0 0; font-family: var(--f-cond); font-weight: 600; letter-spacing: .08em; color: var(--muted); overflow-wrap: anywhere; }
+body[data-page="sertifikat"] .sf-card__kv { margin: 0 0 18px; }
+body[data-page="sertifikat"] .sf-card__note { margin: 0; color: var(--muted); font-size: .92rem; }
+@media (max-width: 559px) {
+  body[data-page="sertifikat"] .sf-card__head { grid-template-columns: auto minmax(0, 1fr); }
+  body[data-page="sertifikat"] .sf-card__badge { grid-column: 2; justify-self: start; }
+}
+body[data-page="sertifikat"] .sf-privacy { display: flex; gap: 10px; align-items: flex-start; margin: clamp(28px, 4vw, 40px) 0 0; color: var(--muted); font-size: .9rem; }
+body[data-page="sertifikat"] .sf-privacy .icon { flex: none; margin-top: 3px; }

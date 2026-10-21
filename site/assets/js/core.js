@@ -1677,6 +1677,8 @@
     } else if (s) {
       items += item('pendaftaran.html', 'file-text', 'Formulir Pendaftaran');
     }
+    /* untuk setiap akun (21 Okt 2026): kegiatan yang diikuti (bagian dasbor) dan pesanan Toko */
+    if (s) items += item('dashboard.html#kegiatan-saya', 'calendar', 'Kegiatan Saya') + item('pesanan.html', 'briefcase', 'Pesanan Saya');
     if (s && s.isAdmin) items += item('admin.html', 'shield-check', 'Konsol Admin');
     var badges = '';
     if (s) {

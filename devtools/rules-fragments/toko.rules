@@ -1,0 +1,161 @@
+    // =====================================================================
+    // TOKO PPAPI (toko.html · keranjang.html · pesanan.html · Konsol Admin › Toko)
+    // Tempel blok ini di dalam `match /databases/{database}/documents { … }`
+    // pada site/firestore.rules, SEBELUM blok penolak `match /{document=**}`.
+    // Memakai fungsi bantu yang sudah ada: signedIn(), isOwner(uid), isAdmin(),
+    // strMax(v, max), listMax(v, max).
+    //
+    // • products/{id}          Katalog: dibaca siapa pun bila aktif (kueri publik
+    //                          wajib memakai where('aktif','==',true)); admin semua.
+    // • product_media/{id}     Foto produk ukuran penuh (≤3 data URL JPEG): publik.
+    // • product_files/{id}     Tautan PRIVAT soft file: hanya admin, atau pembeli
+    //                          yang memiliki dokumen hak unduh entitlements/{uid}_{id}.
+    //                          Satu exists() — hemat anggaran evaluasi.
+    // • entitlements/{uid_id}  Hak unduh: ditulis admin saat mengonfirmasi
+    //                          pembayaran; dibaca pemiliknya dan admin.
+    // • orders/{no}            Pembeli membuat pesanan berstatus "Menunggu
+    //                          Pembayaran" atas namanya sendiri; membaca pesanannya
+    //                          (kueri where('uid','==',uid)); selama belum dibayar
+    //                          hanya boleh MENAMBAH BUKTI BAYAR atau MEMBATALKAN.
+    //                          Admin membaca & memperbarui semua; tidak ada hapus.
+    // • shop_settings/main     Rekening & ongkos kirim: publik baca, admin tulis.
+    // • carts/{uid}            Keranjang tersinkron milik akun itu sendiri.
+    // Catatan: harga ditulis peramban pembeli; aturan tidak menghitung ulang
+    // (akan memerlukan get() per butir). Konsol Admin membandingkan harga pesanan
+    // dengan katalog sebelum pembayaran dikonfirmasi.
+    // =====================================================================
+
+    function tokoKategori(k) {
+      return k in ['Suvenir', 'Pakaian', 'Aksesori', 'Klem & Komponen Perancah', 'Produk Pengetahuan'];
+    }
+    function tokoStatus(s) {
+      return s in ['Menunggu Pembayaran', 'Menunggu Konfirmasi', 'Dibayar', 'Diproses',
+                   'Dikirim', 'Selesai', 'Dibatalkan'];
+    }
+    function tokoUnpaid(s) {
+      return s in ['Menunggu Pembayaran', 'Menunggu Konfirmasi'];
+    }
+
+    function validProduct(d) {
+      return d.keys().hasOnly([
+               'nama', 'kategori', 'kode', 'ringkasan', 'deskripsi', 'harga', 'hargaAnggota',
+               'format', 'hargaCetak', 'hargaCetakAnggota', 'halaman', 'stok', 'varian', 'thumb',
+               'fotoCount', 'berkasAda', 'aktif', 'unggulan', 'urutan', 'createdAt', 'updatedAt'
+             ])
+          && d.nama is string && d.nama.size() >= 3 && d.nama.size() <= 120
+          && tokoKategori(d.kategori)
+          && d.harga is int && d.harga >= 0
+          && d.aktif is bool
+          && strMax(d.get('deskripsi', ''), 4000)
+          && strMax(d.get('thumb', ''), 60000)
+          && listMax(d.get('varian', []), 2);
+    }
+
+    match /products/{id} {
+      allow read: if resource.data.aktif == true || isAdmin();
+      allow create, update: if isAdmin() && validProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /product_media/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['foto', 'updatedAt'])
+                            && request.resource.data.foto is list
+                            && request.resource.data.foto.size() <= 3;
+      allow delete: if isAdmin();
+    }
+
+    match /product_files/{id} {
+      allow get: if signedIn()
+                 && (exists(/databases/$(database)/documents/entitlements/$(request.auth.uid + '_' + id))
+                     || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['url', 'updatedAt', 'updatedBy'])
+                            && request.resource.data.url is string
+                            && request.resource.data.url.size() <= 1000
+                            && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    match /entitlements/{eid} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['uid', 'productId', 'orderId', 'grantedAt', 'grantedBy'])
+                            && eid == request.resource.data.uid + '_' + request.resource.data.productId
+                            && request.resource.data.grantedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    function validNewOrder(d, id) {
+      return d.keys().hasOnly([
+               'id', 'uid', 'buyer', 'items', 'perluKirim', 'alamat', 'ringkasan', 'status',
+               'hargaAnggota', 'catatan', 'riwayat', 'createdAt', 'updatedAt'
+             ])
+          && id.matches('^PSN-[0-9]{8}-[A-Z0-9]{5}$')
+          && d.id == id
+          && d.uid == request.auth.uid
+          && d.status == 'Menunggu Pembayaran'
+          && d.items is list && d.items.size() >= 1 && d.items.size() <= 30
+          && d.ringkasan is map && d.ringkasan.total is int && d.ringkasan.total >= 0
+          && d.buyer is map && d.perluKirim is bool
+          && (d.alamat == null || d.alamat is map)
+          && strMax(d.get('catatan', ''), 500)
+          && listMax(d.riwayat, 40)
+          && d.createdAt == request.time && d.updatedAt == request.time;
+    }
+
+    // Pembeli: kirim/perbarui bukti bayar, atau batalkan — hanya selama belum dibayar.
+    function ownerOrderUpdate(after, before) {
+      let changed = after.diff(before).affectedKeys();
+      return tokoUnpaid(before.status)
+          && after.updatedAt == request.time
+          && listMax(after.riwayat, 40)
+          && (
+               (after.status == 'Menunggu Konfirmasi'
+                && changed.hasOnly(['pembayaran', 'status', 'riwayat', 'updatedAt'])
+                && after.pembayaran.keys().hasOnly(['buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
+                && after.pembayaran.buktiUrl is string
+                && after.pembayaran.buktiUrl.size() <= 1000
+                && after.pembayaran.buktiUrl.matches('^https://.+')
+                && after.pembayaran.jumlah is int && after.pembayaran.jumlah > 0
+                && strMax(after.pembayaran.get('catatan', ''), 500))
+            || (after.status == 'Dibatalkan'
+                && changed.hasOnly(['status', 'riwayat', 'updatedAt', 'alasanBatal', 'dibatalkanOleh'])
+                && after.dibatalkanOleh == 'pembeli'
+                && strMax(after.get('alasanBatal', ''), 500))
+          );
+    }
+
+    match /orders/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn() && validNewOrder(request.resource.data, id);
+      allow update: if signedIn()
+                    && ((resource.data.uid == request.auth.uid
+                         && ownerOrderUpdate(request.resource.data, resource.data))
+                        || (isAdmin()
+                            && tokoStatus(request.resource.data.status)
+                            && request.resource.data.uid == resource.data.uid
+                            && request.resource.data.id == resource.data.id));
+      allow delete: if false;
+    }
+
+    match /shop_settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && id == 'main'
+                   && request.resource.data.keys().hasOnly([
+                        'rekening', 'ongkirMode', 'ongkirFlat', 'ongkirCatatan',
+                        'catatanPembayaran', 'batasBayarJam', 'kontak', 'updatedAt'
+                      ])
+                   && listMax(request.resource.data.rekening, 3)
+                   && request.resource.data.ongkirMode in ['konfirmasi', 'flat'];
+    }
+
+    match /carts/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+                            && request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+                            && request.resource.data.items is list
+                            && request.resource.data.items.size() <= 30;
+    }

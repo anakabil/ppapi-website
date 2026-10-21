@@ -152,7 +152,9 @@ window.PPAPI_CONFIG = {
     { key: 'berita',      label: 'Berita',      href: 'berita.html' },
     { key: 'agenda',      label: 'Agenda',      href: 'agenda.html' },
     { key: 'pustaka',     label: 'Pengetahuan', href: 'pustaka.html', aktifJuga: ['regulasi'] },
+    { key: 'instruktur',  label: 'Instruktur',  href: 'instruktur.html' },
     { key: 'keanggotaan', label: 'Keanggotaan', href: 'keanggotaan.html', aktifJuga: ['pendaftaran'] },
+    { key: 'toko',        label: 'Toko',        href: 'toko.html', aktifJuga: ['keranjang', 'pesanan'] },
     { key: 'umpan-balik', label: 'Kontak',      href: 'umpan-balik.html' }
   ],
 
@@ -163,6 +165,8 @@ window.PPAPI_CONFIG = {
       { label: 'Profil Asosiasi', href: 'profil.html' },
       { label: 'Berita & Kegiatan', href: 'berita.html' },
       { label: 'Agenda', href: 'agenda.html' },
+      { label: 'Direktori Instruktur', href: 'instruktur.html' },
+      { label: 'Toko PPAPI', href: 'toko.html' },
       { label: 'Kontak & Saran', href: 'umpan-balik.html' }
     ],
     'Anggota': [
@@ -170,7 +174,8 @@ window.PPAPI_CONFIG = {
       { label: 'Formulir Pendaftaran', href: 'pendaftaran.html' },
       { label: 'Masuk / Daftar', href: 'masuk.html' },
       { label: 'Dasbor Anggota', href: 'dashboard.html' },
-      { label: 'Verifikasi Anggota', href: 'verifikasi.html' }
+      { label: 'Verifikasi Anggota', href: 'verifikasi.html' },
+      { label: 'Verifikasi Sertifikat', href: 'sertifikat.html' }
     ],
     'Pengetahuan': [
       { label: 'Produk Pengetahuan', href: 'pustaka.html' },

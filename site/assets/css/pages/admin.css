@@ -75,6 +75,10 @@ body[data-page="admin"] .adm-nav__note strong { color: var(--text); font-weight:
     padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
   }
   body[data-page="admin"] .adm-nav__list::-webkit-scrollbar { display: none; }
+  /* end gutter as a spacer: inline-end padding of a scrolling flex row is not always kept, which clipped
+     the last tab (Toko since 21 Oct 2026) when it was scrolled into view */
+  body[data-page="admin"] .adm-nav__list { padding-inline-end: 0; }
+  body[data-page="admin"] .adm-nav__list::after { content: ""; flex: 0 0 var(--gutter); }
   body[data-page="admin"] .adm-nav__list > li { flex: none; }
   body[data-page="admin"] .adm-nav__link { min-height: 52px; padding: 0 14px; gap: 9px; }
   body[data-page="admin"] .adm-nav__link::after {
@@ -142,6 +146,7 @@ body[data-page="admin"] .adm-more { margin: 24px 0 0; text-align: center; }
 body[data-page="admin"] .adm-more .btn { gap: 8px; }
 /* one demo notice per screen: the Konten line shows only where the rail (and its note) is a tab strip */
 body[data-page="admin"] .adm-demo-note { margin: 0 0 16px; }
+body[data-page="admin"] .adm-legacy-note { margin: 0 0 16px; }
 @media (min-width: 1200px) { body[data-page="admin"] .adm-demo-note { display: none; } }
 /* empty state INSIDE an overview card: one muted line, the height of a list row (K.empty is for full lists) */
 body[data-page="admin"] .adm-empty-line {

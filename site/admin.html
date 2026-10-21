@@ -2,23 +2,26 @@
 <html lang="id" class="no-js">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com https://docs.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Konsol Admin — PPAPI</title>
-  <meta name="description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, serta log aktivitas.">
+  <meta name="description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, log aktivitas, instruktur, kegiatan, dan toko.">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0a0a0b">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Konsol Admin — PPAPI">
-  <meta property="og:description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, serta log aktivitas.">
+  <meta property="og:description" content="Konsol admin sekretariat PPAPI: verifikasi permohonan keanggotaan, direktori anggota, pengelolaan konten dan produk pengetahuan, umpan balik, log aktivitas, instruktur, kegiatan, dan toko.">
   <meta property="og:image" content="assets/img/og-image.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/pages/admin.css">
+  <link rel="stylesheet" href="assets/css/pages/admin-instruktur.css">
+  <link rel="stylesheet" href="assets/css/pages/admin-toko.css" data-admin-toko-css>
+  <link rel="stylesheet" href="assets/css/kegiatan.css" data-kegiatan-css>
   <script>document.documentElement.classList.replace('no-js','js')</script>
 </head>
 <body data-page="admin" data-auth="admin">
@@ -62,6 +65,8 @@
             <li><a class="adm-nav__link" href="#umpan-balik" data-section="umpan-balik"><span class="adm-nav__num" aria-hidden="true">05</span><span data-icon="message" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Umpan Balik</span><span class="adm-nav__count" data-count-for="umpan-balik" hidden></span></a></li>
             <li><a class="adm-nav__link" href="#admin" data-section="admin"><span class="adm-nav__num" aria-hidden="true">06</span><span data-icon="shield" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Admin</span></a></li>
             <li><a class="adm-nav__link" href="#log" data-section="log"><span class="adm-nav__num" aria-hidden="true">07</span><span data-icon="activity" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Log Aktivitas</span></a></li>
+            <li><a class="adm-nav__link" href="#instruktur" data-section="instruktur"><span class="adm-nav__num" aria-hidden="true">08</span><span data-icon="award" data-icon-size="18" data-icon-class="adm-nav__icon"></span><span class="adm-nav__text">Instruktur</span><span class="adm-nav__count" data-count-for="instruktur" hidden></span></a></li>
+            <!-- bagian tambahan (Kegiatan, Toko, …) dipasang admin.js dari window.PPAPI_ADMIN_SECTIONS -->
           </ul>
           <div class="adm-nav__foot" id="adm-nav-foot"></div>
         </nav>
@@ -168,6 +173,22 @@
             </div>
           </section>
 
+          <!-- 08 INSTRUKTUR -->
+          <section class="adm-section" id="sec-instruktur" data-section="instruktur" aria-labelledby="h-instruktur" hidden>
+            <header class="adm-head">
+              <div class="adm-head__text">
+                <p class="eyebrow">08 — Instruktur</p>
+                <h2 class="adm-head__title" id="h-instruktur" tabindex="-1">Direktori <em>instruktur</em></h2>
+                <p class="adm-head__lead">Profil instruktur untuk mitra penyelenggara pelatihan, serta permintaan instruktur yang masuk melalui situs.</p>
+              </div>
+            </header>
+            <div class="adm-section__body" id="instruktur-body" aria-busy="true">
+              <div class="skeleton" role="status"><span class="sr-only">Memuat data instruktur…</span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+            </div>
+          </section>
+
+          <!-- 09 dst.: bagian tambahan dari window.PPAPI_ADMIN_SECTIONS (dipasang admin.js di sini) -->
+
         </div>
       </div>
     </div>
@@ -182,11 +203,18 @@
   <script src="assets/data/pustaka.js" defer></script>
   <script src="assets/data/organisasi.js" defer></script>
   <script src="assets/data/registry.js" defer></script>
+  <script src="assets/data/kompetensi.js" defer></script>
   <script src="assets/js/core.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-instruktur.js" defer></script>
+  <script src="assets/js/store-kegiatan.js" defer></script>
+  <script src="assets/js/store-toko.js" defer></script>
   <script src="assets/js/pages/admin.js" defer></script>
   <script src="assets/js/pages/admin-anggota.js" defer></script>
   <script src="assets/js/pages/admin-konten.js" defer></script>
+  <script src="assets/js/pages/admin-instruktur.js" defer></script>
+  <script src="assets/js/pages/admin-kegiatan.js" defer></script>
+  <script src="assets/js/pages/admin-toko.js" defer></script>
 </body>
 </html>

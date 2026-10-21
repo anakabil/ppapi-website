@@ -4,7 +4,8 @@
    Aplikasi di folder aplikasi/ hanya terbuka untuk anggota berstatus Aktif dan
    admin PPAPI. Berkas ini:
    1. memuat skrip inti situs secara berurutan: ../assets/js/config.js, core.js,
-      auth.js, store.js (alamatnya dihitung dari lokasi gate.js sendiri);
+      auth.js, store.js, store-apps.js (data aplikasi per akun, PPAPI.appData;
+      alamatnya dihitung dari lokasi gate.js sendiri);
    2. menyembunyikan aplikasi (kelas html.app-gate-pending + layar #app-gate)
       sampai PPAPI.session siap;
    3. memutuskan:
@@ -44,7 +45,7 @@
   var SELF = html.getAttribute('data-self') || (here.indexOf(ROOT) === 0 ? here.slice(ROOT.length) : '');
   if (!SELF || /\/$/.test(SELF)) SELF += 'index.html';
   var APP_KEY = html.getAttribute('data-app') || '';
-  var FILES = ['assets/js/config.js', 'assets/js/core.js', 'assets/js/auth.js', 'assets/js/store.js'];
+  var FILES = ['assets/js/config.js', 'assets/js/core.js', 'assets/js/auth.js', 'assets/js/store.js', 'assets/js/store-apps.js'];
   var MSG_LOCKED = 'Fitur ini khusus anggota berstatus Aktif.';
   var TIMEOUT_MS = 45000;
   var st = { leaving: false, started: false, failed: false, user: null };
@@ -97,7 +98,7 @@
 
   /* ---------- 1. muat skrip inti situs (urut: config → core → auth → store) ---------- */
   function loadCore(done) {
-    if (w.PPAPI && PPAPI.session && PPAPI.auth && PPAPI.store) { done(); return; }
+    if (w.PPAPI && PPAPI.session && PPAPI.auth && PPAPI.store && PPAPI.appData) { done(); return; }
     var pending = FILES.length, broken = false;
     FILES.forEach(function (f) {
       var s = d.createElement('script');

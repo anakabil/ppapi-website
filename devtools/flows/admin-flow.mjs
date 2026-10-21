@@ -37,8 +37,18 @@ const server = http.createServer((req, res) => {
     return res.end('<!doctype html><title>404</title><p>Not found</p>');
   }
   res.writeHead(200, { 'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
+  /* The sample (contoh) content was removed from assets/data on 15 Oct 2026 (pengumuman and agenda are empty, pustaka
+     holds only the two apps). The content-CRUD scenario needs one static item per type, so the TEST server appends a
+     small fixture (served only here; nothing is written to site/). */
+  const fixture = FIXTURES[String(file).replace(/\\/g, '/').split('/assets/data/')[1]];
+  if (fixture) return res.end(fs.readFileSync(file, 'utf8') + '\n' + fixture);
   (String(file).replace(/\\/g, '/').endsWith('assets/js/config.js') && !process.env.PPAPI_REAL_FIREBASE ? res.end(fs.readFileSync(file, 'utf8').replace(/apiKey:\s*'[^']*'/, "apiKey: ''")) /* test server: Mode Demo unless PPAPI_REAL_FIREBASE=1 */ : fs.createReadStream(file).pipe(res));
 });
+const FIXTURES = {
+  'berita.js': "PPAPI_DATA.pengumuman = (PPAPI_DATA.pengumuman || []).concat([{ id: 'uji-pengumuman-statis', judul: 'Pengumuman statis uji', isi: 'Pengumuman bawaan untuk pengujian konsol.', tanggal: '2026-10-05', penting: false }]);",
+  'agenda.js': "PPAPI_DATA.agenda = (PPAPI_DATA.agenda || []).concat([{ id: 'uji-agenda-statis', judul: 'Agenda statis uji', jenis: 'Pelatihan', mulai: '2026-11-12', selesai: '2026-11-12', waktu: '09.00 – 12.00 WIB', lokasi: 'Jakarta', mode: 'Luring', kuota: 20, deskripsi: 'Agenda bawaan untuk pengujian konsol.', tautanDaftar: '', contoh: false }]);",
+  'pustaka.js': "PPAPI_DATA.pustaka = [{ id: 'uji-petunjuk-teknis-statis', judul: 'Petunjuk Teknis statis uji', kategori: 'Petunjuk Teknis', kode: 'PT-UJI', versi: '', tanggal: '2026-09-01', status: 'Berlaku', ringkasan: 'Dokumen bawaan untuk pengujian konsol.', penyusun: '', format: 'PDF', halaman: '', akses: 'publik', tautan: 'pustaka/uji.pdf', tag: [], contoh: false }].concat(PPAPI_DATA.pustaka || []);"
+};
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
@@ -135,7 +145,8 @@ try {
     check('A1 stays on admin.html', page.url().endsWith('/admin.html'), page.url());
     check('A2 robots noindex', await page.$eval('meta[name="robots"]', m => m.content.includes('noindex')));
     check('A3 one h1 "Konsol Admin"', await page.evaluate(() => document.querySelectorAll('h1').length === 1 && /Konsol\s+Admin/.test(document.querySelector('h1').textContent)));
-    check('A4 nav: 7 links, Ringkasan current', await page.evaluate(() => document.querySelectorAll('.adm-nav__link').length === 7 && document.querySelector('.adm-nav__link[aria-current="page"]').dataset.section === 'ringkasan'));
+    /* since 2026-10-21: + 08 Instruktur, 09 Kegiatan, 10 Toko (PPAPI_ADMIN_SECTIONS) */
+    check('A4 nav: 10 links, Ringkasan current', await page.evaluate(() => document.querySelectorAll('.adm-nav__link').length === 10 && document.querySelector('.adm-nav__link[aria-current="page"]').dataset.section === 'ringkasan'));
     check('A5 hero meta: admin name + Mode Demo', await page.evaluate(() => /Admin PPAPI \(Demo\)/.test(document.getElementById('adm-meta').textContent) && /Mode Demo/.test(document.getElementById('adm-meta').textContent)));
     const kpis = await page.$$eval('.adm-kpi', els => els.map(e => [e.querySelector('.kpi__label').textContent.trim(), e.querySelector('.kpi__value').textContent.trim()]));
     check('A6 6 KPI tiles', kpis.length === 6, kpis);
@@ -322,7 +333,9 @@ try {
     await nav(page, 'konten');
     check('A61 konten defaults to #konten/berita', page.url().endsWith('#konten/berita'));
     await page.waitForSelector('#kt-list tbody tr');
-    check('A62 berita list: 10 rows, Bawaan badges, contoh badges', await page.evaluate(() => document.querySelectorAll('#kt-list tbody tr').length === 10 && document.querySelectorAll('#kt-list .adm-src').length === 10 && document.querySelectorAll('#kt-list .badge--contoh').length === 10));
+    /* since 15 Oct 2026 the static berita are real articles (no contoh items) */
+    const A62 = await page.evaluate(() => ({ rows: document.querySelectorAll('#kt-list tbody tr').length, src: document.querySelectorAll('#kt-list .adm-src').length, contoh: document.querySelectorAll('#kt-list .badge--contoh').length, data: PPAPI.data.berita.filter(x => !x.hidden).length }));
+    check('A62 berita list: one row per static article, Bawaan badges, no contoh badges', A62.rows === A62.data && A62.rows > 0 && A62.src === A62.rows && A62.contoh === 0, A62);
     check('A63 demo notice in Konten', await page.evaluate(() => /hanya tersimpan di peramban ini/.test(document.getElementById('konten-body').textContent)));
     await shot(page, 'd-konten-berita');
     await page.click('#kt-add');
@@ -342,7 +355,8 @@ try {
     const created = listed.find(x => x.judul === 'Uji Konsol: Rapat Koordinasi Sekretariat');
     check('A65 created berita visible via store.content.list', !!created && created._managed && !created._static, created && created.id);
     check('A66 isi split into paragraphs / subheading / bullets', created && JSON.stringify(created.isi) === JSON.stringify(['Paragraf pertama berita uji.', '## Agenda rapat', '- Butir satu', '- Butir dua', 'Paragraf penutup.']), created && created.isi);
-    check('A67 newest first + "Dikelola" badge', await page.evaluate(() => /Uji Konsol/.test(document.querySelector('#kt-list tbody tr').textContent) && /Dikelola/.test(document.querySelector('#kt-list tbody tr').textContent)));
+    /* sorted newest first: the new item (dated today) sits after the static articles dated later */
+    check('A67 newest first + "Dikelola" badge', await page.evaluate(t => { const rows = [...document.querySelectorAll('#kt-list tbody tr')]; const i = PPAPI.data.berita.filter(x => !x.hidden && String(x.tanggal) > t).length; return !!rows[i] && /Uji Konsol/.test(rows[i].textContent) && /Dikelola/.test(rows[i].textContent); }, created && created.tanggal));
     check('A68 "Lihat" link → berita.html?id=', await page.evaluate(id => !!document.querySelector('#kt-list a[href="berita.html?id=' + id + '"]'), created && created.id));
     /* edit a static pengumuman → restore */
     await page.click('.adm-subnav__link[data-type="pengumuman"]');

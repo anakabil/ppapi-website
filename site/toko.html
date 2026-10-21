@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="id" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Toko PPAPI — PPAPI</title>
+  <meta name="description" content="Toko PPAPI: suvenir, pakaian, aksesori, klem dan komponen perancah, serta produk pengetahuan (CoP, pedoman, standar) dalam bentuk soft file atau cetak.">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Toko PPAPI — PPAPI">
+  <meta property="og:description" content="Toko PPAPI: suvenir, pakaian, aksesori, klem dan komponen perancah, serta produk pengetahuan (CoP, pedoman, standar) dalam bentuk soft file atau cetak.">
+  <meta property="og:image" content="assets/img/og-image.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages/toko.css">
+  <script>document.documentElement.classList.replace('no-js','js')</script>
+</head>
+<body data-page="toko" data-auth="public">
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <div id="site-header"></div>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="page-hero tk-hero">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/img/stair-tower.webp" srcset="assets/img/stair-tower-sm.webp 720w, assets/img/stair-tower.webp 1920w" sizes="100vw" alt="" width="1920" height="1280" fetchpriority="high" decoding="async">
+      </div>
+      <div data-scaffold data-cols="8" data-rows="4"></div>
+      <div class="container page-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <ol><li><a href="index.html">Beranda</a></li><li aria-current="page">Toko</li></ol>
+        </nav>
+        <p class="eyebrow">Toko PPAPI</p>
+        <h1 class="display split-lines">Perlengkapan &amp;<br><em>pengetahuan</em> perancah.</h1>
+        <p class="lead">Suvenir, pakaian, aksesori, klem dan komponen perancah, hingga produk pengetahuan PPAPI — Code of Practice, pedoman, dan standar — dalam bentuk soft file atau cetak yang dikirim ke alamat rumah maupun kantor.</p>
+        <div class="page-hero__actions">
+          <a class="btn btn--primary" href="#katalog"><span>Lihat katalog</span><span data-icon="arrow-down" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+          <a class="btn btn--ghost" href="keranjang.html" data-tk="hero-cart"><span data-icon="briefcase" data-icon-size="18"></span><span>Keranjang</span><span class="tk-count" data-tk-count hidden></span></a>
+        </div>
+        <div class="page-hero__meta">
+          <span>Pembayaran transfer bank</span><span>Dikonfirmasi sekretariat</span><span>Soft file bertanda air</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== KOLEKSI ===================== -->
+    <section class="section section--bone tk-collections" aria-labelledby="tk-kol-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Koleksi</p>
+            <h2 class="h2" id="tk-kol-title">Lima <em>koleksi</em>, satu identitas</h2>
+            <p class="lead muted">Setiap produk dipilih dan disiapkan sekretariat PPAPI — dari cendera mata hingga dokumen rujukan kerja.</p>
+          </div>
+        </header>
+        <ul class="tk-tiles" data-tk="tiles" aria-label="Koleksi Toko PPAPI"></ul>
+      </div>
+    </section>
+
+    <!-- ===================== KATALOG ===================== -->
+    <section class="section tk-catalog" id="katalog" aria-labelledby="tk-kat-title">
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Katalog</p>
+            <h2 class="h2" id="tk-kat-title">Katalog <em>produk</em></h2>
+            <p class="lead muted">Pilih produk, tentukan ukuran, warna, atau format, lalu tambahkan ke keranjang.</p>
+          </div>
+          <a class="btn btn--link" href="pesanan.html"><span>Pesanan Saya</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+        </header>
+
+        <div class="tk-member" data-tk="member" hidden></div>
+
+        <form class="tk-toolbar" role="search" aria-label="Cari dan saring produk" data-tk="toolbar" novalidate hidden>
+          <div class="field tk-toolbar__search">
+            <label class="field__label" for="tk-q">Cari produk</label>
+            <div class="search-box">
+              <span data-icon="search" data-icon-size="18"></span>
+              <input class="field__control" id="tk-q" name="q" type="search" autocomplete="off" maxlength="80" placeholder="Nama atau kode produk">
+              <button type="button" class="search-box__clear" aria-label="Hapus pencarian"><span data-icon="close" data-icon-size="16"></span></button>
+            </div>
+          </div>
+          <div class="field tk-toolbar__sort">
+            <label class="field__label" for="tk-sort">Urutkan</label>
+            <select class="field__control" id="tk-sort" name="urut">
+              <option value="unggulan">Unggulan</option>
+              <option value="terbaru">Terbaru</option>
+              <option value="murah">Harga terendah</option>
+              <option value="mahal">Harga tertinggi</option>
+            </select>
+          </div>
+          <div class="tk-toolbar__chips">
+            <p class="field__label" id="tk-chips-label">Koleksi</p>
+            <div class="filter-chips" role="group" aria-labelledby="tk-chips-label" data-tk="chips"></div>
+          </div>
+        </form>
+
+        <p class="tk-resultcount" data-tk="count" role="status" aria-live="polite"></p>
+        <div class="tk-grid" data-tk="grid" aria-busy="true">
+          <div class="skeleton" role="status"><span class="sr-only">Memuat katalog…</span><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
+        </div>
+        <div data-tk="empty" hidden></div>
+      </div>
+    </section>
+
+    <!-- ===================== CARA BERBELANJA ===================== -->
+    <section class="section section--dark tk-how" aria-labelledby="tk-how-title">
+      <div data-scaffold data-cols="10" data-rows="3" data-nodes="false"></div>
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow">Cara Berbelanja</p>
+            <h2 class="h2" id="tk-how-title">Empat langkah, <em>tertata</em> dan jelas</h2>
+          </div>
+        </header>
+        <ol class="grid grid--4 tk-steps" data-reveal-stagger>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">01 <span>/ 04</span></span><span class="feature__icon" data-icon="search" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Pilih produk</h3>
+            <p class="feature__text">Tentukan ukuran, warna, atau format — soft file maupun cetak — lalu masukkan ke keranjang.</p>
+          </li>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">02 <span>/ 04</span></span><span class="feature__icon" data-icon="map-pin" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Buat pesanan</h3>
+            <p class="feature__text">Masuk ke akun Anda, isi alamat pengiriman untuk barang fisik dan dokumen cetak, lalu buat pesanan.</p>
+          </li>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">03 <span>/ 04</span></span><span class="feature__icon" data-icon="upload" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Transfer &amp; kirim bukti</h3>
+            <p class="feature__text">Transfer ke rekening PPAPI, lalu kirim tautan bukti pembayaran dari halaman Pesanan Saya.</p>
+          </li>
+          <li class="feature">
+            <div class="feature__head"><span class="index-num">04 <span>/ 04</span></span><span class="feature__icon" data-icon="check-circle" data-icon-size="22"></span></div>
+            <h3 class="feature__title">Konfirmasi &amp; terima</h3>
+            <p class="feature__text">Setelah sekretariat mengonfirmasi, soft file dapat diunduh dan barang dikirim lengkap dengan nomor resi.</p>
+          </li>
+        </ol>
+        <div class="tk-how__note" data-reveal>
+          <span data-icon="shield-check" data-icon-size="22"></span>
+          <p><strong>Tentang soft file.</strong> Berkas PDF dibuka melalui tautan privat yang hanya dapat diakses pembeli yang pembayarannya telah dikonfirmasi, dan setiap halaman <em>dibubuhi tanda air identitas pembeli</em> — nama, email, dan nomor pesanan. Mohon tidak menggandakan atau menyebarluaskannya.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <a class="tk-fab" href="keranjang.html" data-tk="fab" hidden>
+    <span data-icon="briefcase" data-icon-size="20"></span><span class="tk-fab__label">Keranjang</span><span class="tk-fab__count" data-tk-count>0</span>
+  </a>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-toko.js" defer></script>
+  <script src="assets/js/pages/toko.js" defer></script>
+</body>
+</html>

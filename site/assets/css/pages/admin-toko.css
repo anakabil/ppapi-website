@@ -1,0 +1,71 @@
+/* ==========================================================================
+   PPAPI — Konsol Admin › Toko (admin-toko.js). Dibatasi body[data-page="admin"].
+   Hanya token main.css.
+   ========================================================================== */
+body[data-page="admin"] .atk { display: grid; gap: 22px; min-width: 0; }
+body[data-page="admin"] .atk-demo { display: flex; gap: 8px; align-items: center; margin: 0; padding: 10px 14px; background: var(--surface-2); font-size: .86rem; color: var(--muted); }
+body[data-page="admin"] .atk-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line-strong); scrollbar-width: none; }
+body[data-page="admin"] .atk-tabs::-webkit-scrollbar { display: none; }
+body[data-page="admin"] .atk-tab {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; margin-bottom: -1px;
+  border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); cursor: pointer; white-space: nowrap;
+  font: 600 .78rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase;
+}
+body[data-page="admin"] .atk-tab:hover { color: var(--text); }
+body[data-page="admin"] .atk-tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+body[data-page="admin"] .atk-tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+body[data-page="admin"] .atk-tab__n { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--text); color: var(--bg); letter-spacing: .02em; }
+body[data-page="admin"] .atk-panel { display: grid; gap: 18px; min-width: 0; }
+body[data-page="admin"] .atk-panel:focus { outline: none; }
+body[data-page="admin"] .atk-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 1100px) { body[data-page="admin"] .atk-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body[data-page="admin"] .atk-toolbar { display: grid; gap: 12px 16px; align-items: end; }
+@media (min-width: 760px) { body[data-page="admin"] .atk-toolbar { grid-template-columns: minmax(0, 1fr) 240px auto; } }
+body[data-page="admin"] .atk-toolbar .field { margin: 0; }
+body[data-page="admin"] .atk-toolbar__csv { align-self: end; }
+body[data-page="admin"] .atk-toolbar--products { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+body[data-page="admin"] .atk-count { margin: 0; font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+body[data-page="admin"] .atk-table { font-size: .92rem; }
+body[data-page="admin"] .atk-table .table__muted { display: block; }
+body[data-page="admin"] .atk-id { display: block; white-space: nowrap; }
+body[data-page="admin"] .atk-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+body[data-page="admin"] .atk-actions { text-align: right; white-space: nowrap; }
+body[data-page="admin"] .atk-actions .icon-btn { margin-left: 6px; vertical-align: middle; }
+body[data-page="admin"] .atk-prod { display: flex; align-items: center; gap: 12px; min-width: 0; }
+body[data-page="admin"] .atk-prod img, body[data-page="admin"] .atk-prod__ph { flex: none; width: 48px; height: 48px; object-fit: cover; border: 1px solid var(--line); background: var(--surface-2); }
+body[data-page="admin"] .atk-prod__ph { display: grid; place-items: center; color: var(--muted); }
+body[data-page="admin"] .atk-dstatus { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+body[data-page="admin"] .atk-issues { margin: 6px 0 0; padding-left: 18px; }
+body[data-page="admin"] .atk-note { margin: 8px 0 0; font-size: .88rem; line-height: 1.6; color: var(--muted); }
+body[data-page="admin"] .atk-warn { display: flex; gap: 6px; align-items: center; color: var(--warn-fg); font-size: .88rem; }
+body[data-page="admin"] .atk-items { margin: 0; padding: 0; list-style: none; }
+body[data-page="admin"] .atk-items li { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+body[data-page="admin"] .atk-items li div { display: grid; gap: 2px; min-width: 0; }
+body[data-page="admin"] .atk-items li div span { font-size: .84rem; color: var(--muted); }
+body[data-page="admin"] .atk-items .atk-num { text-align: right; font-size: .9rem; }
+body[data-page="admin"] .atk-sum { margin-top: 14px; }
+body[data-page="admin"] .atk-sum .tk-sum__row { display: flex; justify-content: space-between; gap: 16px; }
+body[data-page="admin"] .atk-sum .tk-sum__row dt { color: var(--muted); }
+body[data-page="admin"] .atk-sum .tk-sum__row dd { margin: 0; font-variant-numeric: tabular-nums; }
+body[data-page="admin"] .atk-sum .tk-sum__row--total { padding-top: 10px; border-top: 1px solid var(--line-strong); font-weight: 600; }
+body[data-page="admin"] .atk-addr { font-style: normal; line-height: 1.65; font-size: .94rem; }
+body[data-page="admin"] .atk-hist { margin: 0; padding-left: 18px; font-size: .88rem; line-height: 1.6; }
+body[data-page="admin"] .atk-hist time { color: var(--muted); font-variant-numeric: tabular-nums; }
+body[data-page="admin"] .atk-hist span { color: var(--faint); }
+body[data-page="admin"] .atk-checks { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+body[data-page="admin"] .atk-form .field + .field, body[data-page="admin"] .atk-form .form__row + .field, body[data-page="admin"] .atk-form .field + .form__row, body[data-page="admin"] .atk-form .form__row + .form__row { margin-top: 16px; }
+body[data-page="admin"] .atk-photos { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+body[data-page="admin"] .atk-photo { position: relative; margin: 0; width: 96px; }
+body[data-page="admin"] .atk-photo img { display: block; width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line); }
+body[data-page="admin"] .atk-photo figcaption { margin-top: 4px; font: 600 .62rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+body[data-page="admin"] .atk-photo__rm { position: absolute; top: 4px; right: 4px; background: var(--surface); }
+body[data-page="admin"] .atk-upload { cursor: pointer; }
+body[data-page="admin"] .atk-upload:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+body[data-page="admin"] .atk-settings { display: grid; gap: 26px; max-width: 920px; }
+body[data-page="admin"] .atk-fieldset { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+body[data-page="admin"] .atk-legend { padding: 0 8px; font: 600 .78rem/1 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; }
+body[data-page="admin"] .atk-fieldset > .field { margin-top: 16px; }
+body[data-page="admin"] .atk-rek { margin-top: 16px; }
+body[data-page="admin"] .atk-rek__n { margin: 0 0 8px; font: 600 .68rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+body[data-page="admin"] .atk-rek .form__row--3 { display: grid; gap: 12px; }
+@media (min-width: 760px) { body[data-page="admin"] .atk-rek .form__row--3 { grid-template-columns: 1fr 1fr 1.4fr; } }

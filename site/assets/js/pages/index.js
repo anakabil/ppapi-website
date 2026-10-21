@@ -59,6 +59,13 @@
       }
       return arr(D[type]).filter(function (x) { return x && !x.hidden; });
     }
+    /* agenda + kegiatan terbit dengan pendaftaran (store-kegiatan.js); id yang sama → versi kegiatan */
+    async function loadAgenda() {
+      var both = await Promise.all([load('agenda'), P.kegiatan ? P.kegiatan.asAgendaItems() : Promise.resolve([])]);
+      var kg = arr(both[1]), ids = {};
+      kg.forEach(function (x) { if (x) ids[x.id] = 1; });
+      return both[0].filter(function (x) { return !ids[x.id]; }).concat(kg);
+    }
 
     /* ---------------- 3. Tentang + angka ---------------- */
     function renderTentang() {
@@ -511,7 +518,7 @@
     var newsList = byId('news-list');
     if (newsList && !newsList.children.length) newsList.innerHTML = P.ui.skeleton(4);
 
-    var loaded = await Promise.all([load('berita'), load('agenda'), load('regulasi'), load('pustaka')]);
+    var loaded = await Promise.all([load('berita'), loadAgenda(), load('regulasi'), load('pustaka')]);
     renderBerita(loaded[0]);
     renderAgenda(loaded[1]);
     renderRegulasi(loaded[2]);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.google.com; frame-src https://*.firebaseapp.com https://*.web.app https://www.google.com https://docs.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Dasbor Anggota — PPAPI</title>
   <meta name="description" content="Dasbor anggota PPAPI: status keanggotaan dan tahapan pendaftaran, agenda terdekat, berita, pengumuman, Produk Pengetahuan, aplikasi anggota, serta pengingat masa berlaku keanggotaan dan sertifikat.">
   <meta name="robots" content="noindex, nofollow">
@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/pages/dashboard.css">
+  <link rel="stylesheet" href="assets/css/kegiatan.css" data-kegiatan-css>
   <script>document.documentElement.classList.replace('no-js','js')</script>
 </head>
 <body data-page="dashboard" data-auth="required">
@@ -276,6 +277,18 @@
       </div>
     </div>
 
+    <!-- =====================================================================
+         KEGIATAN SAYA — untuk setiap akun (webinar, pelatihan, seminar yang diikuti:
+         daftar hadir, tautan ruang, sertifikat). dashboard.js memindahkan bagian ini ke
+         tampilan yang aktif (sebelum isi dasbor / sebelum informasi keanggotaan) lalu
+         memanggil PPAPI.kegiatanSaya.render().
+         ===================================================================== -->
+    <section class="dash-kgs" id="kegiatan-saya" aria-labelledby="dash-h-kegiatan" tabindex="-1" hidden>
+      <div class="container">
+        <div class="dash-kgs__box" id="dash-kegiatan"></div>
+      </div>
+    </section>
+
   </main>
 
   <div id="site-footer"></div>
@@ -287,6 +300,8 @@
   <script src="assets/js/core.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-kegiatan.js" defer></script>
+  <script src="assets/js/kegiatan-saya.js" defer></script>
   <script src="assets/js/pages/dashboard.js" defer></script>
 </body>
 </html>

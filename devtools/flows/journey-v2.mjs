@@ -212,7 +212,7 @@ await step('J1 registration + application wizard', async () => {
   ok('J1 wizard view, step 1 Kategori, 7 steps', (await dafView()) === 'wizard' && (await dafStep()) === 'kategori' && (await page.locator('.stepper__item').count()) === 7);
   ok('J1 header account name = first name', (await text('.account__name')) === FIRST, await text('.account__name'));
   const mn = await menu();
-  ok('J1 Draf account menu: Dasbor | Formulir Pendaftaran | Keluar + Draf badge', mn.labels === 'Dasbor|Formulir Pendaftaran|Keluar' && mn.badges.join() === 'Draf', `${mn.labels} [${mn.badges}]`);
+  ok('J1 Draf account menu: Dasbor | Formulir Pendaftaran | Kegiatan Saya | Pesanan Saya | Keluar + Draf badge', mn.labels === 'Dasbor|Formulir Pendaftaran|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Draf', `${mn.labels} [${mn.badges}]`);
 
   // step 1 — kategori
   await page.click('label[for="cat-0"]');
@@ -357,7 +357,7 @@ await step('J2 pending applicant sees status centre + locks', async () => {
   ok('J2 no KTA number in the hero', !/PPAPI-\d{4}-\d{6}/.test(await text('#dash-meta')), await text('#dash-meta'));
   ok('J2 no app launch links on the page', (await page.locator('main a[href*="aplikasi/"]').count()) === 0, String(await page.locator('main a[href*="aplikasi/"]').count()));
   const mn = await menu();
-  ok('J2 pending menu: Dasbor | Formulir Pendaftaran | Keluar, badge Menunggu Verifikasi', mn.labels === 'Dasbor|Formulir Pendaftaran|Keluar' && mn.badges.join() === 'Menunggu Verifikasi', `${mn.labels} [${mn.badges}]`);
+  ok('J2 pending menu: Dasbor | Formulir Pendaftaran | Kegiatan Saya | Pesanan Saya | Keluar, badge Menunggu Verifikasi', mn.labels === 'Dasbor|Formulir Pendaftaran|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Menunggu Verifikasi', `${mn.labels} [${mn.badges}]`);
   await shot('j2-dashboard-pending', true);
 
   let g = await gatedTo('anggota.html');
@@ -419,7 +419,7 @@ await step('J3 admin approves the applicant', async () => {
   ok('J3 admin dashboard: Konsol Admin band visible', await page.locator('#dash-admin').isVisible());
   info('J3 admin band', (await text('#dash-admin')).slice(0, 220));
   const mn = await menu();
-  ok('J3 admin menu: Dasbor | Profil Anggota | Produk Pengetahuan | Aplikasi Anggota | Konsol Admin | Keluar', mn.labels === 'Dasbor|Profil Anggota|Produk Pengetahuan|Aplikasi Anggota|Konsol Admin|Keluar', mn.labels);
+  ok('J3 admin menu: Dasbor | Profil Anggota | Produk Pengetahuan | Aplikasi Anggota | Kegiatan Saya | Pesanan Saya | Konsol Admin | Keluar', mn.labels === 'Dasbor|Profil Anggota|Produk Pengetahuan|Aplikasi Anggota|Kegiatan Saya|Pesanan Saya|Konsol Admin|Keluar', mn.labels);
   ok('J3 admin menu badge: Admin (own Draf status hidden)', mn.badges.join() === 'Admin', mn.badges.join());
   await page.locator('.account__trigger').click();
   await page.locator('#account-menu [role=menuitem]', { hasText: 'Konsol Admin' }).click();
@@ -493,7 +493,7 @@ await step('J4 approved member: active features', async () => {
   const kpis = await text('#dash-kpis');
   ok('J4 KPIs mention the validity (31 Des 2029)', /2029/.test(kpis), kpis.slice(0, 200));
   const mn = await menu();
-  ok('J4 active menu: Dasbor | Profil Anggota | Produk Pengetahuan | Aplikasi Anggota | Keluar, badge Aktif', mn.labels === 'Dasbor|Profil Anggota|Produk Pengetahuan|Aplikasi Anggota|Keluar' && mn.badges.join() === 'Aktif', `${mn.labels} [${mn.badges}]`);
+  ok('J4 active menu: Dasbor | Profil Anggota | Produk Pengetahuan | Aplikasi Anggota | Kegiatan Saya | Pesanan Saya | Keluar, badge Aktif', mn.labels === 'Dasbor|Profil Anggota|Produk Pengetahuan|Aplikasi Anggota|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Aktif', `${mn.labels} [${mn.badges}]`);
   await shot('j4-dashboard-active', true);
 
   // anggota → KTA card + QR
@@ -616,7 +616,7 @@ await step('J5 revision + rejection on a contoh applicant', async () => {
   const cta = await page.evaluate(() => [...document.querySelectorAll('.dash-sc__actions a')].map(a => a.textContent.replace(/\s+/g, ' ').trim() + '→' + a.getAttribute('href')).join(', '));
   ok('J5 dashboard CTA "Perbaiki Pengajuan" → pendaftaran.html', /Perbaiki[^→]*→pendaftaran\.html/.test(cta), cta);
   const mn = await menu();
-  ok('J5 Perlu Perbaikan menu: Dasbor | Formulir Pendaftaran | Keluar + badge', mn.labels === 'Dasbor|Formulir Pendaftaran|Keluar' && mn.badges.join() === 'Perlu Perbaikan', `${mn.labels} [${mn.badges}]`);
+  ok('J5 Perlu Perbaikan menu: Dasbor | Formulir Pendaftaran | Kegiatan Saya | Pesanan Saya | Keluar + badge', mn.labels === 'Dasbor|Formulir Pendaftaran|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Perlu Perbaikan', `${mn.labels} [${mn.badges}]`);
   await shot('j5-revision-dashboard', true);
   await goto('pendaftaran.html');
   await dafReady();
@@ -847,7 +847,7 @@ await step('J8 deactivate the approved member', async () => {
   ok('J8 member dashboard: status centre "Nonaktif" + note', /Nonaktif/.test(await text('#dash-sc-title')) && /iuran tahunan/.test(await text('#dash-sc')), await text('#dash-sc-title'));
   ok('J8 no app links / active view hidden', !(await page.locator('#dash-active-view').isVisible()) && (await page.locator('main a[href*="aplikasi/"]').count()) === 0);
   const mn = await menu();
-  ok('J8 Nonaktif menu: Dasbor | Formulir Pendaftaran | Keluar, badge Nonaktif', mn.labels === 'Dasbor|Formulir Pendaftaran|Keluar' && mn.badges.join() === 'Nonaktif', `${mn.labels} [${mn.badges}]`);
+  ok('J8 Nonaktif menu: Dasbor | Formulir Pendaftaran | Kegiatan Saya | Pesanan Saya | Keluar, badge Nonaktif', mn.labels === 'Dasbor|Formulir Pendaftaran|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Nonaktif', `${mn.labels} [${mn.badges}]`);
   await shot('j8-nonaktif-dashboard', true);
   let g = await gatedTo('anggota.html');
   ok('J8 anggota.html → dashboard + toast', /^dashboard\.html/.test(g.file) && await toastSeen(/khusus anggota berstatus Aktif/), g.file);
@@ -897,7 +897,7 @@ await step('J9 renewal of an expired membership', async () => {
   const cta = await page.evaluate(() => [...document.querySelectorAll('.dash-sc__actions a')].map(a => a.textContent.replace(/\s+/g, ' ').trim() + '→' + a.getAttribute('href')).join(', '));
   ok('J9 CTA "Ajukan Perpanjangan" → pendaftaran.html', /Ajukan Perpanjangan→pendaftaran\.html/.test(cta), cta);
   const mn = await menu();
-  ok('J9 Kedaluwarsa menu: Dasbor | Formulir Pendaftaran | Keluar, badge Kedaluwarsa', mn.labels === 'Dasbor|Formulir Pendaftaran|Keluar' && mn.badges.join() === 'Kedaluwarsa', `${mn.labels} [${mn.badges}]`);
+  ok('J9 Kedaluwarsa menu: Dasbor | Formulir Pendaftaran | Kegiatan Saya | Pesanan Saya | Keluar, badge Kedaluwarsa', mn.labels === 'Dasbor|Formulir Pendaftaran|Kegiatan Saya|Pesanan Saya|Keluar' && mn.badges.join() === 'Kedaluwarsa', `${mn.labels} [${mn.badges}]`);
   let g = await gatedTo('anggota.html');
   ok('J9 Kedaluwarsa: anggota.html → dashboard', /^dashboard\.html/.test(g.file), g.file);
   await clearToasts();

@@ -1,0 +1,95 @@
+    // ---------------------------------------------------------------------
+    // DIREKTORI INSTRUKTUR (instruktur.html · Konsol Admin › Instruktur)
+    // Sisipkan blok ini di dalam `match /databases/{database}/documents { … }`
+    // pada site/firestore.rules, SEBELUM blok penutup `match /{document=**}`.
+    // Memakai fungsi bantu yang sudah ada di berkas utama: signedIn(), isAdmin(),
+    // strMax(), isoDate(). (jpegDataUrl() tidak dipakai: batas foto di sini 150 KB.)
+    //
+    // • instructors/{id}          Profil publik. Dibaca siapa pun HANYA bila
+    //                             published == true (daftar publik wajib memakai
+    //                             where('published','==',true)); admin membaca
+    //                             semua dan menulis. Tidak memuat kontak pribadi.
+    // • instructor_contacts/{id}  Email/telepon instruktur, akun anggota tertaut,
+    //                             catatan internal — KHUSUS admin.
+    // • instructor_requests/{id}  Permintaan instruktur dari mitra penyelenggara:
+    //                             dibuat siapa pun (tervalidasi, status 'Baru',
+    //                             waktu dari server); dibaca & diperbarui admin
+    //                             (status + catatan saja); tidak dapat dihapus.
+    // Anggaran evaluasi: tiap permintaan < 60 ekspresi (jauh di bawah 1.000).
+    // ---------------------------------------------------------------------
+    function validInstructor(d) {
+      return d.keys().hasOnly([
+               'nama', 'gelar', 'foto', 'kompetensi', 'sertifikasi', 'pengalamanTahun', 'wilayah',
+               'bahasa', 'metode', 'materi', 'bio', 'kta', 'published', 'createdAt', 'updatedAt'
+             ])
+          && d.nama is string && d.nama.size() >= 3 && d.nama.size() <= 120
+          && d.gelar is string && d.gelar.size() <= 120
+          && d.published is bool
+          // foto: '' atau data URL JPEG ±150 KB
+          && (d.foto == '' || (d.foto is string && d.foto.size() <= 205000 && d.foto.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')))
+          && d.kompetensi is list && d.kompetensi.size() >= 1 && d.kompetensi.size() <= 16
+          && d.sertifikasi is list && d.sertifikasi.size() <= 10
+          && d.wilayah is list && d.wilayah.size() >= 1 && d.wilayah.size() <= 39
+          && d.bahasa is list && d.bahasa.size() <= 6
+          && d.metode is list && d.metode.size() >= 1 && d.metode.size() <= 2
+          && d.materi is list && d.materi.size() <= 10
+          && d.bio is string && d.bio.size() <= 600
+          && (d.kta == '' || (d.kta is string && d.kta.matches('^PPAPI-[0-9]{4}-[0-9]{6}$')))
+          && (d.pengalamanTahun == null || (d.pengalamanTahun is int && d.pengalamanTahun >= 0 && d.pengalamanTahun <= 60))
+          && d.updatedAt == request.time;
+    }
+
+    match /instructors/{id} {
+      allow get, list: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && id.size() <= 80
+                    && validInstructor(request.resource.data)
+                    && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin()
+                    && validInstructor(request.resource.data)
+                    && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /instructor_contacts/{id} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['email', 'telepon', 'memberUid', 'catatan', 'updatedAt'])
+                            && strMax(request.resource.data.get('email', ''), 200)
+                            && strMax(request.resource.data.get('telepon', ''), 24)
+                            && strMax(request.resource.data.get('memberUid', ''), 128)
+                            && strMax(request.resource.data.get('catatan', ''), 1000);
+    }
+
+    function validInstructorRequest(d) {
+      return d.keys().hasOnly([
+               'organisasi', 'namaPic', 'email', 'telepon', 'topik', 'metode', 'lokasi', 'tanggal',
+               'jumlahPeserta', 'catatan', 'instrukturId', 'instrukturNama', 'uid', 'status', 'createdAt'
+             ])
+          && d.organisasi is string && d.organisasi.size() >= 2 && d.organisasi.size() <= 160
+          && d.namaPic is string && d.namaPic.size() >= 3 && d.namaPic.size() <= 120
+          && d.email is string && d.email.size() <= 200 && d.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
+          && d.telepon is string && d.telepon.size() >= 8 && d.telepon.size() <= 24
+          && d.topik is string && d.topik.size() >= 3 && d.topik.size() <= 200
+          && d.metode in ['Luring', 'Daring', 'Fleksibel']
+          && strMax(d.get('lokasi', ''), 160)
+          && isoDate(d.tanggal)
+          && d.jumlahPeserta is int && d.jumlahPeserta >= 1 && d.jumlahPeserta <= 1000
+          && strMax(d.get('catatan', ''), 2000)
+          && strMax(d.get('instrukturId', ''), 80)
+          && strMax(d.get('instrukturNama', ''), 120)
+          && (d.get('uid', null) == null || (signedIn() && d.uid == request.auth.uid))
+          && d.status == 'Baru'
+          && d.createdAt == request.time;
+    }
+
+    match /instructor_requests/{id} {
+      allow create: if id.size() <= 40 && validInstructorRequest(request.resource.data);
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status', 'catatanAdmin', 'updatedAt', 'updatedBy'])
+                    && request.resource.data.status in ['Baru', 'Diproses', 'Selesai']
+                    && strMax(request.resource.data.get('catatanAdmin', ''), 2000)
+                    && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if false;
+    }

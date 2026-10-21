@@ -2,7 +2,8 @@ rules_version = '2';
 
 // ===========================================================================
 // Aturan keamanan Firestore — situs PPAPI (versi 2: pendaftaran, admin,
-// konten, Produk Pengetahuan)
+// konten, Produk Pengetahuan; 21 Oktober 2026: instruktur, kegiatan &
+// sertifikat, toko, data aplikasi anggota)
 // Salin seluruh isi berkas ini ke Firebase Console › Firestore › Rules, lalu
 // klik "Publish". (Lihat README.md bagian "Aturan Firestore v2".)
 //
@@ -38,6 +39,14 @@ rules_version = '2';
 //                      mengubah); tidak ada yang dapat menghapus.
 // • counters/{id}      Penghitung nomor KTA (hanya admin).
 // • audit_log/{id}     Log aktivitas admin: hanya admin; tidak dapat diubah/dihapus.
+//
+// Tambahan 21 Oktober 2026 (rincian di awal tiap blok di bawah):
+// • instructors, instructor_contacts, instructor_requests   Direktori Instruktur
+// • events (+ private, participants, attendance, assets), certificates
+//                      Kegiatan: pendaftaran, daftar hadir, sertifikat
+// • products, product_media, product_files, entitlements, orders,
+//   shop_settings, carts                                     Toko PPAPI
+// • app_data/{uid}/…   Data aplikasi anggota (Perencanaan, Simulator)
 // • Koleksi lain       Ditolak.
 //
 // Batasan yang tidak dapat diperiksa aturan: isi tiap butir daftar
@@ -549,6 +558,508 @@ service cloud.firestore {
                        ])
                     && request.resource.data.by == request.auth.uid;
       allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // DIREKTORI INSTRUKTUR (instruktur.html · Konsol Admin › Instruktur)
+    // Memakai fungsi bantu umum di atas: signedIn(), isAdmin(),
+    // strMax(), isoDate(). (jpegDataUrl() tidak dipakai: batas foto di sini 150 KB.)
+    //
+    // • instructors/{id}          Profil publik. Dibaca siapa pun HANYA bila
+    //                             published == true (daftar publik wajib memakai
+    //                             where('published','==',true)); admin membaca
+    //                             semua dan menulis. Tidak memuat kontak pribadi.
+    // • instructor_contacts/{id}  Email/telepon instruktur, akun anggota tertaut,
+    //                             catatan internal — KHUSUS admin.
+    // • instructor_requests/{id}  Permintaan instruktur dari mitra penyelenggara:
+    //                             dibuat siapa pun (tervalidasi, status 'Baru',
+    //                             waktu dari server); dibaca & diperbarui admin
+    //                             (status + catatan saja); tidak dapat dihapus.
+    // Anggaran evaluasi: tiap permintaan < 60 ekspresi (jauh di bawah 1.000).
+    // ---------------------------------------------------------------------
+    function validInstructor(d) {
+      return d.keys().hasOnly([
+               'nama', 'gelar', 'foto', 'kompetensi', 'sertifikasi', 'pengalamanTahun', 'wilayah',
+               'bahasa', 'metode', 'materi', 'bio', 'kta', 'published', 'createdAt', 'updatedAt'
+             ])
+          && d.nama is string && d.nama.size() >= 3 && d.nama.size() <= 120
+          && d.gelar is string && d.gelar.size() <= 120
+          && d.published is bool
+          // foto: '' atau data URL JPEG ±150 KB
+          && (d.foto == '' || (d.foto is string && d.foto.size() <= 205000 && d.foto.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')))
+          && d.kompetensi is list && d.kompetensi.size() >= 1 && d.kompetensi.size() <= 16
+          && d.sertifikasi is list && d.sertifikasi.size() <= 10
+          && d.wilayah is list && d.wilayah.size() >= 1 && d.wilayah.size() <= 39
+          && d.bahasa is list && d.bahasa.size() <= 6
+          && d.metode is list && d.metode.size() >= 1 && d.metode.size() <= 2
+          && d.materi is list && d.materi.size() <= 10
+          && d.bio is string && d.bio.size() <= 600
+          && (d.kta == '' || (d.kta is string && d.kta.matches('^PPAPI-[0-9]{4}-[0-9]{6}$')))
+          && (d.pengalamanTahun == null || (d.pengalamanTahun is int && d.pengalamanTahun >= 0 && d.pengalamanTahun <= 60))
+          && d.updatedAt == request.time;
+    }
+
+    match /instructors/{id} {
+      allow get, list: if resource.data.published == true || isAdmin();
+      allow create: if isAdmin() && id.size() <= 80
+                    && validInstructor(request.resource.data)
+                    && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin()
+                    && validInstructor(request.resource.data)
+                    && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /instructor_contacts/{id} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['email', 'telepon', 'memberUid', 'catatan', 'updatedAt'])
+                            && strMax(request.resource.data.get('email', ''), 200)
+                            && strMax(request.resource.data.get('telepon', ''), 24)
+                            && strMax(request.resource.data.get('memberUid', ''), 128)
+                            && strMax(request.resource.data.get('catatan', ''), 1000);
+    }
+
+    function validInstructorRequest(d) {
+      return d.keys().hasOnly([
+               'organisasi', 'namaPic', 'email', 'telepon', 'topik', 'metode', 'lokasi', 'tanggal',
+               'jumlahPeserta', 'catatan', 'instrukturId', 'instrukturNama', 'uid', 'status', 'createdAt'
+             ])
+          && d.organisasi is string && d.organisasi.size() >= 2 && d.organisasi.size() <= 160
+          && d.namaPic is string && d.namaPic.size() >= 3 && d.namaPic.size() <= 120
+          && d.email is string && d.email.size() <= 200 && d.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
+          && d.telepon is string && d.telepon.size() >= 8 && d.telepon.size() <= 24
+          && d.topik is string && d.topik.size() >= 3 && d.topik.size() <= 200
+          && d.metode in ['Luring', 'Daring', 'Fleksibel']
+          && strMax(d.get('lokasi', ''), 160)
+          && isoDate(d.tanggal)
+          && d.jumlahPeserta is int && d.jumlahPeserta >= 1 && d.jumlahPeserta <= 1000
+          && strMax(d.get('catatan', ''), 2000)
+          && strMax(d.get('instrukturId', ''), 80)
+          && strMax(d.get('instrukturNama', ''), 120)
+          && (d.get('uid', null) == null || (signedIn() && d.uid == request.auth.uid))
+          && d.status == 'Baru'
+          && d.createdAt == request.time;
+    }
+
+    match /instructor_requests/{id} {
+      allow create: if id.size() <= 40 && validInstructorRequest(request.resource.data);
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status', 'catatanAdmin', 'updatedAt', 'updatedBy'])
+                    && request.resource.data.status in ['Baru', 'Diproses', 'Selesai']
+                    && strMax(request.resource.data.get('catatanAdmin', ''), 2000)
+                    && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // =====================================================================
+    // KEGIATAN — webinar, pelatihan, seminar … (PPAPI.kegiatan, store-kegiatan.js)
+    // Memakai fungsi bantu umum di atas: signedIn(), isOwner(), isAdmin(),
+    // isActiveMember(), strMax().
+    //
+    // • events/{eid}                 dibaca siapa pun bila status 'terbit' (admin: semua);
+    //                                ditulis admin. Peserta hanya boleh menambah/mengurangi
+    //                                'terdaftar' tepat 1 bersamaan dengan dokumen pendaftarannya,
+    //                                dan menaikkan 'sertSeq' tepat 1 saat menerbitkan sertifikatnya.
+    // • …/private/ruang              tautan ruang daring: admin + peserta terdaftar.
+    // • …/participants/{uid}         pendaftaran oleh pemilik akun sesuai akses kegiatan
+    //                                ('semua' = semua akun yang masuk; 'aktif' = anggota Aktif).
+    // • …/attendance/{uid}           daftar hadir oleh peserta terdaftar HANYA bila
+    //                                request.time di antara hadirBuka (selesai − 30 menit) dan
+    //                                hadirTutup (selesai + 3 jam); waktu = waktu server.
+    // • …/assets/certificate         desain sertifikat (data URL ≤ 900 KB): admin menulis,
+    //                                admin + peserta yang sudah hadir membaca.
+    // • certificates/{nomor}         verifikasi publik per nomor (get saja; daftar: admin).
+    //                                Dibuat peserta yang hadir, sekali, dengan nomor urut
+    //                                kegiatan berikutnya; status dicabut/dipulihkan oleh admin.
+    // Anggaran: setiap permintaan memakai ≤ 7 akses dokumen dan beberapa puluh ekspresi.
+    // =====================================================================
+    function evPath(eid) {
+      return /databases/$(database)/documents/events/$(eid);
+    }
+    function partPath(eid, uid) {
+      return /databases/$(database)/documents/events/$(eid)/participants/$(uid);
+    }
+    function attPath(eid, uid) {
+      return /databases/$(database)/documents/events/$(eid)/attendance/$(uid);
+    }
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    function personName(n) {
+      return n is string && n.size() >= 3 && n.size() <= 120;
+    }
+
+    function validEvent(d) {
+      return d.keys().hasOnly([
+               'judul', 'jenis', 'deskripsi', 'narasumber', 'mulaiAt', 'selesaiAt', 'hadirBuka', 'hadirTutup',
+               'mode', 'lokasi', 'tautanDaftar', 'kuota', 'terdaftar', 'akses', 'sertifikat', 'kode', 'tahun',
+               'sertSeq', 'status', 'createdAt', 'updatedAt', 'updatedBy'
+             ])
+          && d.judul is string && d.judul.size() >= 3 && d.judul.size() <= 200
+          && d.jenis is string && d.jenis.size() <= 40
+          && d.mode in ['Daring', 'Luring', 'Hybrid']
+          && d.akses in ['semua', 'aktif']
+          && d.status in ['draf', 'terbit']
+          && d.mulaiAt is timestamp && d.selesaiAt is timestamp && d.selesaiAt > d.mulaiAt
+          && d.hadirBuka == d.selesaiAt - duration.value(30, 'm')
+          && d.hadirTutup == d.selesaiAt + duration.value(3, 'h')
+          && d.kuota is int && d.kuota >= 0
+          && d.terdaftar is int && d.terdaftar >= 0
+          && d.sertSeq is int && d.sertSeq >= 0
+          && d.sertifikat is bool
+          && d.kode is string && d.kode.matches('^[A-Z0-9]{2,12}$')
+          && d.tahun is int && d.tahun >= 2020 && d.tahun <= 2100
+          && strMax(d.deskripsi, 4000) && strMax(d.narasumber, 300) && strMax(d.lokasi, 300)
+          && (d.tautanDaftar == '' || (d.tautanDaftar is string && d.tautanDaftar.size() <= 500
+                                       && d.tautanDaftar.matches('^https://[^ ]+$')))
+          && d.updatedAt == request.time && d.updatedBy == request.auth.uid;
+    }
+
+    // Peserta mengambil satu kursi: 'terdaftar' +1 (tidak melewati kuota) bersamaan dengan
+    // pembuatan dokumen pendaftarannya sendiri.
+    function seatTaken(eid) {
+      return signedIn() && onlyChanged(['terdaftar'])
+          && request.resource.data.terdaftar == resource.data.terdaftar + 1
+          && (resource.data.kuota == 0 || request.resource.data.terdaftar <= resource.data.kuota)
+          && !exists(partPath(eid, request.auth.uid))
+          && existsAfter(partPath(eid, request.auth.uid));
+    }
+    // Peserta membatalkan: 'terdaftar' −1 bersamaan dengan penghapusan pendaftarannya.
+    function seatReleased(eid) {
+      return signedIn() && onlyChanged(['terdaftar'])
+          && request.resource.data.terdaftar == resource.data.terdaftar - 1
+          && exists(partPath(eid, request.auth.uid))
+          && !existsAfter(partPath(eid, request.auth.uid));
+    }
+    // Peserta yang hadir mengambil nomor sertifikat berikutnya (sekali saja).
+    function certNumbered(eid) {
+      return signedIn() && onlyChanged(['sertSeq'])
+          && resource.data.sertifikat == true
+          && request.resource.data.sertSeq == resource.data.sertSeq + 1
+          && exists(attPath(eid, request.auth.uid))
+          && !('sertNo' in get(attPath(eid, request.auth.uid)).data)
+          && getAfter(attPath(eid, request.auth.uid)).data.get('sertNo', '') != '';
+    }
+
+    function canJoin(eid) {
+      let ev = get(evPath(eid)).data;
+      return ev.status == 'terbit' && request.time < ev.selesaiAt
+          && (ev.akses == 'semua' || isActiveMember() || isAdmin());
+    }
+    function validParticipant(d, uid) {
+      return d.keys().hasOnly(['uid', 'nama', 'email', 'kta', 'statusAnggota', 'at'])
+          && d.uid == uid && personName(d.nama)
+          && strMax(d.email, 200) && strMax(d.kta, 24) && strMax(d.statusAnggota, 40)
+          && d.at == request.time;
+    }
+    // Daftar hadir mandiri: terdaftar + dalam jendela waktu (waktu server).
+    function attendOk(eid, uid, d) {
+      let ev = get(evPath(eid)).data;
+      return d.keys().hasOnly(['uid', 'nama', 'at'])
+          && d.uid == uid && d.at == request.time
+          && ev.status == 'terbit'
+          && request.time >= ev.hadirBuka && request.time <= ev.hadirTutup
+          && d.nama == get(partPath(eid, uid)).data.nama;
+    }
+    function validDesign(d) {
+      return d.keys().hasOnly(['bg', 'bgW', 'bgH', 'orient', 'fields', 'updatedAt', 'updatedBy'])
+          && (d.bg == '' || (d.bg is string && d.bg.size() <= 921600
+                             && d.bg.matches('^data:image/(jpeg|png);base64,[A-Za-z0-9+/=]+$')))
+          && d.bgW is int && d.bgH is int
+          && d.orient in ['landscape', 'portrait']
+          && d.fields is map && d.fields.size() <= 8
+          && d.updatedAt == request.time && d.updatedBy == request.auth.uid;
+    }
+    // Sertifikat baru: nomor PPAPI-SERT-<tahun>-<kode>-<urut> milik peserta yang hadir.
+    function certOk(no, d) {
+      let eid = d.eventId;
+      let ev = get(evPath(eid)).data;
+      let a = get(attPath(eid, request.auth.uid)).data;
+      let parts = no.split('-');
+      return d.keys().hasOnly(['eventId', 'judul', 'jenis', 'tanggal', 'nama', 'tahun', 'kode', 'seq', 'terbit', 'status'])
+          && eid is string
+          && ev.status == 'terbit' && ev.sertifikat == true
+          && !('sertNo' in a)
+          && getAfter(attPath(eid, request.auth.uid)).data.get('sertNo', '') == no
+          && d.nama == a.nama && d.judul == ev.judul && d.jenis == ev.jenis
+          && d.kode == ev.kode && d.tahun == ev.tahun
+          && d.seq == ev.sertSeq + 1
+          && getAfter(evPath(eid)).data.sertSeq == d.seq
+          && no.matches('^PPAPI-SERT-[0-9]{4}-[A-Z0-9]{2,12}-[0-9]{4,6}$')
+          && parts[2] == string(ev.tahun) && parts[3] == ev.kode && int(parts[4]) == d.seq
+          && strMax(d.tanggal, 80) && d.terbit == request.time && d.status == 'Sah';
+    }
+
+    match /events/{eid} {
+      allow get, list: if resource.data.status == 'terbit' || isAdmin();
+      allow create: if isAdmin() && validEvent(request.resource.data)
+                    && request.resource.data.terdaftar == 0 && request.resource.data.sertSeq == 0
+                    && request.resource.data.createdAt == request.time;
+      allow update: if (isAdmin() && validEvent(request.resource.data))
+                    || seatTaken(eid) || seatReleased(eid) || certNumbered(eid);
+      allow delete: if isAdmin();
+
+      match /private/{doc} {
+        allow get: if isAdmin() || (signedIn() && exists(partPath(eid, request.auth.uid)));
+        allow create, update: if isAdmin() && doc == 'ruang'
+                              && request.resource.data.keys().hasOnly(['linkRuang', 'catatan', 'updatedAt'])
+                              && strMax(request.resource.data.linkRuang, 500)
+                              && strMax(request.resource.data.catatan, 500);
+        allow delete: if isAdmin();
+      }
+
+      match /participants/{uid} {
+        allow get: if isOwner(uid) || isAdmin();
+        allow list: if isAdmin();
+        allow create: if isOwner(uid) && canJoin(eid)
+                      && validParticipant(request.resource.data, uid)
+                      && getAfter(evPath(eid)).data.terdaftar == get(evPath(eid)).data.terdaftar + 1;
+        // nama pada sertifikat dapat dibetulkan sebelum daftar hadir diisi
+        allow update: if (isOwner(uid) || isAdmin()) && onlyChanged(['nama'])
+                      && personName(request.resource.data.nama)
+                      && !exists(attPath(eid, uid));
+        allow delete: if (isOwner(uid) && !exists(attPath(eid, uid))
+                          && request.time < get(evPath(eid)).data.mulaiAt
+                          && getAfter(evPath(eid)).data.terdaftar == get(evPath(eid)).data.terdaftar - 1)
+                      || isAdmin();
+      }
+
+      match /attendance/{uid} {
+        allow get: if isOwner(uid) || isAdmin();
+        allow list: if isAdmin();
+        allow create: if (isOwner(uid) && attendOk(eid, uid, request.resource.data))
+                      || (isAdmin()
+                          && request.resource.data.keys().hasOnly(['uid', 'nama', 'at', 'olehAdmin'])
+                          && request.resource.data.uid == uid && request.resource.data.at == request.time
+                          && exists(partPath(eid, uid)));
+        // nomor sertifikat dicatat sekali, bersamaan dengan dokumen certificates/{nomor}
+        allow update: if isOwner(uid) && onlyChanged(['sertNo'])
+                      && !('sertNo' in resource.data)
+                      && request.resource.data.sertNo is string
+                      && existsAfter(/databases/$(database)/documents/certificates/$(request.resource.data.sertNo))
+                      && getAfter(evPath(eid)).data.sertSeq == get(evPath(eid)).data.sertSeq + 1;
+        allow delete: if isAdmin();
+      }
+
+      match /assets/{doc} {
+        allow get: if isAdmin() || (signedIn() && exists(attPath(eid, request.auth.uid)));
+        allow create, update: if isAdmin() && doc == 'certificate' && validDesign(request.resource.data);
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /certificates/{no} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if signedIn() && certOk(no, request.resource.data);
+      allow update: if isAdmin() && onlyChanged(['status', 'alasan', 'dicabutAt'])
+                    && request.resource.data.status in ['Sah', 'Dicabut']
+                    && strMax(request.resource.data.get('alasan', ''), 300);
+      allow delete: if false;
+    }
+
+    // =====================================================================
+    // TOKO PPAPI (toko.html · keranjang.html · pesanan.html · Konsol Admin › Toko)
+    // Memakai fungsi bantu umum di atas: signedIn(), isOwner(uid), isAdmin(),
+    // strMax(v, max), listMax(v, max).
+    //
+    // • products/{id}          Katalog: dibaca siapa pun bila aktif (kueri publik
+    //                          wajib memakai where('aktif','==',true)); admin semua.
+    // • product_media/{id}     Foto produk ukuran penuh (≤3 data URL JPEG): publik.
+    // • product_files/{id}     Tautan PRIVAT soft file: hanya admin, atau pembeli
+    //                          yang memiliki dokumen hak unduh entitlements/{uid}_{id}.
+    //                          Satu exists() — hemat anggaran evaluasi.
+    // • entitlements/{uid_id}  Hak unduh: ditulis admin saat mengonfirmasi
+    //                          pembayaran; dibaca pemiliknya dan admin.
+    // • orders/{no}            Pembeli membuat pesanan berstatus "Menunggu
+    //                          Pembayaran" atas namanya sendiri; membaca pesanannya
+    //                          (kueri where('uid','==',uid)); selama belum dibayar
+    //                          hanya boleh MENAMBAH BUKTI BAYAR atau MEMBATALKAN.
+    //                          Admin membaca & memperbarui semua; tidak ada hapus.
+    // • shop_settings/main     Rekening & ongkos kirim: publik baca, admin tulis.
+    // • carts/{uid}            Keranjang tersinkron milik akun itu sendiri.
+    // Catatan: harga ditulis peramban pembeli; aturan tidak menghitung ulang
+    // (akan memerlukan get() per butir). Konsol Admin membandingkan harga pesanan
+    // dengan katalog sebelum pembayaran dikonfirmasi.
+    // =====================================================================
+
+    function tokoKategori(k) {
+      return k in ['Suvenir', 'Pakaian', 'Aksesori', 'Klem & Komponen Perancah', 'Produk Pengetahuan'];
+    }
+    function tokoStatus(s) {
+      return s in ['Menunggu Pembayaran', 'Menunggu Konfirmasi', 'Dibayar', 'Diproses',
+                   'Dikirim', 'Selesai', 'Dibatalkan'];
+    }
+    function tokoUnpaid(s) {
+      return s in ['Menunggu Pembayaran', 'Menunggu Konfirmasi'];
+    }
+
+    function validProduct(d) {
+      return d.keys().hasOnly([
+               'nama', 'kategori', 'kode', 'ringkasan', 'deskripsi', 'harga', 'hargaAnggota',
+               'format', 'hargaCetak', 'hargaCetakAnggota', 'halaman', 'stok', 'varian', 'thumb',
+               'fotoCount', 'berkasAda', 'aktif', 'unggulan', 'urutan', 'createdAt', 'updatedAt'
+             ])
+          && d.nama is string && d.nama.size() >= 3 && d.nama.size() <= 120
+          && tokoKategori(d.kategori)
+          && d.harga is int && d.harga >= 0
+          && d.aktif is bool
+          && strMax(d.get('deskripsi', ''), 4000)
+          && strMax(d.get('thumb', ''), 60000)
+          && listMax(d.get('varian', []), 2);
+    }
+
+    match /products/{id} {
+      allow read: if resource.data.aktif == true || isAdmin();
+      allow create, update: if isAdmin() && validProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /product_media/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['foto', 'updatedAt'])
+                            && request.resource.data.foto is list
+                            && request.resource.data.foto.size() <= 3;
+      allow delete: if isAdmin();
+    }
+
+    match /product_files/{id} {
+      allow get: if signedIn()
+                 && (exists(/databases/$(database)/documents/entitlements/$(request.auth.uid + '_' + id))
+                     || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['url', 'updatedAt', 'updatedBy'])
+                            && request.resource.data.url is string
+                            && request.resource.data.url.size() <= 1000
+                            && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    match /entitlements/{eid} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create, update: if isAdmin()
+                            && request.resource.data.keys().hasOnly(['uid', 'productId', 'orderId', 'grantedAt', 'grantedBy'])
+                            && eid == request.resource.data.uid + '_' + request.resource.data.productId
+                            && request.resource.data.grantedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    function validNewOrder(d, id) {
+      return d.keys().hasOnly([
+               'id', 'uid', 'buyer', 'items', 'perluKirim', 'alamat', 'ringkasan', 'status',
+               'hargaAnggota', 'catatan', 'riwayat', 'createdAt', 'updatedAt'
+             ])
+          && id.matches('^PSN-[0-9]{8}-[A-Z0-9]{5}$')
+          && d.id == id
+          && d.uid == request.auth.uid
+          && d.status == 'Menunggu Pembayaran'
+          && d.items is list && d.items.size() >= 1 && d.items.size() <= 30
+          && d.ringkasan is map && d.ringkasan.total is int && d.ringkasan.total >= 0
+          && d.buyer is map && d.perluKirim is bool
+          && (d.alamat == null || d.alamat is map)
+          && strMax(d.get('catatan', ''), 500)
+          && listMax(d.riwayat, 40)
+          && d.createdAt == request.time && d.updatedAt == request.time;
+    }
+
+    // Pembeli: kirim/perbarui bukti bayar, atau batalkan — hanya selama belum dibayar.
+    function ownerOrderUpdate(after, before) {
+      let changed = after.diff(before).affectedKeys();
+      return tokoUnpaid(before.status)
+          && after.updatedAt == request.time
+          && listMax(after.riwayat, 40)
+          && (
+               (after.status == 'Menunggu Konfirmasi'
+                && changed.hasOnly(['pembayaran', 'status', 'riwayat', 'updatedAt'])
+                && after.pembayaran.keys().hasOnly(['buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
+                && after.pembayaran.buktiUrl is string
+                && after.pembayaran.buktiUrl.size() <= 1000
+                && after.pembayaran.buktiUrl.matches('^https://.+')
+                && after.pembayaran.jumlah is int && after.pembayaran.jumlah > 0
+                && strMax(after.pembayaran.get('catatan', ''), 500))
+            || (after.status == 'Dibatalkan'
+                && changed.hasOnly(['status', 'riwayat', 'updatedAt', 'alasanBatal', 'dibatalkanOleh'])
+                && after.dibatalkanOleh == 'pembeli'
+                && strMax(after.get('alasanBatal', ''), 500))
+          );
+    }
+
+    match /orders/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn() && validNewOrder(request.resource.data, id);
+      allow update: if signedIn()
+                    && ((resource.data.uid == request.auth.uid
+                         && ownerOrderUpdate(request.resource.data, resource.data))
+                        || (isAdmin()
+                            && tokoStatus(request.resource.data.status)
+                            && request.resource.data.uid == resource.data.uid
+                            && request.resource.data.id == resource.data.id));
+      allow delete: if false;
+    }
+
+    match /shop_settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && id == 'main'
+                   && request.resource.data.keys().hasOnly([
+                        'rekening', 'ongkirMode', 'ongkirFlat', 'ongkirCatatan',
+                        'catatanPembayaran', 'batasBayarJam', 'kontak', 'updatedAt'
+                      ])
+                   && listMax(request.resource.data.rekening, 3)
+                   && request.resource.data.ongkirMode in ['konfirmasi', 'flat'];
+    }
+
+    match /carts/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+                            && request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+                            && request.resource.data.items is list
+                            && request.resource.data.items.size() <= 30;
+    }
+
+    // ---------------------------------------------------------------------
+    // DATA APLIKASI ANGGOTA (aplikasi/perencanaan · aplikasi/simulator — data melekat ke akun)
+    // Memakai fungsi bantu umum di atas: isOwner(uid), isAdmin().
+    //
+    // app_data/{uid}/{coll}/{docId}
+    //   coll ∈ perencanaan · perencanaan_media · simulator · simulator_media
+    //   Dokumen: { v, meta, data, size, updatedAt, parent }   (assets/js/store-apps.js)
+    //     data      teks JSON isi aplikasi, ≤ 800.000 karakter (klien membatasi
+    //               800.000 BYTE, jadi selalu lolos; batas Firestore 1 MiB tetap berlaku)
+    //     meta      peta datar ≤ 24 kunci (nama proyek, lokasi, tanggal, status …)
+    //     size      byte `data` (angka), updatedAt (ms, angka), parent (id induk media)
+    //   • Pemilik (uid = akun yang masuk) membaca, menulis, dan menghapus datanya sendiri.
+    //     Tidak disyaratkan status Aktif: data inspeksi milik anggota tetap dapat
+    //     diambil kembali walaupun keanggotaannya berakhir (gerbang aplikasi tetap
+    //     mensyaratkan Aktif untuk MEMAKAI aplikasi).
+    //   • Admin PPAPI boleh MEMBACA (dukungan teknis); tidak menulis/menghapus.
+    //   • Pihak lain ditolak.
+    //   Anggaran evaluasi: ±20 ekspresi per tulis (penulisan selalu set() utuh,
+    //   tanpa get() tambahan; isAdmin() hanya dievaluasi bila bukan pemilik).
+    //   Isi `data` tidak diperiksa aturan (milik anggota sendiri, bentuk bebas).
+    // ---------------------------------------------------------------------
+    function appDataColl(coll) {
+      return coll in ['perencanaan', 'perencanaan_media', 'simulator', 'simulator_media'];
+    }
+    function appDataDoc(d) {
+      return d.keys().hasOnly(['v', 'meta', 'data', 'size', 'updatedAt', 'parent'])
+          && d.keys().hasAll(['data', 'updatedAt'])
+          && d.data is string && d.data.size() <= 800000
+          && d.updatedAt is number
+          && d.get('size', 0) is number
+          && d.get('meta', {}) is map && d.get('meta', {}).size() <= 24
+          && d.get('parent', '') is string && d.get('parent', '').size() <= 120;
+    }
+    match /app_data/{uid}/{coll}/{docId} {
+      allow get, list: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid) && appDataColl(coll)
+                            && docId.size() <= 120
+                            && appDataDoc(request.resource.data);
+      allow delete: if isOwner(uid);
     }
 
     // ---------------------------------------------------------------------

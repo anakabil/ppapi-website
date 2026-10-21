@@ -1,0 +1,42 @@
+    // ---------------------------------------------------------------------
+    // FRAGMEN: data aplikasi anggota (fitur "data melekat ke akun", 2026-10-21)
+    // Disisipkan integrator ke site/firestore.rules, DI DALAM
+    //   match /databases/{database}/documents { … }
+    // memakai fungsi bantu yang sudah ada di berkas itu: isOwner(uid), isAdmin().
+    //
+    // app_data/{uid}/{coll}/{docId}
+    //   coll ∈ perencanaan · perencanaan_media · simulator · simulator_media
+    //   Dokumen: { v, meta, data, size, updatedAt, parent }   (assets/js/store-apps.js)
+    //     data      teks JSON isi aplikasi, ≤ 800.000 karakter (klien membatasi
+    //               800.000 BYTE, jadi selalu lolos; batas Firestore 1 MiB tetap berlaku)
+    //     meta      peta datar ≤ 24 kunci (nama proyek, lokasi, tanggal, status …)
+    //     size      byte `data` (angka), updatedAt (ms, angka), parent (id induk media)
+    //   • Pemilik (uid = akun yang masuk) membaca, menulis, dan menghapus datanya sendiri.
+    //     Tidak disyaratkan status Aktif: data inspeksi milik anggota tetap dapat
+    //     diambil kembali walaupun keanggotaannya berakhir (gerbang aplikasi tetap
+    //     mensyaratkan Aktif untuk MEMAKAI aplikasi).
+    //   • Admin PPAPI boleh MEMBACA (dukungan teknis); tidak menulis/menghapus.
+    //   • Pihak lain ditolak.
+    //   Anggaran evaluasi: ±20 ekspresi per tulis (penulisan selalu set() utuh,
+    //   tanpa get() tambahan; isAdmin() hanya dievaluasi bila bukan pemilik).
+    //   Isi `data` tidak diperiksa aturan (milik anggota sendiri, bentuk bebas).
+    // ---------------------------------------------------------------------
+    function appDataColl(coll) {
+      return coll in ['perencanaan', 'perencanaan_media', 'simulator', 'simulator_media'];
+    }
+    function appDataDoc(d) {
+      return d.keys().hasOnly(['v', 'meta', 'data', 'size', 'updatedAt', 'parent'])
+          && d.keys().hasAll(['data', 'updatedAt'])
+          && d.data is string && d.data.size() <= 800000
+          && d.updatedAt is number
+          && d.get('size', 0) is number
+          && d.get('meta', {}) is map && d.get('meta', {}).size() <= 24
+          && d.get('parent', '') is string && d.get('parent', '').size() <= 120;
+    }
+    match /app_data/{uid}/{coll}/{docId} {
+      allow get, list: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid) && appDataColl(coll)
+                            && docId.size() <= 120
+                            && appDataDoc(request.resource.data);
+      allow delete: if isOwner(uid);
+    }
