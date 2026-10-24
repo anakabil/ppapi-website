@@ -18,6 +18,10 @@ import vm from 'node:vm';
 import { startServer, ROOT } from './qa-lib.mjs';
 
 const TERMS = /\b(demo|demonstrasi|trial|uji[\s-]?coba|contoh|preview|sampel|sample|dummy|lorem ipsum|placeholder)\b|Nama Pengurus|PT Contoh|contoh\.id|example\.com|ppapi\.demo/i;
+/* Artikel berita (isinya dapat disunting admin di Firestore): "contoh" dan "sampel" adalah kata baku yang wajar
+   dalam tulisan ("Contoh paling jelas datang dari …"), jadi di halaman artikel hanya penanda konten demo yang
+   dilarang: "(Contoh)", "Data contoh", PT Contoh, contoh.id, dan seterusnya (2026-10-24). */
+const TERMS_ARTIKEL = /\b(demo|demonstrasi|trial|uji[\s-]?coba|preview|sample|dummy|lorem ipsum|placeholder)\b|\(contoh\)|data contoh|konten contoh|Nama Pengurus|PT Contoh|contoh\.id|example\.com|ppapi\.demo/i;
 
 const SB = { window: {} }; SB.PPAPI_DATA = SB.window.PPAPI_DATA = {}; vm.createContext(SB);
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/data/berita.js'), 'utf8'), SB);
@@ -67,7 +71,7 @@ try {
           demoNote: [...document.querySelectorAll('[data-demo-note], [data-demo-admin], [data-demo-only]')].some(e => !e.hidden && vis(e)),
           contohBadges: [...document.querySelectorAll('.badge--contoh')].filter(vis).length,
         };
-      }, TERMS.source).catch(e => ({ mode: '(evaluate failed: ' + e.message + ')', hits: [], ribbon: false, demoNote: false, contohBadges: 0 }));
+      }, (/^berita\.html\?id=/.test(t) ? TERMS_ARTIKEL : TERMS).source).catch(e => ({ mode: '(evaluate failed: ' + e.message + ')', hits: [], ribbon: false, demoNote: false, contohBadges: 0 }));
       const tag = `${vp.name} ${t}`;
       ok(r.mode === 'firebase', `${tag}: Mode Firebase`, r.mode);
       ok(r.hits.length === 0, `${tag}: no demo/trial/contoh/preview wording in visible text`, r.hits);
