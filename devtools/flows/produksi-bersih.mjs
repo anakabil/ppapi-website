@@ -33,7 +33,11 @@ const PAGES = [
 let pass = 0; const fails = [];
 const ok = (c, label, detail) => {
   if (c) { pass++; console.log('  ✓ ' + label); }
-  else { fails.push(label); console.log('  ✗ ' + label + (detail !== undefined ? '\n      ' + JSON.stringify(detail).slice(0, 700) : '')); }
+  else {
+    fails.push(label); console.log('  ✗ ' + label + (detail !== undefined ? '\n      ' + JSON.stringify(detail).slice(0, 700) : ''));
+    /* di GitHub Actions: kegagalan juga ditulis sebagai anotasi agar terbaca tanpa membuka log lengkap */
+    if (process.env.GITHUB_ACTIONS) console.log('::error title=produksi-bersih::' + (label + (detail !== undefined ? ' — ' + JSON.stringify(detail).slice(0, 500) : '')).replace(/%/g, '%25').replace(/\r?\n/g, '%0A'));
+  }
 };
 
 const { BASE, close } = await startServer();
