@@ -19,6 +19,10 @@
    PENETAPAN
    • Isi "penetapan.nomor" dan "penetapan.tanggal" (YYYY-MM-DD) setelah
      keputusan Pengurus ditandatangani; keduanya tampil otomatis di halaman.
+     Tanggal = tanggal keputusan yang sebenarnya (keputusan klien 2026-10-24,
+     opsi A), BUKAN tanggal pendirian: dokumen mengutip rujukan terbitan
+     setelah 1 Juli 2022 dan PPAPI baru berbadan hukum 15 Agustus 2022.
+     Tanggal pendirian cukup disebut di Mukadimah.
    • Perubahan isi ditetapkan dengan keputusan Pengurus (Pasal 14), lalu
      perbarui "versi" dan "diperbarui".
    ========================================================================== */
@@ -33,7 +37,7 @@ PPAPI_DATA.kodeEtik = {
   pembukaan: [
     'Perancah adalah bangunan sementara yang menyangga tenaga kerja, bahan, dan alat pada pekerjaan konstruksi bangunan, termasuk pekerjaan pemeliharaan dan pembongkaran. Kegagalan perancah dan jatuh dari ketinggian berakibat langsung pada keselamatan jiwa pekerja dan masyarakat di sekitarnya, sehingga setiap keputusan teknis pada perancah membawa tanggung jawab moral dan hukum.',
     'Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI) didirikan untuk membina keahlian anggota dan membuat standardisasi teknis pelaksanaan perancah aman di Indonesia. Tujuan tersebut hanya dapat tercapai apabila setiap anggota menjalankan profesinya secara kompeten, jujur, dan bertanggung jawab.',
-    'Atas dasar itu, dengan berpedoman pada Pancasila dan Undang-Undang Dasar 1945 sebagai asas perkumpulan, PPAPI menetapkan Kode Etik ini sebagai pedoman sikap dan perilaku bagi seluruh anggota, pengurus, dan pengawas.'
+    'Atas dasar itu, dengan berpedoman pada Pancasila dan Undang-Undang Dasar 1945 sebagai asas perkumpulan, PPAPI menetapkan Kode Etik ini sebagai pedoman sikap dan perilaku bagi seluruh anggota, pengurus, dan pengawas. Kode Etik ini melengkapi Anggaran Dasar sebagaimana termuat dalam Akta Pendirian Nomor 01 tanggal 1 Juli 2022.'
   ],
 
   bab: [
