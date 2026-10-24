@@ -75,20 +75,18 @@ console.log('\nA) umpan-balik.html');
   check(await page.locator('input[name="kategori"][value="Kritik"]').isChecked(), 'kategori default = Kritik');
   check((await page.textContent('[data-ub-kat-hint]')).includes('perlu diperbaiki'), 'hint kategori Kritik tampil');
   check((await page.textContent('[data-ub-counter]')).trim() === '0 / 2.000', 'counter awal "0 / 2.000"');
-  check(await page.locator('[data-ub-faq] .accordion__item').count() === 4, 'FAQ umum: 4 butir');
+  check(await page.locator('[data-ub-faq] .accordion__item').count() === 5, 'FAQ umum: 5 butir');
   check(await page.getAttribute('[data-ub-faq] .accordion__trigger >> nth=0', 'aria-expanded') === 'true', 'FAQ pertama terbuka');
-  check((await page.textContent('[data-ub-office]')).includes('Alamat sekretariat akan segera diperbarui.'), 'fallback alamat sekretariat');
-  check(await page.locator('.ub-map--placeholder').count() === 1 && await page.locator('.ub-map iframe').count() === 0, 'mapsQuery kosong → placeholder peta (tanpa iframe)');
+  check((await page.textContent('[data-ub-office]')).includes('Jl. Giant No. 99'), 'alamat sekretariat (kedudukan menurut Pasal 1 AD) tampil');
+  check(await page.locator('.ub-map--placeholder').count() === 0 && await page.locator('.ub-map iframe').count() === 1, 'mapsQuery terisi → peta Google Maps (iframe)');
   check(await page.locator('[data-ub-office] a[href^="tel:"], [data-ub-office] a[href^="mailto:"], [data-ub-office] a[href*="wa.me"]').count() === 0, 'tidak ada baris telepon/WA/email saat kosong');
   check(await page.locator('[data-ub-alt]').isHidden(), 'tautan alternatif WA/Email disembunyikan saat kontak kosong');
   check(await page.locator('[data-ub-signed]').isHidden(), 'catatan "masuk sebagai" tersembunyi untuk tamu');
 
   // sticky secretariat card (desktop, fits the viewport)
-  check(await page.locator('[data-ub-aside].is-sticky').count() === 1, 'desktop: kartu Sekretariat lengket (tingginya muat di layar)');
-  await page.evaluate(() => { const c = document.querySelector('.ub-card'); window.scrollTo(0, c.getBoundingClientRect().top + window.scrollY + 700); });
-  await page.waitForTimeout(250);
-  const stickTop = await page.evaluate(() => document.querySelector('.ub-office').getBoundingClientRect().top);
-  check(stickTop > 70 && stickTop < 140, 'kartu Sekretariat tetap terlihat saat formulir digulir', stickTop);
+  /* 2026-10-24: alamat + peta membuat kartu lebih tinggi dari layar 900px → sengaja tidak lengket (lihat uji kartu tinggi di bawah) */
+  const officeH = await page.evaluate(() => document.querySelector('.ub-office').offsetHeight);
+  check((officeH + 124 > 900) === !(await page.locator('[data-ub-aside].is-sticky').count()), 'desktop: kartu Sekretariat lengket hanya bila tingginya muat di layar', officeH);
   await page.evaluate(() => window.scrollTo(0, 0));
 
   // FAQ accordion toggles

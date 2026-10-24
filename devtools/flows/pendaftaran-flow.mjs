@@ -200,7 +200,7 @@ if (run('A')) {
   check(await stepKey(page) === 'kategori', 'untouched application starts at step 1 Kategori');
   check(page.url().endsWith('#kategori'), 'hash synced to #kategori', page.url());
   const cats = await page.$$eval('.daf-cat', els => els.map(e => e.getAttribute('data-value')));
-  check(JSON.stringify(cats) === JSON.stringify(['Praktisi', 'Ahli', 'Mitra Korporat']), 'kategori cards = APPLY_TYPES (no Kehormatan)', cats);
+  check(JSON.stringify(cats) === JSON.stringify(['Praktisi', 'Ahli']), 'kategori cards = APPLY_TYPES (no Kehormatan)', cats);
   check(await page.locator('#daf-step-kategori .daf-cat-note').count() === 0 && await page.locator('#daf-step-kategori .badge--contoh').count() === 0, '2026-10-21: kategori step has no Contoh note and no Contoh badge (production wording)');
   check(await page.locator('.stepper__item').count() === 7, 'stepper has 7 steps');
   check(await page.locator('.daf-foot__back').isHidden(), 'step 1: "Kembali" hidden');

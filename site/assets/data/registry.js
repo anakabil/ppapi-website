@@ -18,7 +18,7 @@
    Tempel blok { … } di antara tanda [ ] (pisahkan dengan koma), lalu isi:
      kta           : nomor KTA, contoh 'PPAPI-2026-000123'
      nama          : nama lengkap
-     kategori      : 'Praktisi', 'Ahli', 'Mitra Korporat', atau 'Kehormatan'
+     kategori      : 'Praktisi', 'Ahli', atau 'Kehormatan'
      kompetensi    : daftar kompetensi utama, contoh ['Teknisi Scaffolding']
      kota          : kota domisili, contoh 'Surabaya'
      berlakuHingga : format TAHUN-BULAN-TANGGAL, contoh '2029-12-31'

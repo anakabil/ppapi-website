@@ -131,6 +131,7 @@
       }).join(''));
       var grid = $('[data-pengurus]');
       grid.classList.toggle('profil-pengurus--few', list.length < 4);
+      grid.classList.toggle('profil-pengurus--five', list.length === 5);
     })();
 
     /* ---------- 06 · Makna logo (logo warna asli + garis penunjuk) ---------- */

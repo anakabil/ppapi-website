@@ -18,7 +18,8 @@
   var PPAPI = w.PPAPI = w.PPAPI || {};
   if (PPAPI.store && PPAPI.store.__real) return;
 
-  var MEMBER_TYPES = ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'];
+  /* kategori sesuai Anggaran Dasar (keanggotaan perorangan, Pasal 8–10); Mitra Korporat dihapus 2026-10-24 */
+  var MEMBER_TYPES = ['Praktisi', 'Ahli', 'Kehormatan'];
   var STATUSES = ['Draf', 'Menunggu Verifikasi', 'Perlu Perbaikan', 'Aktif', 'Ditolak', 'Nonaktif'];
   var LEVELS = ['Dasar', 'Menengah', 'Mahir', 'Ahli'];
   var DOC_TYPES = ['CV', 'Sertifikat', 'Ijazah', 'Surat Rekomendasi', 'Bukti Pembayaran', 'Lainnya'];

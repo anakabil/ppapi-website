@@ -156,7 +156,8 @@ function nodeChecks() {
   ok((O.layanan || []).every(n => n.judul && n.teks && iconNames.has(n.ikon)), 'organisasi.layanan: {ikon,judul,teks} with valid icon names');
   ok((O.sejarah || []).every(s => 'tahun' in s && s.judul && s.teks), 'organisasi.sejarah: {tahun,judul,teks}');
   ok((O.pengurus || []).length > 0 && O.pengurus.every(p => p.contoh === true && p.jabatan && 'nama' in p && 'foto' in p && (!p.foto || imgExists(p.foto))), 'organisasi.pengurus: placeholders flagged contoh, foto exists when set');
-  ok(Array.isArray(O.legalitas) && O.legalitas.length === 0, 'organisasi.legalitas: empty (nothing verified)');
+  ok(Array.isArray(O.legalitas) && O.legalitas.some(l => /AHU-0008151\.AH\.01\.07\.Tahun 2022/.test(l.nilai)) && O.legalitas.some(l => /Nomor 01 tanggal 1 Juli 2022/.test(l.nilai)), 'organisasi.legalitas: from akta pendirian + SK Menkumham (2026-10-24)');
+  ok(!JSON.stringify(O).match(/\b\d{16}\b/), 'organisasi: no 16-digit NIK from the akta');
   ok((O.maknaLogo || []).every(m => m.judul && m.teks), 'organisasi.maknaLogo: {judul,teks}');
   ok((O.stats || []).every(s => typeof s.angka === 'number' && 'akhiran' in s && s.label), 'organisasi.stats: {angka:number, akhiran, label}');
   const st = Object.fromEntries((O.stats || []).map(s => [s.label, s.angka]));
@@ -168,7 +169,7 @@ function nodeChecks() {
   ok((O.faq || []).length > 0 && O.faq.every(f => f.q && f.a), 'organisasi.faq: {q,a}');
   const K = O.keanggotaan || {};
   ok(Array.isArray(K.kategori) && K.kategori.every(k => k.nama && k.ringkas && Array.isArray(k.syarat) && Array.isArray(k.manfaat)), 'organisasi.keanggotaan.kategori: {nama,ringkas,syarat[],manfaat[]}');
-  ok(eqSet(K.kategori.map(k => k.nama), ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan']), 'organisasi.keanggotaan.kategori names = store.MEMBER_TYPES');
+  ok(eqSet(K.kategori.map(k => k.nama), ['Praktisi', 'Ahli', 'Kehormatan']), 'organisasi.keanggotaan.kategori names = store.MEMBER_TYPES');
   ok(Array.isArray(K.manfaatUmum) && Array.isArray(K.langkah) && K.langkah.every(l => l.judul && l.teks) && 'biaya' in K, 'organisasi.keanggotaan: manfaatUmum[], langkah[{judul,teks}], biaya');
   ok((K.manfaatUmum || []).every(m => typeof m === 'string' || iconNames.has(m.ikon)), 'organisasi.keanggotaan.manfaatUmum: valid icon names');
 
@@ -184,7 +185,7 @@ function nodeChecks() {
   ok(G.length >= 5 && G.length <= 6, `registry: 5–6 entries (${G.length})`);
   ok(G.every(g => ['kta', 'nama', 'kategori', 'kompetensi', 'kota', 'berlakuHingga', 'status', 'contoh'].every(k => k in g) && g.contoh === true), 'registry: all SPEC fields, contoh:true');
   ok(G.every(g => /^PPAPI-\d{4}-\d{6}$/.test(g.kta)) && uniq(G.map(g => g.kta)), 'registry: kta format PPAPI-YYYY-NNNNNN, unique');
-  ok(G.every(g => validIso(g.berlakuHingga) && ['Aktif', 'Nonaktif', 'Menunggu Verifikasi'].includes(g.status) && ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'].includes(g.kategori) && Array.isArray(g.kompetensi)), 'registry: valid dates / status / kategori / kompetensi[]');
+  ok(G.every(g => validIso(g.berlakuHingga) && ['Aktif', 'Nonaktif', 'Menunggu Verifikasi'].includes(g.status) && ['Praktisi', 'Ahli', 'Kehormatan'].includes(g.kategori) && Array.isArray(g.kompetensi)), 'registry: valid dates / status / kategori / kompetensi[]');
   ok(G.every(g => !('email' in g) && !('phone' in g) && !('alamat' in g)), 'registry: no private fields (email/phone/alamat)');
 
   // config vs research
@@ -195,8 +196,8 @@ function nodeChecks() {
   const research = JSON.parse(fs.readFileSync(path.join(DEV, 'research/ppapi.json'), 'utf8'));
   const contactKeys = ['address', 'city', 'phone', 'whatsapp', 'email'];
   const invented = contactKeys.filter(k => (C.contact[k] || '') !== (research.contact[k] || ''));
-  ok(!invented.length, 'config.contact address/city/phone/whatsapp/email equal research (all empty)', invented.length ? invented.map(k => ({ k, config: C.contact[k], research: research.contact[k] })) : undefined);
-  ok(!C.contact.mapsQuery && Array.isArray(C.contact.hours) && C.contact.hours.length === 0, 'config.contact.mapsQuery empty and hours [] (SPEC example hours not verified)');
+  ok(!invented.length, 'config.contact address/city/phone/whatsapp/email equal research (alamat dari akta, lainnya kosong)', invented.length ? invented.map(k => ({ k, config: C.contact[k], research: research.contact[k] })) : undefined);
+  ok(/Jl\. Giant No\. ?99/.test(C.contact.address) && /Kabupaten Bogor/.test(C.contact.city) && /Giant/.test(C.contact.mapsQuery) && Array.isArray(C.contact.hours) && C.contact.hours.length === 0, 'config.contact: kedudukan per Pasal 1 AD (2026-10-24); hours [] (not verified)');
   const socialInvented = Object.keys(C.social).filter(k => (C.social[k] || '') !== (research.social[k] || ''));
   ok(!socialInvented.length, 'config.social equals research (all empty)');
   ok(C.fullName === 'Perkumpulan Praktisi dan Ahli Perancah Indonesia' && C.shortName === 'PPAPI', 'config names match research');

@@ -121,10 +121,14 @@ for (const vp of viewports) {
   for (const pg of pages) {
     const page = await context.newPage();
     const issues = [];
-    page.on('console', msg => { if (['error', 'warning'].includes(msg.type())) issues.push(`console.${msg.type()}: ${msg.text()}`); });
+    // Peta Google Maps di halaman Kontak (iframe pihak ketiga): isinya di luar kendali situs, jadi permintaan
+    // dan pesan konsol dari bingkai peta tidak dihitung sebagai masalah situs. Bingkai utama tetap diperiksa penuh.
+    const MAP = /^https:\/\/(www\.)?google\.com\/maps|^https:\/\/maps\.(google|gstatic)\.com\//;
+    const fromMap = (frame, url) => MAP.test(url || '') || (frame && frame !== page.mainFrame() && /google\.com|gstatic\.com/.test(frame.url()));
+    page.on('console', msg => { if (['error', 'warning'].includes(msg.type()) && !fromMap(null, msg.location()?.url) && !/maps\.googleapis|google\.com\/maps/.test(msg.text())) issues.push(`console.${msg.type()}: ${msg.text()}`); });
     page.on('pageerror', err => issues.push(`pageerror: ${err.message}`));
-    page.on('requestfailed', r => { const err = r.failure()?.errorText || ''; if (err !== 'net::ERR_ABORTED') issues.push(`requestfailed: ${r.url()} (${err})`); }); // ERR_ABORTED = request cancelled by navigation/close (e.g. Firestore Listen channel), not a site error
-    page.on('response', r => { if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) issues.push(`HTTP ${r.status()}: ${r.url()}`); });
+    page.on('requestfailed', r => { const err = r.failure()?.errorText || ''; if (err !== 'net::ERR_ABORTED' && !fromMap(r.frame(), r.url())) issues.push(`requestfailed: ${r.url()} (${err})`); }); // ERR_ABORTED = request cancelled by navigation/close (e.g. Firestore Listen channel), not a site error
+    page.on('response', r => { if (r.status() >= 400 && !r.url().endsWith('/favicon.ico') && !fromMap(r.frame(), r.url())) issues.push(`HTTP ${r.status()}: ${r.url()}`); });
     const url = `${BASE}/${pg}.html${flags.query ? '?' + flags.query : ''}`;
     try {
       await page.goto(url, { waitUntil: 'load', timeout: 30000 });

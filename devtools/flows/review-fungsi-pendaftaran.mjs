@@ -43,7 +43,7 @@ for (const vp of VPS) {
     const e1 = await errSum(page);
     R.ok(`${vp}: step 1 without a category → error summary + focus on the radio group`, e1 && /kategori/i.test(e1.txt), JSON.stringify(e1));
     const cats = await page.evaluate(() => [...document.querySelectorAll('input[name="kategori"]')].map(r => r.value));
-    R.ok(`${vp}: only Praktisi / Ahli / Mitra Korporat offered (no Kehormatan)`, cats.length === 3 && !cats.includes('Kehormatan'), JSON.stringify(cats));
+    R.ok(`${vp}: only Praktisi / Ahli offered (no Kehormatan)`, cats.length === 2 && !cats.includes('Kehormatan'), JSON.stringify(cats));
     await page.evaluate(() => document.querySelector('input[name="kategori"][value="Praktisi"]').click()); await page.waitForTimeout(900);
     R.ok(`${vp}: choosing a category autosaves ("Tersimpan")`, /Tersimpan/.test(await saveState(page) || ''), await saveState(page));
     await next(page);

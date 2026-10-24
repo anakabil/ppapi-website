@@ -56,7 +56,7 @@ const headOrder = pages.filter(f => { const s = fs.readFileSync(path.join(ROOT, 
 T.ok(!headOrder.length, 'the CSP meta comes before every script and stylesheet', headOrder);
 const rules = fs.readFileSync(path.join(ROOT, 'firestore.rules'), 'utf8');
 T.ok(/function identityKept\(after, before\)/.test(rules) && /&& identityKept\(after, before\)/.test(rules), 'firestore.rules: identityKept() defined and used in ownerUpdate');
-T.ok(/function kategoriAllowed\(after, before\)/.test(rules) && /&& kategoriAllowed\(after, before\)/.test(rules) && /get\('kategori', ''\)\s*in \['', 'Praktisi', 'Ahli', 'Mitra Korporat'\]/.test(rules), 'firestore.rules: kategoriAllowed() in ownerUpdate + kategori check on create');
+T.ok(/function kategoriAllowed\(after, before\)/.test(rules) && /&& kategoriAllowed\(after, before\)/.test(rules) && /get\('kategori', ''\)\s*in \['', 'Praktisi', 'Ahli'\]/.test(rules), 'firestore.rules: kategoriAllowed() in ownerUpdate + kategori check on create');
 
 /* ------------------------------------------------------------------ demo helpers */
 const { BASE, close } = await startServer();

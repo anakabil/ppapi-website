@@ -181,6 +181,9 @@ body[data-page="profil"] .profil-timeline .timeline__year > span:first-child { c
 /* ---------- 05 · Struktur organisasi ---------- */
 body[data-page="profil"] .profil-pengurus { --grid-gap: 0; }
 body[data-page="profil"] .profil-pengurus--few { max-width: 900px; }
+@media (min-width: 1100px) {
+  body[data-page="profil"] .profil-pengurus--five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
 body[data-page="profil"] .profil-person {
   position: relative; display: flex; justify-content: center;
   padding: clamp(36px, 3.6vw, 48px) clamp(12px, 2vw, 24px);
@@ -307,6 +310,7 @@ body[data-page="profil"] .logo-sheet__leaders .logo-leader__node { fill: var(--c
 
 /* ---------- Legalitas ---------- */
 body[data-page="profil"] .profil-legal dd { font-weight: 500; }
+body[data-page="profil"] .profil-legal__more { margin-top: 28px; }
 
 /* ---------- CTA ---------- */
 body[data-page="profil"] .profil-cta { overflow: hidden; isolation: isolate; text-align: center; }

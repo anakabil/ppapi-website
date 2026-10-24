@@ -1,0 +1,125 @@
+/* ==========================================================================
+   PPAPI — anggaran-dasar.css  (halaman Anggaran Dasar)
+   Semua aturan dibatasi body[data-page="anggaran-dasar"]; hanya memakai token.
+   ========================================================================== */
+
+/* ---------- Hero ringkas ---------- */
+body[data-page="anggaran-dasar"] .ad-hero { padding-bottom: clamp(44px, 5vw, 64px); }
+body[data-page="anggaran-dasar"] .ad-hero .breadcrumb { margin-bottom: clamp(24px, 3vw, 36px); }
+body[data-page="anggaran-dasar"] .ad-hero .h1 { font-size: clamp(2.4rem, 5vw, 4rem); }
+body[data-page="anggaran-dasar"] .ad-hero .lead { max-width: 64ch; }
+body[data-page="anggaran-dasar"] .ad-hero .page-hero__meta time { color: var(--c-white); }
+
+/* ---------- Tata letak: daftar isi lengket + artikel ---------- */
+body[data-page="anggaran-dasar"] .ad-body { padding-top: clamp(56px, 7vw, 104px); }
+body[data-page="anggaran-dasar"] .ad-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+body[data-page="anggaran-dasar"] .ad-aside { display: none; }
+@media (min-width: 1024px) {
+  body[data-page="anggaran-dasar"] .ad-layout {
+    grid-template-columns: 272px minmax(0, 1fr); gap: clamp(56px, 6vw, 104px); align-items: start;
+  }
+  body[data-page="anggaran-dasar"] .ad-aside { display: block; position: sticky; top: calc(var(--header-offset) + 28px); }
+  body[data-page="anggaran-dasar"] .ad-toc-mobile { display: none; }
+}
+body[data-page="anggaran-dasar"] .ad-article { min-width: 0; max-width: 760px; }
+
+/* ---------- Daftar isi ---------- */
+body[data-page="anggaran-dasar"] .ad-toc__title {
+  margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line-strong);
+  font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="anggaran-dasar"] .ad-toc__list { list-style: none; margin: 0; padding: 0; }
+body[data-page="anggaran-dasar"] .ad-toc__list a {
+  position: relative; display: flex; align-items: baseline; gap: 14px;
+  padding: 8px 0 8px 14px; font-size: .9rem; line-height: 1.4; color: var(--muted);
+  transition: color .3s var(--ease), padding-left .45s var(--ease);
+}
+body[data-page="anggaran-dasar"] .ad-toc__list a::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--line);
+  transition: background-color .3s var(--ease), width .3s var(--ease);
+}
+body[data-page="anggaran-dasar"] .ad-toc__list a:hover { color: var(--text); }
+body[data-page="anggaran-dasar"] .ad-toc__list a.is-active { color: var(--text-strong); font-weight: 500; padding-left: 18px; }
+body[data-page="anggaran-dasar"] .ad-toc__list a.is-active::before { width: 2px; background: var(--text); }
+body[data-page="anggaran-dasar"] .ad-toc__num {
+  flex: none; min-width: 1.6em; font: 500 .78rem/1 var(--f-cond); letter-spacing: .12em; color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+body[data-page="anggaran-dasar"] .ad-toc__list a.is-active .ad-toc__num { color: var(--text); }
+body[data-page="anggaran-dasar"] .ad-toc__foot {
+  margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted);
+}
+body[data-page="anggaran-dasar"] .ad-toc__foot p { margin-bottom: 4px; }
+
+/* Daftar isi ponsel/tablet (details) */
+body[data-page="anggaran-dasar"] .ad-toc-mobile {
+  margin-top: 40px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+body[data-page="anggaran-dasar"] .ad-toc-mobile summary {
+  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 18px; cursor: pointer; list-style: none;
+  font: 600 .78rem/1 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--text);
+}
+body[data-page="anggaran-dasar"] .ad-toc-mobile summary::-webkit-details-marker { display: none; }
+/* ---------- Bab ---------- */
+body[data-page="anggaran-dasar"] .ad-section {
+  max-width: none; margin-top: clamp(40px, 5vw, 56px); padding-top: clamp(40px, 5vw, 56px);
+  border-top: 1px solid var(--line);
+}
+body[data-page="anggaran-dasar"] .ad-section > h2 { margin-top: 0; }
+body[data-page="anggaran-dasar"] .ad-num {
+  display: block; margin-bottom: 14px;
+  font: 500 .82rem/1 var(--f-cond); letter-spacing: .2em; color: var(--faint); font-variant-numeric: tabular-nums;
+}
+body[data-page="anggaran-dasar"] .ad-section h3 { font-size: 1.3rem; margin-top: 1.6em; }
+body[data-page="anggaran-dasar"] .ad-section strong { color: var(--text-strong); }
+body[data-page="anggaran-dasar"] .ad-section a { text-decoration-color: var(--line-strong); }
+body[data-page="anggaran-dasar"] .ad-section a:hover { text-decoration-color: currentColor; }
+
+body[data-page="anggaran-dasar"] .ad-callout {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start;
+  margin-top: 1.6em; padding: 18px 20px; font-size: .96rem; line-height: 1.65;
+  background: var(--surface); border: 1px solid var(--line); border-left: 2px solid var(--text);
+}
+body[data-page="anggaran-dasar"] .ad-callout__icon { margin-top: 2px; color: var(--text); }
+body[data-page="anggaran-dasar"] .ad-callout { margin-top: 0; }
+body[data-page="anggaran-dasar"] .ad-callout p + p { margin-top: .6em; }
+body[data-page="anggaran-dasar"] .ad-toc__range {
+  display: block; margin-top: 2px; font: 500 .7rem/1.3 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+}
+
+/* ---------- Pasal & ayat ---------- */
+body[data-page="anggaran-dasar"] .ad-pasal { margin-top: 1.8em; scroll-margin-top: calc(var(--header-offset) + 24px); }
+body[data-page="anggaran-dasar"] .ad-section { scroll-margin-top: calc(var(--header-offset) + 12px); }
+body[data-page="anggaran-dasar"] .ad-pasal__title {
+  margin: 0 0 .7em; font: 600 .8rem/1.2 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--text-strong);
+}
+body[data-page="anggaran-dasar"] .ad-pasal p { line-height: 1.75; }
+body[data-page="anggaran-dasar"] .ad-pasal p + p,
+body[data-page="anggaran-dasar"] .ad-pasal p + ol,
+body[data-page="anggaran-dasar"] .ad-pasal ol + p { margin-top: .6em; }
+body[data-page="anggaran-dasar"] .ad-ayat-list,
+body[data-page="anggaran-dasar"] .ad-butir { list-style: none; margin: 0; padding: 0; }
+body[data-page="anggaran-dasar"] .ad-ayat-list > li,
+body[data-page="anggaran-dasar"] .ad-butir > li {
+  display: grid; grid-template-columns: 2.2em minmax(0, 1fr); gap: 0 6px; align-items: baseline;
+}
+body[data-page="anggaran-dasar"] .ad-ayat-list > li + li { margin-top: .75em; }
+body[data-page="anggaran-dasar"] .ad-butir { margin-top: .5em; }
+body[data-page="anggaran-dasar"] .ad-butir > li + li { margin-top: .4em; }
+body[data-page="anggaran-dasar"] .ad-butir--sub { margin-top: .4em; }
+body[data-page="anggaran-dasar"] .ad-mark { font-variant-numeric: tabular-nums; color: var(--muted); }
+body[data-page="anggaran-dasar"] .ad-ayat-list > li > .ad-mark { color: var(--text-strong); font-weight: 500; }
+
+/* ---------- Susunan pengurus pertama (Pasal 37) ---------- */
+body[data-page="anggaran-dasar"] .ad-susunan { margin-top: 1.1em; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); }
+body[data-page="anggaran-dasar"] .ad-susunan__title {
+  margin-bottom: 8px; font: 600 .72rem/1.3 var(--f-cond); letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---------- Penutup ---------- */
+body[data-page="anggaran-dasar"] .ad-foot {
+  margin-top: clamp(40px, 5vw, 56px); padding-top: 24px; border-top: 1px solid var(--line); font-size: .95rem; color: var(--muted);
+}
+body[data-page="anggaran-dasar"] .ad-foot p { margin-bottom: 8px; }
+
+body[data-page="anggaran-dasar"] .skip-link:not(:focus) { box-shadow: none; }

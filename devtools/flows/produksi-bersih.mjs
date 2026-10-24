@@ -26,7 +26,7 @@ const articles = (SB.PPAPI_DATA.berita || []).map(b => 'berita.html?id=' + encod
 const PAGES = [
   'index.html', 'profil.html', 'berita.html', 'agenda.html', 'agenda.html?tab=telah-berlangsung', 'pustaka.html', 'regulasi.html',
   'instruktur.html', 'toko.html', 'keanggotaan.html', 'verifikasi.html', 'verifikasi.html?kta=PPAPI-2026-000123',
-  'sertifikat.html', 'umpan-balik.html', 'kebijakan-privasi.html', 'masuk.html', 'masuk.html#daftar', '404.html',
+  'sertifikat.html', 'umpan-balik.html', 'kebijakan-privasi.html', 'anggaran-dasar.html', 'masuk.html', 'masuk.html#daftar', '404.html',
   ...articles,
 ];
 

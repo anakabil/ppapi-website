@@ -161,7 +161,7 @@ const STUB = () => {
   function validApplication(a) {
     return isMap(a) && hasOnly(a, ['type', 'kategori', 'submittedAt', 'updatedAt', 'pengalaman', 'dokumen', 'pasFoto', 'pasFotoAda', 'pembayaran', 'pernyataan', 'catatan'])
       && (!('type' in a) || ['baru', 'perpanjangan'].includes(a.type))
-      && (!('kategori' in a) || ['', 'Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'].includes(a.kategori))
+      && (!('kategori' in a) || ['', 'Praktisi', 'Ahli', 'Kehormatan'].includes(a.kategori))
       && optStringOrTime(a, 'submittedAt', 40) && optStringOrTime(a, 'updatedAt', 40)
       && (!('pengalaman' in a) || (Array.isArray(a.pengalaman) && a.pengalaman.length <= 10))
       && (!('dokumen' in a) || (Array.isArray(a.dokumen) && a.dokumen.length <= 12))
@@ -176,7 +176,7 @@ const STUB = () => {
   function validMember(d, id) {
     return hasOnly(d, ['uid', 'name', 'email', 'phone', 'photoURL', 'kta', 'memberType', 'status', 'joinedAt', 'validUntil', 'approvedAt', 'approvedBy', 'profile', 'competencies', 'certificates', 'application', 'review', 'contoh', 'createdAt', 'updatedAt'])
       && d.uid === id && (!('kta' in d) || (typeof d.kta === 'string' && d.kta.length <= 40))
-      && ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan'].includes(d.memberType)
+      && ['Praktisi', 'Ahli', 'Kehormatan'].includes(d.memberType)
       && ['Draf', 'Menunggu Verifikasi', 'Perlu Perbaikan', 'Aktif', 'Ditolak', 'Nonaktif'].includes(d.status)
       && optString(d, 'name', 120) && optString(d, 'email', 200) && optString(d, 'phone', 24) && optString(d, 'photoURL', 1000)
       && optString(d, 'joinedAt', 32) && optString(d, 'validUntil', 10) && optString(d, 'approvedAt', 40) && optString(d, 'approvedBy', 128)
@@ -194,7 +194,7 @@ const STUB = () => {
   const renewable = (m, now) => m.status === 'Nonaktif' || (m.status === 'Aktif' && 'validUntil' in m && isoDate(m.validUntil) && dateTs(m.validUntil) <= now + 61 * DAY);
   function completeSubmission(b, a) {
     const app = a.application, p = get(app, 'pernyataan', {}), kat = get(app, 'kategori', '');
-    return (['Praktisi', 'Ahli', 'Mitra Korporat'].includes(kat) || (kat !== '' && kat === get(b, 'memberType', '') && get(b, 'approvedAt', '') !== ''))
+    return (['Praktisi', 'Ahli'].includes(kat) || (kat !== '' && kat === get(b, 'memberType', '') && get(b, 'approvedAt', '') !== ''))
       && typeof get(a, 'name', '') === 'string' && get(a, 'name', '').length >= 3
       && get(p, 'kodeEtik', false) === true && get(p, 'kebenaranData', false) === true && get(p, 'privasi', false) === true
       && typeof get(p, 'namaTerang', '') === 'string' && get(p, 'namaTerang', '').length >= 3;
@@ -210,9 +210,9 @@ const STUB = () => {
   /* firestore.rules identityKept: the reviewed name stays once the membership was approved (an empty name may be filled) */
   const identityKept = (after, before) => get(before, 'approvedAt', '') === '' || get(before, 'approvedAt', '') == null
     || typeof get(before, 'name', '') !== 'string' || get(before, 'name', '').length < 3 || get(after, 'name', '') === get(before, 'name', '');
-  /* firestore.rules kategoriAllowed: Praktisi / Ahli / Mitra Korporat, or the member's own kategori, or unchanged */
+  /* firestore.rules kategoriAllowed: Praktisi / Ahli, or the member's own kategori, or unchanged */
   const kategoriAllowed = (after, before) => { const k = get(get(after, 'application', {}), 'kategori', '');
-    return ['', 'Praktisi', 'Ahli', 'Mitra Korporat'].includes(k) || k === get(before, 'memberType', '') || k === get(get(before, 'application', {}), 'kategori', ''); };
+    return ['', 'Praktisi', 'Ahli'].includes(k) || k === get(before, 'memberType', '') || k === get(get(before, 'application', {}), 'kategori', ''); };
   function ownerTimesOk(after, before) {
     const ch = affected(after, before), a = get(after, 'application', {}), b = get(before, 'application', {});
     return (!ch.includes('updatedAt') || isNow(after.updatedAt))
@@ -253,7 +253,7 @@ const STUB = () => {
         if (op === 'create') return (isOwner(id) && validMember(after, id) && contactMatches(after) && after.status === 'Draf' && after.memberType === 'Praktisi'
             && emptyOrMissing(after, 'kta') && emptyOrMissing(after, 'validUntil') && emptyOrMissing(after, 'approvedAt') && emptyOrMissing(after, 'approvedBy') && !('contoh' in after)
             && (!('review' in after) || (hasOnly(after.review, ['note', 'history']) && (!('note' in after.review) || after.review.note === '') && (!('history' in after.review) || (Array.isArray(after.review.history) && after.review.history.length === 0))))
-            && !submitted(after) && ['', 'Praktisi', 'Ahli', 'Mitra Korporat'].includes(get(get(after, 'application', {}), 'kategori', '')) && isoDate(after.joinedAt)) || (isAdmin() && validMember(after, id));
+            && !submitted(after) && ['', 'Praktisi', 'Ahli'].includes(get(get(after, 'application', {}), 'kategori', '')) && isoDate(after.joinedAt)) || (isAdmin() && validMember(after, id));
         if (op === 'update') return (isOwner(id) && ownerUpdate(after, before, id, now)) || (isAdmin() && validMember(after, id));
         return false;
       case 'member_photos':
@@ -519,7 +519,7 @@ try {
     const rr = await S.admin.reactivate(d.uid, { validUntil: '2030-12-31' });
     out.react = [rr.status, rr.validUntil, F.console.get('registry/' + rr.kta).berlakuHingga];
     out.extend = (await S.admin.extend(d.uid, '2031-01-31')).validUntil;
-    out.type = [(await S.admin.setMemberType(d.uid, 'Mitra Korporat')).memberType, F.console.get('registry/' + ap2.kta).kategori];
+    out.type = [(await S.admin.setMemberType(d.uid, 'Kehormatan')).memberType, F.console.get('registry/' + ap2.kta).kategori];
     // ---- content + pustaka files ----
     const pk = await S.content.save('pustaka', { judul: 'Modul Firebase', ringkasan: 'Uji.', kategori: 'Modul Pelatihan', akses: 'anggota', tautan: 'https://drive.example.com/modul.pdf' });
     out.pustaka = [F.console.get('content_pustaka/' + pk.id).tautan, F.console.get('pustaka_files/' + pk.id).url, pk.berkasAnggota];
@@ -610,7 +610,7 @@ try {
   eq([R.approve[3].value, R.approve[4], R.approve[5]], [1, 'berlakuHingga,kategori,kompetensi,kota,kta,ktaNomor,nama,namaCari,namaKata,status,updatedAt', 1], 'counters/kta-2026 = 1; registry doc with public fields + search keys only; one transaction');
   eq(R.approve2, ['PPAPI-2026-000003', 'Ahli', 3], 'next approval skips an existing registry number (000002 taken) → 000003; counter 3');
   eq(R.revision, 'store/invalid-transition', 'requestRevision on an Aktif member is refused');
-  eq([R.deact, R.react, R.extend, R.type], [['Nonaktif', 'Nonaktif'], ['Aktif', '2030-12-31', '2030-12-31'], '2031-01-31', ['Mitra Korporat', 'Mitra Korporat']], 'deactivate / reactivate / extend / setMemberType (transactions + registry)');
+  eq([R.deact, R.react, R.extend, R.type], [['Nonaktif', 'Nonaktif'], ['Aktif', '2030-12-31', '2030-12-31'], '2031-01-31', ['Kehormatan', 'Kehormatan']], 'deactivate / reactivate / extend / setMemberType (transactions + registry)');
   eq(R.pustaka, ['', 'https://drive.example.com/modul.pdf', true], 'member-only knowledge file: content_pustaka doc has no link; pustaka_files/{id}.url holds it');
   eq(R.berita, [PPAPI_BERITA, false], 'content_berita merged with static data; hidden static item not listed');
   eq(R.fileAdmin, 'https://drive.example.com/modul.pdf', 'admin reads pustaka_files');

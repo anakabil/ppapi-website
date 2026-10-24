@@ -186,7 +186,7 @@ service cloud.firestore {
                'pasFoto', 'pasFotoAda', 'pembayaran', 'pernyataan', 'catatan'
              ])
           && a.get('type', 'baru') in ['baru', 'perpanjangan']
-          && a.get('kategori', '') in ['', 'Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan']
+          && a.get('kategori', '') in ['', 'Praktisi', 'Ahli', 'Kehormatan']
           && strOrTime(a.get('submittedAt', ''), 40)
           && strOrTime(a.get('updatedAt', ''), 40)
           && listMax(a.get('pengalaman', null), 10)
@@ -206,7 +206,7 @@ service cloud.firestore {
                'certificates', 'application', 'review', 'contoh', 'createdAt', 'updatedAt'
              ])
           && d.uid == uid
-          && d.memberType in ['Praktisi', 'Ahli', 'Mitra Korporat', 'Kehormatan']
+          && d.memberType in ['Praktisi', 'Ahli', 'Kehormatan']
           && d.status in ['Draf', 'Menunggu Verifikasi', 'Perlu Perbaikan', 'Aktif', 'Ditolak', 'Nonaktif'];
     }
 
@@ -265,7 +265,7 @@ service cloud.firestore {
       let a = after.get('application', {});
       let p = a.get('pernyataan', {});
       let kategori = a.get('kategori', '');
-      return (kategori in ['Praktisi', 'Ahli', 'Mitra Korporat']
+      return (kategori in ['Praktisi', 'Ahli']
                 || (kategori != '' && kategori == before.get('memberType', '')
                     && before.get('approvedAt', '') != ''))
           && after.get('name', '') is string && after.get('name', '').size() >= 3
@@ -296,11 +296,11 @@ service cloud.firestore {
           || (before.status == 'Menunggu Verifikasi' && (after.status == 'Draf' || !submitted(before)));
     }
 
-    // Kategori yang diajukan anggota: Praktisi, Ahli, atau Mitra Korporat. Kategori lain
+    // Kategori yang diajukan anggota: Praktisi atau Ahli. Kategori lain
     // (Kehormatan) hanya bila sama dengan kategori resmi anggota atau tidak berubah.
     function kategoriAllowed(after, before) {
       let k = after.get('application', {}).get('kategori', '');
-      return k in ['', 'Praktisi', 'Ahli', 'Mitra Korporat']
+      return k in ['', 'Praktisi', 'Ahli']
           || k == before.get('memberType', '')
           || k == before.get('application', {}).get('kategori', '');
     }
@@ -387,7 +387,7 @@ service cloud.firestore {
                           && request.resource.data.get('review', {}).get('history', []).size() == 0
                           && !submitted(request.resource.data)
                           && request.resource.data.get('application', {}).get('kategori', '')
-                               in ['', 'Praktisi', 'Ahli', 'Mitra Korporat']
+                               in ['', 'Praktisi', 'Ahli']
                           && isoDate(request.resource.data.joinedAt))
                     || (isAdmin() && validMember(request.resource.data, uid));
 

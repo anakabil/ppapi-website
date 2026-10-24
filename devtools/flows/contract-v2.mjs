@@ -84,7 +84,7 @@ function nodeChecks() {
   sect('organisasi.keanggotaan (§4.5 keanggotaan flow)');
   const K = D.organisasi.keanggotaan;
   eq(K.langkah.map(l => l.judul), ['Buat akun', 'Isi formulir pendaftaran', 'Verifikasi sekretariat', 'Aktif & KTA digital', 'Akses fitur anggota'], 'langkah reflects the real flow');
-  eq(K.kategori.map(k => [k.nama, k.bisaDiajukan !== false]), [['Praktisi', true], ['Ahli', true], ['Mitra Korporat', true], ['Kehormatan', false]], 'Kehormatan cannot be applied for (bisaDiajukan:false)');
+  eq(K.kategori.map(k => [k.nama, k.bisaDiajukan !== false]), [['Praktisi', true], ['Ahli', true], ['Kehormatan', false]], 'Kehormatan cannot be applied for (bisaDiajukan:false)');
 
   sect('main.css v2 components');
   const css = fs.readFileSync(path.join(ROOT, 'assets/css/main.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');

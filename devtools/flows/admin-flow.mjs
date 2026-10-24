@@ -303,13 +303,13 @@ try {
     await page.click('#dlg-type-ok');
     await page.waitForTimeout(120);
     check('A54 ubah kategori: same value → inline error', await page.evaluate(() => !!document.querySelector('.modal .field.is-invalid')));
-    await page.selectOption('.modal [name="memberType"]', 'Mitra Korporat');
+    await page.selectOption('.modal [name="memberType"]', 'Kehormatan');
     await page.click('#dlg-type-ok');
     await page.waitForSelector('.modal', { state: 'detached' });
     await page.waitForTimeout(150);
     dimas = await member(page, 'demo-contoh-0003');
     look2 = await page.evaluate(() => PPAPI.store.registry.lookup('PPAPI-2025-000318'));
-    check('A55 kategori → Mitra Korporat (+ registry)', dimas.memberType === 'Mitra Korporat' && look2.exact.kategori === 'Mitra Korporat');
+    check('A55 kategori → Kehormatan (+ registry)', dimas.memberType === 'Kehormatan' && look2.exact.kategori === 'Kehormatan');
     check('A56 history lists every decision', ['dinonaktifkan', 'diaktifkan', 'diperpanjang', 'kategori-diubah'].every(a => dimas.review.history.some(x => x.action === a)));
     await shot(page, 'd-drawer-anggota');
     await closeDrawer(page);
