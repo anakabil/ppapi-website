@@ -41,6 +41,10 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   (Notaris Hj. Tuti Sriwahyuti, Kab. Bogor), SK Menkumham AHU-0008151.AH.01.07.Tahun 2022 (15 Agustus 2022), BNRI No. 066
   TBNRI No. 000370 (19 Agustus 2022). Pengurus pertama + Pengawas di `organisasi.js`; naskah AD lengkap di
   `site/anggaran-dasar.html` (data: `assets/data/anggaran-dasar.js`). Alamat sekretariat = kedudukan Pasal 1 AD.
+- Kontak resmi: `sekretariat@ppapi.or.id`, telepon/WhatsApp 0812-2728-0075 (dikonfirmasi klien 24-10-2026).
+- **Kode Etik v1.0** (disusun 24-10-2026 atas permintaan klien; berlaku, nomor/tanggal keputusan Pengurus menyusul di
+  `assets/data/kode-etik.js` → `penetapan`). Halaman `site/kode-etik.html`, dirender oleh `assets/js/pages/anggaran-dasar.js`
+  (body `data-doc`). Rujukan APA 7 + sitasi dalam teks di bagian Dasar Penyusunan.
 - Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
@@ -52,7 +56,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
 - **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus dari daftar kategori).
-- Data dari klien: telepon/email sekretariat, Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
+- Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan
   KEP-74/PPK/XII/2013, jawaban 11 pertanyaan Komite Teknis.
 - Review menyeluruh bahasa (KBBI/humanis), fungsi, dan tampilan seluruh halaman.

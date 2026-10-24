@@ -135,7 +135,7 @@ PPAPI_DATA.organisasi = {
     { kelompok: 'keanggotaan', q: 'Bagaimana cara mengakses aplikasi perencanaan dan simulator?', a: 'Aplikasi PPAPI Scaffold (perencanaan & analisis struktur) dan Simulator Pemasangan Perancah Tube & Coupler tersedia di Dasbor dan Profil Anggota bagi anggota berstatus Aktif. Cukup masuk dengan akun situs ini — tidak diperlukan akun terpisah.' },
     { kelompok: 'keanggotaan', q: 'Apakah berkas sertifikat perlu diunggah?', a: 'Tidak. Situs ini menyimpan data sertifikat (judul, nomor, penerbit, masa berlaku) beserta tautan dokumen yang bersifat opsional, misalnya dari Google Drive.' },
     { kelompok: 'keanggotaan', q: 'Apakah badan usaha dapat menjadi anggota?', a: 'Anggaran Dasar PPAPI mengatur keanggotaan perorangan, sehingga badan usaha tidak terdaftar sebagai anggota. Badan usaha di bidang perancah tetap dapat bekerja sama dengan PPAPI, misalnya dalam pelatihan atau kegiatan teknis. Sampaikan minat kerja sama melalui halaman Kontak.' },
-    { kelompok: 'keanggotaan', q: 'Apa hak dan kewajiban anggota?', a: 'Menurut Pasal 11 dan 12 Anggaran Dasar, anggota berhak memperoleh perlakuan dan pembelaan yang sama terkait profesinya, menyampaikan pendapat dengan hak suara dan bicara, memilih dan dipilih dalam kepengurusan, serta memperoleh Kartu Tanda Anggota. Anggota wajib menaati Anggaran Dasar, Anggaran Rumah Tangga, dan keputusan organisasi, menjaga nama baik organisasi, serta berupaya memajukan organisasi.' }
+    { kelompok: 'keanggotaan', q: 'Apa hak dan kewajiban anggota?', a: 'Menurut Pasal 11 dan 12 Anggaran Dasar, anggota berhak memperoleh perlakuan dan pembelaan yang sama terkait profesinya, menyampaikan pendapat dengan hak suara dan bicara, memilih dan dipilih dalam kepengurusan, serta memperoleh Kartu Tanda Anggota. Anggota wajib menaati Anggaran Dasar, Anggaran Rumah Tangga, Kode Etik, dan keputusan organisasi, menjaga nama baik organisasi, serta berupaya memajukan organisasi.' }
   ],
 
   keanggotaan: {
@@ -146,7 +146,7 @@ PPAPI_DATA.organisasi = {
       {
         nama: 'Praktisi',
         ringkas: 'Bagi tenaga teknik perancah serta pengurus dan pelaku usaha di bidang perancah yang bekerja langsung pada pemasangan, pembongkaran, pengawasan, atau pengelolaan pekerjaan perancah.',
-        syarat: ['Warga Negara Republik Indonesia', 'Memiliki lisensi dan/atau sertifikat kerja resmi bidang perancah dari Kementerian Ketenagakerjaan atau BNSP', 'Berperilaku baik serta menerima dan menaati Anggaran Dasar, Anggaran Rumah Tangga, dan ketetapan perkumpulan', 'Mengajukan permohonan tertulis melalui Formulir Pendaftaran'],
+        syarat: ['Warga Negara Republik Indonesia', 'Memiliki lisensi dan/atau sertifikat kerja resmi bidang perancah dari Kementerian Ketenagakerjaan atau BNSP', 'Berperilaku baik serta menerima dan menaati Anggaran Dasar, Anggaran Rumah Tangga, Kode Etik, dan ketetapan perkumpulan', 'Mengajukan permohonan tertulis melalui Formulir Pendaftaran'],
         manfaat: ['KTA digital yang dapat diverifikasi publik', 'Akses aplikasi perencanaan & analisis struktur serta simulator pemasangan', 'Akses Produk Pengetahuan dan informasi pelatihan, sertifikasi, serta agenda kegiatan']
       },
       {

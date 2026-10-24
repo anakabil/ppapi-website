@@ -79,8 +79,9 @@ console.log('\nA) umpan-balik.html');
   check(await page.getAttribute('[data-ub-faq] .accordion__trigger >> nth=0', 'aria-expanded') === 'true', 'FAQ pertama terbuka');
   check((await page.textContent('[data-ub-office]')).includes('Jl. Giant No. 99'), 'alamat sekretariat (kedudukan menurut Pasal 1 AD) tampil');
   check(await page.locator('.ub-map--placeholder').count() === 0 && await page.locator('.ub-map iframe').count() === 1, 'mapsQuery terisi → peta Google Maps (iframe)');
-  check(await page.locator('[data-ub-office] a[href^="tel:"], [data-ub-office] a[href^="mailto:"], [data-ub-office] a[href*="wa.me"]').count() === 0, 'tidak ada baris telepon/WA/email saat kosong');
-  check(await page.locator('[data-ub-alt]').isHidden(), 'tautan alternatif WA/Email disembunyikan saat kontak kosong');
+  /* 2026-10-24: telepon/WhatsApp/email resmi sekretariat terisi → ketiga baris dan tautan alternatif tampil */
+  check(await page.locator('[data-ub-office] a[href="tel:081227280075"]').count() === 1 && await page.locator('[data-ub-office] a[href="mailto:sekretariat@ppapi.or.id"]').count() === 1 && await page.locator('[data-ub-office] a[href*="wa.me/6281227280075"]').count() === 1, 'baris telepon, WhatsApp, dan email sekretariat tampil');
+  check(await page.locator('[data-ub-alt]').isVisible(), 'tautan alternatif WA/Email tampil saat kontak terisi');
   check(await page.locator('[data-ub-signed]').isHidden(), 'catatan "masuk sebagai" tersembunyi untuk tamu');
 
   // sticky secretariat card (desktop, fits the viewport)

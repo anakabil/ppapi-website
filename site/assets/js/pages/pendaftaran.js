@@ -650,7 +650,7 @@
         '<fieldset class="daf-stmts"><legend class="daf-stmts__legend">Dengan ini saya menyatakan:</legend>' +
           /* the documents are not published yet (V2 report, open issue 3) — say where a copy can be obtained */
           stmt('kodeEtik', 'Bersedia mematuhi Kode Etik serta Anggaran Dasar dan Anggaran Rumah Tangga (AD/ART) PPAPI.',
-            'Kode Etik dan AD/ART belum tersedia di situs ini. Salinannya dapat diminta kepada sekretariat melalui <a class="link" href="umpan-balik.html?kategori=Pertanyaan" target="_blank" rel="noopener">halaman Kontak<span class="sr-only"> (tab baru)</span></a>.') +
+            'Baca <a class="link" href="kode-etik.html" target="_blank" rel="noopener">Kode Etik<span class="sr-only"> (tab baru)</span></a> dan <a class="link" href="anggaran-dasar.html" target="_blank" rel="noopener">Anggaran Dasar<span class="sr-only"> (tab baru)</span></a> PPAPI. Anggaran Rumah Tangga akan dimuat setelah ditetapkan Rapat Umum Anggota.') +
           stmt('kebenaranData', 'Data dan dokumen yang saya sampaikan benar dan dapat dipertanggungjawabkan. Saya memahami bahwa keterangan yang tidak benar dapat menjadi dasar penolakan atau pencabutan keanggotaan.') +
           stmt('privasi', 'Menyetujui pemrosesan data pribadi saya untuk keperluan keanggotaan sesuai <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a> PPAPI.') +
         '</fieldset>' +

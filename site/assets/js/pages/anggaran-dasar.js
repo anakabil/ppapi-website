@@ -1,6 +1,9 @@
 /* ==========================================================================
-   PPAPI — Anggaran Dasar (anggaran-dasar.html)
-   Naskah dirender dari PPAPI.data.anggaranDasar (assets/data/anggaran-dasar.js).
+   PPAPI — dokumen organisasi: Anggaran Dasar (anggaran-dasar.html) dan Kode Etik (kode-etik.html)
+   Naskah dirender dari PPAPI.data[<body data-doc>] (bawaan: anggaranDasar), yaitu
+   assets/data/anggaran-dasar.js atau assets/data/kode-etik.js.
+   • Bagian opsional pada data: pembukaan (Mukadimah), ikrar, dasar (Dasar Penyusunan), pustaka.
+   • Bab dengan isian label (mis. "Bab I") memakai label itu sebagai nomor bagian.
    • Setiap bab menjadi satu bagian bernomor dengan jangkar #bab-NN; setiap pasal
      memiliki jangkar #pasal-N sehingga dapat dirujuk langsung (mis. dari Profil).
    • Ayat bernomor 1, 2, …; rincian ayat berhuruf a, b, … (atau huruf pada data).
@@ -11,7 +14,8 @@
 
   PPAPI.onReady(function () {
     var util = PPAPI.util, ui = PPAPI.ui, h = util.h, $ = util.$, $$ = util.$$;
-    var ad = (PPAPI.data && PPAPI.data.anggaranDasar) || {};
+    var docKey = document.body.getAttribute('data-doc') || 'anggaranDasar';
+    var ad = (PPAPI.data && PPAPI.data[docKey]) || {};
     var bab = Array.isArray(ad.bab) ? ad.bab : [];
     var ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
     var HURUF = 'abcdefghijklmnopqrstuvwxyz';
@@ -66,32 +70,65 @@
     /* ---------- Meta hero & sumber ---------- */
     var total = bab.reduce(function (n, b) { return n + (b.pasal || []).length; }, 0);
     var meta = $('[data-ad-meta]');
+    var pen = ad.penetapan || {};
     if (meta) {
       var tgl = ad.diperbarui ? util.formatDate(ad.diperbarui) : '';
+      var middle = ad.akta ? 'Akta Nomor 01 Tahun 2022' : (ad.versi ? 'Versi ' + ad.versi : '');
       meta.innerHTML =
-        (tgl ? '<span>' + PPAPI.icon('calendar', { size: 16 }) + 'Dimuat: <time datetime="' + h(ad.diperbarui) + '">' + h(tgl) + '</time></span>' : '') +
-        '<span>' + PPAPI.icon('scale', { size: 16 }) + 'Akta Nomor 01 Tahun 2022</span>' +
+        (tgl ? '<span>' + PPAPI.icon('calendar', { size: 16 }) + (ad.akta ? 'Dimuat' : 'Diperbarui') + ': <time datetime="' + h(ad.diperbarui) + '">' + h(tgl) + '</time></span>' : '') +
+        (middle ? '<span>' + PPAPI.icon('scale', { size: 16 }) + h(middle) + '</span>' : '') +
         '<span>' + PPAPI.icon('file-text', { size: 16 }) + total + ' pasal</span>';
     }
     var src = $('[data-ad-sumber]');
     if (src) src.textContent = [ad.akta, ad.pengesahan].filter(Boolean).join('; disahkan dengan ') + '.';
+    /* Kode Etik: keterangan penetapan (nomor & tanggal keputusan Pengurus bila sudah diisi pada data) */
+    var penEl = $('[data-ad-penetapan]');
+    if (penEl) {
+      penEl.textContent = pen.nomor
+        ? 'Ditetapkan dengan Keputusan Pengurus Nomor ' + pen.nomor + (pen.tanggal ? ' tanggal ' + util.formatDate(pen.tanggal) : '') + '.'
+        : 'Ditetapkan oleh Pengurus PPAPI sebagai ketetapan perkumpulan sesuai Pasal 9 Anggaran Dasar.';
+    }
 
     /* ---------- Daftar isi & naskah ---------- */
-    var toc = bab.map(function (b, i) {
+    /* bagian = [Mukadimah] + bab + [Ikrar] + [Dasar Penyusunan] + [Daftar Pustaka] */
+    function paras(list) { return list.map(function (p) { return '<p>' + text(p) + '</p>'; }).join(''); }
+    function linkify(html) { return html.replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+    var parts = [];
+    if (Array.isArray(ad.pembukaan) && ad.pembukaan.length) {
+      parts.push({ id: 'mukadimah', num: '', judul: 'Mukadimah', body: '<div class="ad-prose">' + paras(ad.pembukaan) + '</div>' });
+    }
+    bab.forEach(function (b, i) {
       var ps = b.pasal || [];
-      var range = ps.length > 1 ? 'Pasal ' + ps[0].no + '–' + ps[ps.length - 1].no : 'Pasal ' + (ps[0] ? ps[0].no : '');
-      return '<li><a href="#bab-' + pad(i + 1) + '"><span class="ad-toc__num">' + pad(i + 1) + '</span><span>' + h(b.judul) +
-        '<span class="ad-toc__range">' + h(range) + '</span></span></a></li>';
+      parts.push({
+        id: 'bab-' + pad(i + 1), num: b.label || pad(i + 1), judul: b.judul,
+        range: ps.length > 1 ? 'Pasal ' + ps[0].no + '–' + ps[ps.length - 1].no : 'Pasal ' + (ps[0] ? ps[0].no : ''),
+        body: ps.map(pasalHtml).join('')
+      });
+    });
+    if (ad.ikrar && Array.isArray(ad.ikrar.butir)) {
+      parts.push({ id: 'ikrar', num: '', judul: 'Ikrar Anggota', body: '<div class="ad-ikrar">' + (ad.ikrar.pembuka ? '<p>' + text(ad.ikrar.pembuka) + '</p>' : '') +
+        '<ol class="ad-ayat-list" role="list">' + ad.ikrar.butir.map(function (t, i) { return '<li class="ad-ayat"><span class="ad-mark">' + (i + 1) + '.</span><div><p>' + text(t) + '</p></div></li>'; }).join('') + '</ol></div>' });
+    }
+    if (Array.isArray(ad.dasar) && ad.dasar.length) {
+      parts.push({ id: 'dasar-penyusunan', num: '', judul: 'Dasar Penyusunan', body: '<div class="ad-prose">' + paras(ad.dasar) + '</div>' });
+    }
+    if (Array.isArray(ad.pustaka) && ad.pustaka.length) {
+      parts.push({ id: 'daftar-pustaka', num: '', judul: 'Daftar Pustaka', body: '<ul class="ad-pustaka" role="list">' +
+        ad.pustaka.map(function (p) { return '<li>' + linkify(util.emphasis(p)) + '</li>'; }).join('') + '</ul>' });
+    }
+
+    var toc = parts.map(function (p, i) {
+      return '<li><a href="#' + p.id + '"><span class="ad-toc__num">' + h(p.num ? (/^Bab /.test(p.num) ? p.num.slice(4) : p.num) : '·') + '</span><span>' + h(p.judul) +
+        (p.range ? '<span class="ad-toc__range">' + h(p.range) + '</span>' : '') + '</span></a></li>';
     }).join('');
     $$('[data-ad-toc-list]').forEach(function (ol) { ol.innerHTML = toc; });
 
     var isi = $('[data-ad-isi]');
     if (isi) {
-      isi.innerHTML = bab.map(function (b, i) {
-        return '<section class="ad-section" id="bab-' + pad(i + 1) + '" aria-labelledby="bab-' + pad(i + 1) + '-t">' +
-          '<span class="ad-num">' + pad(i + 1) + '</span>' +
-          '<h2 class="h3" id="bab-' + pad(i + 1) + '-t">' + h(b.judul) + '</h2>' +
-          (b.pasal || []).map(pasalHtml).join('') +
+      isi.innerHTML = parts.map(function (p) {
+        return '<section class="ad-section" id="' + p.id + '" aria-labelledby="' + p.id + '-t">' +
+          (p.num ? '<span class="ad-num">' + h(p.num) + '</span>' : '') +
+          '<h2 class="h3" id="' + p.id + '-t">' + h(p.judul) + '</h2>' + p.body +
         '</section>';
       }).join('');
       ui.reveal(isi);

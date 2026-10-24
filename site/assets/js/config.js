@@ -127,9 +127,9 @@ window.PPAPI_CONFIG = {
     address: 'Jl. Giant No. 99, Pamegarsari, Kec. Parung',
     city: 'Kabupaten Bogor, Jawa Barat 16330',
     mapsQuery: 'Jl. Giant No.99, Pamegarsari, Parung, Kabupaten Bogor, Jawa Barat 16330',
-    phone: '',        // contoh format: '+62 21 1234 5678'
-    whatsapp: '',     // contoh format: '+6281234567890' (tanpa spasi)
-    email: '',        // contoh format: 'sekretariat@domain.or.id'
+    phone: '0812-2728-0075',        // contoh format: '+62 21 1234 5678'
+    whatsapp: '+6281227280075',     // contoh format: '+6281234567890' (tanpa spasi)
+    email: 'sekretariat@ppapi.or.id',        // contoh format: 'sekretariat@domain.or.id'
     // Jam layanan. Contoh: [ { hari: 'Senin – Jumat', jam: '08.00 – 16.00 WIB' } ]
     hours: []
   },
@@ -165,6 +165,7 @@ window.PPAPI_CONFIG = {
     'Organisasi': [
       { label: 'Profil Asosiasi', href: 'profil.html' },
       { label: 'Anggaran Dasar', href: 'anggaran-dasar.html' },
+      { label: 'Kode Etik', href: 'kode-etik.html' },
       { label: 'Berita & Kegiatan', href: 'berita.html' },
       { label: 'Agenda', href: 'agenda.html' },
       { label: 'Direktori Instruktur', href: 'instruktur.html' },
