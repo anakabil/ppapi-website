@@ -316,8 +316,18 @@
             }).join('') + '</tbody></table></div>'
             : '<p class="kga-hint">Belum ada sertifikat. Nomor diterbitkan saat peserta yang hadir mengunduh sertifikatnya.</p>')
         : '<div class="alert alert--info">' + icon('info', { size: 18 }) + '<div><p>Sertifikat tidak disediakan untuk kegiatan ini. Aktifkan melalui tombol Ubah bila diperlukan.</p></div></div>';
-      var tabs = [['peserta', 'Peserta', 'users', partPanel], ['hadir', 'Daftar Hadir', 'check-circle', attPanel], ['sertifikat', 'Sertifikat', 'award', certPanel]];
-      var sel = selectTab || 'peserta';
+      var flyer = ev.flyer ? await K().getFlyer(id).catch(function () { return null; }) : null;
+      var flyerPanel = '<div class="kga-flyer">' +
+        (flyer
+          ? '<figure class="kga-flyer__preview"><img src="' + h(flyer.img) + '" alt="Flyer ' + h(ev.judul) + '" width="' + h(flyer.w) + '" height="' + h(flyer.h) + '"><figcaption class="kga-sub">' + h(flyer.w + ' × ' + flyer.h + ' piksel') + '</figcaption></figure>'
+          : '<div class="kga-flyer__empty">' + icon('upload', { size: 28 }) + '<p>Belum ada flyer. Flyer tampil di halaman Agenda dan di sorotan Kegiatan Terbaru pada halaman depan.</p></div>') +
+        '<div class="kga-flyer__side"><p class="kga-hint">Unggah berkas JPG, PNG, atau WebP. Gambar dikompresi otomatis menjadi JPEG berukuran paling besar 900 KB dengan sisi terpanjang 1.600 piksel. Rasio 4:5 atau 1:1 paling pas di halaman depan.</p>' +
+        '<div class="cluster"><label class="btn btn--primary btn--sm kga-flyer__pick">' + btnIcon('upload') + '<span>' + (flyer ? 'Ganti Flyer' : 'Unggah Flyer') + '</span>' +
+        '<input class="sr-only" type="file" accept="image/jpeg,image/png,image/webp" data-kgm-flyer></label>' +
+        (flyer ? '<button type="button" class="btn btn--link btn--sm" data-kgm="flyer-remove">' + icon('trash', { size: 16 }) + '<span>Hapus Flyer</span></button>' : '') +
+        '</div></div></div>';
+      var tabs = [['flyer', 'Flyer', 'upload', flyerPanel], ['peserta', 'Peserta', 'users', partPanel], ['hadir', 'Daftar Hadir', 'check-circle', attPanel], ['sertifikat', 'Sertifikat', 'award', certPanel]];
+      var sel = selectTab || (ev.flyer ? 'peserta' : 'flyer');
       dr.setBody(summary + actions +
         '<div class="tabs kga-tabs" data-tabs><div class="tabs__list" role="tablist" aria-label="Kelola kegiatan">' +
         tabs.map(function (t) { return '<button class="tabs__tab" role="tab" id="kgt-' + t[0] + '" data-tab="' + t[0] + '" aria-controls="kgp-' + t[0] + '" aria-selected="' + (t[0] === sel) + '"' + (t[0] === sel ? '' : ' tabindex="-1"') + '>' + icon(t[2], { size: 16 }) + t[1] + '</button>'; }).join('') +
@@ -333,6 +343,16 @@
       var tabNow = (dr.body.querySelector('.tabs__tab[aria-selected="true"]') || {}).getAttribute ? dr.body.querySelector('.tabs__tab[aria-selected="true"]').getAttribute('data-tab') : 'peserta';
       try {
         if (kind === 'edit') { openForm(ev, function () { paint(tabNow); }); return; }
+        if (kind === 'flyer-remove') {
+          var okF = await ui().confirm('Hapus flyer “' + ev.judul + '”?', { title: 'Hapus flyer', okLabel: 'Ya, hapus', danger: true });
+          if (!okF) return;
+          ui().setLoading(b, true);
+          await K().admin.saveFlyer(id, null);
+          ui().toast('Flyer dihapus.', { type: 'success' });
+          await paint('flyer');
+          await reload();
+          return;
+        }
         if (kind === 'csv') {
           var csv = K().admin.participantsCsv(ev, dr.__data.participants);
           K().saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'peserta-' + ev.id + '.csv');
@@ -375,6 +395,25 @@
         console.error(err);
         ui().toast(err.message || 'Tindakan gagal.', { type: 'error' });
         if (b.isConnected) ui().setLoading(b, false);
+      }
+    });
+    /* unggah flyer (input berkas di tab Flyer) */
+    dr.body.addEventListener('change', async function (e) {
+      var inp = e.target.closest('[data-kgm-flyer]');
+      if (!inp || !inp.files || !inp.files[0]) return;
+      var pick = inp.closest('.kga-flyer__pick');
+      try {
+        if (pick) pick.classList.add('is-loading');
+        inp.disabled = true;
+        var r = await K().admin.saveFlyer(id, inp.files[0]);
+        ui().toast('Flyer disimpan (' + r.w + ' × ' + r.h + ' piksel).', { type: 'success' });
+        await paint('flyer');
+        await reload();
+      } catch (err) {
+        console.error(err);
+        ui().toast(err.message || 'Flyer gagal disimpan.', { type: 'error' });
+        if (inp.isConnected) { inp.disabled = false; inp.value = ''; }
+        if (pick) pick.classList.remove('is-loading');
       }
     });
     try { await paint(tab); } catch (err) { console.error(err); dr.setBody('<div class="alert alert--err" role="alert">' + icon('alert-triangle', { size: 18 }) + '<div><p>' + h(err.message || 'Data belum dapat dimuat.') + '</p></div></div>'); }

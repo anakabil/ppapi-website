@@ -1,9 +1,13 @@
 /* ==========================================================================
    PPAPI — Beranda (index.html)
-   Merender bagian berbasis data: Tentang + angka, Pilar Layanan, Produk
-   Pengetahuan, Aplikasi Anggota, Kabar Terkini (berita + agenda), Regulasi
-   Kunci, dan pita "Mulai Pendaftaran".
-   • Berita, agenda, regulasi, dan produk pengetahuan dibaca melalui
+   Merender bagian berbasis data: Tentang + angka, Kegiatan Terbaru (sorotan
+   kegiatan terbit + flyer), Pilar Layanan, Produk Pengetahuan, Aplikasi
+   Anggota, Kabar Terkini (berita selebar halaman), Regulasi Kunci, dan pita
+   "Mulai Pendaftaran".
+   • Kegiatan Terbaru dibaca dari PPAPI.kegiatan (store-kegiatan.js); bagian ini
+     disembunyikan bila belum ada kegiatan terbit, dan nomor bagian (01, 02, …)
+     dihitung ulang dari bagian yang tampil (atribut data-sec pada eyebrow).
+   • Berita, regulasi, dan produk pengetahuan dibaca melalui
      PPAPI.store.content.list() sehingga konten kelolaan admin ikut tampil dan
      butir bawaan yang disembunyikan admin tidak tampil.
    • Tombol aplikasi, ajakan bergabung, dan alur pendaftaran mengikuti status
@@ -59,12 +63,20 @@
       }
       return arr(D[type]).filter(function (x) { return x && !x.hidden; });
     }
-    /* agenda + kegiatan terbit dengan pendaftaran (store-kegiatan.js); id yang sama → versi kegiatan */
-    async function loadAgenda() {
-      var both = await Promise.all([load('agenda'), P.kegiatan ? P.kegiatan.asAgendaItems() : Promise.resolve([])]);
-      var kg = arr(both[1]), ids = {};
-      kg.forEach(function (x) { if (x) ids[x.id] = 1; });
-      return both[0].filter(function (x) { return !ids[x.id]; }).concat(kg);
+    /* kegiatan terbit (store-kegiatan.js) */
+    async function loadKegiatan() {
+      if (!P.kegiatan) return [];
+      try { return arr(await P.kegiatan.listPublished()); }
+      catch (e) { console.warn('[PPAPI] Kegiatan tidak dapat dimuat:', e && e.message); return []; }
+    }
+    /* nomor bagian mengikuti bagian yang tampil */
+    function renumberSections() {
+      var n = 0;
+      u.$$('#main .eyebrow[data-sec]').forEach(function (el) {
+        var sec = el.closest('section');
+        if (sec && sec.hidden) return;
+        el.textContent = pad(++n) + '\u00a0— ' + el.getAttribute('data-sec');
+      });
     }
 
     /* ---------------- 3. Tentang + angka ---------------- */
@@ -269,7 +281,7 @@
       }
     }
 
-    /* ---------------- 7. Kabar terkini ---------------- */
+    /* ---------------- 7. Kabar terkini (berita: satu utama + tiga baris, selebar halaman) ---------------- */
     function mediaHtml(b, opts) {
       if (b.gambar) return u.img(b.gambar, opts);
       return '<span class="home-media-fallback" aria-hidden="true">' + P.ui.scaffoldSVG({ cols: 4, rows: 3, cls: 'scaffold-draw--static' }) + '</span>';
@@ -279,7 +291,7 @@
       if (!list) return;
       var items = berita.filter(function (b) { return b && b.id && b.judul; }).slice().sort(function (a, b) {
         return String(b.tanggal || '').localeCompare(String(a.tanggal || ''));
-      }).slice(0, 3);
+      }).slice(0, 4);
       if (!items.length) {
         list.innerHTML = P.ui.emptyState({ icon: 'file-text', title: 'Belum ada berita', text: 'Berita dan kegiatan perkumpulan akan tampil di sini.' });
         return;
@@ -315,78 +327,95 @@
       list.innerHTML = html;
     }
 
-    function dateBlock(ev) {
-      var a = u.parseDate(ev.mulai), b = u.parseDate(ev.selesai || ev.mulai) || a;
-      if (!a) return '';
-      if (b < a) b = a;
-      var M = u.MONTHS_SHORT;
-      var single = a.getTime() === b.getTime();
-      var sameMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
-      var day, month;
-      if (single) { day = String(a.getDate()); month = M[a.getMonth()]; }
-      else if (sameMonth) { day = a.getDate() + '–' + b.getDate(); month = M[a.getMonth()]; }
-      else { day = a.getDate() + '–' + b.getDate(); month = M[a.getMonth()] + '–' + M[b.getMonth()]; }
-      return '<div class="date-block' + (single ? '' : ' date-block--range') + '" aria-hidden="true">' +
-        '<span class="date-block__day">' + h(day) + '</span>' +
-        '<span class="date-block__month">' + h(month) + '</span>' +
-        '<span class="date-block__year">' + h(String(b.getFullYear())) + '</span>' +
+    /* ---------------- 3a. Kegiatan terbaru ---------------- */
+    /* Pilihan: kegiatan yang akan datang/sedang berlangsung (terdekat dulu); bila tidak ada,
+       kegiatan yang terakhir berlangsung. Paling banyak 3: satu sorotan + dua kartu. */
+    function pickKegiatan(list) {
+      var now = Date.now();
+      var live = list.filter(function (ev) { return ev && ev.selesai >= now; }).sort(function (a, b) { return a.mulai - b.mulai; });
+      if (live.length) return live.slice(0, 3);
+      return list.filter(function (ev) { return ev && ev.selesai < now; }).sort(function (a, b) { return b.mulai - a.mulai; }).slice(0, 3);
+    }
+    function kgHref(ev) { return 'agenda.html?id=' + encodeURIComponent(ev.id); }
+    function kgPhaseBadge(ev) {
+      var ph = P.kegiatan.phaseOf(ev);
+      var cls = ph === 'berlangsung' ? 'badge--ok' : ph === 'selesai' ? 'badge--muted' : 'badge--solid';
+      return '<span class="badge ' + cls + '">' + h(P.kegiatan.PHASE_LABEL[ph]) + '</span>';
+    }
+    function kgDateTile(ev, cls) {
+      var iso = P.kegiatan.dateIso(ev.mulai), dt = u.parseDate(iso);
+      if (!dt) return '';
+      return '<span class="home-kg__date ' + (cls || '') + '" aria-hidden="true">' +
+        '<span class="home-kg__date-day">' + h(String(dt.getDate())) + '</span>' +
+        '<span class="home-kg__date-month">' + h(u.MONTHS_SHORT[dt.getMonth()] + ' ' + dt.getFullYear()) + '</span>' +
+        '<span class="home-kg__date-jenis">' + h(ev.jenis) + '</span>' +
+      '</span>';
+    }
+    function kgPoster(ev, big) {
+      /* flyer dimuat terpisah (data-kg-flyer); sampai termuat / bila tidak ada → panel tanggal */
+      return '<div class="home-kg__poster' + (big ? ' home-kg__poster--big' : '') + '"' + (ev.flyer ? ' data-kg-flyer="' + h(ev.id) + '"' : '') + '>' +
+        '<span class="home-kg__poster-bg" aria-hidden="true">' + P.ui.scaffoldSVG({ cols: 3, rows: 4, cls: 'scaffold-draw--static' }) + '</span>' +
+        kgDateTile(ev, big ? 'home-kg__date--big' : '') +
       '</div>';
     }
-    function whenLabel(ev) {
-      var start = u.daysUntil(ev.mulai);
-      var end = u.daysUntil(ev.selesai || ev.mulai);
-      if (start === null) return '';
-      if (start === 0) return 'Hari ini';
-      if (start < 0 && end >= 0) return 'Sedang berlangsung';
-      if (start === 1) return 'Besok';
-      return start + ' hari lagi';
-    }
-    function renderAgenda(agenda) {
-      var list = byId('agenda-list');
-      if (!list) return;
-      var upcoming = agenda.filter(function (ev) {
-        var end = ev && ev.judul ? u.daysUntil(ev.selesai || ev.mulai) : null;
-        return end !== null && end >= 0;
-      }).sort(function (a, b) {
-        return String(a.mulai || '').localeCompare(String(b.mulai || ''));
-      });
-      var items = upcoming.slice(0, 3);
-      var count = byId('agenda-count');
-      if (count) {
-        var lastDate = null;
-        upcoming.forEach(function (ev) {
-          var d = u.parseDate(ev.selesai || ev.mulai);
-          if (d && (!lastDate || d > lastDate)) lastDate = d;
-        });
-        count.textContent = upcoming.length
-          ? upcoming.length + ' kegiatan terjadwal' + (lastDate ? ' hingga ' + u.MONTHS[lastDate.getMonth()] + ' ' + lastDate.getFullYear() : '')
-          : '';
-        count.hidden = !upcoming.length;
-      }
-      if (!items.length) {
-        list.innerHTML = '<div class="home-agenda__empty">' + icon('calendar', { size: 22 }) +
-          '<p>Belum ada agenda terdekat. Jadwal pelatihan, sertifikasi, dan seminar berikutnya akan diumumkan di halaman Agenda.</p></div>';
-        return;
-      }
-      list.innerHTML = items.map(function (ev) {
-        var range = u.formatDateRange(ev.mulai, ev.selesai || ev.mulai);
-        var when = whenLabel(ev);
-        return '<article class="event-row home-event">' +
-          dateBlock(ev) +
-          '<div class="event-row__body">' +
-            '<div class="event-row__meta">' +
-              (ev.jenis ? '<span class="tag">' + h(ev.jenis) + '</span>' : '') +
-              (ev.mode ? '<span class="badge badge--outline">' + h(ev.mode) + '</span>' : '') +
-              u.contohBadge(ev) +
-            '</div>' +
-            '<h4 class="event-row__title"><a href="agenda.html?id=' + h(encodeURIComponent(ev.id || '')) + '"><span class="sr-only">' + h(range) + ': </span>' + h(ev.judul) + '</a></h4>' +
-            '<p class="event-row__info">' +
-              (when ? '<span class="home-event__when">' + icon('clock', { size: 16 }) + h(when) + '</span>' : '') +
-              (ev.lokasi ? '<span>' + icon('map-pin', { size: 16 }) + h(ev.lokasi) + '</span>' : '') +
-            '</p>' +
+    function kgWhere(ev) { return ev.mode + (ev.lokasi && ev.lokasi !== ev.mode ? ' · ' + ev.lokasi : ''); }
+    function renderKegiatan(all) {
+      var sec = byId('kegiatan'), host = byId('kg-highlight');
+      if (!sec || !host) return;
+      var items = P.kegiatan ? pickKegiatan(all) : [];
+      sec.hidden = !items.length;
+      if (!items.length) { host.innerHTML = ''; return; }
+      var K = P.kegiatan, now = Date.now();
+      var ev = items[0], ph = K.phaseOf(ev), past = ph === 'selesai';
+      var soon = ph === 'akan-datang' ? 'Dimulai ' + K.fmtDuration(ev.mulai - now) + ' lagi' : (ph === 'berlangsung' ? 'Sedang berlangsung sekarang' : '');
+      var seats = ev.kuota ? (ev.sisa > 0 ? 'Sisa ' + u.formatNumber(ev.sisa) + ' dari ' + u.formatNumber(ev.kuota) + ' kursi' : 'Kuota penuh') : 'Kuota tidak dibatasi';
+      var facts = [
+        ['Jadwal', K.fmtSchedule(ev)],
+        ['Tempat', kgWhere(ev)],
+        ev.narasumber ? ['Narasumber', ev.narasumber] : null,
+        past ? null : ['Peserta', K.AKSES[ev.akses] + ' · ' + seats],
+        ev.sertifikat ? ['Sertifikat', 'Tersedia bagi peserta yang mengisi daftar hadir'] : null
+      ].filter(Boolean);
+      var html = '<article class="home-kg__feature" data-reveal>' +
+        '<a class="home-kg__poster-link" href="' + h(kgHref(ev)) + '" tabindex="-1" aria-hidden="true">' + kgPoster(ev, true) + '</a>' +
+        '<div class="home-kg__body">' +
+          '<div class="home-kg__meta"><span class="tag">' + h(ev.jenis) + '</span>' + kgPhaseBadge(ev) + '</div>' +
+          '<h3 class="home-kg__title"><a href="' + h(kgHref(ev)) + '">' + h(ev.judul) + '</a></h3>' +
+          (soon ? '<p class="home-kg__soon">' + icon('clock', { size: 16 }) + '<span>' + h(soon) + '</span></p>' : '') +
+          (ev.deskripsi ? '<p class="home-kg__desc">' + prose(ev.deskripsi) + '</p>' : '') +
+          '<dl class="home-kg__facts">' + facts.map(function (f) { return '<div><dt>' + h(f[0]) + '</dt><dd>' + h(f[1]) + '</dd></div>'; }).join('') + '</dl>' +
+          '<div class="home-kg__actions">' +
+            '<a class="btn btn--primary" href="' + h(kgHref(ev)) + '"><span>' + (past ? 'Lihat Detail' : 'Detail &amp; Daftar') + '</span>' + arrow('arrow-right') + '<span class="sr-only"> ' + h(ev.judul) + '</span></a>' +
           '</div>' +
-        '</article>';
-      }).join('');
+        '</div>' +
+      '</article>';
+      var rest = items.slice(1);
+      if (rest.length) {
+        html += '<div class="home-kg__more" data-reveal-stagger>' + rest.map(function (x) {
+          return '<article class="home-kg__card">' +
+            kgPoster(x, false) +
+            '<div class="home-kg__card-body">' +
+              '<div class="home-kg__meta"><span class="tag">' + h(x.jenis) + '</span>' + kgPhaseBadge(x) + '</div>' +
+              '<h4 class="home-kg__card-title"><a href="' + h(kgHref(x)) + '">' + h(x.judul) + '</a></h4>' +
+              '<p class="home-kg__card-when">' + icon('calendar', { size: 16 }) + '<span>' + h(K.fmtSchedule(x, { weekday: false, short: true })) + '</span></p>' +
+              '<p class="home-kg__card-when">' + icon('map-pin', { size: 16 }) + '<span>' + h(kgWhere(x)) + '</span></p>' +
+            '</div>' +
+          '</article>';
+        }).join('') + '</div>';
+      }
+      host.innerHTML = html;
+      host.classList.toggle('home-kg__layout--single', !rest.length);
+      /* flyer: gambar menggantikan panel tanggal setelah termuat */
+      u.$$('[data-kg-flyer]', host).forEach(function (box) {
+        var id = box.getAttribute('data-kg-flyer');
+        var title = (items.filter(function (x) { return x.id === id; })[0] || {}).judul || '';
+        K.getFlyer(id).then(function (f) {
+          if (!f) return;
+          box.classList.add('has-flyer');
+          box.innerHTML = '<img src="' + h(f.img) + '" alt="Flyer ' + h(title) + '" width="' + h(f.w) + '" height="' + h(f.h) + '" decoding="async">';
+        }).catch(function () { /* panel tanggal tetap tampil */ });
+      });
+      P.ui.reveal(sec);
     }
 
     /* ---------------- 8. Regulasi kunci ---------------- */
@@ -518,9 +547,10 @@
     var newsList = byId('news-list');
     if (newsList && !newsList.children.length) newsList.innerHTML = P.ui.skeleton(4);
 
-    var loaded = await Promise.all([load('berita'), loadAgenda(), load('regulasi'), load('pustaka')]);
+    var loaded = await Promise.all([load('berita'), loadKegiatan(), load('regulasi'), load('pustaka')]);
     renderBerita(loaded[0]);
-    renderAgenda(loaded[1]);
+    renderKegiatan(loaded[1]);
+    renumberSections();
     renderRegulasi(loaded[2]);
     renderPustaka(loaded[3], loaded[2]);
 

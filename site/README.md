@@ -474,6 +474,7 @@ Prinsip: setiap pihak hanya mendapat akses seminimal mungkin.
 | `events/{id}/participants/{uid}` | pemilik, admin | pemilik sesuai akses kegiatan (semua akun / anggota Aktif); admin |
 | `events/{id}/attendance/{uid}` | pemilik, admin | peserta terdaftar, **hanya** antara 30 menit sebelum dan 3 jam sesudah kegiatan selesai (waktu server); admin |
 | `events/{id}/assets/certificate` | admin, peserta yang sudah hadir | admin |
+| `events/{id}/assets/flyer` | publik bila kegiatan terbit; admin | admin (JPEG ≤ 900 KB) |
 | `certificates/{nomor}` | siapa saja per nomor (daftar: admin) | dibuat peserta yang hadir, sekali; cabut/pulihkan: admin |
 | `products/{id}`, `product_media/{id}` | siapa saja (produk **aktif**); admin: semua | admin |
 | `product_files/{id}` | admin, pembeli yang memiliki hak unduh | admin |
@@ -636,6 +637,13 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   daring, kuota, siapa yang boleh mendaftar (**semua akun** yang masuk, atau **anggota Aktif**
   saja), dan tautan Google Form penyelenggara bila ada. Kegiatan **terbit** tampil di Agenda,
   Beranda, dan Dasbor.
+- **Flyer kegiatan**: Konsol Admin › Kegiatan › Kelola › tab **Flyer** › Unggah Flyer (JPG, PNG,
+  atau WebP). Gambar otomatis dikompresi menjadi JPEG ≤ 900 KB (sisi terpanjang 1.600 px) dan
+  disimpan di Firestore (`events/{id}/assets/flyer`), jadi tidak memerlukan layanan penyimpanan
+  berkas. Rasio 4:5 atau 1:1 paling pas. Flyer tampil di detail Agenda dan di bagian **Kegiatan
+  Terbaru** pada Beranda (setelah "Tentang PPAPI"): kegiatan terbit terdekat disorot bersama dua
+  kegiatan berikutnya; bila semua sudah lewat, yang terakhir berlangsung. Tanpa kegiatan terbit,
+  bagian ini disembunyikan.
 - **Pendaftaran** dari detail kegiatan di halaman Agenda. Peserta melihat kegiatannya di
   **Dasbor › Kegiatan Saya** (menu akun › Kegiatan Saya) — untuk semua akun, termasuk yang
   keanggotaannya belum Aktif.

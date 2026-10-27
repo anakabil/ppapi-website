@@ -403,13 +403,92 @@ body[data-page="beranda"] .home-apps__note > svg { margin-top: 3px; color: var(-
 
 
 /* ==========================================================================
-   7. KABAR TERKINI — news + agenda panel
+   3a. KEGIATAN TERBARU — sorotan kegiatan terbit (flyer + rincian) + dua kartu
    ========================================================================== */
-body[data-page="beranda"] .home-news__layout { display: grid; gap: clamp(48px, 5vw, 72px); }
-@media (min-width: 1024px) {
-  body[data-page="beranda"] .home-news__layout { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: stretch; }
+body[data-page="beranda"] .home-kg { position: relative; isolation: isolate; overflow: hidden; }
+body[data-page="beranda"] .home-kg__scaffold { z-index: -1; top: auto; height: 38%; }
+body[data-page="beranda"] .home-kg__scaffold .scaffold-draw { color: rgba(185,185,191,.07); }
+body[data-page="beranda"] .home-kg__layout { display: grid; gap: clamp(28px, 3vw, 40px); }
+
+body[data-page="beranda"] .home-kg__feature {
+  position: relative; display: grid; gap: clamp(24px, 3vw, 48px); align-items: start;
+  padding: clamp(20px, 2.4vw, 32px); background: var(--c-ink); border: 1px solid rgba(255,255,255,.08);
 }
+body[data-page="beranda"] .home-kg__feature::before {
+  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal); opacity: .8;
+}
+@media (min-width: 860px) {
+  body[data-page="beranda"] .home-kg__feature { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+}
+body[data-page="beranda"] .home-kg__poster-link { display: block; }
+
+/* poster: flyer (rasio asli) atau panel tanggal bila belum ada flyer */
+body[data-page="beranda"] .home-kg__poster {
+  position: relative; overflow: hidden; display: grid; place-items: center;
+  aspect-ratio: 4 / 5; background: var(--c-graphite); border: 1px solid rgba(255,255,255,.08);
+}
+body[data-page="beranda"] .home-kg__poster.has-flyer { aspect-ratio: auto; background: transparent; border-color: transparent; }
+body[data-page="beranda"] .home-kg__poster img { display: block; width: 100%; height: auto; }
+body[data-page="beranda"] .home-kg__poster--big.has-flyer img { max-height: 78vh; object-fit: contain; }
+body[data-page="beranda"] .home-kg__poster-bg { position: absolute; inset: 0; color: rgba(185,185,191,.14); }
+body[data-page="beranda"] .home-kg__date { position: relative; display: grid; justify-items: center; gap: 6px; text-align: center; color: var(--c-white); }
+body[data-page="beranda"] .home-kg__date-day { font: 600 clamp(2.6rem, 5vw, 3.4rem)/1 var(--f-display); font-variant-numeric: lining-nums; }
+body[data-page="beranda"] .home-kg__date--big .home-kg__date-day { font-size: clamp(4rem, 9vw, 6.5rem); }
+body[data-page="beranda"] .home-kg__date-month,
+body[data-page="beranda"] .home-kg__date-jenis { font: 600 .74rem/1.3 var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--c-silver); }
+body[data-page="beranda"] .home-kg__date-jenis { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.18); }
+
+body[data-page="beranda"] .home-kg__body { min-width: 0; display: grid; gap: 16px; align-content: start; }
+body[data-page="beranda"] .home-kg__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+body[data-page="beranda"] .home-kg__title { font-size: clamp(1.7rem, 3vw, 2.5rem); line-height: 1.12; color: var(--c-white); }
+body[data-page="beranda"] .home-kg__title a,
+body[data-page="beranda"] .home-kg__card-title a { color: inherit; text-decoration: none; }
+body[data-page="beranda"] .home-kg__title a:hover,
+body[data-page="beranda"] .home-kg__card-title a:hover { text-decoration: underline; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+body[data-page="beranda"] .home-kg__soon { display: inline-flex; align-items: center; gap: 8px; font: 600 .78rem/1.3 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--c-bone); }
+body[data-page="beranda"] .home-kg__desc {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+  max-width: 62ch; font-size: 1rem; line-height: 1.7; color: var(--c-silver);
+}
+body[data-page="beranda"] .home-kg__facts { display: grid; gap: 0; margin: 4px 0 0; border-top: 1px solid rgba(255,255,255,.12); }
+body[data-page="beranda"] .home-kg__facts > div {
+  display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.12);
+}
+body[data-page="beranda"] .home-kg__facts dt { font: 600 .7rem/1.6 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-gray); }
+body[data-page="beranda"] .home-kg__facts dd { margin: 0; font-size: .95rem; line-height: 1.55; color: var(--c-white); }
+body[data-page="beranda"] .home-kg__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+
+body[data-page="beranda"] .home-kg__more { display: grid; gap: clamp(20px, 2.4vw, 28px); }
+@media (min-width: 720px) { body[data-page="beranda"] .home-kg__more { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+body[data-page="beranda"] .home-kg__card {
+  position: relative; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 18px; align-items: start;
+  padding: 18px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  transition: background-color .4s var(--ease), border-color .4s var(--ease);
+}
+body[data-page="beranda"] .home-kg__card:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); }
+body[data-page="beranda"] .home-kg__card .home-kg__date-jenis { display: none; }
+body[data-page="beranda"] .home-kg__card-body { display: grid; gap: 8px; min-width: 0; }
+body[data-page="beranda"] .home-kg__card-title {
+  font: 600 1.28rem/1.25 var(--f-display); font-variant-numeric: lining-nums; letter-spacing: 0; text-transform: none; color: var(--c-white);
+}
+body[data-page="beranda"] .home-kg__card-title a::after { content: ""; position: absolute; inset: 0; }
+body[data-page="beranda"] .home-kg__card-when { display: flex; align-items: flex-start; gap: 8px; font-size: .88rem; line-height: 1.5; color: var(--c-silver); }
+body[data-page="beranda"] .home-kg__card-when > svg { flex: none; margin-top: 2px; }
+@media (max-width: 479px) {
+  body[data-page="beranda"] .home-kg__card { grid-template-columns: 88px minmax(0, 1fr); gap: 14px; padding: 14px; }
+  body[data-page="beranda"] .home-kg__facts > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+
+/* ==========================================================================
+   7. KABAR TERKINI — berita selebar halaman: satu berita utama + tiga baris
+   ========================================================================== */
 body[data-page="beranda"] .home-news__list { display: grid; gap: clamp(32px, 3.4vw, 44px); min-width: 0; }
+@media (min-width: 1024px) {
+  body[data-page="beranda"] .home-news__list { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(48px, 5vw, 72px); align-items: start; }
+  body[data-page="beranda"] .home-news__rows { border-top: 0; }
+  body[data-page="beranda"] .home-news__row:first-child { padding-top: 0; }
+}
 body[data-page="beranda"] .home-news__lead .news-card__media { aspect-ratio: 16 / 9; margin-bottom: 26px; }
 body[data-page="beranda"] .home-news__lead .news-card__title { font-size: clamp(1.65rem, 2.6vw, 2.25rem); line-height: 1.12; margin-bottom: 14px; }
 body[data-page="beranda"] .home-news__lead .news-card__excerpt { font-size: 1.02rem; max-width: 62ch; }
@@ -430,63 +509,6 @@ body[data-page="beranda"] .home-news__row .news-card__excerpt { -webkit-line-cla
   body[data-page="beranda"] .home-news__row { grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding-block: 22px; }
   body[data-page="beranda"] .home-news__row .news-card__media { aspect-ratio: 1 / 1; }
   body[data-page="beranda"] .home-news__row .news-card__excerpt { display: none; }
-}
-
-/* agenda panel (dark island in a light section) */
-body[data-page="beranda"] .home-agenda {
-  --card-pad: clamp(24px, 2.8vw, 40px);
-  isolation: isolate; overflow: hidden; background: var(--c-ink); border-color: var(--c-ink);
-}
-body[data-page="beranda"] .home-agenda__scaffold { z-index: -1; top: auto; height: 46%; }
-body[data-page="beranda"] .home-agenda__scaffold .scaffold-draw { color: rgba(185,185,191,.08); }
-body[data-page="beranda"] .home-agenda__scaffold::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, var(--c-ink) 0%, rgba(17,17,19,0) 60%);
-}
-body[data-page="beranda"] .home-agenda::before {
-  content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 2px; background: var(--metal); opacity: .8;
-}
-body[data-page="beranda"] .home-agenda__head { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-body[data-page="beranda"] .home-agenda__label {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-  font: 600 .72rem/1 var(--f-cond); letter-spacing: .26em; text-transform: uppercase; color: var(--c-silver);
-}
-body[data-page="beranda"] .home-agenda__title { font-size: clamp(1.7rem, 2.4vw, 2.1rem); color: var(--c-white); }
-body[data-page="beranda"] .home-agenda .event-row { grid-template-columns: auto minmax(0, 1fr); gap: 16px 20px; padding-block: 24px; align-items: start; }
-body[data-page="beranda"] .home-agenda .date-block { min-width: 76px; background: transparent; }
-body[data-page="beranda"] .home-agenda .date-block--range .date-block__day { font-size: 1.55rem; }
-body[data-page="beranda"] .home-agenda .event-row__title {
-  font-size: 1.28rem; line-height: 1.25; letter-spacing: 0; text-transform: none; color: var(--c-white); margin: 10px 0 8px;
-}
-body[data-page="beranda"] .home-agenda .event-row__title a { color: inherit; }
-body[data-page="beranda"] .home-agenda .event-row__title a::after { content: ""; position: absolute; inset: 0; }
-body[data-page="beranda"] .home-agenda .event-row { position: relative; transition: background-color .4s var(--ease); }
-body[data-page="beranda"] .home-agenda .event-row__info { font-size: .86rem; gap: 6px 16px; }
-body[data-page="beranda"] .home-event__when { color: var(--c-bone); }
-body[data-page="beranda"] .home-agenda__foot {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px;
-  margin-top: auto; padding-top: 20px;
-}
-body[data-page="beranda"] .home-agenda__list { margin-bottom: 8px; }
-body[data-page="beranda"] .home-agenda__count {
-  font: 600 .72rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--c-gray);
-}
-body[data-page="beranda"] .home-agenda__empty { display: grid; gap: 12px; padding: 28px 0; color: var(--muted); }
-body[data-page="beranda"] .home-agenda__empty > svg { color: var(--c-silver); }
-/* Desktop: the panel stretches to the height of the news column. The count + "Semua agenda" link
-   follow the list directly, and the height left over is filled by a scaffold elevation drawn from
-   the panel's base (an in-flow flex item that grows into the spare space, fading in at its top). */
-@media (min-width: 1024px) {
-  body[data-page="beranda"] .home-agenda__foot { margin-top: 0; }
-  body[data-page="beranda"] .home-agenda__scaffold {
-    position: relative; inset: auto; z-index: 0; height: auto;
-    flex: 1 0 0; min-height: 0;
-    margin: 28px calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad));
-  }
-  body[data-page="beranda"] .home-agenda__scaffold .scaffold-draw { color: rgba(185,185,191,.15); }
-  body[data-page="beranda"] .home-agenda__scaffold::after {
-    background: linear-gradient(180deg, var(--c-ink) 0%, rgba(17,17,19,0) 45%);
-  }
 }
 
 

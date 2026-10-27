@@ -42,8 +42,9 @@
       return d.keys().hasOnly([
                'judul', 'jenis', 'deskripsi', 'narasumber', 'mulaiAt', 'selesaiAt', 'hadirBuka', 'hadirTutup',
                'mode', 'lokasi', 'tautanDaftar', 'kuota', 'terdaftar', 'akses', 'sertifikat', 'kode', 'tahun',
-               'sertSeq', 'status', 'createdAt', 'updatedAt', 'updatedBy'
+               'sertSeq', 'status', 'flyer', 'createdAt', 'updatedAt', 'updatedBy'
              ])
+          && d.get('flyer', false) is bool
           && d.judul is string && d.judul.size() >= 3 && d.judul.size() <= 200
           && d.jenis is string && d.jenis.size() <= 40
           && d.mode in ['Daring', 'Luring', 'Hybrid']
@@ -119,6 +120,14 @@
           && d.fields is map && d.fields.size() <= 8
           && d.updatedAt == request.time && d.updatedBy == request.auth.uid;
     }
+    // Flyer kegiatan: JPEG data URL ≤ 900 KB (dikompresi di peramban admin).
+    function validFlyer(d) {
+      return d.keys().hasOnly(['img', 'w', 'h', 'updatedAt', 'updatedBy'])
+          && d.img is string && d.img.size() <= 921600
+          && d.img.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          && d.w is int && d.h is int
+          && d.updatedAt == request.time && d.updatedBy == request.auth.uid;
+    }
     // Sertifikat baru: nomor PPAPI-SERT-<tahun>-<kode>-<urut> milik peserta yang hadir.
     function certOk(no, d) {
       let eid = d.eventId;
@@ -191,8 +200,13 @@
       }
 
       match /assets/{doc} {
-        allow get: if isAdmin() || (signedIn() && exists(attPath(eid, request.auth.uid)));
-        allow create, update: if isAdmin() && doc == 'certificate' && validDesign(request.resource.data);
+        // flyer: publik bila kegiatan terbit; desain sertifikat: admin + peserta yang hadir
+        allow get: if isAdmin()
+                   || (doc == 'flyer' && get(evPath(eid)).data.status == 'terbit')
+                   || (doc == 'certificate' && signedIn() && exists(attPath(eid, request.auth.uid)));
+        allow create, update: if isAdmin()
+                              && ((doc == 'certificate' && validDesign(request.resource.data))
+                                  || (doc == 'flyer' && validFlyer(request.resource.data)));
         allow delete: if isAdmin();
       }
     }

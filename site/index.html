@@ -109,7 +109,7 @@
       <div class="container">
         <div class="split split--wide-left home-about__split">
           <div class="home-about__text">
-            <p class="eyebrow" data-reveal>01&nbsp;— Tentang PPAPI</p>
+            <p class="eyebrow" data-reveal data-sec="Tentang PPAPI">01&nbsp;— Tentang PPAPI</p>
             <h2 class="h2" id="tentang-title" data-reveal>Satu wadah bagi profesi <em>perancah</em> Indonesia.</h2>
             <div class="home-about__body" id="tentang-body" data-reveal data-reveal-delay="120"></div>
             <div class="home-about__actions" data-reveal data-reveal-delay="200">
@@ -137,12 +137,27 @@
       </div>
     </section>
 
+    <!-- ===================== 3a. KEGIATAN TERBARU (disembunyikan bila belum ada kegiatan terbit) ===================== -->
+    <section class="section section--dark home-kg" id="kegiatan" aria-labelledby="kg-title" hidden>
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div class="section-head__text">
+            <p class="eyebrow" data-sec="Kegiatan Terbaru">02&nbsp;— Kegiatan Terbaru</p>
+            <h2 class="h2" id="kg-title">Belajar dan bertumbuh <em>bersama</em> sesama praktisi.</h2>
+          </div>
+          <a class="btn btn--link" href="agenda.html"><span>Semua agenda</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
+        </header>
+        <div class="home-kg__layout" id="kg-highlight"></div>
+      </div>
+      <div class="home-kg__scaffold" data-scaffold data-cols="6" data-rows="2" data-nodes="false"></div>
+    </section>
+
     <!-- ===================== 4. LAYANAN / PILAR ===================== -->
     <section class="section section--bone home-pilar" id="layanan" aria-labelledby="pilar-title">
       <div class="container">
         <header class="section-head" data-reveal>
           <div class="section-head__text">
-            <p class="eyebrow">02&nbsp;— Pilar Layanan</p>
+            <p class="eyebrow" data-sec="Pilar Layanan">03&nbsp;— Pilar Layanan</p>
             <h2 class="h2" id="pilar-title">Pilar kerja untuk praktik perancah yang <em>aman</em> dan <em>terukur</em>.</h2>
           </div>
           <p class="home-pilar__aside">Dari pengembangan kompetensi hingga verifikasi keanggotaan&nbsp;— layanan yang dirancang untuk mengangkat mutu dan keselamatan pekerjaan perancah.</p>
@@ -156,7 +171,7 @@
       <div class="container">
         <header class="section-head" data-reveal>
           <div class="section-head__text">
-            <p class="eyebrow">03&nbsp;— Produk Pengetahuan</p>
+            <p class="eyebrow" data-sec="Produk Pengetahuan">04&nbsp;— Produk Pengetahuan</p>
             <h2 class="h2" id="pk-title">Rujukan teknis yang <em>tersusun</em> untuk kerja yang <em>tertib</em>.</h2>
           </div>
           <p class="home-pk__aside">Standar, <span lang="en">code of practice</span>, peraturan perundangan, petunjuk teknis, hingga modul dan panduan pelatihan&nbsp;— dihimpun dalam satu pustaka bagi anggota PPAPI.</p>
@@ -179,7 +194,7 @@
       <div class="container">
         <header class="section-head" data-reveal>
           <div class="section-head__text">
-            <p class="eyebrow">04&nbsp;— Aplikasi Anggota</p>
+            <p class="eyebrow" data-sec="Aplikasi Anggota">05&nbsp;— Aplikasi Anggota</p>
             <h2 class="h2" id="apps-title">Rencanakan, hitung, dan periksa&nbsp;— <em>sebelum</em> naik ke perancah.</h2>
           </div>
           <p class="home-apps__lead" id="apps-lead">Dua aplikasi milik PPAPI menjadi aset anggota dan terpadu di portal ini: perencanaan dan analisis struktur perancah tubular, serta simulator urutan pemasangan perancah <span lang="en">tube &amp; coupler</span>.</p>
@@ -197,32 +212,19 @@
       </div>
     </section>
 
-    <!-- ===================== 7. KABAR TERKINI ===================== -->
+    <!-- ===================== 7. KABAR TERKINI (berita selebar halaman) ===================== -->
     <section class="section home-news" id="kabar" aria-labelledby="news-title">
       <div class="container">
         <header class="section-head" data-reveal>
           <div class="section-head__text">
-            <p class="eyebrow">05&nbsp;— Kabar Terkini</p>
-            <h2 class="h2" id="news-title">Berita dan <em>agenda</em> perkumpulan.</h2>
+            <p class="eyebrow" data-sec="Kabar Terkini">06&nbsp;— Kabar Terkini</p>
+            <h2 class="h2" id="news-title">Kabar dan <em>wawasan</em> dari perkumpulan.</h2>
           </div>
           <a class="btn btn--link" href="berita.html"><span>Semua berita</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
         </header>
 
         <div class="home-news__layout">
           <div class="home-news__list" id="news-list"></div>
-
-          <section class="card card--dark home-agenda" aria-labelledby="agenda-title" data-reveal="right">
-            <div class="home-agenda__head">
-              <p class="home-agenda__label"><span data-icon="calendar" data-icon-size="18"></span><span>Agenda</span></p>
-              <h3 class="home-agenda__title" id="agenda-title">Agenda Terdekat</h3>
-            </div>
-            <div class="home-agenda__list" id="agenda-list"></div>
-            <div class="home-agenda__foot">
-              <p class="home-agenda__count" id="agenda-count" hidden></p>
-              <a class="btn btn--link" href="agenda.html"><span>Semua agenda</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>
-            </div>
-            <div class="home-agenda__scaffold" data-scaffold data-cols="4" data-rows="2" data-nodes="false"></div>
-          </section>
         </div>
       </div>
     </section>
@@ -232,7 +234,7 @@
       <div class="container">
         <div class="split split--wide-right split--top home-reg__split">
           <div class="home-reg__intro" data-reveal>
-            <p class="eyebrow">06&nbsp;— Regulasi &amp; Standar</p>
+            <p class="eyebrow" data-sec="Regulasi &amp; Standar">07&nbsp;— Regulasi &amp; Standar</p>
             <h2 class="h2" id="reg-title">Bekerja di atas <em>dasar hukum</em> yang jelas.</h2>
             <p class="home-reg__text" id="reg-text">Pustaka regulasi memuat peraturan perundang-undangan, SNI, dan standar internasional yang relevan dengan pekerjaan perancah&nbsp;— ringkas dan bertaut ke naskah resmi.</p>
             <div class="home-reg__actions">
@@ -253,7 +255,7 @@
       <div class="container">
         <header class="section-head" data-reveal>
           <div class="section-head__text">
-            <p class="eyebrow">07&nbsp;— Galeri</p>
+            <p class="eyebrow" data-sec="Galeri">08&nbsp;— Galeri</p>
             <h2 class="h2" id="gallery-title">Struktur, ketinggian, dan <em>ketelitian</em>.</h2>
           </div>
           <p class="home-gallery__aside">Perancah hadir di balik fasad gedung, panggung pertunjukan, hingga bangunan bersejarah&nbsp;— dan setiap sambungannya menuntut ketelitian.</p>
@@ -305,7 +307,6 @@
   <script src="assets/js/config.js" defer></script>
   <script src="assets/data/organisasi.js" defer></script>
   <script src="assets/data/berita.js" defer></script>
-  <script src="assets/data/agenda.js" defer></script>
   <script src="assets/data/regulasi.js" defer></script>
   <script src="assets/data/pustaka.js" defer></script>
   <script src="assets/js/core.js" defer></script>

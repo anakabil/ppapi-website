@@ -10,6 +10,8 @@
        events/{id}/participants/{uid}      pendaftaran peserta
        events/{id}/attendance/{uid}        daftar hadir (waktu server)
        events/{id}/assets/certificate      desain sertifikat (latar data URL ≤ 900 KB + tata letak)
+       events/{id}/assets/flyer            flyer kegiatan (JPEG data URL ≤ 900 KB; publik bila kegiatan terbit;
+                                           events/{id}.flyer = true menandai adanya flyer)
        certificates/{nomor}                data terbatas untuk verifikasi publik (sertifikat.html)
      Aturan: firestore.rules, blok KEGIATAN (jendela daftar hadir diperiksa
      dengan request.time terhadap hadirBuka/hadirTutup yang tersimpan).
@@ -49,12 +51,14 @@
   var JSPDF_SRI = 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==';
 
   var K_EVENTS = 'ppapi_events', K_PRIV = 'ppapi_event_private', K_PART = 'ppapi_event_participants_',
-    K_ATT = 'ppapi_event_attendance_', K_DESIGN = 'ppapi_event_design_', K_CERTS = 'ppapi_certificates', K_AUDIT = 'ppapi_audit_log';
+    K_ATT = 'ppapi_event_attendance_', K_DESIGN = 'ppapi_event_design_', K_CERTS = 'ppapi_certificates', K_AUDIT = 'ppapi_audit_log',
+    K_FLYER = 'ppapi_event_flyer_';
 
   var AUDIT_LABELS = {
     'kegiatan.disimpan': 'Menyimpan kegiatan',
     'kegiatan.dihapus': 'Menghapus kegiatan',
     'kegiatan.desain': 'Menyimpan desain sertifikat',
+    'kegiatan.flyer': 'Memperbarui flyer kegiatan',
     'kegiatan.peserta-dihapus': 'Menghapus peserta kegiatan',
     'kegiatan.hadir-ditandai': 'Menandai kehadiran peserta',
     'sertifikat.dicabut': 'Mencabut sertifikat',
@@ -222,6 +226,7 @@
       tahun: int(raw.tahun) || wib(selesai).y,
       sertSeq: int(raw.sertSeq),
       status: raw.status === 'terbit' ? 'terbit' : 'draf',
+      flyer: raw.flyer === true,
       hadirBuka: msOf(raw.hadirBuka), hadirTutup: msOf(raw.hadirTutup),
       createdAt: msOf(raw.createdAt), updatedAt: msOf(raw.updatedAt)
     };
@@ -368,7 +373,7 @@
       id: ev.id, judul: ev.judul, jenis: ev.jenis, mulai: dateIso(ev.mulai), selesai: dateIso(ev.selesai),
       waktu: same ? fmtTime(ev.mulai) + ' – ' + fmtTime(ev.selesai) + ' WIB' : fmtTime(ev.mulai) + ' WIB',
       lokasi: ev.lokasi || (ev.mode === 'Daring' ? 'Daring' : ''), mode: ev.mode, kuota: ev.kuota || '',
-      deskripsi: ev.deskripsi, tautanDaftar: ev.tautanDaftar, contoh: false, kegiatan: true, akses: ev.akses
+      deskripsi: ev.deskripsi, tautanDaftar: ev.tautanDaftar, contoh: false, kegiatan: true, akses: ev.akses, flyer: ev.flyer
     };
   }
   async function asAgendaItems() {
@@ -657,6 +662,33 @@
     }
   }
 
+  /* ---- flyer kegiatan ---- */
+  var FLYER_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/;
+  var flyerCache = {};   /* id → Promise<{img, w, h}|null>, dikosongkan saat admin mengubah flyer */
+  function normFlyer(raw) {
+    if (!raw || typeof raw.img !== 'string' || !FLYER_RE.test(raw.img) || raw.img.length > LIMITS.designChars) return null;
+    return { img: raw.img, w: int(raw.w), h: int(raw.h) };
+  }
+  /** Flyer kegiatan (null bila tidak ada). Publik untuk kegiatan terbit; admin untuk semua kegiatan. */
+  function getFlyer(id) {
+    id = str(id, 120);
+    if (!id) return Promise.resolve(null);
+    if (!flyerCache[id]) {
+      flyerCache[id] = (async function () {
+        if (mode() === 'local') return normFlyer(lsGet(K_FLYER + id, null));
+        var f = await fx();
+        try {
+          var snap = await f.db.collection('events').doc(id).collection('assets').doc('flyer').get();
+          return normFlyer(snap.exists ? snap.data() : null);
+        } catch (e) {
+          if (e && /permission-denied/.test(e.code || '')) return null;
+          throw mapErr(e);
+        }
+      })().catch(function (e) { delete flyerCache[id]; throw e; });
+    }
+    return flyerCache[id];
+  }
+
   /* ---- jsPDF (dimuat saat dibutuhkan, dengan SRI) ---- */
   var jspdfLoading = null;
   function ensureJsPDF() {
@@ -814,7 +846,7 @@
   }
   async function compressImage(file, o) {
     o = o || {};
-    if (!file || !/^image\/(png|jpeg)$/.test(file.type || '')) throw kErr('kegiatan/gambar', 'Gunakan berkas PNG atau JPEG.');
+    if (!file || !(o.webp ? /^image\/(png|jpeg|webp)$/ : /^image\/(png|jpeg)$/).test(file.type || '')) throw kErr('kegiatan/gambar', o.webp ? 'Gunakan berkas JPG, PNG, atau WebP.' : 'Gunakan berkas PNG atau JPEG.');
     if (file.size > 20 * 1024 * 1024) throw kErr('kegiatan/gambar', 'Ukuran berkas terlalu besar (maksimal 20 MB sebelum dikompresi).');
     var max = o.maxChars || LIMITS.designChars;
     var li = await loadImage(file), img = li.img;
@@ -1042,13 +1074,13 @@
     if (mode() === 'local') {
       var all = lsMap(K_EVENTS); delete all[id]; lsSet(K_EVENTS, all);
       var priv = lsMap(K_PRIV); delete priv[id]; lsSet(K_PRIV, priv);
-      lsRemove(K_PART + id); lsRemove(K_ATT + id); lsRemove(K_DESIGN + id);
+      lsRemove(K_PART + id); lsRemove(K_ATT + id); lsRemove(K_DESIGN + id); lsRemove(K_FLYER + id);
     } else {
       var f = await fx(), ref = f.db.collection('events').doc(id);
       try {
         var r = await Promise.all([ref.collection('participants').get(), ref.collection('attendance').get()]);
         var refs = r[0].docs.concat(r[1].docs).map(function (s) { return s.ref; });
-        refs.push(ref.collection('private').doc('ruang'), ref.collection('assets').doc('certificate'));
+        refs.push(ref.collection('private').doc('ruang'), ref.collection('assets').doc('certificate'), ref.collection('assets').doc('flyer'));
         for (var i = 0; i < refs.length; i += 400) {
           var b = f.db.batch();
           refs.slice(i, i + 400).forEach(function (x) { b.delete(x); });
@@ -1057,7 +1089,7 @@
         await ref.delete();
       } catch (e) { throw mapErr(e); }
     }
-    listCache = null;
+    listCache = null; delete flyerCache[id];
     await audit(adm, 'kegiatan.dihapus', id, ev ? ev.judul : id, 'Sertifikat yang sudah terbit tetap dapat diverifikasi.');
     return true;
   }
@@ -1076,6 +1108,35 @@
     var ev = await get(id);
     await audit(adm, 'kegiatan.desain', id, ev ? ev.judul : id, n.bg ? 'Desain unggahan' : 'Templat bawaan');
     return getDesign(id);
+  }
+  /** Simpan flyer dari berkas gambar (dikompresi ke JPEG ≤ 900 KB, sisi terpanjang ≤ 1600 px),
+      atau hapus flyer bila file = null. Menandai events/{id}.flyer agar daftar tahu tanpa membaca gambar. */
+  async function adminSaveFlyer(id, file) {
+    var adm = await requireAdmin();
+    var ev = await adminGet(id);
+    if (!ev) throw kErr('kegiatan/not-found', 'Kegiatan tidak ditemukan. Simpan kegiatan terlebih dahulu.');
+    var r = file ? await compressImage(file, { maxSide: 1600, webp: true }) : null;
+    var data = r ? { img: r.dataUrl, w: r.w, h: r.h } : null;
+    if (mode() === 'local') {
+      if (data) {
+        try { w.localStorage.setItem(K_FLYER + id, JSON.stringify(Object.assign({}, data, { updatedAt: new Date().toISOString(), updatedBy: adm.uid }))); }
+        catch (e) { throw kErr('kegiatan/gambar', 'Penyimpanan peramban penuh. Hapus flyer kegiatan lain atau gunakan gambar yang lebih kecil.'); }
+      } else lsRemove(K_FLYER + id);
+      var all = lsMap(K_EVENTS);
+      if (all[id]) { all[id].flyer = !!data; all[id].updatedAt = new Date().toISOString(); all[id].updatedBy = adm.uid; lsSet(K_EVENTS, all); }
+    } else {
+      var f = await fx(), ref = f.db.collection('events').doc(id);
+      try {
+        var batch = f.db.batch();
+        if (data) batch.set(ref.collection('assets').doc('flyer'), Object.assign({}, data, { updatedAt: serverTs(f), updatedBy: adm.uid }));
+        else batch.delete(ref.collection('assets').doc('flyer'));
+        batch.update(ref, { flyer: !!data, updatedAt: serverTs(f), updatedBy: adm.uid });
+        await batch.commit();
+      } catch (e) { throw mapErr(e); }
+    }
+    listCache = null; delete flyerCache[id];
+    await audit(adm, 'kegiatan.flyer', id, ev.judul, data ? 'Flyer diunggah (' + data.w + '×' + data.h + ' px)' : 'Flyer dihapus');
+    return data;
   }
   async function adminCertificates(id) {
     await requireAdmin();
@@ -1380,7 +1441,7 @@
     FIELD_KEYS: FIELD_KEYS.slice(), FIELD_LABEL: Object.assign({}, FIELD_LABEL), PHASE_LABEL: Object.assign({}, PHASE_LABEL),
     AUDIT_LABELS: Object.assign({}, AUDIT_LABELS), DEFAULT_STATIC: clone(DEFAULT_STATIC),
     /* publik */
-    listPublished: listPublished, get: get, asAgendaItems: asAgendaItems, toAgendaItem: toAgendaItem,
+    listPublished: listPublished, get: get, getFlyer: getFlyer, asAgendaItems: asAgendaItems, toAgendaItem: toAgendaItem,
     /* peserta */
     eligibility: eligibility, myRegistration: myRegistration, myAttendance: myAttendance, myStatus: myStatus, myEvents: myEvents,
     register: register, updateName: updateName, cancel: cancel, meetingInfo: meetingInfo, attend: attend,
@@ -1398,7 +1459,7 @@
       list: adminList, get: adminGet, save: adminSave, setStatus: adminSetStatus, remove: adminRemove,
       participants: adminParticipants, markAttendance: adminMarkAttendance, removeParticipant: adminRemoveParticipant,
       getDesign: function (id) { return requireAdmin().then(function () { return getDesign(id); }); },
-      saveDesign: adminSaveDesign, certificates: adminCertificates, setCertificateStatus: adminSetCertificateStatus,
+      saveDesign: adminSaveDesign, saveFlyer: adminSaveFlyer, certificates: adminCertificates, setCertificateStatus: adminSetCertificateStatus,
       samplePdf: adminSamplePdf, participantsCsv: participantsCsv
     }
   };

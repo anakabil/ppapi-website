@@ -170,3 +170,18 @@
 }
 @media (prefers-reduced-motion: reduce) { .kga-field { transition: none; } }
 @media print { .kg-step__actions, .kg-panel__live { display: none !important; } }
+
+/* ---------- Flyer kegiatan (Konsol Admin → Kelola → Flyer) ---------- */
+.kga-flyer { display: grid; gap: 20px; align-items: start; }
+@media (min-width: 720px) { .kga-flyer { grid-template-columns: minmax(0, 260px) minmax(0, 1fr); } }
+.kga-flyer__preview { margin: 0; }
+.kga-flyer__preview img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: var(--surface); }
+.kga-flyer__preview figcaption { margin-top: 6px; }
+.kga-flyer__empty {
+  display: grid; place-items: center; gap: 10px; aspect-ratio: 4 / 5; padding: 20px; text-align: center;
+  color: var(--muted); font-size: .88rem; border: 1px dashed var(--line-strong); background: var(--surface);
+}
+.kga-flyer__side { display: grid; gap: 14px; }
+.kga-flyer__pick { position: relative; cursor: pointer; }
+.kga-flyer__pick:focus-within { outline: 2px solid var(--text); outline-offset: 2px; }
+.kga-flyer__pick.is-loading { opacity: .6; pointer-events: none; }

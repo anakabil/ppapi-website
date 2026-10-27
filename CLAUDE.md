@@ -45,6 +45,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - **Kode Etik v1.0** (disusun 24-10-2026 atas permintaan klien; berlaku, nomor/tanggal keputusan Pengurus menyusul di
   `assets/data/kode-etik.js` → `penetapan`). Halaman `site/kode-etik.html`, dirender oleh `assets/js/pages/anggaran-dasar.js`
   (body `data-doc`). Rujukan APA 7 + sitasi dalam teks di bagian Dasar Penyusunan.
+- Beranda (27-10-2026): bagian **Kegiatan Terbaru** (setelah Tentang; sorotan + flyer, tersembunyi bila tak ada kegiatan
+  terbit; nomor bagian dihitung ulang via `data-sec`), kartu Agenda Terdekat dihapus, Berita selebar halaman (4 berita).
+  Flyer kegiatan: Konsol Admin › Kegiatan › Kelola › Flyer → `events/{id}/assets/flyer` (JPEG ≤ 900 KB) + `events/{id}.flyer`.
 - Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
@@ -55,7 +58,8 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   `mail-ppapi-or-id.dkim2._domainkey.firebasemail.com`; lalu Verify di Firebase → Authentication → Templates.
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
-- **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus dari daftar kategori).
+- **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; tanpa publish,
+  unggah flyer di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan
   KEP-74/PPK/XII/2013, jawaban 11 pertanyaan Komite Teknis.

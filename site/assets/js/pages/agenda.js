@@ -605,6 +605,7 @@
               '<div class="event-row__meta">' + modeBadge(a) + statusBadge + U.contohBadge(a) + '</div>' +
             '</div>' +
           '</div>' +
+          (kg && kg.flyer ? '<figure class="agenda-modal__flyer" data-agenda-flyer aria-busy="true"></figure>' : '') +
           (a.deskripsi ? '<p class="agenda-modal__desc">' + h(a.deskripsi) + '</p>' : '') +
           '<dl class="kv kv--stacked agenda-modal__facts">' +
             (a.waktu ? '<div class="kv__row"><dt>Waktu</dt><dd>' + h(a.waktu) + (multi ? ' <span class="agenda-modal__muted">· setiap hari</span>' : '') + '</dd></div>' : '') +
@@ -632,6 +633,13 @@
         onOpen: function (el) {
           var slot = kg && el.querySelector('[data-kg-slot]');
           if (slot) PPAPI.kegiatanUI.panel(slot, kg, { next: 'agenda.html?id=' + encodeURIComponent(a.id) });
+          /* flyer kegiatan (dimuat terpisah; dokumen gambar tidak ikut daftar kegiatan) */
+          var fl = kg && el.querySelector('[data-agenda-flyer]');
+          if (fl) PPAPI.kegiatan.getFlyer(kg.id).then(function (f) {
+            if (!f) { fl.remove(); return; }
+            fl.innerHTML = '<img src="' + h(f.img) + '" alt="Flyer ' + h(a.judul) + '" width="' + h(f.w) + '" height="' + h(f.h) + '" decoding="async">';
+            fl.removeAttribute('aria-busy');
+          }).catch(function () { fl.remove(); });
           el.addEventListener('click', function (e) {
             var b = e.target.closest('[data-agenda-ics]');
             if (b) { e.preventDefault(); downloadIcs(b.getAttribute('data-agenda-ics')); }
