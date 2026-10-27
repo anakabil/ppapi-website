@@ -18,9 +18,11 @@ import vm from 'node:vm';
 import { startServer, ROOT } from './qa-lib.mjs';
 
 const TERMS = /\b(demo|demonstrasi|trial|uji[\s-]?coba|contoh|preview|sampel|sample|dummy|lorem ipsum|placeholder)\b|Nama Pengurus|PT Contoh|contoh\.id|example\.com|ppapi\.demo/i;
-/* Artikel berita (isinya dapat disunting admin di Firestore): "contoh" dan "sampel" adalah kata baku yang wajar
-   dalam tulisan ("Contoh paling jelas datang dari …"), jadi di halaman artikel hanya penanda konten demo yang
-   dilarang: "(Contoh)", "Data contoh", PT Contoh, contoh.id, dan seterusnya (2026-10-24). */
+/* Halaman yang menampilkan tulisan kelolaan admin di Firestore (artikel berita; deskripsi kegiatan dan berita di
+   Beranda, Agenda, dan daftar Berita): "contoh" dan "sampel" adalah kata baku yang wajar dalam tulisan ("Contoh paling
+   jelas datang dari …", "Pembahasan contoh kegagalan di lapangan"), jadi di halaman tersebut hanya penanda konten demo
+   yang dilarang: "(Contoh)", "Data contoh", PT Contoh, contoh.id, dan seterusnya (2026-10-24, diperluas 2026-10-27).
+   Lencana Contoh, pita demo, dan catatan demo tetap diperiksa di semua halaman. */
 const TERMS_ARTIKEL = /\b(demo|demonstrasi|trial|uji[\s-]?coba|preview|sample|dummy|lorem ipsum|placeholder)\b|\(contoh\)|data contoh|konten contoh|Nama Pengurus|PT Contoh|contoh\.id|example\.com|ppapi\.demo/i;
 
 const SB = { window: {} }; SB.PPAPI_DATA = SB.window.PPAPI_DATA = {}; vm.createContext(SB);
@@ -71,7 +73,7 @@ try {
           demoNote: [...document.querySelectorAll('[data-demo-note], [data-demo-admin], [data-demo-only]')].some(e => !e.hidden && vis(e)),
           contohBadges: [...document.querySelectorAll('.badge--contoh')].filter(vis).length,
         };
-      }, (/^berita\.html\?id=/.test(t) ? TERMS_ARTIKEL : TERMS).source).catch(e => ({ mode: '(evaluate failed: ' + e.message + ')', hits: [], ribbon: false, demoNote: false, contohBadges: 0 }));
+      }, (/^(berita\.html|agenda\.html|index\.html)/.test(t) ? TERMS_ARTIKEL : TERMS).source).catch(e => ({ mode: '(evaluate failed: ' + e.message + ')', hits: [], ribbon: false, demoNote: false, contohBadges: 0 }));
       const tag = `${vp.name} ${t}`;
       ok(r.mode === 'firebase', `${tag}: Mode Firebase`, r.mode);
       ok(r.hits.length === 0, `${tag}: no demo/trial/contoh/preview wording in visible text`, r.hits);
