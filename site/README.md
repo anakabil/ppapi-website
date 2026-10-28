@@ -457,7 +457,7 @@ Prinsip: setiap pihak hanya mendapat akses seminimal mungkin.
 
 | Koleksi | Baca | Tulis |
 | --- | --- | --- |
-| `members/{uid}` | pemilik akun, admin | Pemilik: hanya profil (nama, kontak, profil, kompetensi, sertifikat; email hanya boleh email akun yang dipakai masuk **dan sudah terverifikasi**) dan formulir pendaftaran, dengan perubahan status terbatas: **Draf/Perlu Perbaikan/Ditolak → Menunggu Verifikasi** (mengajukan formulir lengkap: kategori, nama, ketiga pernyataan, nama terang), **Menunggu Verifikasi → Draf** (menarik), **Aktif kedaluwarsa (≤ 60 hari)/Nonaktif → Menunggu Verifikasi** (perpanjangan). Selama diverifikasi, formulir dan data yang diperiksa (nama, HP, foto, profil, kompetensi, sertifikat) terkunci. Setelah keanggotaan pernah disetujui, nama lengkap tidak dapat diubah anggota. Kategori yang dapat diajukan sendiri: Praktisi, Ahli, Mitra Korporat (Kehormatan hanya bagi pemegangnya saat perpanjangan). Waktu pengajuan dan pembaruan ditetapkan server (tidak dapat dipilih anggota). Kolom sekretariat (`kta`, `memberType`, `validUntil`, `approvedAt`, `approvedBy`, `review`, `joinedAt`, `createdAt`) tidak dapat diubah anggota. Akun baru selalu Draf tanpa KTA. Admin: semua. Hapus: ditolak. |
+| `members/{uid}` | pemilik akun, admin | Pemilik: hanya profil (nama, kontak, profil, kompetensi, sertifikat; email hanya boleh email akun yang dipakai masuk **dan sudah terverifikasi**) dan formulir pendaftaran, dengan perubahan status terbatas: **Draf/Perlu Perbaikan/Ditolak → Menunggu Verifikasi** (mengajukan formulir lengkap: kategori, nama, ketiga pernyataan, nama terang), **Menunggu Verifikasi → Draf** (menarik), **Aktif kedaluwarsa (≤ 60 hari)/Nonaktif → Menunggu Verifikasi** (perpanjangan). Selama diverifikasi, formulir dan data yang diperiksa (nama, HP, foto, profil, kompetensi, sertifikat) terkunci. Setelah keanggotaan pernah disetujui, nama lengkap tidak dapat diubah anggota. Kategori yang dapat diajukan sendiri: Praktisi, Ahli (Kehormatan hanya bagi pemegangnya saat perpanjangan). Waktu pengajuan dan pembaruan ditetapkan server (tidak dapat dipilih anggota). Kolom sekretariat (`kta`, `memberType`, `validUntil`, `approvedAt`, `approvedBy`, `review`, `joinedAt`, `createdAt`) tidak dapat diubah anggota. Akun baru selalu Draf tanpa KTA. Admin: semua. Hapus: ditolak. |
 | `member_photos/{uid}` | pemilik akun, admin | pemilik (hanya saat formulir boleh diubah; JPEG ≤ 120 KB), admin |
 | `admins/{uid}` | diri sendiri, admin | admin |
 | `registry/{kta}` | siapa saja: satu nomor KTA, atau pencarian maksimal 20 hasil per permintaan (daftar tidak dapat diunduh sekaligus) | admin (hanya kolom publik terbatas) |
@@ -475,6 +475,7 @@ Prinsip: setiap pihak hanya mendapat akses seminimal mungkin.
 | `events/{id}/attendance/{uid}` | pemilik, admin | peserta terdaftar, **hanya** antara 30 menit sebelum dan 3 jam sesudah kegiatan selesai (waktu server); admin |
 | `events/{id}/assets/certificate` | admin, peserta yang sudah hadir | admin |
 | `events/{id}/assets/flyer` | publik bila kegiatan terbit; admin | admin (JPEG ≤ 900 KB) |
+| `cert_settings/penandatangan` | akun yang masuk | admin (nama, jabatan, PNG tanda tangan ≤ 300 KB) |
 | `certificates/{nomor}` | siapa saja per nomor (daftar: admin) | dibuat peserta yang hadir, sekali; cabut/pulihkan: admin |
 | `products/{id}`, `product_media/{id}` | siapa saja (produk **aktif**); admin: semua | admin |
 | `product_files/{id}` | admin, pembeli yang memiliki hak unduh | admin |
@@ -661,8 +662,11 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   atau memakai templat bawaan; sertifikat dapat dicabut dan dipulihkan.
 - **Templat bawaan** (2026-10-28): latar perancah pudar, logo PPAPI sejajar logo INOSHPRO ("a member
   of"), judul "Sertifikat", baris tanggal kegiatan · penanda tangan · nomor sertifikat, dan QR verifikasi.
-  Penanda tangan diatur di `assets/js/config.js` › `sertifikat` (nama, jabatan, dan opsional berkas PNG
-  tanda tangan transparan). Gambar templat: `assets/img/sertifikat/`.
+  Penanda tangan diatur di Konsol Admin › Kegiatan › **Penanda Tangan Sertifikat** (juga tombol "Ubah
+  penanda tangan" di tab Sertifikat): nama, jabatan, dan foto/pindaian tanda tangan. Latar kertas dihapus
+  otomatis, tinta dipertegas, lalu disimpan sebagai PNG ≤ 300 KB di `cert_settings/penandatangan`
+  (hanya dapat dibaca akun yang masuk, tidak ada di repositori publik). Nilai bawaan bila belum diatur:
+  `assets/js/config.js` › `sertifikat`. Gambar templat: `assets/img/sertifikat/`.
 - Panel kelola kegiatan juga menyediakan daftar peserta (ekspor CSV, tandai hadir manual).
 - PDF dibuat di peramban dengan jsPDF 2.5.1 dari cdnjs (dengan SRI).
 

@@ -194,3 +194,10 @@
 .kga-stage__img { position: absolute; transform: translate(-50%, -50%); height: auto; pointer-events: none; }
 .kga-stage__line { position: absolute; height: 0; box-sizing: border-box; transform: translateY(-50%); pointer-events: none; }
 .kga-stage__static.is-wrap { white-space: normal; }
+/* penanda tangan sertifikat (Konsol Admin) */
+.kga-sign { display: grid; gap: 14px; }
+.kga-sign__box { border: 1px solid var(--line); background: #f8f7f3; padding: 18px; display: grid; place-items: center; min-height: 150px; }
+.kga-sign__paper { margin: 0; display: grid; justify-items: center; width: min(100%, 320px); }
+.kga-sign__paper img { display: block; max-width: 100%; max-height: 120px; height: auto; }
+.kga-sign__line { display: block; width: 100%; border-top: 1px solid #9aa0a6; margin-top: -6px; }
+.kga-sign__empty { display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: .9rem; text-align: center; }

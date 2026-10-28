@@ -479,8 +479,64 @@
   /* ------------------------------------------------------------ perancang sertifikat */
   function cq(pt, design) { return (pt * 0.352778 / K().pageSize(design).w * 100).toFixed(3) + 'cqw'; }
   function fontCss(f) { return f === 'sans' ? 'Helvetica, Arial, sans-serif' : "'Times New Roman', Times, serif"; }
+  /* ---- penanda tangan sertifikat (templat bawaan, berlaku untuk semua kegiatan) ---- */
+  async function openSigner(after) {
+    var cur;
+    try { cur = await K().getSigner({ fresh: true }); } catch (err) { ui().toast(err.message, { type: 'error' }); return; }
+    var st = { img: cur.ttd ? { ttd: cur.ttd, ttdW: cur.ttdW, ttdH: cur.ttdH } : null, changed: false };
+    function preview() {
+      return st.img
+        ? '<figure class="kga-sign__paper"><img src="' + h(st.img.ttd) + '" alt="Pratinjau tanda tangan"><span class="kga-sign__line" aria-hidden="true"></span></figure>'
+        : '<div class="kga-sign__empty">' + icon('edit', { size: 22 }) + '<p>Belum ada tanda tangan. Sertifikat hanya mencetak nama dan jabatan.</p></div>';
+    }
+    function actions() {
+      return '<label class="btn btn--ghost btn--sm kga-flyer__pick">' + btnIcon('upload') + '<span>' + (st.img ? 'Ganti Tanda Tangan' : 'Unggah Tanda Tangan') + '</span>' +
+        '<input class="sr-only" type="file" accept="image/jpeg,image/png,image/webp" data-kgs-file></label>' +
+        (st.img ? '<button type="button" class="btn btn--link btn--sm" data-kgs="remove">' + icon('trash', { size: 16 }) + '<span>Hapus Tanda Tangan</span></button>' : '');
+    }
+    var body = '<div class="form kga-sign">' +
+      '<p class="kga-hint">Dipakai pada templat sertifikat bawaan untuk semua kegiatan. Tanda tangan disimpan di basis data situs (bukan di berkas publik) dan hanya dapat dibaca oleh akun yang sudah masuk, sehingga gambarnya tidak dapat diunduh bebas dari internet.</p>' +
+      '<div class="form__row form__row--2">' +
+        field('kgs-nama', 'Nama penanda tangan', input('kgs-nama', 'text', cur.nama, { max: 120 }), { opt: true, hint: 'Kosongkan bila hanya jabatan yang dicetak.' }) +
+        field('kgs-jabatan', 'Jabatan', input('kgs-jabatan', 'text', cur.jabatan, { max: 120 }), {}) +
+      '</div>' +
+      '<div class="kga-sign__box" data-kgs-preview>' + preview() + '</div>' +
+      '<div class="cluster" data-kgs-actions>' + actions() + '</div>' +
+      '<p class="kga-hint">Unggah foto atau pindaian tanda tangan (JPG, PNG, atau WebP) bertinta gelap di atas kertas terang. Latar kertas dihapus otomatis, tinta dipertegas menjadi biru tua, dan tepi kosong dipangkas.</p>' +
+    '</div>';
+    ui().modal({
+      title: 'Penanda tangan sertifikat', eyebrow: 'Kegiatan', size: 'md', cls: 'kga-modal', body: body,
+      onOpen: function (el) {
+        function repaint() { el.querySelector('[data-kgs-preview]').innerHTML = preview(); el.querySelector('[data-kgs-actions]').innerHTML = actions(); }
+        el.addEventListener('change', async function (e) {
+          var inp = e.target.closest('[data-kgs-file]');
+          if (!inp || !inp.files || !inp.files[0]) return;
+          try { st.img = await K().processSignature(inp.files[0]); st.changed = true; repaint(); }
+          catch (err) { ui().toast(err.message, { type: 'error' }); inp.value = ''; }
+        });
+        el.addEventListener('click', function (e) {
+          if (e.target.closest('[data-kgs="remove"]')) { st.img = null; st.changed = true; repaint(); }
+        });
+      },
+      actions: [
+        { label: 'Batal', variant: 'ghost' },
+        { label: 'Simpan', variant: 'primary', onClick: async function (close, ctx) {
+          var el = ctx.el;
+          try {
+            await K().admin.saveSigner({
+              nama: el.querySelector('#kgs-nama').value, jabatan: el.querySelector('#kgs-jabatan').value,
+              img: st.changed && st.img ? st.img : undefined, hapusTtd: st.changed && !st.img
+            });
+            ui().toast('Penanda tangan sertifikat disimpan.', { type: 'success' });
+            if (after) after();
+          } catch (err) { ui().toast(err.message || 'Gagal menyimpan.', { type: 'error' }); return false; }
+        } }
+      ]
+    });
+  }
+
   function mountDesigner(slot, ev) {
-    var design = null, sel = 'nama', dirty = false;
+    var design = null, sel = 'nama', dirty = false, signerNow = null;
     var sampleNo = 'PPAPI-SERT-' + ev.tahun + '-' + ev.kode + '-0001';
     var qrSvg = '';
     try { qrSvg = K().qr.svg(K().verifyUrl(sampleNo)); } catch (e) { qrSvg = ''; }
@@ -492,7 +548,7 @@
       /* templat bawaan: elemen yang sama dengan PDF (K().templateSpec) */
       var tpl = design.bg ? '<img class="kga-stage__bg" src="' + h(design.bg) + '" alt="">'
         : '<div class="kga-stage__tpl" aria-hidden="true">' +
-          K().templateSpec(design.orient).map(function (s) {
+          K().templateSpec(design.orient, signerNow).map(function (s) {
             if (s.k === 'img') return '<img class="kga-stage__img" src="' + h(s.src) + '" alt="" style="left:' + (s.x * 100) + '%;top:' + (s.y * 100) + '%;width:' + (s.w * 100) + '%' + (s.bg ? ';height:100%' : '') + '">';
             if (s.k === 'line' && s.y1 !== undefined) return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;top:' + (s.y1 * 100) + '%;height:' + ((s.y2 - s.y1) * 100) + '%;transform:none;border-left:1px solid ' + s.color + '"></span>';
             if (s.k === 'line') return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;width:' + ((s.x2 - s.x1) * 100) + '%;top:' + (s.y * 100) + '%;border-top:' + Math.max(1, s.lw * 2.4).toFixed(1) + 'px solid ' + s.color + '"></span>';
@@ -550,7 +606,8 @@
             '<div><h3 class="form__section-title mt-0">Kolom: ' + h(K().FIELD_LABEL[sel]) + '</h3>' + propsHtml() + '</div>' +
             '<div class="cluster"><button type="button" class="btn btn--primary btn--sm" data-kgd="save">' + icon('check', { size: 16 }) + '<span>Simpan Desain</span></button>' +
               '<button type="button" class="btn btn--ghost btn--sm" data-kgd="sample">' + icon('download', { size: 16 }) + '<span>Unduh PDF Pratinjau</span></button>' +
-              '<button type="button" class="btn btn--link btn--sm" data-kgd="reset"><span>Tata letak bawaan</span></button></div>' +
+              '<button type="button" class="btn btn--link btn--sm" data-kgd="reset"><span>Tata letak bawaan</span></button>' +
+              (design.bg ? '' : '<button type="button" class="btn btn--link btn--sm" data-kgd="signer"><span>Ubah penanda tangan</span></button>') + '</div>' +
             '<p class="kga-hint" data-kgd-state aria-live="polite">' + (dirty ? 'Ada perubahan yang belum disimpan.' : (design.updatedAt ? 'Tersimpan.' : 'Belum disimpan — peserta memakai tata letak bawaan.')) + '</p>' +
           '</div>' +
         '</div>';
@@ -647,6 +704,7 @@
       if (!b) return;
       var kind = b.getAttribute('data-kgd');
       if (kind === 'clear-bg') { design.bg = ''; design.bgW = 0; design.bgH = 0; markDirty(); paint(); return; }
+      if (kind === 'signer') { openSigner(function () { K().getSigner().then(function (sg) { signerNow = sg; refreshStage(); }); }); return; }
       if (kind === 'reset') { var bg = { bg: design.bg, bgW: design.bgW, bgH: design.bgH, orient: design.orient }; design = Object.assign(K().defaultDesign(design.orient), bg); markDirty(); paint(); return; }
       ui().setLoading(b, true, kind === 'save' ? 'Menyimpan…' : 'Menyiapkan PDF…');
       try {
@@ -663,7 +721,7 @@
         }
       } catch (err) { console.error(err); ui().toast(err.message || 'Gagal.', { type: 'error' }); if (b.isConnected) ui().setLoading(b, false); }
     });
-    api.ready = K().admin.getDesign(ev.id).then(function (x) { design = x; paint(); }, function (err) { design = K().defaultDesign(); paint(); ui().toast(err.message, { type: 'error' }); });
+    api.ready = Promise.all([K().admin.getDesign(ev.id), K().getSigner().catch(function () { return null; })]).then(function (r) { design = r[0]; signerNow = r[1]; paint(); }, function (err) { design = K().defaultDesign(); paint(); ui().toast(err.message, { type: 'error' }); });
     return api;
   }
 
@@ -680,6 +738,7 @@
             '<button type="button" class="search-box__clear" aria-label="Hapus pencarian"' + (S.q ? '' : ' hidden') + '>' + icon('close', { size: 16 }) + '</button></div></div>' +
           '<div class="filter-chips" role="group" aria-label="Saring status kegiatan" data-kga-chips></div>' +
         '</div>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-kga="signer">' + icon('edit', { size: 16 }) + '<span>Penanda Tangan Sertifikat</span></button>' +
         '<button type="button" class="btn btn--primary btn--sm" data-kga="new">' + icon('plus', { size: 16 }) + '<span>Tambah Kegiatan</span></button>' +
       '</div>' +
       '<p class="kga-count" data-kga-count aria-live="polite"></p>' +
@@ -694,6 +753,7 @@
         if (!b) return;
         var kind = b.getAttribute('data-kga'), id = b.getAttribute('data-id');
         if (kind === 'new') openForm(null, function (saved) { openManage(saved.id, 'sertifikat'); });
+        if (kind === 'signer') openSigner();
         else if (kind === 'edit') K().admin.get(id).then(function (ev) { openForm(ev); }, function (err) { ui().toast(err.message, { type: 'error' }); });
         else if (kind === 'manage') openManage(id);
       });

@@ -48,6 +48,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Beranda (27-10-2026): bagian **Kegiatan Terbaru** (setelah Tentang; sorotan + flyer, tersembunyi bila tak ada kegiatan
   terbit; nomor bagian dihitung ulang via `data-sec`), kartu Agenda Terdekat dihapus, Berita selebar halaman (4 berita).
   Flyer kegiatan: Konsol Admin › Kegiatan › Kelola › Flyer → `events/{id}/assets/flyer` (JPEG ≤ 900 KB) + `events/{id}.flyer`.
+- Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
+  Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
+  Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
 - Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
@@ -58,8 +61,8 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   `mail-ppapi-or-id.dkim2._domainkey.firebasemail.com`; lalu Verify di Firebase → Authentication → Templates.
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
-- **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; tanpa publish,
-  unggah flyer di Mode Firebase ditolak `permission-denied`).
+- **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; 28-10-2026:
+  `cert_settings` penanda tangan sertifikat; tanpa publish, unggah flyer/tanda tangan di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan
   KEP-74/PPK/XII/2013, jawaban 11 pertanyaan Komite Teknis.

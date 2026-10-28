@@ -10,6 +10,8 @@
        events/{id}/participants/{uid}      pendaftaran peserta
        events/{id}/attendance/{uid}        daftar hadir (waktu server)
        events/{id}/assets/certificate      desain sertifikat (latar data URL ≤ 900 KB + tata letak)
+       cert_settings/penandatangan         penanda tangan sertifikat templat bawaan (nama, jabatan, PNG tanda
+                                           tangan ≤ 300 KB); dibaca akun yang masuk, diubah admin
        events/{id}/assets/flyer            flyer kegiatan (JPEG data URL ≤ 900 KB; publik bila kegiatan terbit;
                                            events/{id}.flyer = true menandai adanya flyer)
        certificates/{nomor}                data terbatas untuk verifikasi publik (sertifikat.html)
@@ -52,13 +54,14 @@
 
   var K_EVENTS = 'ppapi_events', K_PRIV = 'ppapi_event_private', K_PART = 'ppapi_event_participants_',
     K_ATT = 'ppapi_event_attendance_', K_DESIGN = 'ppapi_event_design_', K_CERTS = 'ppapi_certificates', K_AUDIT = 'ppapi_audit_log',
-    K_FLYER = 'ppapi_event_flyer_';
+    K_FLYER = 'ppapi_event_flyer_', K_SIGNER = 'ppapi_cert_signer';
 
   var AUDIT_LABELS = {
     'kegiatan.disimpan': 'Menyimpan kegiatan',
     'kegiatan.dihapus': 'Menghapus kegiatan',
     'kegiatan.desain': 'Menyimpan desain sertifikat',
     'kegiatan.flyer': 'Memperbarui flyer kegiatan',
+    'sertifikat.penandatangan': 'Memperbarui penanda tangan sertifikat',
     'kegiatan.peserta-dihapus': 'Menghapus peserta kegiatan',
     'kegiatan.hadir-ditandai': 'Menandai kehadiran peserta',
     'sertifikat.dicabut': 'Mencabut sertifikat',
@@ -664,12 +667,95 @@
       k: 'img' (src, w, r = tinggi/lebar), 'text' (t, size pt, font serif|sans, style, color, spacing, w = lebar bungkus),
       'line' (x1, x2, y — atau y1, y2 untuk garis tegak — color, lw mm). Penanda tangan dari PPAPI.config.sertifikat. */
   var TPL_IMG = { bgL: 'assets/img/sertifikat/latar-lanskap.jpg', bgP: 'assets/img/sertifikat/latar-potret.jpg', ppapi: 'assets/img/sertifikat/logo-ppapi.png', inoshpro: 'assets/img/sertifikat/logo-inoshpro.png' };
+  /* penanda tangan bawaan dari config.js (dipakai bila Konsol Admin belum menyimpan pengaturan) */
   function signer() {
     var c = (PPAPI.config && PPAPI.config.sertifikat) || {};
-    return { nama: str(c.penandatangan, 120), jabatan: str(c.jabatan, 120) || 'Ketua Umum', ttd: str(c.tandaTangan, 300) };
+    return { nama: str(c.penandatangan, 120), jabatan: str(c.jabatan, 120) || 'Ketua Umum', ttd: str(c.tandaTangan, 300), ttdW: 5, ttdH: 2 };
   }
-  function templateSpec(orient) {
-    var sg = signer(), ink = '#22313a', soft = '#4a4f55', mute = '#6b6f75', gold = '#f2b705', rule = '#9aa0a6';
+  var SIGN_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/, SIGN_MAX = 307200;
+  function normSigner(raw) {
+    var b = signer();
+    if (!raw) return b;
+    var ttd = typeof raw.ttd === 'string' && SIGN_RE.test(raw.ttd) && raw.ttd.length <= SIGN_MAX ? raw.ttd : '';
+    return {
+      nama: raw.nama !== undefined ? str(raw.nama, 120) : b.nama,
+      jabatan: str(raw.jabatan, 120) || b.jabatan,
+      ttd: ttd, ttdW: ttd ? int(raw.ttdW) || 5 : 5, ttdH: ttd ? int(raw.ttdH) || 2 : 2,
+      stored: true, updatedAt: msOf(raw.updatedAt)
+    };
+  }
+  var signerCache = null;
+  /** Penanda tangan sertifikat: cert_settings/penandatangan (Mode Firebase, akun masuk) / localStorage (Mode Demo) → config.js */
+  function getSigner(o) {
+    if (o && o.fresh) signerCache = null;
+    if (!signerCache) {
+      signerCache = (async function () {
+        if (mode() === 'local') return normSigner(lsGet(K_SIGNER, null));
+        if (!me()) return normSigner(null);
+        var f = await fx();
+        try { var snap = await f.db.collection('cert_settings').doc('penandatangan').get(); return normSigner(snap.exists ? snap.data() : null); }
+        catch (e) { if (e && /permission-denied/.test(e.code || '')) return normSigner(null); throw mapErr(e); }
+      })().catch(function (e) { signerCache = null; throw e; });
+    }
+    return signerCache;
+  }
+  /** Berkas foto/pindaian tanda tangan → PNG transparan: latar terang dibuang, tinta dipertegas, tepi kosong dipangkas */
+  async function processSignature(file) {
+    if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type || '')) throw kErr('kegiatan/gambar', 'Gunakan berkas JPG, PNG, atau WebP.');
+    if (file.size > 10 * 1024 * 1024) throw kErr('kegiatan/gambar', 'Ukuran berkas terlalu besar (maksimal 10 MB).');
+    var li = await loadImage(file), img = li.img;
+    try {
+      var iw = img.naturalWidth, ih = img.naturalHeight, sc = Math.min(1, 1400 / Math.max(iw, ih));
+      var cw = Math.max(1, Math.round(iw * sc)), ch = Math.max(1, Math.round(ih * sc));
+      var cv = d.createElement('canvas'); cv.width = cw; cv.height = ch;
+      var ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, cw, ch);
+      var id = ctx.getImageData(0, 0, cw, ch), px = id.data;
+      /* ambang dari kecerahan latar (persentil terang) agar foto kertas keabu-abuan tetap bersih */
+      var hist = new Array(256).fill(0), n = cw * ch;
+      for (var i = 0; i < px.length; i += 4) hist[Math.round(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2])]++;
+      var acc = 0, paper = 255;
+      for (var v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= n * 0.5) { paper = v; break; } }
+      var hi = paper - 18, lo = Math.max(0, paper - 110), minX = cw, minY = ch, maxX = -1, maxY = -1;
+      for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) {
+        var k = (y * cw + x) * 4, lum = 0.299 * px[k] + 0.587 * px[k + 1] + 0.114 * px[k + 2];
+        var a = lum >= hi ? 0 : lum <= lo ? 1 : (hi - lum) / (hi - lo);
+        px[k] = 24; px[k + 1] = 34; px[k + 2] = 58; px[k + 3] = Math.round(a * 255);   /* tinta biru tua */
+        if (a > 0.25) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+      }
+      if (maxX < 0) throw kErr('kegiatan/gambar', 'Goresan tanda tangan tidak terdeteksi. Gunakan foto tanda tangan bertinta gelap di atas kertas terang.');
+      ctx.putImageData(id, 0, 0);
+      var pad = 8; minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad); maxX = Math.min(cw - 1, maxX + pad); maxY = Math.min(ch - 1, maxY + pad);
+      var tw = maxX - minX + 1, th = maxY - minY + 1, s2 = Math.min(1, 900 / tw, 420 / th);
+      var out = d.createElement('canvas'); out.width = Math.max(1, Math.round(tw * s2)); out.height = Math.max(1, Math.round(th * s2));
+      var o2 = out.getContext('2d'); o2.imageSmoothingQuality = 'high';
+      o2.drawImage(cv, minX, minY, tw, th, 0, 0, out.width, out.height);
+      var url = out.toDataURL('image/png');
+      if (url.length > SIGN_MAX) throw kErr('kegiatan/gambar', 'Tanda tangan terlalu rinci (lebih dari 300 KB). Gunakan pindaian yang lebih sederhana.');
+      return { ttd: url, ttdW: out.width, ttdH: out.height };
+    } finally { URL.revokeObjectURL(li.url); }
+  }
+  /** Simpan penanda tangan. input: { nama, jabatan, file?: File (ganti tanda tangan), hapusTtd?: true } */
+  async function adminSaveSigner(input) {
+    var adm = await requireAdmin();
+    input = input || {};
+    var cur = await getSigner({ fresh: true });
+    if (input.img && !(typeof input.img.ttd === 'string' && SIGN_RE.test(input.img.ttd) && input.img.ttd.length <= SIGN_MAX)) throw kErr('kegiatan/gambar', 'Gambar tanda tangan tidak valid.');
+    var img = input.img ? input.img : input.file ? await processSignature(input.file) : (input.hapusTtd ? { ttd: '', ttdW: 0, ttdH: 0 } : { ttd: cur.ttd, ttdW: cur.ttd ? cur.ttdW : 0, ttdH: cur.ttd ? cur.ttdH : 0 });
+    var data = { nama: str(input.nama !== undefined ? input.nama : cur.nama, 120), jabatan: str(input.jabatan !== undefined ? input.jabatan : cur.jabatan, 120) || 'Ketua Umum', ttd: img.ttd, ttdW: int(img.ttdW), ttdH: int(img.ttdH) };
+    if (mode() === 'local') {
+      try { w.localStorage.setItem(K_SIGNER, JSON.stringify(Object.assign({}, data, { updatedAt: new Date().toISOString(), updatedBy: adm.uid }))); }
+      catch (e) { throw kErr('kegiatan/gambar', 'Penyimpanan peramban penuh.'); }
+    } else {
+      var f = await fx();
+      try { await f.db.collection('cert_settings').doc('penandatangan').set(Object.assign({}, data, { updatedAt: serverTs(f), updatedBy: adm.uid })); }
+      catch (e) { throw mapErr(e); }
+    }
+    signerCache = null;
+    await audit(adm, 'sertifikat.penandatangan', 'penandatangan', data.nama || data.jabatan, data.ttd ? 'Dengan tanda tangan' : 'Tanpa tanda tangan');
+    return getSigner();
+  }
+  function templateSpec(orient, sgIn) {
+    var sg = sgIn || signer(), ink = '#22313a', soft = '#4a4f55', mute = '#6b6f75', gold = '#f2b705', rule = '#9aa0a6';
     var lbl = function (t, x, y) { return { k: 'text', t: t, x: x, y: y, size: 7.5, font: 'sans', style: 'bold', color: mute, spacing: 0.6 }; };
     if (orient === 'portrait') return [
       { k: 'img', src: TPL_IMG.bgP, x: 0.5, y: 0.5, w: 1, r: 297 / 210, bg: true },
@@ -686,7 +772,7 @@
       { k: 'text', t: 'yang diselenggarakan oleh Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)', x: 0.5, y: 0.538, size: 10.5, font: 'sans', style: 'normal', color: soft, w: 0.78 },
       { k: 'line', x1: 0.08, x2: 0.32, y: 0.642, color: rule, lw: 0.3 }, lbl('TANGGAL KEGIATAN', 0.2, 0.657),
       { k: 'line', x1: 0.68, x2: 0.92, y: 0.642, color: rule, lw: 0.3 }, lbl('NOMOR SERTIFIKAT', 0.8, 0.657),
-      sg.ttd ? { k: 'img', src: sg.ttd, x: 0.5, y: 0.6, w: 0.2, r: 0.4 } : null,
+      sg.ttd ? sigImg(sg, 0.5, 0.642, 210, 297, 0.22, 22) : null,
       { k: 'line', x1: 0.38, x2: 0.62, y: 0.642, color: rule, lw: 0.3 },
       sg.nama ? { k: 'text', t: sg.nama, x: 0.5, y: 0.657, size: 9.5, font: 'sans', style: 'bold', color: ink } : null,
       lbl(sg.jabatan.toUpperCase(), 0.5, sg.nama ? 0.672 : 0.657),
@@ -707,7 +793,7 @@
       { k: 'text', t: 'atas partisipasinya sebagai peserta dalam', x: 0.5, y: 0.548, size: 12, font: 'sans', style: 'normal', color: soft },
       { k: 'text', t: 'yang diselenggarakan oleh Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)', x: 0.5, y: 0.678, size: 11, font: 'sans', style: 'normal', color: soft },
       { k: 'line', x1: 0.23, x2: 0.39, y: 0.815, color: rule, lw: 0.3 }, lbl('TANGGAL KEGIATAN', 0.31, 0.838),
-      sg.ttd ? { k: 'img', src: sg.ttd, x: 0.5, y: 0.775, w: 0.13, r: 0.4 } : null,
+      sg.ttd ? sigImg(sg, 0.5, 0.815, 297, 210, 0.15, 19) : null,
       { k: 'line', x1: 0.42, x2: 0.58, y: 0.815, color: rule, lw: 0.3 },
       sg.nama ? { k: 'text', t: sg.nama, x: 0.5, y: 0.838, size: 10, font: 'sans', style: 'bold', color: ink } : null,
       lbl(sg.jabatan.toUpperCase(), 0.5, sg.nama ? 0.862 : 0.838),
@@ -716,12 +802,19 @@
       { k: 'text', t: 'Keaslian sertifikat dapat diperiksa di ppapi.or.id/sertifikat.html', x: 0.5, y: 0.93, size: 7, font: 'sans', style: 'normal', color: mute }
     ].filter(Boolean);
   }
+  /* tanda tangan duduk di atas garis (lineY): lebar relatif wRel, tinggi dibatasi maxHmm */
+  function sigImg(sg, x, lineY, Wmm, Hmm, wRel, maxHmm) {
+    var r = (sg.ttdH || 2) / (sg.ttdW || 5), wmm = wRel * Wmm, hmm = wmm * r;
+    if (hmm > maxHmm) { hmm = maxHmm; wmm = hmm / r; }
+    return { k: 'img', src: sg.ttd, x: x, y: (lineY * Hmm - 0.6 - hmm / 2 + hmm * 0.18) / Hmm, w: wmm / Wmm, r: r, sign: true };
+  }
   /* teks tetap lama dipertahankan sebagai alias (dipakai uji lama); isinya kini dari templateSpec */
   var DEFAULT_STATIC = templateSpec('landscape').filter(function (e) { return e.k === 'text'; });
   var assetCache = {};
   function assetUrl(src) { return /^(data:|https?:)/.test(src) ? src : new URL(src, d.baseURI).href; }
   /** gambar templat → {data (data URL), type} (cache per sesi) */
   function loadAsset(src) {
+    if (/^data:image\//.test(src)) return Promise.resolve({ data: src, type: /^data:image\/png/.test(src) ? 'PNG' : 'JPEG' });
     if (!assetCache[src]) {
       assetCache[src] = fetch(assetUrl(src)).then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -801,7 +894,7 @@
       doc.addImage(design.bg, /^data:image\/png/.test(design.bg) ? 'PNG' : 'JPEG', 0, 0, W, H, undefined, 'FAST');
     } else {
       /* templat bawaan: latar perancah pudar, logo PPAPI & INOSHPRO, teks tetap, garis isian */
-      var spec = templateSpec(design.orient);
+      var spec = templateSpec(design.orient, await getSigner().catch(function () { return signer(); }));
       var imgs = await Promise.all(spec.map(function (e) { return e.k === 'img' ? loadAsset(e.src).catch(function (err) { if (e.bg || e.src === TPL_IMG.ppapi) throw err; return null; }) : null; }));
       spec.forEach(function (e, i) {
         if (e.k === 'img') {
@@ -1540,18 +1633,18 @@
     /* sertifikat */
     issueCertificate: issueCertificate, downloadCertificate: downloadCertificate, verify: verify, getDesign: getDesign,
     defaultDesign: defaultDesign, normDesign: normDesign, buildPdf: buildPdf, ensureJsPDF: ensureJsPDF, verifyUrl: verifyUrl,
-    certDisplay: certDisplay, certDocId: certDocId, compressImage: compressImage, pageSize: pageSize, fieldTexts: fieldTexts,
+    certDisplay: certDisplay, certDocId: certDocId, compressImage: compressImage, processSignature: processSignature, pageSize: pageSize, fieldTexts: fieldTexts,
     qr: qrCode,
     /* waktu & format */
     windowOf: windowOf, phaseOf: phaseOf, fromWib: fromWib, dateIso: dateIso, timeHm: timeHm, fmtTime: fmtTime, fmtDate: fmtDate,
     fmtDateTime: fmtDateTime, fmtSchedule: fmtSchedule, dateLabel: dateLabel, fmtCountdown: fmtCountdown, fmtDuration: fmtDuration,
-    defaultKode: defaultKode, normEvent: normEvent, templateSpec: templateSpec, TPL_IMG: Object.assign({}, TPL_IMG), ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
+    defaultKode: defaultKode, normEvent: normEvent, templateSpec: templateSpec, getSigner: getSigner, TPL_IMG: Object.assign({}, TPL_IMG), ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
     /* admin */
     admin: {
       list: adminList, get: adminGet, save: adminSave, setStatus: adminSetStatus, remove: adminRemove,
       participants: adminParticipants, markAttendance: adminMarkAttendance, removeParticipant: adminRemoveParticipant,
       getDesign: function (id) { return requireAdmin().then(function () { return getDesign(id); }); },
-      saveDesign: adminSaveDesign, saveFlyer: adminSaveFlyer, certificates: adminCertificates, setCertificateStatus: adminSetCertificateStatus,
+      saveDesign: adminSaveDesign, saveFlyer: adminSaveFlyer, saveSigner: adminSaveSigner, certificates: adminCertificates, setCertificateStatus: adminSetCertificateStatus,
       samplePdf: adminSamplePdf, participantsCsv: participantsCsv
     }
   };

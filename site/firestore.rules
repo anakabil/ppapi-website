@@ -875,6 +875,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Penanda tangan sertifikat (templat bawaan): dibaca akun yang masuk (peserta membuat PDF di
+    // peramban sendiri); hanya admin yang mengubah. Tanda tangan = PNG transparan ≤ 300 KB.
+    match /cert_settings/{doc} {
+      allow get: if signedIn();
+      allow create, update: if isAdmin() && doc == 'penandatangan'
+                            && request.resource.data.keys().hasOnly(['nama', 'jabatan', 'ttd', 'ttdW', 'ttdH', 'updatedAt', 'updatedBy'])
+                            && strMax(request.resource.data.nama, 120) && strMax(request.resource.data.jabatan, 120)
+                            && (request.resource.data.ttd == ''
+                                || (request.resource.data.ttd is string && request.resource.data.ttd.size() <= 307200
+                                    && request.resource.data.ttd.matches('^data:image/png;base64,[A-Za-z0-9+/=]+$')))
+                            && request.resource.data.ttdW is int && request.resource.data.ttdH is int
+                            && request.resource.data.updatedAt == request.time && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
     // =====================================================================
     // TOKO PPAPI (toko.html · keranjang.html · pesanan.html · Konsol Admin › Toko)
     // Memakai fungsi bantu umum di atas: signedIn(), isOwner(uid), isAdmin(),
