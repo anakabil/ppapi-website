@@ -659,6 +659,10 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   (verifikasi publik per nomor; footer › Verifikasi Sertifikat). Sekretariat dapat mengunggah
   desain sertifikat (PNG/JPEG ≤ 900 KB) dan mengatur letak nama, judul, tanggal, nomor, dan QR,
   atau memakai templat bawaan; sertifikat dapat dicabut dan dipulihkan.
+- **Templat bawaan** (2026-10-28): latar perancah pudar, logo PPAPI sejajar logo INOSHPRO ("a member
+  of"), judul "Sertifikat", baris tanggal kegiatan · penanda tangan · nomor sertifikat, dan QR verifikasi.
+  Penanda tangan diatur di `assets/js/config.js` › `sertifikat` (nama, jabatan, dan opsional berkas PNG
+  tanda tangan transparan). Gambar templat: `assets/img/sertifikat/`.
 - Panel kelola kegiatan juga menyediakan daftar peserta (ekspor CSV, tandai hadir manual).
 - PDF dibuat di peramban dengan jsPDF 2.5.1 dari cdnjs (dengan SRI).
 

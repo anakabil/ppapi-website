@@ -598,26 +598,41 @@
      ====================================================================== */
   var FIELD_KEYS = ['nama', 'judul', 'tanggal', 'nomor', 'qr'];
   var FIELD_LABEL = { nama: 'Nama peserta', judul: 'Judul kegiatan', tanggal: 'Tanggal', nomor: 'Nomor sertifikat', qr: 'QR verifikasi' };
-  function defaultDesign() {
-    return {
-      bg: '', bgW: 0, bgH: 0, orient: 'landscape',
-      fields: {
-        nama: { on: true, x: 0.5, y: 0.47, size: 32, color: '#111113', align: 'center', font: 'serif', bold: true, w: 0.8, prefix: '' },
-        judul: { on: true, x: 0.5, y: 0.625, size: 15, color: '#26262a', align: 'center', font: 'sans', bold: true, w: 0.72, prefix: '' },
-        tanggal: { on: true, x: 0.5, y: 0.715, size: 11, color: '#3a3a3f', align: 'center', font: 'sans', bold: false, w: 0.6, prefix: '' },
-        nomor: { on: true, x: 0.5, y: 0.27, size: 10, color: '#5c5c63', align: 'center', font: 'sans', bold: false, w: 0.6, prefix: 'Nomor: ' },
-        qr: { on: true, x: 0.885, y: 0.8, size: 0.1 }
-      }
-    };
+  /* Tata letak kolom templat bawaan (2026-10-28: logo PPAPI, latar perancah pudar, INOSHPRO), per orientasi */
+  var DEFAULT_FIELDS = {
+    landscape: {
+      nama: { on: true, x: 0.5, y: 0.452, size: 32, color: '#1a1d21', align: 'center', font: 'serif', bold: true, w: 0.8, prefix: '' },
+      judul: { on: true, x: 0.5, y: 0.612, size: 16, color: '#22313a', align: 'center', font: 'sans', bold: true, w: 0.86, prefix: '' },
+      tanggal: { on: true, x: 0.31, y: 0.79, size: 11, color: '#1a1d21', align: 'center', font: 'sans', bold: true, w: 0.17, prefix: '' },
+      nomor: { on: true, x: 0.69, y: 0.79, size: 10, color: '#1a1d21', align: 'center', font: 'sans', bold: true, w: 0.3, prefix: '' },
+      qr: { on: true, x: 0.885, y: 0.785, size: 0.085 }
+    },
+    portrait: {
+      nama: { on: true, x: 0.5, y: 0.352, size: 28, color: '#1a1d21', align: 'center', font: 'serif', bold: true, w: 0.84, prefix: '' },
+      judul: { on: true, x: 0.5, y: 0.47, size: 15, color: '#22313a', align: 'center', font: 'sans', bold: true, w: 0.78, prefix: '' },
+      tanggal: { on: true, x: 0.2, y: 0.622, size: 10.5, color: '#1a1d21', align: 'center', font: 'sans', bold: true, w: 0.26, prefix: '' },
+      nomor: { on: true, x: 0.8, y: 0.622, size: 9, color: '#1a1d21', align: 'center', font: 'sans', bold: true, w: 0.38, prefix: '' },
+      qr: { on: true, x: 0.5, y: 0.765, size: 0.14 }
+    }
+  };
+  function defaultDesign(orient) {
+    var o = orient === 'portrait' ? 'portrait' : 'landscape';
+    return { bg: '', bgW: 0, bgH: 0, orient: o, fields: clone(DEFAULT_FIELDS[o]) };
+  }
+  /* desain lama (templat sebelum 2026-10-28) menyimpan nomor di atas dengan awalan "Nomor: " → pakai tata letak baru */
+  function legacyDefault(raw) {
+    var n = raw && raw.fields && raw.fields.nomor;
+    return !raw.bg && n && n.prefix === 'Nomor: ' && Math.abs(Number(n.y) - 0.27) < 0.03;
   }
   function cleanColor(c, fb) { return /^#[0-9a-f]{6}$/i.test(c || '') ? String(c).toLowerCase() : fb; }
   function clamp(n, a, b, fb) { n = Number(n); return isFinite(n) ? Math.min(b, Math.max(a, n)) : fb; }
   function normDesign(raw) {
-    var def = defaultDesign();
     raw = raw || {};
+    var orient = raw.orient === 'portrait' ? 'portrait' : 'landscape';
+    var def = defaultDesign(orient);
     var bg = typeof raw.bg === 'string' && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(raw.bg) && raw.bg.length <= LIMITS.designChars ? raw.bg : '';
-    var out = { bg: bg, bgW: bg ? int(raw.bgW) : 0, bgH: bg ? int(raw.bgH) : 0, orient: raw.orient === 'portrait' ? 'portrait' : 'landscape', fields: {}, updatedAt: msOf(raw.updatedAt) };
-    var rf = raw.fields || {};
+    var out = { bg: bg, bgW: bg ? int(raw.bgW) : 0, bgH: bg ? int(raw.bgH) : 0, orient: orient, fields: {}, updatedAt: msOf(raw.updatedAt) };
+    var rf = legacyDefault(raw) ? {} : (raw.fields || {});
     FIELD_KEYS.forEach(function (k) {
       var a = Object.assign({}, def.fields[k], rf[k] || {});
       if (k === 'qr') out.fields.qr = { on: a.on !== false, x: clamp(a.x, 0, 1, def.fields.qr.x), y: clamp(a.y, 0, 1, def.fields.qr.y), size: clamp(a.size, 0.05, 0.3, 0.1) };
@@ -628,6 +643,8 @@
         font: a.font === 'sans' ? 'sans' : 'serif', bold: !!a.bold, w: clamp(a.w, 0.1, 1, def.fields[k].w), prefix: String(a.prefix === undefined || a.prefix === null ? '' : a.prefix).replace(/[\r\n\t]+/g, ' ').replace(/^\s+/, '').slice(0, LIMITS.prefix)
       };
     });
+    /* desain unggahan tidak memuat label "Nomor sertifikat" seperti templat bawaan → awalan bawaan "Nomor: " */
+    if (bg && !(rf.nomor && typeof rf.nomor.prefix === 'string')) out.fields.nomor.prefix = 'Nomor: ';
     return out;
   }
   /** ukuran halaman (mm) */
@@ -642,13 +659,79 @@
       nomor: (f.nomor.prefix || '') + certDisplay(data.no || '')
     };
   }
-  /** teks tetap templat bawaan (dipakai bila belum ada desain unggahan) — posisi relatif halaman */
-  var DEFAULT_STATIC = [
-    { t: 'SERTIFIKAT', x: 0.5, y: 0.2, size: 30, font: 'serif', bold: true, color: '#111113', spacing: 3 },
-    { t: 'diberikan kepada', x: 0.5, y: 0.385, size: 11, font: 'sans', bold: false, color: '#5c5c63' },
-    { t: 'atas partisipasinya sebagai peserta dalam', x: 0.5, y: 0.555, size: 11, font: 'sans', bold: false, color: '#5c5c63' },
-    { t: 'Perkumpulan Praktisi dan Ahli Perancah Indonesia', x: 0.5, y: 0.86, size: 10, font: 'serif', bold: true, color: '#26262a' }
-  ];
+  /** Templat bawaan (dipakai bila belum ada desain unggahan). Posisi relatif halaman (x, y = titik tengah;
+      w = lebar relatif). Dipakai bersama oleh buildPdf (PDF) dan pratinjau di Konsol Admin.
+      k: 'img' (src, w, r = tinggi/lebar), 'text' (t, size pt, font serif|sans, style, color, spacing, w = lebar bungkus),
+      'line' (x1, x2, y — atau y1, y2 untuk garis tegak — color, lw mm). Penanda tangan dari PPAPI.config.sertifikat. */
+  var TPL_IMG = { bgL: 'assets/img/sertifikat/latar-lanskap.jpg', bgP: 'assets/img/sertifikat/latar-potret.jpg', ppapi: 'assets/img/sertifikat/logo-ppapi.png', inoshpro: 'assets/img/sertifikat/logo-inoshpro.png' };
+  function signer() {
+    var c = (PPAPI.config && PPAPI.config.sertifikat) || {};
+    return { nama: str(c.penandatangan, 120), jabatan: str(c.jabatan, 120) || 'Ketua Umum', ttd: str(c.tandaTangan, 300) };
+  }
+  function templateSpec(orient) {
+    var sg = signer(), ink = '#22313a', soft = '#4a4f55', mute = '#6b6f75', gold = '#f2b705', rule = '#9aa0a6';
+    var lbl = function (t, x, y) { return { k: 'text', t: t, x: x, y: y, size: 7.5, font: 'sans', style: 'bold', color: mute, spacing: 0.6 }; };
+    if (orient === 'portrait') return [
+      { k: 'img', src: TPL_IMG.bgP, x: 0.5, y: 0.5, w: 1, r: 297 / 210, bg: true },
+      /* baris logo: PPAPI | garis pemisah | "a member of" + INOSHPRO */
+      { k: 'img', src: TPL_IMG.ppapi, x: 0.33, y: 0.11, w: 0.4, r: 245 / 700 },
+      { k: 'line', x1: 0.575, x2: 0.575, y1: 0.075, y2: 0.145, color: rule, lw: 0.25 },
+      { k: 'text', t: 'a member of', x: 0.76, y: 0.083, size: 7, font: 'sans', style: 'italic', color: mute },
+      { k: 'img', src: TPL_IMG.inoshpro, x: 0.76, y: 0.118, w: 0.27, r: 196 / 600 },
+      { k: 'text', t: 'Sertifikat', x: 0.5, y: 0.225, size: 44, font: 'serif', style: 'bolditalic', color: ink },
+      { k: 'line', x1: 0.42, x2: 0.58, y: 0.268, color: gold, lw: 0.7 },
+      { k: 'text', t: 'Diberikan kepada', x: 0.5, y: 0.31, size: 11.5, font: 'sans', style: 'normal', color: soft },
+      { k: 'line', x1: 0.18, x2: 0.82, y: 0.383, color: rule, lw: 0.25 },
+      { k: 'text', t: 'atas partisipasinya sebagai peserta dalam', x: 0.5, y: 0.418, size: 11.5, font: 'sans', style: 'normal', color: soft },
+      { k: 'text', t: 'yang diselenggarakan oleh Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)', x: 0.5, y: 0.538, size: 10.5, font: 'sans', style: 'normal', color: soft, w: 0.78 },
+      { k: 'line', x1: 0.08, x2: 0.32, y: 0.642, color: rule, lw: 0.3 }, lbl('TANGGAL KEGIATAN', 0.2, 0.657),
+      { k: 'line', x1: 0.68, x2: 0.92, y: 0.642, color: rule, lw: 0.3 }, lbl('NOMOR SERTIFIKAT', 0.8, 0.657),
+      sg.ttd ? { k: 'img', src: sg.ttd, x: 0.5, y: 0.6, w: 0.2, r: 0.4 } : null,
+      { k: 'line', x1: 0.38, x2: 0.62, y: 0.642, color: rule, lw: 0.3 },
+      sg.nama ? { k: 'text', t: sg.nama, x: 0.5, y: 0.657, size: 9.5, font: 'sans', style: 'bold', color: ink } : null,
+      lbl(sg.jabatan.toUpperCase(), 0.5, sg.nama ? 0.672 : 0.657),
+      { k: 'text', t: 'Pindai untuk verifikasi', x: 0.5, y: 0.845, size: 7.5, font: 'sans', style: 'normal', color: mute },
+      { k: 'text', t: 'Keaslian sertifikat dapat diperiksa di ppapi.or.id/sertifikat.html', x: 0.5, y: 0.952, size: 7, font: 'sans', style: 'normal', color: mute }
+    ].filter(Boolean);
+    return [
+      { k: 'img', src: TPL_IMG.bgL, x: 0.5, y: 0.5, w: 1, r: 210 / 297, bg: true },
+      /* baris logo: PPAPI | garis pemisah | "a member of" + INOSHPRO */
+      { k: 'img', src: TPL_IMG.ppapi, x: 0.4, y: 0.13, w: 0.22, r: 245 / 700 },
+      { k: 'line', x1: 0.545, x2: 0.545, y1: 0.08, y2: 0.18, color: rule, lw: 0.25 },
+      { k: 'text', t: 'a member of', x: 0.65, y: 0.086, size: 7, font: 'sans', style: 'italic', color: mute },
+      { k: 'img', src: TPL_IMG.inoshpro, x: 0.65, y: 0.137, w: 0.155, r: 196 / 600 },
+      { k: 'text', t: 'Sertifikat', x: 0.5, y: 0.272, size: 42, font: 'serif', style: 'bolditalic', color: ink },
+      { k: 'line', x1: 0.455, x2: 0.545, y: 0.318, color: gold, lw: 0.7 },
+      { k: 'text', t: 'Diberikan kepada', x: 0.5, y: 0.365, size: 12, font: 'sans', style: 'normal', color: soft },
+      { k: 'line', x1: 0.27, x2: 0.73, y: 0.502, color: rule, lw: 0.25 },
+      { k: 'text', t: 'atas partisipasinya sebagai peserta dalam', x: 0.5, y: 0.548, size: 12, font: 'sans', style: 'normal', color: soft },
+      { k: 'text', t: 'yang diselenggarakan oleh Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)', x: 0.5, y: 0.678, size: 11, font: 'sans', style: 'normal', color: soft },
+      { k: 'line', x1: 0.23, x2: 0.39, y: 0.815, color: rule, lw: 0.3 }, lbl('TANGGAL KEGIATAN', 0.31, 0.838),
+      sg.ttd ? { k: 'img', src: sg.ttd, x: 0.5, y: 0.775, w: 0.13, r: 0.4 } : null,
+      { k: 'line', x1: 0.42, x2: 0.58, y: 0.815, color: rule, lw: 0.3 },
+      sg.nama ? { k: 'text', t: sg.nama, x: 0.5, y: 0.838, size: 10, font: 'sans', style: 'bold', color: ink } : null,
+      lbl(sg.jabatan.toUpperCase(), 0.5, sg.nama ? 0.862 : 0.838),
+      { k: 'line', x1: 0.61, x2: 0.77, y: 0.815, color: rule, lw: 0.3 }, lbl('NOMOR SERTIFIKAT', 0.69, 0.838),
+      { k: 'text', t: 'Pindai untuk verifikasi', x: 0.885, y: 0.865, size: 7, font: 'sans', style: 'normal', color: mute },
+      { k: 'text', t: 'Keaslian sertifikat dapat diperiksa di ppapi.or.id/sertifikat.html', x: 0.5, y: 0.93, size: 7, font: 'sans', style: 'normal', color: mute }
+    ].filter(Boolean);
+  }
+  /* teks tetap lama dipertahankan sebagai alias (dipakai uji lama); isinya kini dari templateSpec */
+  var DEFAULT_STATIC = templateSpec('landscape').filter(function (e) { return e.k === 'text'; });
+  var assetCache = {};
+  function assetUrl(src) { return /^(data:|https?:)/.test(src) ? src : new URL(src, d.baseURI).href; }
+  /** gambar templat → {data (data URL), type} (cache per sesi) */
+  function loadAsset(src) {
+    if (!assetCache[src]) {
+      assetCache[src] = fetch(assetUrl(src)).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.blob();
+      }).then(function (b) {
+        return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res({ data: fr.result, type: /png/.test(b.type) ? 'PNG' : 'JPEG' }); }; fr.onerror = rej; fr.readAsDataURL(b); });
+      }).catch(function (e) { delete assetCache[src]; throw kErr('kegiatan/pdf', 'Gambar templat sertifikat tidak dapat dimuat (' + src + ').', e); });
+    }
+    return assetCache[src];
+  }
 
   async function getDesign(id) {
     if (mode() === 'local') return normDesign(lsGet(K_DESIGN + id, null));
@@ -717,19 +800,28 @@
     if (design.bg) {
       doc.addImage(design.bg, /^data:image\/png/.test(design.bg) ? 'PNG' : 'JPEG', 0, 0, W, H, undefined, 'FAST');
     } else {
-      /* templat bawaan: bingkai ganda garis rambut + teks tetap */
-      doc.setDrawColor(26, 26, 29); doc.setLineWidth(0.8); doc.rect(10, 10, W - 20, H - 20);
-      doc.setDrawColor(139, 139, 146); doc.setLineWidth(0.25); doc.rect(14, 14, W - 28, H - 28);
-      doc.setFillColor(26, 26, 29);
-      [[14, 14], [W - 14, 14], [14, H - 14], [W - 14, H - 14]].forEach(function (c) { doc.rect(c[0] - 1.4, c[1] - 1.4, 2.8, 2.8, 'F'); });
-      doc.setDrawColor(185, 185, 191); doc.setLineWidth(0.3); doc.line(W / 2 - 30, H * 0.235, W / 2 + 30, H * 0.235);
-      DEFAULT_STATIC.forEach(function (s) {
-        doc.setFont(s.font === 'serif' ? 'times' : 'helvetica', s.bold ? 'bold' : 'normal');
-        doc.setFontSize(s.size);
-        var c = hexRgb(s.color); doc.setTextColor(c[0], c[1], c[2]);
-        /* jsPDF tidak menghitung charSpace saat meratakan tengah → geser setengah total spasi */
-        var sp = s.spacing || 0;
-        doc.text(s.t, s.x * W - sp * (s.t.length - 1) / 2, s.y * H, { align: 'center', baseline: 'middle', charSpace: sp });
+      /* templat bawaan: latar perancah pudar, logo PPAPI & INOSHPRO, teks tetap, garis isian */
+      var spec = templateSpec(design.orient);
+      var imgs = await Promise.all(spec.map(function (e) { return e.k === 'img' ? loadAsset(e.src).catch(function (err) { if (e.bg || e.src === TPL_IMG.ppapi) throw err; return null; }) : null; }));
+      spec.forEach(function (e, i) {
+        if (e.k === 'img') {
+          if (!imgs[i]) return;
+          var iw = e.w * W, ih = e.bg ? H : iw * e.r;
+          doc.addImage(imgs[i].data, imgs[i].type, e.x * W - iw / 2, e.y * H - ih / 2, iw, ih, undefined, 'FAST');
+        } else if (e.k === 'line') {
+          var lc = hexRgb(e.color); doc.setDrawColor(lc[0], lc[1], lc[2]); doc.setLineWidth(e.lw);
+          if (e.y1 !== undefined) doc.line(e.x1 * W, e.y1 * H, e.x2 * W, e.y2 * H);   /* garis tegak */
+          else doc.line(e.x1 * W, e.y * H, e.x2 * W, e.y * H);
+        } else {
+          doc.setFont(e.font === 'serif' ? 'times' : 'helvetica', e.style || 'normal');
+          doc.setFontSize(e.size);
+          var tc = hexRgb(e.color); doc.setTextColor(tc[0], tc[1], tc[2]);
+          var sp = e.spacing || 0;
+          var lines = e.w ? doc.splitTextToSize(e.t, e.w * W) : [e.t];
+          var lh = e.size * PT * 1.25, ty = e.y * H - (lines.length - 1) * lh / 2;
+          /* jsPDF tidak menghitung charSpace saat meratakan tengah → geser setengah total spasi */
+          lines.forEach(function (ln, j) { doc.text(ln, e.x * W - sp * (ln.length - 1) / 2, ty + j * lh, { align: 'center', baseline: 'middle', charSpace: sp }); });
+        }
       });
     }
     var texts = fieldTexts(ev, data, design);
@@ -1453,7 +1545,7 @@
     /* waktu & format */
     windowOf: windowOf, phaseOf: phaseOf, fromWib: fromWib, dateIso: dateIso, timeHm: timeHm, fmtTime: fmtTime, fmtDate: fmtDate,
     fmtDateTime: fmtDateTime, fmtSchedule: fmtSchedule, dateLabel: dateLabel, fmtCountdown: fmtCountdown, fmtDuration: fmtDuration,
-    defaultKode: defaultKode, normEvent: normEvent, ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
+    defaultKode: defaultKode, normEvent: normEvent, templateSpec: templateSpec, TPL_IMG: Object.assign({}, TPL_IMG), ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
     /* admin */
     admin: {
       list: adminList, get: adminGet, save: adminSave, setStatus: adminSetStatus, remove: adminRemove,

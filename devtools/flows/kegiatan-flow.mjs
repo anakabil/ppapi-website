@@ -61,6 +61,12 @@ DRAF_MEMBER.application = Object.assign({}, DRAF_MEMBER.application, { submitted
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'id-ID', timezoneId: 'Asia/Jakarta', reducedMotion: 'reduce', acceptDownloads: true });
+/* Opsional (jaringan tanpa akses cdnjs): PPAPI_JSPDF_LOCAL=<path jspdf.umd.min.js 2.5.1> menyajikan berkas yang sama
+   (SRI tetap diperiksa peramban). CI tidak memakainya. */
+if (process.env.PPAPI_JSPDF_LOCAL) {
+  const body = (await import('node:fs')).readFileSync(process.env.PPAPI_JSPDF_LOCAL);
+  await ctx.route('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', r => r.fulfill({ status: 200, contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' }, body }));
+}
 await ctx.clock.setFixedTime(T('2026-10-21T10:00:00'));
 /* formulir Google penyelenggara (contoh) → halaman tiruan, tanpa jaringan */
 await ctx.route('https://docs.google.com/**', r => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: '<!doctype html><title>Formulir</title><p>Formulir penyelenggara (tiruan uji)</p>' }));
@@ -382,6 +388,8 @@ console.log('\n[K9] Admin — peserta, CSV, daftar hadir, sertifikat terbit, pen
   await page.waitForFunction(() => window.__ready === true);
   await page.click(`.kga-table [data-kga="manage"][data-id="${idA}"] >> nth=0`);
   await page.waitForSelector('.drawer .tabs', { timeout: 8000 });
+  /* 2026-10-27: tab Flyer terbuka lebih dulu bila kegiatan belum punya flyer */
+  if (await page.locator('#kgt-flyer[aria-selected="true"]').count()) await page.click('#kgt-peserta');
   ok(await page.locator('#kgp-peserta tbody tr').count() === 2, 'tab Peserta: 2 peserta');
   const dl = page.waitForEvent('download');
   await page.click('#kgp-peserta [data-kgm="csv"]');

@@ -190,3 +190,7 @@
 .kga-fmt { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .kga-fmt .btn span[aria-hidden="true"] { font-variant-numeric: tabular-nums; margin-right: 2px; }
 .kga-fmt-view { margin-top: 10px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); font-size: .95rem; line-height: 1.7; }
+/* templat sertifikat bawaan di pratinjau (elemen dari PPAPI.kegiatan.templateSpec) */
+.kga-stage__img { position: absolute; transform: translate(-50%, -50%); height: auto; pointer-events: none; }
+.kga-stage__line { position: absolute; height: 0; box-sizing: border-box; transform: translateY(-50%); pointer-events: none; }
+.kga-stage__static.is-wrap { white-space: normal; }

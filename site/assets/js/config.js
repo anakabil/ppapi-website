@@ -93,6 +93,19 @@ window.PPAPI_CONFIG = {
     rekening: ''
   },
 
+  /* ---------- SERTIFIKAT KEGIATAN (templat bawaan) ---------- */
+  // Penanda tangan yang dicetak pada sertifikat kegiatan bila belum ada desain unggahan.
+  //   penandatangan : nama lengkap (kosong = hanya jabatan yang dicetak)
+  //   jabatan       : jabatan penanda tangan
+  //   tandaTangan   : (opsional) berkas PNG tanda tangan berlatar transparan di folder situs,
+  //                   mis. 'assets/img/sertifikat/ttd-ketua.png' (rasio kira-kira 5 : 2)
+  // Keabsahan sertifikat tetap dapat diperiksa melalui kode QR dan halaman sertifikat.html.
+  sertifikat: {
+    penandatangan: 'Haddy Achmad Chalidi',
+    jabatan: 'Ketua Umum',
+    tandaTangan: ''
+  },
+
   /* ---------- PRODUK PENGETAHUAN (pustaka.html) ---------- */
   // katalogPublik: true  = pengunjung yang belum berstatus Aktif tetap melihat daftar
   //                        judul dokumen, tetapi isi/berkasnya terkunci.

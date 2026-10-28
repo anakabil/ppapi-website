@@ -489,10 +489,14 @@
     function sampleTexts() { return K().fieldTexts(ev, { nama: 'Nama Peserta', no: sampleNo }, design); }
     function stageHtml() {
       var pg = K().pageSize(design), t = sampleTexts();
+      /* templat bawaan: elemen yang sama dengan PDF (K().templateSpec) */
       var tpl = design.bg ? '<img class="kga-stage__bg" src="' + h(design.bg) + '" alt="">'
-        : '<div class="kga-stage__tpl" aria-hidden="true"><div class="kga-stage__frame"></div>' +
-          K().DEFAULT_STATIC.map(function (s) {
-            return '<span class="kga-stage__static" style="left:' + (s.x * 100) + '%;top:' + (s.y * 100) + '%;font-size:' + cq(s.size, design) + ';font-family:' + fontCss(s.font) + ';font-weight:' + (s.bold ? 700 : 400) + ';color:' + s.color + ';letter-spacing:' + (s.spacing ? (s.spacing * 0.352778 / pg.w * 100).toFixed(3) + 'cqw' : 'normal') + '">' + h(s.t) + '</span>';
+        : '<div class="kga-stage__tpl" aria-hidden="true">' +
+          K().templateSpec(design.orient).map(function (s) {
+            if (s.k === 'img') return '<img class="kga-stage__img" src="' + h(s.src) + '" alt="" style="left:' + (s.x * 100) + '%;top:' + (s.y * 100) + '%;width:' + (s.w * 100) + '%' + (s.bg ? ';height:100%' : '') + '">';
+            if (s.k === 'line' && s.y1 !== undefined) return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;top:' + (s.y1 * 100) + '%;height:' + ((s.y2 - s.y1) * 100) + '%;transform:none;border-left:1px solid ' + s.color + '"></span>';
+            if (s.k === 'line') return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;width:' + ((s.x2 - s.x1) * 100) + '%;top:' + (s.y * 100) + '%;border-top:' + Math.max(1, s.lw * 2.4).toFixed(1) + 'px solid ' + s.color + '"></span>';
+            return '<span class="kga-stage__static' + (s.w ? ' is-wrap' : '') + '" style="left:' + (s.x * 100) + '%;top:' + (s.y * 100) + '%;font-size:' + cq(s.size, design) + ';font-family:' + fontCss(s.font) + ';font-weight:' + (/bold/.test(s.style) ? 700 : 400) + ';font-style:' + (/italic/.test(s.style) ? 'italic' : 'normal') + ';color:' + s.color + (s.w ? ';width:' + (s.w * 100) + '%;text-align:center' : '') + ';letter-spacing:' + (s.spacing ? (s.spacing * 0.352778 / pg.w * 100).toFixed(3) + 'cqw' : 'normal') + '">' + h(s.t) + '</span>';
           }).join('') + '</div>';
       var fields = K().FIELD_KEYS.map(function (k) {
         var f = design.fields[k];
@@ -540,7 +544,7 @@
               '<input class="sr-only" id="kgd-file" type="file" accept="image/png,image/jpeg" data-kgd-file>' +
               (design.bg ? '<button type="button" class="btn btn--link btn--sm" data-kgd="clear-bg"><span>Pakai templat bawaan</span></button>' : '') + '</div>' +
               '<p class="kga-hint mt-2" data-kgd-bginfo>' + (design.bg ? 'Desain ' + design.bgW + '×' + design.bgH + ' px · ' + Math.round(design.bg.length / 1024) + ' KB (setelah dikompresi).' : 'Belum ada desain unggahan; dipakai templat bawaan PPAPI.') +
-              ' PNG atau JPEG, sebaiknya ukuran A4 (mis. 3508×2480 px). Gambar dikompresi otomatis hingga ≤ 900 KB.</p>' +
+              ' PNG atau JPEG, sebaiknya ukuran A4 (mis. 3508×2480 px). Gambar dikompresi otomatis hingga ≤ 900 KB. Templat bawaan memuat logo PPAPI, logo INOSHPRO (a member of), dan latar perancah; desain unggahan menggantikan seluruhnya.</p>' +
               (design.bg ? '' : '<div class="field mt-3"><label class="field__label" for="kgd-orient">Orientasi</label><select class="field__control" id="kgd-orient" data-kgd-orient><option value="landscape"' + (design.orient === 'landscape' ? ' selected' : '') + '>Lanskap</option><option value="portrait"' + (design.orient === 'portrait' ? ' selected' : '') + '>Potret</option></select></div>') +
             '</div>' +
             '<div><h3 class="form__section-title mt-0">Kolom: ' + h(K().FIELD_LABEL[sel]) + '</h3>' + propsHtml() + '</div>' +
@@ -623,13 +627,15 @@
     });
     slot.addEventListener('change', async function (e) {
       var t = e.target;
-      if (t.hasAttribute('data-kgd-orient')) { design.orient = t.value === 'portrait' ? 'portrait' : 'landscape'; markDirty(); paint(); return; }
+      if (t.hasAttribute('data-kgd-orient')) { design.orient = t.value === 'portrait' ? 'portrait' : 'landscape'; design.fields = K().defaultDesign(design.orient).fields; markDirty(); paint(); return; }
       if (!t.hasAttribute('data-kgd-file') || !t.files || !t.files[0]) return;
       var info = slot.querySelector('[data-kgd-bginfo]');
       if (info) info.textContent = 'Mengompresi gambar…';
       try {
         var r = await K().compressImage(t.files[0]);
         design.bg = r.dataUrl; design.bgW = r.w; design.bgH = r.h; design.orient = r.orient;
+        if (!design.fields.nomor.prefix) design.fields.nomor.prefix = 'Nomor: ';   /* desain unggahan tidak punya label nomor */
+        if (!design.fields.nomor.prefix) design.fields.nomor.prefix = 'Nomor: ';   /* desain unggahan tidak punya label nomor */
         markDirty(); paint();
         ui().toast('Desain dimuat (' + Math.round(r.chars / 1024) + ' KB). Atur posisi kolom, lalu simpan.', { type: 'success' });
       } catch (err) { ui().toast(err.message, { type: 'error' }); paint(); }
@@ -641,7 +647,7 @@
       if (!b) return;
       var kind = b.getAttribute('data-kgd');
       if (kind === 'clear-bg') { design.bg = ''; design.bgW = 0; design.bgH = 0; markDirty(); paint(); return; }
-      if (kind === 'reset') { var bg = { bg: design.bg, bgW: design.bgW, bgH: design.bgH, orient: design.orient }; design = Object.assign(K().defaultDesign(), bg); markDirty(); paint(); return; }
+      if (kind === 'reset') { var bg = { bg: design.bg, bgW: design.bgW, bgH: design.bgH, orient: design.orient }; design = Object.assign(K().defaultDesign(design.orient), bg); markDirty(); paint(); return; }
       ui().setLoading(b, true, kind === 'save' ? 'Menyimpan…' : 'Menyiapkan PDF…');
       try {
         if (kind === 'save') {
