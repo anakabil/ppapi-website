@@ -369,6 +369,7 @@
             '<h2 class="agenda-feature__title" id="agenda-next-title"><a href="agenda.html?id=' + encodeURIComponent(a.id) + '" data-agenda-open="' + h(a.id) + '">' + h(a.judul) + '</a></h2>' +
           '</header>' +
           '<div class="agenda-feature__aside">' +
+            (a.kegiatan && a.flyer ? '<figure class="agenda-feature__flyer" data-agenda-next-flyer aria-busy="true"></figure>' : '') +
             '<div class="agenda-cd" id="agenda-cd" role="timer" aria-labelledby="agenda-cd-label">' +
               '<p class="agenda-cd__label" id="agenda-cd-label">Dimulai dalam</p>' +
               '<div class="agenda-cd__units">' +
@@ -381,7 +382,7 @@
             '</div>' +
           '</div>' +
           '<div class="agenda-feature__body">' +
-            (a.deskripsi ? '<p class="agenda-feature__desc">' + h(a.deskripsi) + '</p>' : '') +
+            (a.deskripsi ? '<div class="agenda-feature__desc">' + U.richText(a.deskripsi) + '</div>' : '') +
             '<dl class="agenda-feature__facts">' +
               '<div><dt>' + icon('calendar', { size: 16 }) + 'Tanggal</dt><dd>' + h(dateLong(nextEv)) + '</dd></div>' +
               (a.waktu ? '<div><dt>' + icon('clock', { size: 16 }) + 'Waktu</dt><dd>' + h(a.waktu) + '</dd></div>' : '') +
@@ -395,6 +396,14 @@
           '</div>' +
         '</article>';
       ui.reveal(wrap);
+      /* flyer kegiatan (dokumen terpisah; termuat setelah panel tampil) */
+      var nf = U.$('[data-agenda-next-flyer]', wrap);
+      if (nf && PPAPI.kegiatan) PPAPI.kegiatan.getFlyer(a.id).then(function (f) {
+        if (!f) { nf.remove(); return; }
+        nf.innerHTML = '<a href="agenda.html?id=' + encodeURIComponent(a.id) + '" data-agenda-open="' + h(a.id) + '" aria-label="Detail ' + h(a.judul) + '">' +
+          '<img src="' + h(f.img) + '" alt="Flyer ' + h(a.judul) + '" width="' + h(f.w) + '" height="' + h(f.h) + '" decoding="async"></a>';
+        nf.removeAttribute('aria-busy');
+      }).catch(function () { nf.remove(); });
       tick();
       /* sinkron ke batas menit, lalu tiap 60 detik */
       clearTimeout(cdTimer);
@@ -606,7 +615,7 @@
             '</div>' +
           '</div>' +
           (kg && kg.flyer ? '<figure class="agenda-modal__flyer" data-agenda-flyer aria-busy="true"></figure>' : '') +
-          (a.deskripsi ? '<p class="agenda-modal__desc">' + h(a.deskripsi) + '</p>' : '') +
+          (a.deskripsi ? '<div class="agenda-modal__desc">' + U.richText(a.deskripsi) + '</div>' : '') +
           '<dl class="kv kv--stacked agenda-modal__facts">' +
             (a.waktu ? '<div class="kv__row"><dt>Waktu</dt><dd>' + h(a.waktu) + (multi ? ' <span class="agenda-modal__muted">· setiap hari</span>' : '') + '</dd></div>' : '') +
             (a.lokasi ? '<div class="kv__row"><dt>Lokasi</dt><dd>' + h(a.lokasi) + '</dd></div>' : '') +

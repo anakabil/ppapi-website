@@ -644,6 +644,11 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   Terbaru** pada Beranda (setelah "Tentang PPAPI"): kegiatan terbit terdekat disorot bersama dua
   kegiatan berikutnya; bila semua sudah lewat, yang terakhir berlangsung. Tanpa kegiatan terbit,
   bagian ini disembunyikan.
+- **Format deskripsi kegiatan**: baris kosong memisahkan paragraf; baris diawali `- ` menjadi poin
+  dan `1. ` menjadi penomoran (tombol **Poin** / **Penomoran** di formulir menerapkannya pada baris
+  terpilih, klik lagi untuk melepas; **Lihat hasil** menampilkan tampilannya). Baris pendek tanpa
+  tanda baca di akhir tampil sebagai subjudul, teks sebelum titik dua pada butir ditebalkan, dan
+  seluruh teks tampil rata kanan-kiri (Agenda, detail kegiatan, Beranda).
 - **Pendaftaran** dari detail kegiatan di halaman Agenda. Peserta melihat kegiatannya di
   **Dasbor › Kegiatan Saya** (menu akun › Kegiatan Saya) — untuk semua akun, termasuk yang
   keanggotaannya belum Aktif.

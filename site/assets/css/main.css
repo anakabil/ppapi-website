@@ -465,6 +465,21 @@ small { font-size: .85em; }
 
 /* Long-form article typography */
 .prose { font-size: 1.075rem; line-height: 1.8; color: var(--text); max-width: 70ch; }
+/* Teks bebas kelolaan admin (PPAPI.util.richText): paragraf, subjudul, poin, penomoran; rata kanan-kiri */
+.rich-text { text-align: justify; text-justify: inter-word; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+.rich-text > * + * { margin-top: .85em; }
+.rich-text p { margin-bottom: 0; }
+.rich-text .rich-text__head { text-align: left; font: 600 .76rem/1.4 var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--text-strong); margin-top: 1.4em; }
+.rich-text > .rich-text__head:first-child { margin-top: 0; }
+.rich-text .rich-text__head + * { margin-top: .55em; }
+.rich-text ul, .rich-text ol { margin: 0; padding-left: 1.5em; }
+.rich-text ul { list-style: none; }
+.rich-text ul > li { position: relative; }
+.rich-text ul > li::before { content: ""; position: absolute; left: -1.05em; top: .72em; width: 5px; height: 5px; background: currentColor; opacity: .7; }
+.rich-text ol { list-style: decimal; }
+.rich-text ol > li::marker { font-variant-numeric: tabular-nums; font-weight: 600; }
+.rich-text li + li { margin-top: .45em; }
+.rich-text strong { font-weight: 600; color: var(--text-strong); }
 .prose > * + * { margin-top: 1.25em; }
 .prose h2 { font-size: clamp(1.7rem, 2.6vw, 2.2rem); line-height: 1.15; margin-top: 2em; }
 .prose h3 { font-size: 1.4rem; line-height: 1.25; margin-top: 1.8em; }

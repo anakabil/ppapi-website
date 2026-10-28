@@ -143,7 +143,15 @@
         field('kg-jenis', 'Jenis', select('kg-jenis', jenis, e.jenis || 'Webinar'), { key: 'jenis' }) +
         field('kg-narasumber', 'Narasumber', input('kg-narasumber', 'text', e.narasumber, { max: 300 }), { opt: true, key: 'narasumber' }) +
       '</div>' +
-      field('kg-deskripsi', 'Deskripsi', '<textarea class="field__control" id="kg-deskripsi" rows="4" maxlength="4000" aria-describedby="kg-deskripsi-hint kg-deskripsi-err">' + h(e.deskripsi || '') + '</textarea>', { opt: true, key: 'deskripsi', hint: 'Ringkasan materi, sasaran peserta, dan hal yang perlu disiapkan.' }) +
+      field('kg-deskripsi', 'Deskripsi',
+        '<div class="kga-fmt" role="toolbar" aria-label="Format deskripsi" aria-controls="kg-deskripsi">' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-kga-fmt="bullet"><span aria-hidden="true">•</span><span>Poin</span></button>' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-kga-fmt="number"><span aria-hidden="true">1.</span><span>Penomoran</span></button>' +
+          '<button type="button" class="btn btn--link btn--sm" data-kga-fmt="view" aria-pressed="false"><span>Lihat hasil</span></button>' +
+        '</div>' +
+        '<textarea class="field__control" id="kg-deskripsi" rows="9" maxlength="4000" aria-describedby="kg-deskripsi-hint kg-deskripsi-err">' + h(e.deskripsi || '') + '</textarea>' +
+        '<div class="kga-fmt-view" data-kga-fmt-view hidden></div>',
+        { opt: true, key: 'deskripsi', hint: 'Ringkasan materi, sasaran peserta, dan hal yang perlu disiapkan. Baris kosong memisahkan paragraf. Pilih beberapa baris, lalu klik Poin atau Penomoran (klik lagi untuk melepas). Baris pendek tanpa tanda baca di akhir tampil sebagai subjudul, dan teks sebelum titik dua pada butir ditebalkan. Teks tampil rata kanan-kiri.' }) +
       '<h3 class="form__section-title">Jadwal</h3>' +
       '<div class="form__row form__row--2">' +
         field('kg-mulai-tgl', 'Tanggal mulai', input('kg-mulai-tgl', 'date', md, { req: true }), { req: true, key: 'mulai', err: 'Isi tanggal dan jam mulai.' }) +
@@ -216,6 +224,40 @@
           if (f && f.classList.contains('is-invalid')) { f.classList.remove('is-invalid'); e.target.removeAttribute('aria-invalid'); }
         });
         form.addEventListener('change', function () { updateWindowHint(form); });
+        /* format deskripsi: poin / penomoran pada baris terpilih, dan tampilan hasil */
+        var ta = form.querySelector('#kg-deskripsi'), view = form.querySelector('[data-kga-fmt-view]');
+        function refreshView() { if (view && !view.hidden) view.innerHTML = P().util.richText(ta.value) || '<p class="kga-hint">Deskripsi masih kosong.</p>'; }
+        ta.addEventListener('input', refreshView);
+        form.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-kga-fmt]');
+          if (!b) return;
+          var kind = b.getAttribute('data-kga-fmt');
+          if (kind === 'view') {
+            view.hidden = !view.hidden;
+            b.setAttribute('aria-pressed', String(!view.hidden));
+            b.querySelector('span').textContent = view.hidden ? 'Lihat hasil' : 'Sembunyikan hasil';
+            refreshView();
+            return;
+          }
+          var v = ta.value, a0 = ta.selectionStart, a1 = ta.selectionEnd;
+          var start = v.lastIndexOf('\n', a0 - 1) + 1, endIdx = v.indexOf('\n', Math.max(a1 - (a1 > a0 && v[a1 - 1] === '\n' ? 1 : 0), a0));
+          if (endIdx === -1) endIdx = v.length;
+          var lines = v.slice(start, endIdx).split('\n');
+          var PREFIX = /^\s*(?:[-*•–]|\d{1,3}[.)])\s+/;
+          var re = kind === 'bullet' ? /^\s*[-*•–]\s+/ : /^\s*\d{1,3}[.)]\s+/;
+          var filled = lines.filter(function (l) { return l.trim(); });
+          var undo = filled.length && filled.every(function (l) { return re.test(l); });
+          var n = 0;
+          var out = lines.map(function (l) {
+            if (!l.trim()) return l;
+            var bare = l.replace(PREFIX, '');
+            return undo ? bare : (kind === 'bullet' ? '- ' : (++n) + '. ') + bare;
+          }).join('\n');
+          ta.value = v.slice(0, start) + out + v.slice(endIdx);
+          ta.focus();
+          ta.setSelectionRange(start, start + out.length);
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+        });
         form.addEventListener('submit', function (e) { e.preventDefault(); });
       },
       actions: [

@@ -75,6 +75,8 @@ body[data-page="agenda"] .agenda-feature__body { grid-area: body; min-width: 0; 
 body[data-page="agenda"] .agenda-feature__desc {
   max-width: 38.27em; /* ≈ 62ch */ font-weight: 300; font-size: 1.06rem; line-height: 1.7; color: var(--c-silver);
 }
+body[data-page="agenda"] .agenda-feature__desc .rich-text strong,
+body[data-page="agenda"] .agenda-feature__desc .rich-text__head { color: var(--c-white); }
 body[data-page="agenda"] .agenda-feature__facts {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 32px;
   margin: 28px 0 0; border-top: 1px solid var(--line);
@@ -90,7 +92,16 @@ body[data-page="agenda"] .agenda-feature__facts dt {
 body[data-page="agenda"] .agenda-feature__facts dd { margin: 6px 0 0; color: var(--c-bone); }
 body[data-page="agenda"] .agenda-feature__actions { grid-area: actions; display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px; }
 
-body[data-page="agenda"] .agenda-feature__aside { grid-area: aside; display: flex; align-items: center; min-width: 0; }
+body[data-page="agenda"] .agenda-feature__aside { grid-area: aside; display: flex; flex-direction: column; justify-content: center; gap: 32px; min-width: 0; }
+@media (min-width: 1024px) { body[data-page="agenda"] .agenda-feature__aside:has(.agenda-feature__flyer) { justify-content: flex-start; } }
+/* flyer kegiatan di atas hitung mundur */
+body[data-page="agenda"] .agenda-feature__flyer { margin: 0; min-height: 160px; }
+body[data-page="agenda"] .agenda-feature__flyer a { display: block; }
+body[data-page="agenda"] .agenda-feature__flyer img {
+  display: block; width: 100%; height: auto; max-height: 620px; object-fit: contain; object-position: center top;
+  border: 1px solid rgba(255,255,255,.1); box-shadow: 0 24px 48px -24px rgba(0,0,0,.6);
+}
+@media (max-width: 1023px) { body[data-page="agenda"] .agenda-feature__flyer img { max-width: 460px; margin-inline: auto; } }
 @media (min-width: 1024px) {
   body[data-page="agenda"] .agenda-feature__aside { padding-left: clamp(40px, 5vw, 72px); border-left: 1px solid var(--line); }
 }

@@ -382,7 +382,7 @@
           '<div class="home-kg__meta"><span class="tag">' + h(ev.jenis) + '</span>' + kgPhaseBadge(ev) + '</div>' +
           '<h3 class="home-kg__title"><a href="' + h(kgHref(ev)) + '">' + h(ev.judul) + '</a></h3>' +
           (soon ? '<p class="home-kg__soon">' + icon('clock', { size: 16 }) + '<span>' + h(soon) + '</span></p>' : '') +
-          (ev.deskripsi ? '<p class="home-kg__desc">' + prose(ev.deskripsi) + '</p>' : '') +
+          (ev.deskripsi ? '<p class="home-kg__desc">' + prose(u.richExcerpt(ev.deskripsi)) + '</p>' : '') +
           '<dl class="home-kg__facts">' + facts.map(function (f) { return '<div><dt>' + h(f[0]) + '</dt><dd>' + h(f[1]) + '</dd></div>'; }).join('') + '</dl>' +
           '<div class="home-kg__actions">' +
             '<a class="btn btn--primary" href="' + h(kgHref(ev)) + '"><span>' + (past ? 'Lihat Detail' : 'Detail &amp; Daftar') + '</span>' + arrow('arrow-right') + '<span class="sr-only"> ' + h(ev.judul) + '</span></a>' +

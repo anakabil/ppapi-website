@@ -46,6 +46,54 @@
   util.emphasis = function (str) {
     return util.h(str).replace(/\*([^*]+)\*/g, '<em>$1</em>');
   };
+  /** Teks bebas (deskripsi kegiatan dari admin) → HTML rapi yang sudah di-escape.
+      • baris kosong memisahkan paragraf; baris tunggal dalam paragraf disambung dengan <br>;
+      • baris diawali "- ", "* ", "• ", atau "– " → daftar poin (<ul>);
+      • baris diawali "1. " / "1) " → daftar bernomor (<ol>, nomor awal mengikuti teks);
+      • baris pendek (≤ 70 karakter) tanpa tanda baca akhir yang diikuti baris lain → subjudul;
+      • pada butir daftar, label sebelum titik dua (≤ 60 karakter) ditebalkan: "Label: uraian".
+      Hasil diberi kelas .rich-text (rata kanan-kiri, lihat main.css). */
+  util.richText = function (str) {
+    var text = String(str == null ? '' : str).replace(/\r\n?/g, '\n').trim();
+    if (!text) return '';
+    var BUL = /^\s*(?:[-*•–])\s+(.*)$/, NUM = /^\s*(\d{1,3})[.)]\s+(.*)$/;
+    function item(t) {
+      var m = /^([^:]{2,60}):\s+(.+)$/.exec(t);
+      return '<li>' + (m ? '<strong>' + util.h(m[1]) + ':</strong> ' + util.h(m[2]) : util.h(t)) + '</li>';
+    }
+    function isHead(line, next) { return next !== undefined && line.length <= 70 && !/[.,;:!?…)]$/.test(line) && !BUL.test(line) && !NUM.test(line); }
+    var out = [];
+    text.split(/\n\s*\n/).forEach(function (block) {
+      var lines = block.split('\n').map(function (l) { return l.trim(); }).filter(Boolean), para = [];
+      function flush() { if (para.length) { out.push('<p>' + para.map(util.h).join('<br>') + '</p>'); para = []; } }
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i], m;
+        if ((m = BUL.exec(line))) {
+          flush(); var ul = [];
+          while (i < lines.length && (m = BUL.exec(lines[i]))) { ul.push(item(m[1])); i++; }
+          i--; out.push('<ul>' + ul.join('') + '</ul>');
+        } else if ((m = NUM.exec(line))) {
+          flush(); var start = parseInt(m[1], 10), ol = [];
+          while (i < lines.length && (m = NUM.exec(lines[i]))) { ol.push(item(m[2])); i++; }
+          i--; out.push('<ol' + (start > 1 ? ' start="' + start + '"' : '') + '>' + ol.join('') + '</ol>');
+        } else if (!para.length && isHead(line, lines[i + 1])) {
+          out.push('<p class="rich-text__head">' + util.h(line) + '</p>');
+        } else para.push(line);
+      }
+      flush();
+    });
+    return '<div class="rich-text">' + out.join('') + '</div>';
+  };
+  /** Paragraf biasa pertama dari teks bebas (tanpa subjudul/daftar) → ringkasan satu paragraf. */
+  util.richExcerpt = function (str) {
+    var blocks = String(str == null ? '' : str).replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/);
+    for (var i = 0; i < blocks.length; i++) {
+      var lines = blocks[i].split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l && !/^\s*(?:[-*•–]|\d{1,3}[.)])\s+/.test(l); });
+      if (lines.length > 1 && lines[0].length <= 70 && !/[.,;:!?…)]$/.test(lines[0])) lines.shift();
+      if (lines.length && lines.join(' ').length > 40) return lines.join(' ');
+    }
+    return String(str || '').replace(/\s+/g, ' ').trim();
+  };
   /** Remove *emphasis* markers → plain text. */
   util.plain = function (str) { return String(str || '').replace(/\*([^*]+)\*/g, '$1'); };
 
