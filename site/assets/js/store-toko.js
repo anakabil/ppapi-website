@@ -212,6 +212,7 @@
       hargaAnggota: int(raw.hargaAnggota, 0, 1e9),
       format: null, hargaCetak: null, hargaCetakAnggota: null, halaman: null,
       stok: int(raw.stok, 0, 1e6),
+      berat: int(raw.berat, 0, 100000),   // gram per unit (barang fisik / versi cetak)
       varian: [],
       thumb: jpeg(raw.thumb, 60000),
       fotoCount: int(raw.fotoCount, 0, LIMITS.foto) || 0,
@@ -311,14 +312,24 @@
   }
 
   /* ---------------------------------------------------------------- settings */
-  var DEFAULT_SETTINGS = { rekening: [], ongkirMode: 'konfirmasi', ongkirFlat: null, ongkirCatatan: '', catatanPembayaran: '', batasBayarJam: 48, kontak: '' };
+  var DEFAULT_SETTINGS = { rekening: [], ongkirMode: 'konfirmasi', ongkirFlat: null, ongkirCatatan: '', ongkirTabel: null, catatanPembayaran: '', batasBayarJam: 48, kontak: '' };
+  /* Tabel tarif kurir per provinsi tujuan (rupiah per kg), diisi sekretariat dari situs resmi kurir.
+     {kurir, asal, sumber, diperbarui, toleransi (gram), tarif: {Provinsi: rupiah/kg}} */
+  function sanitizeTabel(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var prov = U().PROVINSI || [], tarif = {};
+    Object.keys(raw.tarif || {}).forEach(function (k) { var v = int(raw.tarif[k], 0, 1e7); if (v && (!prov.length || prov.indexOf(k) !== -1)) tarif[k] = v; });
+    var tol = int(raw.toleransi, 0, 900);
+    return { kurir: str(raw.kurir, 60), asal: str(raw.asal, 80), sumber: str(raw.sumber, 200), diperbarui: str(raw.diperbarui, 10), toleransi: tol === null ? 300 : tol, tarif: tarif };
+  }
   function sanitizeSettings(raw) {
     raw = raw || {};
     var s = {
       rekening: (Array.isArray(raw.rekening) ? raw.rekening : []).slice(0, LIMITS.rekening).map(function (r) {
         return { bank: str(r && r.bank, 60), nomor: str(r && r.nomor, 40).replace(/[^\d\s.-]/g, ''), atasNama: str(r && r.atasNama, 120) };
       }).filter(function (r) { return r.bank && r.nomor && r.atasNama; }),
-      ongkirMode: raw.ongkirMode === 'flat' ? 'flat' : 'konfirmasi',
+      ongkirMode: raw.ongkirMode === 'flat' || raw.ongkirMode === 'tabel' ? raw.ongkirMode : 'konfirmasi',
+      ongkirTabel: sanitizeTabel(raw.ongkirTabel),
       ongkirFlat: int(raw.ongkirFlat, 0, 1e8),
       ongkirCatatan: str(raw.ongkirCatatan, 500),
       catatanPembayaran: str(raw.catatanPembayaran, 1000),
@@ -328,6 +339,7 @@
     };
     if (s.batasBayarJam === null) s.batasBayarJam = 48;
     if (s.ongkirMode === 'flat' && s.ongkirFlat === null) s.ongkirMode = 'konfirmasi';
+    if (s.ongkirMode === 'tabel' && !(s.ongkirTabel && Object.keys(s.ongkirTabel.tarif).length)) s.ongkirMode = 'konfirmasi';
     return s;
   }
   var settingsCache = null;
@@ -347,7 +359,7 @@
     await requireAdmin();
     var cur = await getSettings({ fresh: true });
     var s = sanitizeSettings(Object.assign({}, cur, patch || {}));
-    var out = { rekening: s.rekening, ongkirMode: s.ongkirMode, ongkirFlat: s.ongkirFlat, ongkirCatatan: s.ongkirCatatan, catatanPembayaran: s.catatanPembayaran, batasBayarJam: s.batasBayarJam, kontak: s.kontak };
+    var out = { rekening: s.rekening, ongkirMode: s.ongkirMode, ongkirFlat: s.ongkirFlat, ongkirCatatan: s.ongkirCatatan, ongkirTabel: s.ongkirTabel, catatanPembayaran: s.catatanPembayaran, batasBayarJam: s.batasBayarJam, kontak: s.kontak };
     if (local()) { out.updatedAt = nowIso(); lsSet(K.settings, out); }
     else {
       var f = await fx();
@@ -358,9 +370,40 @@
     settingsCache = sanitizeSettings(out);
     return clone(settingsCache);
   }
-  function shippingQuote(settings, perluKirim) {
+  /** beratKirim(lines) → gram (null bila ada barang kirim tanpa data berat) */
+  function beratKirim(lines) {
+    var total = 0, unknown = false;
+    (lines || []).forEach(function (l) {
+      var it = l.item || l, p = l.product;
+      if (!needsShipping(it.format)) return;
+      var b = p ? p.berat : it.berat;
+      if (b === null || b === undefined || !b) unknown = true; else total += b * (it.qty || 1);
+    });
+    return unknown ? null : total;
+  }
+  /** berat tertagih (kg): minimal 1 kg; kelebihan di atas kg bulat dibulatkan ke atas bila melebihi toleransi */
+  function kgTagih(gram, toleransi) {
+    var kg = Math.floor(gram / 1000), sisa = gram - kg * 1000;
+    if (sisa > (toleransi === undefined ? 300 : toleransi)) kg += 1;
+    return Math.max(1, kg);
+  }
+  /** shippingQuote(settings, perluKirim, {provinsi, berat}) → {ongkir, final, catatan, kg?} */
+  function shippingQuote(settings, perluKirim, ctx) {
     if (!perluKirim) return { ongkir: 0, final: true, catatan: '' };
     if (settings.ongkirMode === 'flat' && settings.ongkirFlat !== null) return { ongkir: settings.ongkirFlat, final: true, catatan: settings.ongkirCatatan || 'Ongkos kirim tetap ke seluruh Indonesia.' };
+    var t = settings.ongkirTabel;
+    if (settings.ongkirMode === 'tabel' && t) {
+      ctx = ctx || {};
+      var tarif = ctx.provinsi ? t.tarif[ctx.provinsi] : null;
+      var src = (t.kurir ? t.kurir : 'kurir') + (t.diperbarui ? ', tarif per ' + (U().formatDate ? U().formatDate(t.diperbarui) : t.diperbarui) : '');
+      if (!ctx.provinsi) return { ongkir: null, final: false, catatan: 'Pilih provinsi tujuan untuk menghitung ongkos kirim.' };
+      if (tarif && ctx.berat !== null && ctx.berat !== undefined) {
+        var kg = kgTagih(ctx.berat, t.toleransi);
+        return { ongkir: tarif * kg, final: true, kg: kg, berat: ctx.berat,
+          catatan: 'Ongkos kirim ' + src + ' ke ' + ctx.provinsi + ': ' + kg + ' kg × ' + rupiah(tarif) + ' (perkiraan berat ' + (Math.round(ctx.berat / 10) / 100).toString().replace('.', ',') + ' kg).' };
+      }
+      return { ongkir: null, final: false, catatan: !tarif ? 'Tarif ke ' + ctx.provinsi + ' belum tersedia; ongkos kirim dikonfirmasi sekretariat setelah pesanan dibuat.' : 'Ongkos kirim dikonfirmasi sekretariat setelah pesanan dibuat.' };
+    }
     return { ongkir: null, final: false, catatan: settings.ongkirCatatan || 'Ongkos kirim dikonfirmasi sekretariat setelah pesanan dibuat.' };
   }
 
@@ -567,11 +610,12 @@
     });
     var subtotal = items.reduce(function (n, it) { return n + it.subtotal; }, 0);
     var normal = items.reduce(function (n, it) { return n + it.hargaNormal * it.qty; }, 0);
-    var q = shippingQuote(settings, perluKirim);
+    var berat = beratKirim(lines);
+    var q = shippingQuote(settings, perluKirim, { provinsi: alamat && alamat.provinsi, berat: berat });
     var id = 'PSN-' + ymd() + '-' + rand(5);
     var order = {
       id: id, uid: u.uid, buyer: buyer, items: items, perluKirim: perluKirim, alamat: alamat,
-      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, total: subtotal + (q.ongkir || 0) },
+      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, beratGram: berat, total: subtotal + (q.ongkir || 0) },
       status: 'Menunggu Pembayaran', hargaAnggota: member && normal !== subtotal,
       catatan: str(input.catatan, 500),
       riwayat: [historyEntry('Menunggu Pembayaran', 'pembeli', 'Pesanan dibuat.')]
@@ -1064,7 +1108,7 @@
     return sortOrders(list);
   }
   /** priceCheck(order, products) → [{nama, format, expected, actual, reason}] — differences vs the catalogue */
-  function priceCheck(order, products, buyerIsMember) {
+  function priceCheck(order, products, buyerIsMember, settings) {
     var byId = Object.create(null); (products || []).forEach(function (p) { byId[p.id] = p; });
     var out = [];
     (order.items || []).forEach(function (it) {
@@ -1076,6 +1120,12 @@
     });
     var sum = (order.items || []).reduce(function (n, it) { return n + (it.subtotal || 0); }, 0);
     var r = order.ringkasan || {};
+    /* ongkir otomatis (tabel tarif): hitung ulang dari katalog saat ini */
+    if (settings && settings.ongkirMode === 'tabel' && order.perluKirim && r.ongkirFinal !== false && order.alamat) {
+      var lines = (order.items || []).map(function (it) { return { item: it, product: byId[it.productId] || null }; });
+      var q = shippingQuote(settings, true, { provinsi: order.alamat.provinsi, berat: beratKirim(lines) });
+      if (q.final && q.ongkir !== r.ongkir) out.push({ nama: 'Ongkos kirim', format: '', expected: q.ongkir, actual: r.ongkir, reason: 'Ongkos kirim berbeda dengan tabel tarif saat ini (tarif atau berat produk mungkin telah berubah).' });
+    }
     if (sum !== r.subtotal || (r.subtotal + (r.ongkir || 0)) !== r.total) out.push({ nama: 'Ringkasan', format: '', expected: sum + (r.ongkir || 0), actual: r.total, reason: 'Total pesanan tidak sesuai penjumlahan butir.' });
     return out;
   }
@@ -1251,7 +1301,7 @@
     isKnowledge: isKnowledge, formatsOf: formatsOf, needsShipping: needsShipping, priceFor: priceFor, fromPrice: fromPrice,
     inStock: inStock, stockLeft: stockLeft, sanitizeProduct: sanitizeProduct,
     listProducts: listProducts, getProduct: getProduct, getMedia: getMedia,
-    getSettings: getSettings, shippingQuote: shippingQuote, validateAlamat: validateAlamat,
+    getSettings: getSettings, shippingQuote: shippingQuote, beratKirim: beratKirim, kgTagih: kgTagih, validateAlamat: validateAlamat,
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
     paymentDeadline: paymentDeadline, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,

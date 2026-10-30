@@ -929,7 +929,7 @@ service cloud.firestore {
     function validProduct(d) {
       return d.keys().hasOnly([
                'nama', 'kategori', 'kode', 'ringkasan', 'deskripsi', 'harga', 'hargaAnggota',
-               'format', 'hargaCetak', 'hargaCetakAnggota', 'halaman', 'stok', 'varian', 'thumb',
+               'format', 'hargaCetak', 'hargaCetakAnggota', 'halaman', 'stok', 'berat', 'varian', 'thumb',
                'fotoCount', 'berkasAda', 'aktif', 'unggulan', 'urutan', 'createdAt', 'updatedAt'
              ])
           && d.nama is string && d.nama.size() >= 3 && d.nama.size() <= 120
@@ -1051,11 +1051,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin() && id == 'main'
                    && request.resource.data.keys().hasOnly([
-                        'rekening', 'ongkirMode', 'ongkirFlat', 'ongkirCatatan',
+                        'rekening', 'ongkirMode', 'ongkirFlat', 'ongkirCatatan', 'ongkirTabel',
                         'catatanPembayaran', 'batasBayarJam', 'kontak', 'updatedAt'
                       ])
                    && listMax(request.resource.data.rekening, 3)
-                   && request.resource.data.ongkirMode in ['konfirmasi', 'flat'];
+                   && request.resource.data.ongkirMode in ['konfirmasi', 'flat', 'tabel']
+                   && (request.resource.data.get('ongkirTabel', null) == null
+                       || request.resource.data.ongkirTabel is map);
     }
 
     match /carts/{uid} {

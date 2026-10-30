@@ -74,3 +74,6 @@ body[data-page="admin"] .atk-rek .form__row--3 { display: grid; gap: 12px; }
 @media (min-width: 760px) { body[data-page="admin"] .atk-rek .form__row--3 { grid-template-columns: 1fr 1fr 1.4fr; } }
 body[data-page="admin"] .atk-pdf__acts, body[data-page="admin"] .atk-photo-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 body[data-page="admin"] .atk-pdf__file { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; font-size: .9rem; overflow-wrap: anywhere; }
+body[data-page="admin"] .atk-tabel > summary { cursor: pointer; font-weight: 600; }
+body[data-page="admin"] .atk-tabel[open] > summary { margin-bottom: 12px; }
+body[data-page="admin"] .atk-tarif { display: grid; gap: 0 16px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }

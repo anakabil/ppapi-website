@@ -52,6 +52,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (30-10-2026): ongkir mode `tabel` (`shop_settings/main.ongkirTabel` = tarif Rp/kg per provinsi, toleransi gram) + `products.berat`
+  (gram/unit). Tarif kurir belum diisi: situs kurir diblokir jaringan sesi; isi dari cek tarif resmi. Berat estimasi: kaos 200 g,
+  CoP cetak 600 g. CoP versi cetak Rp200.000 (paket `toko-ppapi-pembaruan-2026-10-30.json` diserahkan ke klien).
 - Toko (30-10-2026): biaya tambahan varian (`varian[i].tambahan`, ditulis "XXL +5000" di formulir; dihitung di keranjang,
   pesanan, dan priceCheck). Paket `kaos-ppapi-5-desain.json` (id `kaos-*`, KAOS_001–005, XXL +Rp5.000) diserahkan ke klien.
 - Toko (30-10-2026): tombol Impor Produk (JSON `ppapi-toko-produk`) di Konsol Admin › Toko › Produk. Paket 5 kaus PPAPI
@@ -73,7 +76,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
 - **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; 28-10-2026:
-  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko; tanpa publish, unggah
+  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko, `berat` produk & `ongkirTabel`; tanpa publish, unggah
   flyer/tanda tangan/PDF di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan

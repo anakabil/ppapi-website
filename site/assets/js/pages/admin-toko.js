@@ -176,7 +176,8 @@
     var buyerMember = null;
     try { buyerMember = PPAPI.store.admin && PPAPI.store.admin.getMember ? await PPAPI.store.admin.getMember(o.uid) : null; } catch (e) { buyerMember = null; }
     var isMember = buyerMember ? U.isActiveMember(buyerMember) : false;
-    var issues = T.admin.priceCheck(o, products, isMember);
+    var shopSettings = await T.getSettings().catch(function () { return null; });
+    var issues = T.admin.priceCheck(o, products, isMember, shopSettings);
     if (o.hargaAnggota && !isMember) issues.push({ nama: 'Harga anggota', reason: 'Pesanan memakai harga anggota, tetapi status keanggotaan pembeli saat ini bukan Aktif.' });
     var p = o.pembayaran || {}, a = o.alamat, r = o.ringkasan;
     var mail = o.buyer.email ? 'mailto:' + encodeURIComponent(o.buyer.email) + '?subject=' + encodeURIComponent('Pesanan Toko PPAPI ' + o.id) + '&body=' + encodeURIComponent('Yth. ' + o.buyer.name + ',\n\nTerkait pesanan ' + o.id + ' (status: ' + o.status + ').\n\n\nSalam,\nSekretariat PPAPI') : '';
@@ -358,7 +359,10 @@
             fld('pf-hcetak', 'Harga cetak (Rp)', inp('pf-hcetak', num(p.hargaCetak), 'inputmode="numeric" maxlength="12"'), { err: 'Isi harga cetak.' }) +
             fld('pf-hcetakang', 'Harga cetak anggota (Rp)', inp('pf-hcetakang', num(p.hargaCetakAnggota), 'inputmode="numeric" maxlength="12"')) +
           '</div>' +
+          '<div class="form__row form__row--2">' +
           fld('pf-stok', 'Stok', inp('pf-stok', num(p.stok), 'inputmode="numeric" maxlength="7"'), { hint: 'Untuk barang fisik dan versi cetak. Kosongkan bila tidak dibatasi; stok berkurang otomatis saat pembayaran dikonfirmasi.' }) +
+          fld('pf-berat', 'Berat kirim per unit (gram)', inp('pf-berat', num(p.berat), 'inputmode="numeric" maxlength="6"'), { hint: 'Termasuk kemasan. Dipakai menghitung ongkos kirim otomatis; kosong = ongkir dikonfirmasi sekretariat.' }) +
+          '</div>' +
         '</div>' +
         '<div class="drawer__section"><h3 class="drawer__section-title">Varian</h3><p class="atk-note">Misalnya Ukuran: S, M, L, XL — atau Warna: Hitam, Abu. Biaya tambahan ditulis setelah pilihan, mis. <strong>XXL +5000</strong>. Maks. 2 kelompok, 12 pilihan per kelompok.</p>' +
           [0, 1].map(function (i) { var g = p.varian[i] || { nama: '', opsi: [] }; return '<div class="form__row form__row--2">' + fld('pf-vn' + i, 'Nama varian ' + (i + 1), inp('pf-vn' + i, g.nama, 'maxlength="30" placeholder="' + (i ? 'Warna' : 'Ukuran') + '"')) + fld('pf-vo' + i, 'Pilihan (pisahkan dengan koma)', inp('pf-vo' + i, g.opsi.map(function (o) { var t = (g.tambahan || {})[o]; return t ? o + ' +' + t : o; }).join(', '), 'maxlength="400" placeholder="' + (i ? 'Hitam, Abu' : 'S, M, L, XL, XXL +5000') + '"')) + '</div>'; }).join('') +
@@ -453,7 +457,7 @@
         id: isNew ? '' : p.id, nama: v('pf-nama'), kategori: kat, kode: v('pf-kode'), ringkasan: v('pf-ring'), deskripsi: el.querySelector('#pf-desk').value,
         harga: harga, hargaAnggota: k && !soft ? null : digits('pf-hang'),
         format: k ? { soft: soft, cetak: cetak } : null, hargaCetak: k && cetak ? hc : null, hargaCetakAnggota: k && cetak ? digits('pf-hcetakang') : null,
-        halaman: k ? digits('pf-hal') : null, stok: digits('pf-stok'),
+        halaman: k ? digits('pf-hal') : null, stok: digits('pf-stok'), berat: digits('pf-berat'),
         varian: [0, 1].map(function (i) { return { nama: v('pf-vn' + i), opsi: v('pf-vo' + i).split(',') }; }),
         aktif: el.querySelector('#pf-aktif').checked, unggulan: el.querySelector('#pf-ung').checked, urutan: digits('pf-urut') || 0
       };
@@ -477,6 +481,22 @@
     var U = PPAPI.util, h = U.h, T = PPAPI.toko, ui = PPAPI.ui;
     var s = await T.getSettings({ fresh: true });
     var rek = s.rekening.slice(); while (rek.length < T.LIMITS.rekening) rek.push({ bank: '', nomor: '', atasNama: '' });
+    function tabelHtml(t) {
+      var tarif = t.tarif || {};
+      function inp(id, label, val, extra) { return '<div class="field"><label class="field__label" for="' + id + '">' + label + '</label><input class="field__control" id="' + id + '" value="' + h(val === undefined || val === null ? '' : val) + '" ' + (extra || '') + '></div>'; }
+      return '<details class="atk-tabel mt-3"' + (s.ongkirMode === 'tabel' ? ' open' : '') + '><summary>Tabel tarif kurir (rupiah per kg, per provinsi tujuan)</summary>' +
+        '<p class="atk-note">Isi dari pengecek tarif di situs resmi kurir (JNE, J&amp;T, TIKI, atau Pos Indonesia) dari kota asal pengiriman. Ongkos kirim = tarif provinsi tujuan × berat tertagih (minimal 1 kg; kelebihan di atas kilogram bulat dihitung 1 kg bila melebihi toleransi). Berat diambil dari kolom berat tiap produk. Provinsi yang dikosongkan tetap dikonfirmasi sekretariat. Tarif antarkota dalam satu provinsi dapat berbeda; gunakan tarif tertinggi di provinsi tersebut agar tidak kurang bayar.</p>' +
+        '<div class="form__row form__row--2">' +
+          inp('st-tk-kurir', 'Kurir dan layanan', t.kurir, 'maxlength="60" placeholder="JNE REG"') +
+          inp('st-tk-asal', 'Kota asal pengiriman', t.asal, 'maxlength="80" placeholder="Kabupaten Bogor"') +
+        '</div><div class="form__row form__row--3">' +
+          inp('st-tk-sumber', 'Sumber tarif', t.sumber, 'maxlength="200" placeholder="jne.co.id, cek tarif"') +
+          inp('st-tk-tgl', 'Tanggal pengecekan', t.diperbarui, 'type="date"') +
+          inp('st-tk-tol', 'Toleransi berat (gram)', t.toleransi === undefined ? 300 : t.toleransi, 'inputmode="numeric" maxlength="3"') +
+        '</div><div class="atk-tarif">' +
+          U.PROVINSI.map(function (pv, i) { return inp('st-tk-p' + i, h(pv), tarif[pv], 'inputmode="numeric" maxlength="8" placeholder="Rp/kg"'); }).join('') +
+        '</div></details>';
+    }
     panel.innerHTML = '<form class="form atk-settings" novalidate data-ps-form>' +
       '<fieldset class="atk-fieldset"><legend class="atk-legend">Rekening pembayaran</legend><p class="atk-note">Tampil di keranjang dan halaman pesanan. Bila kosong, pembeli melihat “Informasi rekening akan diumumkan sekretariat”.</p>' +
         rek.map(function (r, i) {
@@ -490,9 +510,11 @@
       '<fieldset class="atk-fieldset"><legend class="atk-legend">Ongkos kirim</legend>' +
         '<div class="atk-checks" role="radiogroup" aria-label="Cara menetapkan ongkos kirim">' +
           '<label class="check"><input type="radio" name="st-mode" value="konfirmasi"' + (s.ongkirMode !== 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Dikonfirmasi sekretariat per pesanan</span></label>' +
-          '<label class="check"><input type="radio" name="st-mode" value="flat"' + (s.ongkirMode === 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Tarif tetap</span></label></div>' +
+          '<label class="check"><input type="radio" name="st-mode" value="flat"' + (s.ongkirMode === 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Tarif tetap</span></label>' +
+          '<label class="check"><input type="radio" name="st-mode" value="tabel"' + (s.ongkirMode === 'tabel' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Otomatis dari tabel tarif kurir per provinsi</span></label></div>' +
         '<div class="form__row form__row--2 mt-3"><div class="field"><label class="field__label" for="st-flat">Tarif tetap (Rp)</label><input class="field__control" id="st-flat" inputmode="numeric" maxlength="10" value="' + (s.ongkirFlat === null ? '' : s.ongkirFlat) + '"><p class="field__error">Isi tarif untuk mode tarif tetap.</p></div>' +
         '<div class="field"><label class="field__label" for="st-jam">Batas waktu pembayaran (jam)</label><input class="field__control" id="st-jam" inputmode="numeric" maxlength="3" value="' + (s.batasBayarJam || '') + '"><p class="field__hint">Hanya informasi bagi pembeli; 0 / kosong = tidak ditampilkan.</p></div></div>' +
+        tabelHtml(s.ongkirTabel || {}) +
         '<div class="field"><label class="field__label" for="st-onote">Keterangan ongkos kirim</label><textarea class="field__control" id="st-onote" rows="2" maxlength="500" placeholder="Contoh: Ongkos kirim dihitung sesuai tarif kurir ke alamat Anda.">' + h(s.ongkirCatatan) + '</textarea></div>' +
       '</fieldset>' +
       '<fieldset class="atk-fieldset"><legend class="atk-legend">Petunjuk &amp; kontak</legend>' +
@@ -508,12 +530,16 @@
       var mode = f.querySelector('input[name="st-mode"]:checked').value;
       var flat = v('st-flat').replace(/\D/g, '');
       if (mode === 'flat' && !flat) { f.querySelector('#st-flat').closest('.field').classList.add('is-invalid'); f.querySelector('#st-flat').focus(); return; }
+      var tarif = {};
+      U.PROVINSI.forEach(function (pv, i) { var x = v('st-tk-p' + i).replace(/\D/g, ''); if (x) tarif[pv] = Number(x); });
+      var tabel = { kurir: v('st-tk-kurir'), asal: v('st-tk-asal'), sumber: v('st-tk-sumber'), diperbarui: v('st-tk-tgl'), toleransi: v('st-tk-tol') === '' ? 300 : Number(v('st-tk-tol').replace(/\D/g, '')), tarif: tarif };
+      if (mode === 'tabel' && !Object.keys(tarif).length) { ui.toast('Isi tarif minimal satu provinsi untuk mode tabel tarif.', { type: 'warn' }); f.querySelector('.atk-tabel').open = true; return; }
       var btn = f.querySelector('#st-save');
       ui.setLoading(btn, true, 'Menyimpan…');
       try {
         await T.admin.saveSettings({
           rekening: [0, 1, 2].map(function (i) { return { bank: v('st-bank' + i), nomor: v('st-no' + i), atasNama: v('st-an' + i) }; }),
-          ongkirMode: mode, ongkirFlat: flat === '' ? null : Number(flat), ongkirCatatan: v('st-onote'),
+          ongkirMode: mode, ongkirFlat: flat === '' ? null : Number(flat), ongkirCatatan: v('st-onote'), ongkirTabel: Object.keys(tarif).length ? tabel : null,
           batasBayarJam: v('st-jam') === '' ? 0 : Number(v('st-jam').replace(/\D/g, '')), catatanPembayaran: v('st-pay'), kontak: v('st-kontak')
         });
         ui.toast('Pengaturan toko disimpan.', { type: 'success' });

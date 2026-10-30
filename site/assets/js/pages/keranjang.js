@@ -12,6 +12,7 @@
     var sess = PPAPI.session.current();
     var user = sess.user, member = sess.member;
     var layout = $('[data-kr="layout"]');
+    var updateShip = function () {};
     var draftKey = 'ppapi_toko_checkout_draft';
     var products = [], settings = null, lines = [];
 
@@ -99,11 +100,24 @@
       var perluKirim = lines.some(function (l) { return T.needsShipping(l.item.format); });
       var subtotal = ok.reduce(function (n, l) { return n + l.subtotal; }, 0);
       var normal = ok.reduce(function (n, l) { return n + l.price.normal * l.item.qty; }, 0);
-      var q = T.shippingQuote(settings, perluKirim);
+      var prof = (member && member.profile) || {};
+      var beratG = T.beratKirim(ok);
+      var provNow = (draft().provinsi || prof.province || '');
+      function quote(prov) { return T.shippingQuote(settings, perluKirim, { provinsi: prov, berat: beratG }); }
+      var q = quote(provNow);
       var count = lines.reduce(function (n, l) { return n + l.item.qty; }, 0);
       var hasProblem = lines.length !== ok.length;
-      var prof = (member && member.profile) || {};
 
+      function shipRow(q) { return perluKirim ? '<div class="tk-sum__row" data-kr-ship><dt>Ongkos kirim</dt><dd>' + (q.final ? h(R(q.ongkir)) : 'Dikonfirmasi') + '</dd></div>' : ''; }
+      function totalRow(q) { return '<div class="tk-sum__row tk-sum__row--total" data-kr-total><dt>Total' + (q.final ? '' : '*') + '</dt><dd>' + h(R(subtotal + (q.ongkir || 0))) + '</dd></div>'; }
+      function sumShip(q) { return shipRow(q) + totalRow(q); }
+      function shipNote(q) { return (q.final ? '' : '* Belum termasuk ongkos kirim. ') + h(q.catatan); }
+      updateShip = function (prov) {
+        var nq = quote(prov), row = layout.querySelector('[data-kr-ship]'), tot = layout.querySelector('[data-kr-total]'), note = layout.querySelector('[data-kr-shipnote]');
+        if (row) row.outerHTML = shipRow(nq);
+        if (tot) tot.outerHTML = totalRow(nq);
+        if (note) note.innerHTML = shipNote(nq);
+      };
       var form = '';
       if (!user) {
         form = '<section class="kr-panel kr-signin" aria-labelledby="kr-signin-t">' +
@@ -168,10 +182,9 @@
             '<dl class="tk-sum">' +
               '<div class="tk-sum__row"><dt>Subtotal (' + U.formatNumber(ok.reduce(function (n, l) { return n + l.item.qty; }, 0)) + ' barang)</dt><dd>' + h(R(subtotal)) + '</dd></div>' +
               (normal > subtotal ? '<div class="tk-sum__row tk-sum__row--save"><dt>Hemat harga anggota</dt><dd>−' + h(R(normal - subtotal)) + '</dd></div>' : '') +
-              (perluKirim ? '<div class="tk-sum__row"><dt>Ongkos kirim</dt><dd>' + (q.final ? h(R(q.ongkir)) : 'Dikonfirmasi') + '</dd></div>' : '') +
-              '<div class="tk-sum__row tk-sum__row--total"><dt>Total' + (q.final ? '' : '*') + '</dt><dd>' + h(R(subtotal + (q.ongkir || 0))) + '</dd></div>' +
+              sumShip(q) +
             '</dl>' +
-            (perluKirim ? '<p class="tk-sum__note">' + (q.final ? '' : '* Belum termasuk ongkos kirim. ') + h(q.catatan) + '</p>' : '') +
+            (perluKirim ? '<p class="tk-sum__note" data-kr-shipnote>' + shipNote(q) + '</p>' : '') +
             (hasProblem ? '<p class="kr-summary__warn" role="alert">' + icon('alert-triangle', { size: 16 }) + 'Perbaiki atau hapus produk bertanda sebelum membuat pesanan.</p>' : '') +
             (user ? '<button type="submit" form="kr-form" class="btn btn--primary btn--block" data-kr="submit"' + (hasProblem ? ' disabled' : '') + '><span>Buat Pesanan</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></button>'
                   : '<a class="btn btn--primary btn--block" href="masuk.html?next=' + encodeURIComponent('keranjang.html#pemesanan') + '"><span>Masuk untuk memesan</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>') +
@@ -217,6 +230,7 @@
       f.addEventListener('input', function (e) { var fl = e.target.closest('.field'); if (fl) { fl.classList.remove('is-invalid'); e.target.removeAttribute('aria-invalid'); } if (e.target.id === 'kr-setuju') f.classList.remove('agree-invalid'); });
       f.addEventListener('change', function (e) { if (e.target.id === 'kr-setuju') f.classList.toggle('agree-invalid', false); });
       f.addEventListener('submit', submit);
+      if (f.elements.provinsi) f.elements.provinsi.addEventListener('change', function () { updateShip(f.elements.provinsi.value); });
       if (location.hash === '#pemesanan') { var sec = $('#pemesanan'); if (sec) setTimeout(function () { sec.scrollIntoView({ block: 'start' }); sec.focus({ preventScroll: true }); }, 60); }
     }
 
