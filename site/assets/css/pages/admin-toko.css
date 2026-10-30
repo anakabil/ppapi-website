@@ -35,7 +35,7 @@ body[data-page="admin"] .atk-num { font-variant-numeric: tabular-nums; white-spa
 body[data-page="admin"] .atk-actions { text-align: right; white-space: nowrap; }
 body[data-page="admin"] .atk-actions .icon-btn { margin-left: 6px; vertical-align: middle; }
 body[data-page="admin"] .atk-prod { display: flex; align-items: center; gap: 12px; min-width: 0; }
-body[data-page="admin"] .atk-prod img, body[data-page="admin"] .atk-prod__ph { flex: none; width: 48px; height: 48px; object-fit: cover; border: 1px solid var(--line); background: var(--surface-2); }
+body[data-page="admin"] .atk-prod img, body[data-page="admin"] .atk-prod__ph { flex: none; width: 48px; height: 48px; object-fit: contain; border: 1px solid var(--line); background: var(--surface-2); }
 body[data-page="admin"] .atk-prod__ph { display: grid; place-items: center; color: var(--muted); }
 body[data-page="admin"] .atk-dstatus { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
 body[data-page="admin"] .atk-issues { margin: 6px 0 0; padding-left: 18px; }
@@ -59,7 +59,7 @@ body[data-page="admin"] .atk-checks { display: flex; flex-wrap: wrap; gap: 10px 
 body[data-page="admin"] .atk-form .field + .field, body[data-page="admin"] .atk-form .form__row + .field, body[data-page="admin"] .atk-form .field + .form__row, body[data-page="admin"] .atk-form .form__row + .form__row { margin-top: 16px; }
 body[data-page="admin"] .atk-photos { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
 body[data-page="admin"] .atk-photo { position: relative; margin: 0; width: 96px; }
-body[data-page="admin"] .atk-photo img { display: block; width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line); }
+body[data-page="admin"] .atk-photo img { display: block; width: 96px; height: 96px; object-fit: contain; border: 1px solid var(--line); }
 body[data-page="admin"] .atk-photo figcaption { margin-top: 4px; font: 600 .62rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
 body[data-page="admin"] .atk-photo__rm { position: absolute; top: 4px; right: 4px; background: var(--surface); }
 body[data-page="admin"] .atk-upload { cursor: pointer; }
@@ -72,3 +72,5 @@ body[data-page="admin"] .atk-rek { margin-top: 16px; }
 body[data-page="admin"] .atk-rek__n { margin: 0 0 8px; font: 600 .68rem/1 var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
 body[data-page="admin"] .atk-rek .form__row--3 { display: grid; gap: 12px; }
 @media (min-width: 760px) { body[data-page="admin"] .atk-rek .form__row--3 { grid-template-columns: 1fr 1fr 1.4fr; } }
+body[data-page="admin"] .atk-pdf__acts, body[data-page="admin"] .atk-photo-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+body[data-page="admin"] .atk-pdf__file { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; font-size: .9rem; overflow-wrap: anywhere; }

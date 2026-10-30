@@ -110,7 +110,7 @@
           '<p class="ps-item__price">' + U.formatNumber(it.qty) + ' × ' + h(R(it.harga)) + (it.hargaAnggota ? ' <span class="badge badge--outline">Harga anggota</span>' : '') + '</p></div>' +
           '<div class="ps-item__aside"><span class="ps-item__sub">' + h(R(it.subtotal)) + '</span>' + dl + '</div></li>';
       }).join('') + '</ul>' +
-      (o.hasSoft ? '<p class="ps-softnote">' + icon('shield-check', { size: 16 }) + '<span>Soft file dibuka melalui tautan privat dan <strong>dibubuhi tanda air identitas pembeli</strong> (nama, email, dan nomor pesanan) pada setiap halaman. Berkas hanya untuk penggunaan Anda; mohon tidak menggandakan atau menyebarluaskannya.</span></p>' : '');
+      (o.hasSoft ? '<p class="ps-softnote">' + icon('shield-check', { size: 16 }) + '<span>Soft file dibuka melalui tautan privat dan <strong>dibubuhi tanda air identitas pembeli</strong> (nama, email, dan nomor pesanan) pada setiap halaman, lalu dikunci: buka dengan <strong>kata sandi berupa alamat email Anda</strong>. Berkas dapat dicetak, tetapi tidak dapat diubah atau disalin. Berkas hanya untuk penggunaan Anda; mohon tidak menggandakan atau menyebarluaskannya.</span></p>' : '');
     }
 
     async function detail() {
@@ -243,7 +243,16 @@
           try {
             var res = await T.downloadSoft(o, it);
             ui.setLoading(b, false);
-            if (res.ok) { ui.toast('Berkas bertanda air diunduh: ' + res.fileName, { type: 'success' }); return; }
+            if (res.ok) {
+              ui.modal({
+                title: 'Berkas berhasil diunduh', eyebrow: it.nama, size: 'sm',
+                body: '<p>Berkas <strong>' + h(res.fileName) + '</strong> sudah tersimpan di perangkat Anda.</p>' +
+                  '<p class="mt-3">Buka berkas dengan kata sandi berikut (alamat email Anda):</p><p class="mt-3"><strong class="tk-mono">' + h(res.password) + '</strong></p>' +
+                  '<p class="mt-3">Berkas dapat dibaca dan dicetak, tetapi tidak dapat diubah atau disalin. Setiap halaman memuat identitas Anda sebagai pemegang lisensi.</p>',
+                actions: [{ label: 'Mengerti', variant: 'primary' }]
+              });
+              return;
+            }
             fallback(res, it, o);
           } catch (e) { ui.setLoading(b, false); ui.toast(e.message, { type: 'error' }); }
         });

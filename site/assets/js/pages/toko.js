@@ -51,7 +51,7 @@
 
     /* ---------------- render helpers ---------------- */
     function media(p, cls) {
-      if (p.thumb) return '<img class="' + (cls || '') + '" src="' + h(p.thumb) + '" alt="" width="560" height="560" loading="lazy" decoding="async">';
+      if (p.thumb) return '<img class="' + (cls || '') + '" src="' + h(p.thumb) + '" alt="" loading="lazy" decoding="async">';
       return '<span class="tk-ph" aria-hidden="true">' + icon(T.KATEGORI_INFO[p.kategori].icon, { size: 34 }) + '<span>' + h(p.kategori) + '</span></span>';
     }
     function formatBadges(p) {
@@ -273,7 +273,7 @@
         stockEl.textContent = soft || left === Infinity ? '' : (left === 0 ? 'Stok habis' : 'Stok ' + U.formatNumber(left));
         var q = root.querySelector('#d-qty'); if (left !== Infinity) q.max = String(Math.max(1, Math.min(99, left)));
         root.querySelector('[data-d-note]').innerHTML = soft
-          ? icon('shield-check', { size: 18 }) + '<span>Soft file PDF dapat diunduh dari <strong>Pesanan Saya</strong> setelah pembayaran dikonfirmasi. Setiap halaman berkas dibubuhi tanda air identitas pembeli (nama, email, dan nomor pesanan).</span>'
+          ? icon('shield-check', { size: 18 }) + '<span>Soft file PDF dapat diunduh dari <strong>Pesanan Saya</strong> setelah pembayaran dikonfirmasi. Setiap halaman berkas dibubuhi tanda air identitas pembeli (nama, email, dan nomor pesanan), lalu berkas dikunci dengan kata sandi berupa email Anda: dapat dibaca dan dicetak, tetapi tidak dapat diubah atau disalin.</span>'
           : icon('map-pin', { size: 18 }) + '<span>' + (T.isKnowledge(p) ? 'Dokumen cetak' : 'Barang') + ' dikirim ke alamat rumah atau kantor Anda. Ongkos kirim tercantum saat pemesanan.</span>';
         var addBtn = document.getElementById('d-add');
         var out = left === 0;

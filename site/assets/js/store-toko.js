@@ -6,7 +6,10 @@
      products/{id}            ppapi_toko_products {id: produk}     dibaca publik bila aktif; ditulis admin
      product_media/{id}       ppapi_toko_media    {id: {foto[]}}   foto ukuran penuh (≤3 × ±150 KB)
      product_files/{id}       ppapi_toko_files    {id: {url}}      tautan PRIVAT soft file — admin atau
-                                                                   pembeli yang memiliki hak unduh
+                                                                   pembeli yang memiliki hak unduh; atau
+                                                                   berkas PDF yang diunggah ke situs:
+                                                                   {parts, size, fileName} + potongan
+     product_files/{id}/parts/{i}  IndexedDB ppapi_toko_berkas    {b: Bytes ≤ 900 KB} (aturan akses sama)
      entitlements/{uid}_{id}  ppapi_toko_entitlements              hak unduh, ditulis admin saat
                                                                    mengonfirmasi pembayaran
      orders/{no}              ppapi_toko_orders   {no: pesanan}    pemilik membuat & membaca; pemilik
@@ -55,12 +58,14 @@
     ent: 'ppapi_toko_entitlements', orders: 'ppapi_toko_orders', settings: 'ppapi_toko_settings',
     cartGuest: 'ppapi_toko_cart', cartUser: 'ppapi_toko_cart_'
   };
+  /* @cantoo/pdf-lib (turunan pdf-lib dengan dukungan enkripsi). Salinan lokal lebih dahulu,
+     cadangan jsDelivr dengan SRI berkas yang sama. */
   var PDFLIB = [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',
-      integrity: 'sha512-z8IYLHO8bTgFqj+yrPyIJnzBDf7DDhWwiEsk4sY+Oe6J2M+WQequeGS7qioI5vT6rXgVRb4K1UVQC5ER7MKzKQ==' },
-    { src: 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
-      integrity: 'sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI' }
+    { src: 'assets/vendor/pdf-lib-cantoo-2.8.4.min.js', integrity: '' },
+    { src: 'https://cdn.jsdelivr.net/npm/@cantoo/pdf-lib@2.8.4/dist/pdf-lib.min.js',
+      integrity: 'sha384-yaorLZ/dLXTpJKYcZnny8799jIuI4tRXRs+x1RYdAozyawLvwsHPMRh4OpoXUz7w' }
   ];
+  var PART_BYTES = 900 * 1024, MAX_PDF = 30 * 1024 * 1024;
 
   /* ---------------------------------------------------------------- helpers */
   function U() { return PPAPI.util || {}; }
@@ -649,18 +654,63 @@
     try { var s = await f.db.collection('entitlements').doc(entId(u.uid, productId)).get(); return s.exists; }
     catch (e) { return false; }
   }
-  /** fileUrl(productId) → url — admin, or a buyer whose payment was confirmed (entitlement). */
-  async function fileUrl(productId) {
+  /* ---- berkas PDF privat yang diunggah ke situs (Mode Demo: IndexedDB peramban ini) ---- */
+  var idbP = null;
+  function idb() {
+    if (idbP) return idbP;
+    idbP = new Promise(function (resolve, reject) {
+      var r = w.indexedDB.open('ppapi_toko_berkas', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('berkas'); };
+      r.onsuccess = function () { resolve(r.result); };
+      r.onerror = function () { idbP = null; reject(err('toko/quota', 'Penyimpanan peramban tidak tersedia untuk berkas PDF.')); };
+    });
+    return idbP;
+  }
+  async function idbDo(mode, fn) {
+    var db = await idb();
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction('berkas', mode), req = fn(tx.objectStore('berkas'));
+      tx.oncomplete = function () { resolve(req && req.result); };
+      tx.onerror = tx.onabort = function () { reject(err('toko/quota', 'Berkas PDF tidak dapat disimpan di peramban ini.', tx.error)); };
+    });
+  }
+  function fileMeta(raw) {
+    raw = raw || {};
+    return { url: str(raw.url, 1000), parts: int(raw.parts, 0, 40) || 0, size: int(raw.size, 0, MAX_PDF) || 0, fileName: str(raw.fileName, 120) };
+  }
+  /** fileInfo(productId) → {url, parts, size, fileName} — admin, or a buyer whose payment was confirmed (entitlement). */
+  async function fileInfo(productId) {
     var u = requireUser();
     var denied = err('toko/forbidden', 'Berkas ini dapat dibuka setelah pembayaran pesanan Anda dikonfirmasi sekretariat.');
     if (local()) {
       var ok = !!lsMap(K.ent)[entId(u.uid, productId)] || (await isAdmin());
       if (!ok) throw denied;
-      return ((lsMap(K.files)[productId] || {}).url) || '';
+      return fileMeta(lsMap(K.files)[productId]);
     }
     var f = await fx();
-    try { var s = await f.db.collection('product_files').doc(productId).get(); return s.exists ? str((s.data() || {}).url, 1000) : ''; }
+    try { var s = await f.db.collection('product_files').doc(productId).get(); return fileMeta(s.exists ? s.data() : null); }
     catch (e) { if (e && /permission-denied/.test(e.code || '')) throw denied; throw mapFs(e); }
+  }
+  async function fileUrl(productId) { return (await fileInfo(productId)).url; }
+  /** readParts(productId, meta) → Uint8Array — the uploaded PDF, reassembled */
+  async function readParts(productId, meta) {
+    if (local()) {
+      var v = await idbDo('readonly', function (st) { return st.get(productId); });
+      if (!v) throw err('toko/no-file', 'Berkas PDF produk ini tidak ditemukan di peramban ini.');
+      return new Uint8Array(v);
+    }
+    var f = await fx(), chunks = [], total = 0;
+    try {
+      for (var i = 0; i < meta.parts; i++) {
+        var s = await f.db.collection('product_files').doc(productId).collection('parts').doc(String(i)).get();
+        var b = s.exists && s.data().b ? s.data().b.toUint8Array() : null;
+        if (!b) throw err('toko/no-file', 'Sebagian berkas PDF tidak ditemukan. Silakan hubungi sekretariat.');
+        chunks.push(b); total += b.length;
+      }
+    } catch (e) { if (e.code === 'toko/no-file') throw e; throw mapFs(e); }
+    var out = new Uint8Array(total), pos = 0;
+    chunks.forEach(function (c) { out.set(c, pos); pos += c.length; });
+    return out;
   }
   /* Google Drive share link → direct download address (still usually blocked by CORS) */
   function fetchableUrl(url) {
@@ -676,12 +726,13 @@
     });
   }
   var pdfLibP = null;
+  function canEncrypt() { return !!(w.PDFLib && w.PDFLib.PDFDocument && typeof w.PDFLib.PDFDocument.prototype.encrypt === 'function'); }
   function loadPdfLib() {
-    if (w.PDFLib && w.PDFLib.PDFDocument) return Promise.resolve(w.PDFLib);
+    if (canEncrypt()) return Promise.resolve(w.PDFLib);
     if (pdfLibP) return pdfLibP;
     pdfLibP = (async function () {
       for (var i = 0; i < PDFLIB.length; i++) {
-        try { await loadScript(PDFLIB[i].src, PDFLIB[i].integrity); if (w.PDFLib && w.PDFLib.PDFDocument) return w.PDFLib; } catch (e) { /* next */ }
+        try { await loadScript(PDFLIB[i].src, PDFLIB[i].integrity); if (canEncrypt()) return w.PDFLib; } catch (e) { /* next */ }
       }
       pdfLibP = null;
       throw err('toko/pdf-lib', 'Pustaka pengolah PDF tidak dapat dimuat. Periksa koneksi internet Anda, lalu coba lagi.');
@@ -691,7 +742,9 @@
   function latin(s) {   // the standard Helvetica font encodes WinAnsi only
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\x20-\x7E]/g, '?');
   }
-  /** watermark(bytes, {nama, email, orderId, tanggal}) → Uint8Array (every page: diagonal + footer line) */
+  /** watermark(bytes, {nama, email, orderId, tanggal}) → Uint8Array (every page: diagonal + footer line).
+      Hasilnya dienkripsi (AES-128): kata sandi pembuka = email pembeli; kata sandi pemilik acak dan tidak
+      disimpan, sehingga izin mengubah, menyalin, dan menyusun ulang halaman tertutup; mencetak diizinkan. */
   async function watermark(bytes, who) {
     var L = await loadPdfLib();
     var doc;
@@ -728,7 +781,14 @@
     doc.setKeywords(['PPAPI', 'Pesanan ' + no, nama, email].filter(Boolean));
     doc.setProducer('PPAPI - Toko');
     doc.setModificationDate(new Date());
-    return doc.save({ useObjectStreams: false });
+    var pw = String(who.email || '').trim().toLowerCase();
+    if (!pw) throw err('toko/pdf-invalid', 'Email pembeli tidak tersedia untuk mengunci berkas. Silakan hubungi sekretariat.');
+    doc.encrypt({
+      userPassword: pw, ownerPassword: rand(40),
+      permissions: { printing: 'highResolution', modifying: false, copying: false, annotating: false, fillingForms: false, contentAccessibility: true, documentAssembly: false }
+    });
+    /* object stream wajib: tanpa itu @cantoo/pdf-lib 2.8.4 menyandikan string metadata/penanda secara keliru */
+    return doc.save({ useObjectStreams: true });
   }
   /** downloadSoft(order, item) → {ok:true, fileName} | {ok:false, reason, url, message}
       reason: 'cors' (host blocks fetch) | 'not-pdf' | 'encrypted' | 'invalid' | 'lib' | 'no-file' */
@@ -736,10 +796,13 @@
     var u = requireUser();
     if (!order || !order.isPaid) throw err('toko/forbidden', 'Berkas dapat diunduh setelah pembayaran dikonfirmasi sekretariat.');
     if (!item || item.format !== 'soft') throw err('toko/invalid-item', 'Butir ini bukan soft file.');
-    var url = await fileUrl(item.productId);
-    if (!url) return { ok: false, reason: 'no-file', url: '', message: 'Sekretariat belum menautkan berkas untuk produk ini. Silakan hubungi sekretariat.' };
+    var info = await fileInfo(item.productId), url = info.url;
+    if (!url && !info.parts) return { ok: false, reason: 'no-file', url: '', message: 'Sekretariat belum menautkan berkas untuk produk ini. Silakan hubungi sekretariat.' };
     var bytes;
-    try {
+    if (info.parts) {
+      try { bytes = await readParts(item.productId, info); }
+      catch (e) { return { ok: false, reason: 'no-file', url: '', message: e.message }; }
+    } else try {
       var res = await fetch(fetchableUrl(url), { mode: 'cors', credentials: 'omit', redirect: 'follow', cache: 'no-store', referrerPolicy: 'no-referrer' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       bytes = new Uint8Array(await res.arrayBuffer());
@@ -750,7 +813,8 @@
     if (head.indexOf('%PDF-') === -1) return { ok: false, reason: 'not-pdf', url: url, message: 'Tautan tidak mengarah langsung ke berkas PDF (misalnya halaman pratinjau), sehingga tanda air tidak dapat dibubuhkan otomatis.' };
     var out;
     try {
-      out = await watermark(bytes, { nama: order.buyer.name || u.name, email: order.buyer.email || u.email, orderId: order.id, tanggal: todayIso() });
+      var email = order.buyer.email || u.email;
+      out = await watermark(bytes, { nama: order.buyer.name || u.name, email: email, orderId: order.id, tanggal: todayIso() });
     } catch (e) {
       if (e.code === 'toko/pdf-lib') return { ok: false, reason: 'lib', url: url, message: e.message };
       return { ok: false, reason: e.code === 'toko/pdf-encrypted' ? 'encrypted' : 'invalid', url: url, message: e.message };
@@ -761,7 +825,7 @@
     a.href = URL.createObjectURL(blob); a.download = name; a.rel = 'noopener';
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-    return { ok: true, fileName: name, bytes: out.length };
+    return { ok: true, fileName: name, bytes: out.length, password: String(email || '').trim().toLowerCase() };
   }
 
   /* ---------------------------------------------------------------- images */
@@ -795,6 +859,31 @@
     if (src.url && !file.img) URL.revokeObjectURL(src.url);
     if ((out.length - 23) * 0.75 <= maxBytes) return out;
     throw err('toko/photo-too-large', 'Foto tidak dapat diperkecil hingga ' + Math.round(maxBytes / 1024) + ' KB. Gunakan foto lain.');
+  }
+  /** watermarkPhoto(dataUrl) → data:image/jpeg — tanda air PPAPI miring berulang (tipis) + label di pojok */
+  async function watermarkPhoto(dataUrl, opts) {
+    opts = opts || {};
+    var img = await new Promise(function (resolve, reject) { var i = new Image(); i.onload = function () { resolve(i); }; i.onerror = function () { reject(err('toko/invalid-image', 'Foto tidak dapat dibaca.')); }; i.src = dataUrl; });
+    var W = img.naturalWidth, H = img.naturalHeight, c = document.createElement('canvas'), ctx = c.getContext('2d');
+    c.width = W; c.height = H;
+    ctx.drawImage(img, 0, 0, W, H);
+    var text = opts.text || 'PPAPI · ppapi.or.id', fs = Math.max(14, Math.round(Math.min(W, H) * 0.045));
+    ctx.save();
+    ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 6);
+    ctx.font = '600 ' + fs + 'px Inter, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var tw = ctx.measureText(text).width + fs * 3, th = fs * 4.2, R = Math.hypot(W, H) / 2 + tw;
+    for (var y = -R, row = 0; y <= R; y += th, row++) {
+      for (var x = -R + (row % 2) * tw / 2; x <= R; x += tw) {
+        ctx.fillStyle = 'rgba(0,0,0,0.10)'; ctx.fillText(text, x + 1, y + 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.fillText(text, x, y);
+      }
+    }
+    ctx.restore();
+    var ls = Math.max(12, Math.round(Math.min(W, H) * 0.03)), label = '© PPAPI';
+    ctx.font = '700 ' + ls + 'px Inter, Arial, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillText(label, W - ls + 1, H - ls * 0.8 + 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillText(label, W - ls, H - ls * 0.8);
+    return compressImage({ img: await new Promise(function (resolve) { var i = new Image(); i.onload = function () { resolve(i); }; i.src = c.toDataURL('image/png'); }) }, { max: 1200, maxKB: LIMITS.fotoKB });
   }
   async function thumbFrom(dataUrl) {
     var img = await new Promise(function (resolve, reject) { var i = new Image(); i.onload = function () { resolve(i); }; i.onerror = reject; i.src = dataUrl; });
@@ -833,11 +922,12 @@
       p.fotoCount = foto.length;
       p.thumb = foto.length ? await thumbFrom(foto[0]) : '';
     }
-    var file = extra.fileUrl;
+    var file = extra.fileUrl, uploaded = false;
+    if (existing && id) { try { uploaded = (await adminFileMeta(id)).parts > 0; } catch (e) { /* belum ada */ } }
     if (file !== undefined) {
       file = anyUrl(file);
       if (extra.fileUrl && !file) throw err('toko/invalid-url', 'Tautan berkas harus diawali https:// (atau http:// untuk server uji).');
-      p.berkasAda = !!file && isKnowledge(p);
+      p.berkasAda = (!!file || uploaded) && isKnowledge(p);
     }
     if (!isKnowledge(p)) p.berkasAda = false;
     var now = nowIso();
@@ -847,7 +937,7 @@
       var m = lsMap(K.products), md = lsMap(K.media), fl = lsMap(K.files);
       m[id] = doc;
       if (Array.isArray(foto)) { if (foto.length) md[id] = { foto: foto, updatedAt: now }; else delete md[id]; }
-      if (file !== undefined) { if (file && isKnowledge(p)) fl[id] = { url: file, updatedAt: now, updatedBy: adm.uid }; else delete fl[id]; }
+      if (file !== undefined) { if ((file && isKnowledge(p)) || uploaded) fl[id] = Object.assign({}, fl[id] || {}, { url: isKnowledge(p) ? file : '', updatedAt: now, updatedBy: adm.uid }); else delete fl[id]; }
       lsSet(K.media, md); lsSet(K.files, fl); lsSet(K.products, m);
     } else {
       var f = await fx();
@@ -860,7 +950,8 @@
           else batch.delete(f.db.collection('product_media').doc(id));
         }
         if (file !== undefined) {
-          if (file && isKnowledge(p)) batch.set(f.db.collection('product_files').doc(id), { url: file, updatedAt: serverTs(f), updatedBy: adm.uid });
+          /* berkas unggahan (parts) tetap disimpan; hanya tautannya yang diubah */
+          if ((file && isKnowledge(p)) || uploaded) batch.set(f.db.collection('product_files').doc(id), { url: isKnowledge(p) ? file : '', updatedAt: serverTs(f), updatedBy: adm.uid }, { merge: true });
           else batch.delete(f.db.collection('product_files').doc(id));
         }
         await batch.commit();
@@ -869,8 +960,59 @@
     productCache = null;
     return sanitizeProduct(doc, id);
   }
+  async function adminFileMeta(id) {
+    await requireAdmin();
+    if (local()) return fileMeta(lsMap(K.files)[id]);
+    var f = await fx();
+    try { var s = await f.db.collection('product_files').doc(id).get(); return fileMeta(s.exists ? s.data() : null); }
+    catch (e) { throw mapFs(e); }
+  }
+  /** saveFile(id, File|Blob|Uint8Array|null, fileName) — unggah berkas PDF privat (dipotong ≤ 900 KB per dokumen);
+      null menghapus berkas unggahan. Tautan (url) yang ada tidak diubah. */
+  async function saveFile(id, file, fileName) {
+    var adm = await requireAdmin();
+    var p = await getProduct(id);
+    if (!p) throw err('toko/not-found', 'Produk tidak ditemukan. Simpan produk terlebih dahulu.');
+    var old = await adminFileMeta(id), bytes = null;
+    if (file) {
+      bytes = file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer());
+      if (bytes.length > MAX_PDF) throw err('toko/file-too-large', 'Berkas PDF maksimal 30 MB.');
+      var head = String.fromCharCode.apply(null, bytes.subarray(0, 1024));
+      if (head.indexOf('%PDF-') === -1) throw err('toko/pdf-invalid', 'Berkas harus berupa PDF.');
+      if (/\/Encrypt\b/.test(String.fromCharCode.apply(null, bytes.subarray(Math.max(0, bytes.length - 4096))))) throw err('toko/pdf-encrypted', 'Unggah PDF tanpa kata sandi; berkas dikunci otomatis saat diunduh pembeli.');
+      fileName = str(fileName || (file && file.name) || (p.kode || p.nama) + '.pdf', 120);
+    }
+    var parts = bytes ? Math.ceil(bytes.length / PART_BYTES) : 0;
+    var now = nowIso();
+    if (local()) {
+      if (bytes) await idbDo('readwrite', function (st) { return st.put(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length), id); });
+      else await idbDo('readwrite', function (st) { return st.delete(id); });
+      var fl = lsMap(K.files), m = lsMap(K.products);
+      var meta = Object.assign({}, fl[id] || { url: '' }, { parts: parts, size: bytes ? bytes.length : 0, fileName: bytes ? fileName : '', updatedAt: now, updatedBy: adm.uid });
+      if (!parts) { delete meta.parts; delete meta.size; delete meta.fileName; }
+      if (!parts && !meta.url) delete fl[id]; else fl[id] = meta;
+      if (m[id]) { m[id].berkasAda = !!(parts || meta.url); m[id].updatedAt = now; }
+      lsSet(K.files, fl); lsSet(K.products, m);
+    } else {
+      var f = await fx(), ref = f.db.collection('product_files').doc(id);
+      try {
+        for (var i = 0; i < parts; i++) {
+          await ref.collection('parts').doc(String(i)).set({ b: f.fb.firestore.Blob.fromUint8Array(bytes.subarray(i * PART_BYTES, (i + 1) * PART_BYTES)), i: i });
+        }
+        for (var j = parts; j < old.parts; j++) await ref.collection('parts').doc(String(j)).delete();
+        var doc = { url: old.url || '', updatedAt: serverTs(f), updatedBy: adm.uid };
+        if (parts) { doc.parts = parts; doc.size = bytes.length; doc.fileName = fileName; }
+        if (parts || doc.url) await ref.set(doc); else await ref.delete();
+        await f.db.collection('products').doc(id).update({ berkasAda: !!(parts || doc.url), updatedAt: now });
+      } catch (e) { throw mapFs(e); }
+    }
+    productCache = null;
+    return { parts: parts, size: bytes ? bytes.length : 0, fileName: bytes ? fileName : '' };
+  }
   async function removeProduct(id) {
     await requireAdmin();
+    var fm = await adminFileMeta(id).catch(function () { return { parts: 0 }; });
+    if (fm.parts) await saveFile(id, null).catch(function () { /* lanjut hapus produk */ });
     if (local()) {
       ['products', 'media', 'files'].forEach(function (k) { var m = lsMap(K[k]); delete m[id]; lsSet(K[k], m); });
     } else {
@@ -984,6 +1126,8 @@
   var admin = {
     listProducts: adminListProducts,
     getFile: adminGetFile,
+    getFileMeta: adminFileMeta,
+    saveFile: saveFile,
     saveProduct: saveProduct,
     removeProduct: removeProduct,
     listOrders: adminListOrders,
@@ -1093,8 +1237,8 @@
     getSettings: getSettings, shippingQuote: shippingQuote, validateAlamat: validateAlamat,
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
-    paymentDeadline: paymentDeadline, hasEntitlement: hasEntitlement, fileUrl: fileUrl, downloadSoft: downloadSoft,
-    watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage,
+    paymentDeadline: paymentDeadline, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
+    watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage, watermarkPhoto: watermarkPhoto, MAX_PDF: MAX_PDF,
     admin: admin
   };
 })(window);

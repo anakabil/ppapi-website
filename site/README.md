@@ -684,21 +684,23 @@ Menunggu Pembayaran → (pembeli mengirim bukti) Menunggu Konfirmasi → (sekret
 - Harga dicatat oleh peramban pembeli. Sebelum konfirmasi, detail pesanan di konsol menampilkan peringatan bila harga/total berbeda dengan katalog atau bila harga anggota dipakai oleh pembeli yang tidak lagi Aktif. **Periksa mutasi rekening sebelum menekan "Konfirmasi Pembayaran".**
 - Stok barang fisik dan cetak berkurang otomatis saat pembayaran dikonfirmasi (bukan saat checkout).
 
-### 18.3 Soft file: tautan privat + tanda air
-- Tautan berkas disimpan terpisah di `product_files/{id}` dan hanya dapat dibaca admin atau pembeli yang memiliki `entitlements/{uid}_{id}` — dokumen ini ditulis admin saat mengonfirmasi pembayaran.
-- Saat pembeli menekan **Unduh berkas**, peramban mengambil PDF dari tautan tersebut, membubuhkan tanda air (nama, email, nomor pesanan, tanggal) pada **setiap halaman** dengan pdf-lib 1.17.1 (cdnjs, SRI; cadangan jsDelivr), lalu menyimpan berkas hasilnya.
+### 18.3 Soft file: berkas privat, tanda air, dan kunci kata sandi
+- **Cara utama: unggah PDF ke situs.** Di Konsol Admin › Toko › Produk › Ubah › *Berkas PDF (disimpan privat di situs)*, pilih PDF tanpa kata sandi (maks. 30 MB), lalu Simpan. Berkas dipotong ≤ 900 KB dan disimpan di `product_files/{id}/parts/{n}`; hanya admin dan pembeli yang memiliki `entitlements/{uid}_{id}` (ditulis saat pembayaran dikonfirmasi) yang dapat membacanya. Tidak memerlukan Cloud Storage.
+- Cara lain: tautan privat (`product_files/{id}.url`) yang mengarah langsung ke PDF dengan CORS. Bila ada berkas unggahan, berkas unggahan yang dipakai.
+- Saat pembeli menekan **Unduh berkas**, peramban:
+  1. membubuhkan tanda air nama, email, nomor pesanan, dan tanggal pada **setiap halaman**;
+  2. mengunci berkas dengan enkripsi AES-128: **kata sandi pembuka = alamat email pembeli** (huruf kecil); kata sandi pemilik dibuat acak dan tidak disimpan, sehingga izin **mengubah, menyalin teks, menyusun ulang halaman, dan anotasi ditutup**; mencetak diizinkan;
+  3. menampilkan kata sandinya kepada pembeli.
+  Pustaka: `assets/vendor/pdf-lib-cantoo-2.8.4.min.js` (@cantoo/pdf-lib, lisensi MIT; cadangan jsDelivr dengan SRI).
 - **Batasan yang perlu dipahami (jujur):**
-  1. Tanda air adalah pencegah penyebaran dan penanda asal, **bukan DRM/enkripsi**. Pembeli tetap menerima PDF utuh; berkas tidak dikunci kata sandi (pdf-lib tidak dapat mengenkripsi PDF). Unggah PDF **tanpa kata sandi** — PDF terenkripsi tidak dapat dibubuhi tanda air.
-  2. Tautan sumber pada akhirnya diketahui peramban pembeli yang berhak (terlihat di alat pengembang). Siapa pun yang memegang tautan itu dapat mengunduh berkas **tanpa** tanda air. Kerahasiaan sepenuhnya bergantung pada hosting.
-  3. Agar tanda air dapat dibubuhkan otomatis, hosting harus (a) mengirim berkas PDF langsung (bukan halaman pratinjau) dan (b) mengizinkan CORS (`Access-Control-Allow-Origin` untuk domain situs). **Tautan Google Drive biasa tidak memenuhi syarat ini** (pratinjau HTML + tanpa CORS): pembeli kemudian diberi penjelasan dan tombol "Buka tautan berkas" — berkas yang dibuka dengan cara ini **tidak** bertanda air.
-- **Pilihan hosting:**
-  | Hosting | CORS / tanda air otomatis | Privasi tautan |
-  | --- | --- | --- |
-  | Google Drive "siapa saja yang memiliki link" | Tidak (fallback buka tautan, tanpa tanda air) | Tautan sulit ditebak, tetapi dapat diteruskan |
-  | Rilis/aset GitHub publik, folder situs ini | Ya (GitHub Pages/raw) | **Tidak privat** — siapa pun yang tahu/menebak alamatnya dapat mengunduh; jangan dipakai untuk dokumen berbayar |
-  | Bucket penyimpanan objek (mis. Cloudflare R2, Backblaze B2, AWS S3) dengan nama berkas acak panjang + aturan CORS untuk domain situs | Ya | Cukup baik untuk kebutuhan ini (tautan rahasia; dapat diganti berkala) |
-  | Tautan bertanda tangan berumur pendek (signed URL) | Ya | Terbaik, tetapi memerlukan server/fungsi (Cloud Functions — paket Blaze), di luar cakupan situs statis |
-  Rekomendasi: bucket objek dengan CORS dan nama berkas acak; ganti tautan bila diduga bocor (cukup ubah di Konsol › Produk).
+  1. Izin PDF (tidak dapat diubah/disalin) dipatuhi pembaca PDF umum (Adobe Acrobat/Reader, peramban, Foxit), tetapi dapat dilewati dengan perangkat lunak pembuka kunci. Tanda air identitas tetap melekat pada setiap halaman dan menjadi penanda asal bila berkas tersebar.
+  2. Pengolahan dilakukan di peramban pembeli, sehingga berkas sumber pada akhirnya diterima peramban pembeli yang berhak (terlihat di alat pengembang). Perlindungan penuh memerlukan server (Cloud Functions, paket Blaze).
+  3. Kata sandi = email pembeli memudahkan pembeli, tetapi siapa pun yang mengetahui email tersebut dapat membuka berkas yang diteruskan. Tanda air nama pembeli tetap tampil.
+- Untuk tautan eksternal: hosting harus mengirim berkas PDF langsung dan mengizinkan CORS untuk domain situs. Tautan Google Drive biasa tidak memenuhi syarat ini; pembeli kemudian diberi tombol "Buka tautan berkas" (tanpa tanda air dan tanpa kunci). Karena itu, gunakan unggahan ke situs.
+
+### 18.3a Foto produk
+- Foto ditampilkan utuh sesuai rasio aslinya (tidak dipotong).
+- Kotak **Bubuhkan tanda air PPAPI pada foto yang diunggah** (bawaan aktif) menambahkan tanda air "PPAPI · ppapi.or.id" miring berulang dan "© PPAPI" di pojok. Untuk foto yang sudah ada, tekan **Bubuhkan tanda air ke foto saat ini**, lalu Simpan (tekan sekali saja agar tidak berlapis).
 
 ### 18.4 Firestore
 Aturan toko sudah tergabung di `firestore.rules` (bagian 11) — cukup Publish ulang berkas itu. Tidak memerlukan indeks komposit (kueri: `products where aktif == true`, `orders where uid == …`).

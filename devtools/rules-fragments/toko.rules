@@ -72,11 +72,27 @@
                      || isAdmin());
       allow list: if isAdmin();
       allow create, update: if isAdmin()
-                            && request.resource.data.keys().hasOnly(['url', 'updatedAt', 'updatedBy'])
+                            && request.resource.data.keys().hasOnly(['url', 'parts', 'size', 'fileName', 'updatedAt', 'updatedBy'])
                             && request.resource.data.url is string
                             && request.resource.data.url.size() <= 1000
+                            && request.resource.data.get('parts', 0) is int
+                            && request.resource.data.get('parts', 0) <= 40
                             && request.resource.data.updatedBy == request.auth.uid;
       allow delete: if isAdmin();
+
+      // Berkas PDF yang diunggah ke situs, dipotong ≤ 900 KB per dokumen (Bytes).
+      // Akses baca sama dengan dokumen induknya.
+      match /parts/{n} {
+        allow get: if signedIn()
+                   && (exists(/databases/$(database)/documents/entitlements/$(request.auth.uid + '_' + id))
+                       || isAdmin());
+        allow create, update: if isAdmin()
+                              && request.resource.data.keys().hasOnly(['b', 'i'])
+                              && request.resource.data.b is bytes
+                              && request.resource.data.b.size() <= 921600
+                              && request.resource.data.i is int;
+        allow delete: if isAdmin();
+      }
     }
 
     match /entitlements/{eid} {

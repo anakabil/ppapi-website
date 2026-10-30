@@ -54,6 +54,11 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Toko (30-10-2026): tombol Impor Produk (JSON `ppapi-toko-produk`) di Konsol Admin › Toko › Produk. Paket 5 kaus PPAPI
   (Ratchet Master, Coupler Crew, Falsework, Torque Society, Rise Up; Rp120.000; katun combed 30s; sablon rubber) diserahkan
   ke klien untuk diimpor; ukuran S–XXL dan stok tak terbatas adalah asumsi, konfirmasi klien.
+- Toko (30-10-2026, lanjutan): foto produk utuh (object-fit contain, galeri ikut rasio asli) + tanda air PPAPI saat unggah.
+  Soft file kini dapat diunggah ke situs (`product_files/{id}/parts/{n}`, ≤ 900 KB/dokumen, maks. 30 MB) dan setiap unduhan
+  dibubuhi tanda air pembeli + dienkripsi AES-128 (kata sandi = email pembeli, izin ubah/salin ditutup, cetak boleh) dengan
+  `assets/vendor/pdf-lib-cantoo-2.8.4.min.js` (wajib `useObjectStreams: true`). Produk CoP: PPAPI-CoP-01:2026 Seri Lengkap
+  8 bagian (183 hlm., Rp150.000), paket impor diserahkan ke klien; berkas PDF CoP **jangan** dimasukkan ke repositori.
 - Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
@@ -65,7 +70,8 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
 - **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; 28-10-2026:
-  `cert_settings` penanda tangan sertifikat; tanpa publish, unggah flyer/tanda tangan di Mode Firebase ditolak `permission-denied`).
+  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko; tanpa publish, unggah
+  flyer/tanda tangan/PDF di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan
   KEP-74/PPK/XII/2013, jawaban 11 pertanyaan Komite Teknis.

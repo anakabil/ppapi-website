@@ -284,7 +284,7 @@
     var T = PPAPI.toko, ui = PPAPI.ui;
     var data;
     try {
-      if (file.size > 8 * 1024 * 1024) throw new Error('size');
+      if (file.size > 48 * 1024 * 1024) throw new Error('size');
       data = JSON.parse(await file.text());
       if (!data || data.format !== 'ppapi-toko-produk' || !Array.isArray(data.produk) || !data.produk.length) throw new Error('format');
     } catch (e) { ui.toast('Berkas bukan paket impor produk PPAPI yang sah.', { type: 'error' }); return; }
@@ -296,9 +296,17 @@
     if (!ok) return;
     var done = 0, gagal = [];
     for (var i = 0; i < items.length; i++) {
-      var raw = Object.assign({}, items[i]), foto = Array.isArray(raw.foto) ? raw.foto : undefined;
-      delete raw.foto;
-      try { await T.admin.saveProduct(raw, { foto: foto }); done++; }
+      var raw = Object.assign({}, items[i]), foto = Array.isArray(raw.foto) ? raw.foto : undefined, berkas = raw.berkas;
+      delete raw.foto; delete raw.berkas;
+      try {
+        var saved = await T.admin.saveProduct(raw, { foto: foto });
+        if (berkas && typeof berkas.data === 'string' && /^data:application\/pdf;base64,/.test(berkas.data)) {
+          var bin = atob(berkas.data.slice(berkas.data.indexOf(',') + 1)), bytes = new Uint8Array(bin.length);
+          for (var j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+          await T.admin.saveFile(saved.id, bytes, berkas.nama);
+        }
+        done++;
+      }
       catch (e) { gagal.push((raw.nama || 'Produk ' + (i + 1)) + ': ' + e.message); }
     }
     if (done) ui.toast(done + ' produk berhasil diimpor.', { type: 'success' });
@@ -314,6 +322,8 @@
     if (!foto.length && p.thumb) foto = [p.thumb];
     var fotoChanged = false;
     var fileUrl = isNew ? '' : await T.admin.getFile(p.id).catch(function () { return ''; });
+    var fmeta = isNew ? { parts: 0 } : await T.admin.getFileMeta(p.id).catch(function () { return { parts: 0 }; });
+    var pdfNew;   // undefined = tidak berubah, File = ganti, null = hapus berkas unggahan
     var know = T.isKnowledge(p);
     function num(v) { return v === null || v === undefined ? '' : String(v); }
     function fld(id, label, input, opts) { opts = opts || {}; return '<div class="field' + (opts.cls ? ' ' + opts.cls : '') + '"><label class="field__label" for="' + id + '">' + label + (opts.req ? ' <span class="field__req" aria-hidden="true">*</span>' : ' <span class="opt">(opsional)</span>') + '</label>' + input + (opts.hint ? '<p class="field__hint">' + opts.hint + '</p>' : '') + '<p class="field__error">' + (opts.err || 'Kolom ini wajib diisi.') + '</p></div>'; }
@@ -332,7 +342,11 @@
         '<div class="drawer__section" data-pf-know' + (know ? '' : ' hidden') + '><h3 class="drawer__section-title">Format produk pengetahuan</h3>' +
           '<div class="atk-checks"><label class="check"><input type="checkbox" id="pf-soft"' + (!know || (p.format && p.format.soft) ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Soft file (PDF bertanda air)</span></label>' +
           '<label class="check"><input type="checkbox" id="pf-cetak"' + (know && p.format && p.format.cetak ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Cetak (dikirim)</span></label></div>' +
-          fld('pf-file', 'Tautan privat berkas PDF', inp('pf-file', fileUrl, 'type="url" maxlength="1000" placeholder="https://…/berkas.pdf"'), { cls: 'mt-3', hint: 'Disimpan terpisah dan hanya dapat dibaca admin serta pembeli yang pembayarannya telah dikonfirmasi. Agar tanda air dapat dibubuhkan otomatis, tautan harus mengarah langsung ke berkas PDF tanpa kata sandi dan penyimpanannya mengizinkan pengambilan dari situs ini (CORS). Tautan Google Drive biasa tidak mengizinkannya — pembeli kemudian diarahkan membuka tautan aslinya tanpa tanda air.', err: 'Tautan harus diawali https://.' }) +
+          '<div class="atk-pdf mt-3"><p class="field__label">Berkas PDF (disimpan privat di situs)</p><div data-pf-pdf></div>' +
+            '<div class="atk-pdf__acts"><label class="btn btn--ghost btn--sm"><span data-icon="upload" data-icon-size="16"></span><span>Pilih PDF</span><input type="file" accept="application/pdf,.pdf" class="sr-only" data-pf-pdf-file></label>' +
+            '<button type="button" class="btn btn--link btn--sm" data-pf-pdf-rm hidden>Hapus berkas</button></div>' +
+            '<p class="field__hint">PDF tanpa kata sandi, maks. 30 MB. Hanya admin dan pembeli yang pembayarannya dikonfirmasi yang dapat mengambilnya. Saat diunduh, setiap halaman dibubuhi tanda air nama, email, dan nomor pesanan pembeli, lalu berkas dikunci: dibuka dengan kata sandi berupa email pembeli, dapat dicetak, tetapi tidak dapat diubah atau disalin.</p></div>' +
+          fld('pf-file', 'Atau tautan privat berkas PDF', inp('pf-file', fileUrl, 'type="url" maxlength="1000" placeholder="https://…/berkas.pdf"'), { cls: 'mt-3', hint: 'Dipakai bila tidak ada berkas unggahan. Tautan harus mengarah langsung ke PDF dan penyimpanannya mengizinkan pengambilan dari situs ini (CORS); tautan Google Drive biasa tidak dapat dibubuhi tanda air.', err: 'Tautan harus diawali https://.' }) +
           fld('pf-hal', 'Jumlah halaman', inp('pf-hal', num(p.halaman), 'inputmode="numeric" maxlength="6"')) +
         '</div>' +
         '<div class="drawer__section"><h3 class="drawer__section-title">Harga &amp; stok</h3>' +
@@ -351,7 +365,9 @@
         '</div>' +
         '<div class="drawer__section"><h3 class="drawer__section-title">Foto</h3><p class="atk-note">Maks. 3 foto; otomatis diperkecil menjadi JPEG ≤ 150 KB. Foto pertama menjadi sampul.</p>' +
           '<div class="atk-photos" data-pf-photos></div>' +
-          '<label class="btn btn--ghost btn--sm atk-upload"><span data-icon="upload" data-icon-size="16"></span><span>Pilih foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-pf-file class="sr-only"></label>' +
+          '<div class="atk-photo-acts"><label class="btn btn--ghost btn--sm atk-upload"><span data-icon="upload" data-icon-size="16"></span><span>Pilih foto</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-pf-file class="sr-only"></label>' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-pf-wm-all><span data-icon="shield" data-icon-size="16"></span><span>Bubuhkan tanda air ke foto saat ini</span></button></div>' +
+          '<label class="check mt-3"><input type="checkbox" id="pf-wm" checked><span class="check__box"></span><span class="check__label">Bubuhkan tanda air PPAPI pada foto yang diunggah</span></label>' +
         '</div>' +
         '<div class="drawer__section"><h3 class="drawer__section-title">Tampilan</h3><div class="atk-checks">' +
           '<label class="check"><input type="checkbox" id="pf-aktif"' + (p.aktif ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Tampilkan di toko</span></label>' +
@@ -369,6 +385,14 @@
       var box = el.querySelector('[data-pf-photos]');
       box.innerHTML = foto.length ? foto.map(function (f, i) { return '<figure class="atk-photo"><img src="' + h(f) + '" alt="Foto ' + (i + 1) + '" width="96" height="96">' + (i === 0 ? '<figcaption>Sampul</figcaption>' : '') + '<button type="button" class="icon-btn icon-btn--sm atk-photo__rm" data-rm="' + i + '" aria-label="Hapus foto ' + (i + 1) + '">' + icon('close', { size: 14 }) + '</button></figure>'; }).join('') : '<p class="atk-note">Belum ada foto — kartu katalog menampilkan ikon kategori.</p>';
       el.querySelector('.atk-upload').hidden = foto.length >= T.LIMITS.foto;
+      el.querySelector('[data-pf-wm-all]').hidden = !foto.length;
+    }
+    function paintPdf() {
+      var box = el.querySelector('[data-pf-pdf]'), U = PPAPI.util;
+      var name = pdfNew ? pdfNew.name : pdfNew === null ? '' : fmeta.parts ? fmeta.fileName : '';
+      var size = pdfNew ? pdfNew.size : pdfNew === null ? 0 : fmeta.size;
+      box.innerHTML = name ? '<p class="atk-pdf__file">' + icon('file-text', { size: 16 }) + '<span>' + h(name) + ' · ' + U.formatNumber(Math.round(size / 1024)) + ' KB' + (pdfNew ? ' (disimpan saat Simpan)' : '') + '</span></p>' : '<p class="atk-note">' + (pdfNew === null ? 'Berkas unggahan akan dihapus saat Simpan.' : 'Belum ada berkas unggahan.') + '</p>';
+      el.querySelector('[data-pf-pdf-rm]').hidden = !name;
     }
     function syncKnow() {
       var k = el.querySelector('#pf-kat').value === 'Produk Pengetahuan';
@@ -380,14 +404,32 @@
     }
     function wire(root) {
       el = root;
-      paintPhotos(); syncKnow();
+      paintPhotos(); paintPdf(); syncKnow();
+      el.querySelector('[data-pf-pdf-file]').addEventListener('change', function (e) {
+        var f = e.target.files && e.target.files[0]; e.target.value = '';
+        if (!f) return;
+        if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { ui.toast('Pilih berkas PDF.', { type: 'error' }); return; }
+        if (f.size > T.MAX_PDF) { ui.toast('Berkas PDF maksimal 30 MB.', { type: 'error' }); return; }
+        pdfNew = f; paintPdf();
+      });
+      el.querySelector('[data-pf-pdf-rm]').addEventListener('click', function () { pdfNew = fmeta.parts ? null : undefined; paintPdf(); });
+      el.querySelector('[data-pf-wm-all]').addEventListener('click', async function (e) {
+        var b = e.currentTarget; ui.setLoading(b, true, 'Membubuhkan…');
+        try { for (var i = 0; i < foto.length; i++) foto[i] = await T.watermarkPhoto(foto[i]); fotoChanged = true; ui.toast('Tanda air dibubuhkan pada ' + foto.length + ' foto. Simpan untuk menerapkan.', { type: 'success' }); }
+        catch (err) { ui.toast(err.message, { type: 'error' }); }
+        ui.setLoading(b, false); paintPhotos();
+      });
       el.addEventListener('change', function (e) { if (e.target.matches('#pf-kat, #pf-soft, #pf-cetak')) syncKnow(); });
       el.addEventListener('input', function (e) { var f = e.target.closest('.field'); if (f) f.classList.remove('is-invalid'); });
       el.querySelector('[data-pf-photos]').addEventListener('click', function (e) { var b = e.target.closest('[data-rm]'); if (!b) return; foto.splice(Number(b.dataset.rm), 1); fotoChanged = true; paintPhotos(); });
       el.querySelector('[data-pf-file]').addEventListener('change', async function (e) {
         var files = Array.prototype.slice.call(e.target.files || []).slice(0, T.LIMITS.foto - foto.length);
         for (var i = 0; i < files.length; i++) {
-          try { foto.push(await T.compressImage(files[i], { max: 1200, maxKB: T.LIMITS.fotoKB })); fotoChanged = true; }
+          try {
+            var ph = await T.compressImage(files[i], { max: 1200, maxKB: T.LIMITS.fotoKB });
+            if (el.querySelector('#pf-wm').checked) ph = await T.watermarkPhoto(ph);
+            foto.push(ph); fotoChanged = true;
+          }
           catch (err) { ui.toast(err.message, { type: 'error' }); }
         }
         e.target.value = ''; paintPhotos();
@@ -420,6 +462,10 @@
       if (isNew || fotoChanged) extra.foto = foto;
       if (k && soft) extra.fileUrl = file; else if (!isNew && fileUrl) extra.fileUrl = '';
       var saved = await T.admin.saveProduct(input, extra);
+      if (pdfNew !== undefined && k) {
+        try { await T.admin.saveFile(saved.id, pdfNew); }
+        catch (e) { ui.toast('Produk disimpan, tetapi berkas PDF gagal disimpan: ' + e.message, { type: 'error' }); close(); paint(); return; }
+      }
       ui.toast('Produk “' + saved.nama + '” disimpan.', { type: 'success' });
       close(); paint();
     }
