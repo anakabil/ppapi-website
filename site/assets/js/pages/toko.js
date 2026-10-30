@@ -221,7 +221,7 @@
             '<div class="tk-detail__price" data-d-price aria-live="polite"></div>' +
             (p.ringkasan ? '<p class="tk-detail__lead">' + h(p.ringkasan) + '</p>' : '') +
             (formats.length > 1 || T.isKnowledge(p) ? radioGroup('d-format', 'Format', formats.map(function (f) { return { value: f, label: f === 'soft' ? 'Soft file (PDF)' : 'Cetak', disabled: !T.inStock(p, f) }; }), firstOk) : '') +
-            p.varian.map(function (g, i) { return radioGroup('d-var-' + i, g.nama, g.opsi.map(function (o) { return { value: o, label: o }; }), g.opsi.length === 1 ? g.opsi[0] : '', 'tk-opt--var'); }).join('') +
+            p.varian.map(function (g, i) { return radioGroup('d-var-' + i, g.nama, g.opsi.map(function (o) { var t = (g.tambahan || {})[o]; return { value: o, label: t ? o + ' (+' + R(t) + ')' : o }; }), g.opsi.length === 1 ? g.opsi[0] : '', 'tk-opt--var'); }).join('') +
             '<div class="tk-qtyrow" data-d-qtyrow><label class="field__label" for="d-qty">Jumlah</label>' +
               '<div class="tk-qty"><button type="button" class="tk-qty__btn" data-step="-1" aria-label="Kurangi jumlah">' + icon('minus', { size: 16 }) + '</button>' +
               '<input class="tk-qty__input" id="d-qty" type="number" inputmode="numeric" min="1" max="99" value="1">' +
@@ -260,8 +260,8 @@
         return { format: format, varian: varian, missing: missing, qty: qty };
       }
       function paint() {
-        var c = chosen(), pr = T.priceFor(p, c.format, member);
-        var anyMember = T.priceFor(p, c.format, true);
+        var c = chosen(), pr = T.priceFor(p, c.format, member, c.varian);
+        var anyMember = T.priceFor(p, c.format, true, c.varian);
         root.querySelector('[data-d-price]').innerHTML =
           '<span class="tk-detail__amount">' + h(R(pr.harga)) + '</span>' +
           (pr.anggota ? '<span class="tk-detail__was"><s>' + h(R(pr.normal)) + '</s> · harga anggota</span>' :

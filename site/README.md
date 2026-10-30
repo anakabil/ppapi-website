@@ -673,7 +673,7 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
 ## 18. Toko PPAPI
 
 ### 18.1 Halaman
-- **toko.html** — katalog (Suvenir, Pakaian, Aksesori, Klem & Komponen Perancah, Produk Pengetahuan). Katalog dimulai kosong; produk ditambahkan sekretariat di **Konsol Admin › Toko › Produk**. Beberapa produk sekaligus dapat dimasukkan dengan tombol **Impor Produk** (berkas `.json` berformat `ppapi-toko-produk`, berisi data produk dan foto JPEG ≤ 150 KB, maks. 3 per produk); produk dengan id yang sama diperbarui. Deskripsi produk mendukung daftar berbutir (`- `), bernomor (`1. `), dan baris judul pendek.
+- **toko.html** — katalog (Suvenir, Pakaian, Aksesori, Klem & Komponen Perancah, Produk Pengetahuan). Katalog dimulai kosong; produk ditambahkan sekretariat di **Konsol Admin › Toko › Produk**. Beberapa produk sekaligus dapat dimasukkan dengan tombol **Impor Produk** (berkas `.json` berformat `ppapi-toko-produk`, berisi data produk dan foto JPEG ≤ 150 KB, maks. 3 per produk); produk dengan id yang sama diperbarui. Biaya tambahan per pilihan varian ditulis di kolom pilihan, mis. `S, M, L, XL, XXL +5000`; harga di halaman produk, keranjang, dan pesanan ikut menyesuaikan. Deskripsi produk mendukung daftar berbutir (`- `), bernomor (`1. `), dan baris judul pendek.
 - **keranjang.html** — keranjang (tersimpan di peramban; untuk akun yang masuk juga tersinkron ke Firestore `carts/{uid}`), alamat pengiriman untuk barang fisik/cetak, ringkasan, buat pesanan (wajib masuk, status keanggotaan apa pun). Anggota berstatus **Aktif** mendapat harga anggota bila diisi.
 - **pesanan.html** — Pesanan Saya: status, instruksi transfer, kirim bukti bayar (tautan https), batalkan selama belum dibayar, resi pengiriman, unduh soft file bertanda air.
 

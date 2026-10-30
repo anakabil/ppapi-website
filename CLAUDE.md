@@ -21,6 +21,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - **Jangan pernah** menampilkan label atribusi lama (lihat `devtools/flows/branding-guard.mjs`). Kredit pengembang
   hanya **"Dikembangkan oleh mrezahuzain@2026"** (footer semua halaman + kedua aplikasi).
 - Bahasa: baku (KBBI/PUEBI), humanis, kata umum (mis. *umum* bukan *lazim*, *kesimpulan* bukan *simpulan*).
+  Pengecualian atas pilihan klien (30-10-2026): pakai **"kaos"** (bukan "kaus") untuk produk pakaian.
 - Tidak ada konten demo/contoh/pratinjau di produksi (`devtools/flows/produksi-bersih.mjs` di CI).
 - Fitur anggota hanya untuk status **Aktif** (admin melihat semua).
 - Keanggotaan mengikuti **Anggaran Dasar (Akta No. 01/2022)**: perorangan WNI berlisensi/bersertifikat perancah
@@ -51,6 +52,8 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (30-10-2026): biaya tambahan varian (`varian[i].tambahan`, ditulis "XXL +5000" di formulir; dihitung di keranjang,
+  pesanan, dan priceCheck). Paket `kaos-ppapi-5-desain.json` (id `kaos-*`, KAOS_001–005, XXL +Rp5.000) diserahkan ke klien.
 - Toko (30-10-2026): tombol Impor Produk (JSON `ppapi-toko-produk`) di Konsol Admin › Toko › Produk. Paket 5 kaus PPAPI
   (Ratchet Master, Coupler Crew, Falsework, Torque Society, Rise Up; Rp120.000; katun combed 30s; sablon rubber) diserahkan
   ke klien untuk diimpor; ukuran S–XXL dan stok tak terbatas adalah asumsi, konfirmasi klien.

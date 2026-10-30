@@ -360,8 +360,8 @@
           '</div>' +
           fld('pf-stok', 'Stok', inp('pf-stok', num(p.stok), 'inputmode="numeric" maxlength="7"'), { hint: 'Untuk barang fisik dan versi cetak. Kosongkan bila tidak dibatasi; stok berkurang otomatis saat pembayaran dikonfirmasi.' }) +
         '</div>' +
-        '<div class="drawer__section"><h3 class="drawer__section-title">Varian</h3><p class="atk-note">Misalnya Ukuran: S, M, L, XL — atau Warna: Hitam, Abu. Maks. 2 kelompok, 12 pilihan per kelompok.</p>' +
-          [0, 1].map(function (i) { var g = p.varian[i] || { nama: '', opsi: [] }; return '<div class="form__row form__row--2">' + fld('pf-vn' + i, 'Nama varian ' + (i + 1), inp('pf-vn' + i, g.nama, 'maxlength="30" placeholder="' + (i ? 'Warna' : 'Ukuran') + '"')) + fld('pf-vo' + i, 'Pilihan (pisahkan dengan koma)', inp('pf-vo' + i, g.opsi.join(', '), 'maxlength="400" placeholder="' + (i ? 'Hitam, Abu' : 'S, M, L, XL') + '"')) + '</div>'; }).join('') +
+        '<div class="drawer__section"><h3 class="drawer__section-title">Varian</h3><p class="atk-note">Misalnya Ukuran: S, M, L, XL — atau Warna: Hitam, Abu. Biaya tambahan ditulis setelah pilihan, mis. <strong>XXL +5000</strong>. Maks. 2 kelompok, 12 pilihan per kelompok.</p>' +
+          [0, 1].map(function (i) { var g = p.varian[i] || { nama: '', opsi: [] }; return '<div class="form__row form__row--2">' + fld('pf-vn' + i, 'Nama varian ' + (i + 1), inp('pf-vn' + i, g.nama, 'maxlength="30" placeholder="' + (i ? 'Warna' : 'Ukuran') + '"')) + fld('pf-vo' + i, 'Pilihan (pisahkan dengan koma)', inp('pf-vo' + i, g.opsi.map(function (o) { var t = (g.tambahan || {})[o]; return t ? o + ' +' + t : o; }).join(', '), 'maxlength="400" placeholder="' + (i ? 'Hitam, Abu' : 'S, M, L, XL, XXL +5000') + '"')) + '</div>'; }).join('') +
         '</div>' +
         '<div class="drawer__section"><h3 class="drawer__section-title">Foto</h3><p class="atk-note">Maks. 3 foto; otomatis diperkecil menjadi JPEG ≤ 150 KB. Foto pertama menjadi sampul.</p>' +
           '<div class="atk-photos" data-pf-photos></div>' +

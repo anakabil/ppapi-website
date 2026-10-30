@@ -30,7 +30,7 @@
   var KATEGORI = ['Suvenir', 'Pakaian', 'Aksesori', 'Klem & Komponen Perancah', 'Produk Pengetahuan'];
   var KATEGORI_INFO = {
     'Suvenir': { icon: 'award', slug: 'suvenir', desc: 'Cendera mata resmi PPAPI untuk anggota, mitra, dan tamu kegiatan.' },
-    'Pakaian': { icon: 'user', slug: 'pakaian', desc: 'Kaus, kemeja, dan rompi kerja dengan identitas PPAPI.' },
+    'Pakaian': { icon: 'user', slug: 'pakaian', desc: 'Kaos, kemeja, dan rompi kerja dengan identitas PPAPI.' },
     'Aksesori': { icon: 'bookmark', slug: 'aksesori', desc: 'Perlengkapan pendukung kerja dan keseharian para praktisi.' },
     'Klem & Komponen Perancah': { icon: 'wrench', slug: 'klem', desc: 'Klem (coupler) dan komponen perancah untuk pelatihan maupun lapangan.' },
     'Produk Pengetahuan': { icon: 'book', slug: 'pengetahuan', desc: 'CoP, pedoman, standar, dan modul — soft file bertanda air atau versi cetak.' }
@@ -173,13 +173,20 @@
     return f.length ? f : ['soft'];
   }
   function needsShipping(format) { return format !== 'soft'; }
-  function priceFor(p, format, member) {
+  /** biaya tambahan varian, mis. Ukuran XXL +Rp5.000 (varian[i].tambahan = {opsi: rupiah}) */
+  function surcharge(p, varian) {
+    varian = varian || {};
+    return (p.varian || []).reduce(function (n, g) { var t = g.tambahan || {}, v = varian[g.nama]; return n + (v && t[v] ? t[v] : 0); }, 0);
+  }
+  function priceFor(p, format, member, varian) {
     var cetak = isKnowledge(p) && format === 'cetak';
     var normal = cetak ? p.hargaCetak : p.harga;
     var ang = cetak ? p.hargaCetakAnggota : p.hargaAnggota;
     if (normal === null || normal === undefined) normal = p.harga || 0;
+    var add = surcharge(p, varian);
+    normal += add; if (ang !== null && ang !== undefined) ang += add;
     var use = !!member && ang !== null && ang !== undefined && ang < normal;
-    return { harga: use ? ang : normal, normal: normal, anggota: use, hargaAnggota: ang === undefined ? null : ang };
+    return { harga: use ? ang : normal, normal: normal, anggota: use, hargaAnggota: ang === undefined ? null : ang, tambahan: add };
   }
   function fromPrice(p, member) {
     var list = formatsOf(p).map(function (f) { return priceFor(p, f, member); });
@@ -228,10 +235,20 @@
     }
     (Array.isArray(raw.varian) ? raw.varian : []).slice(0, LIMITS.varianGroups).forEach(function (g) {
       var nama = str(g && g.nama, 30);
+      /* pilihan dapat ditulis "XXL +5000" (biaya tambahan) atau memakai g.tambahan */
+      var tambahan = {}, rawT = (g && g.tambahan && typeof g.tambahan === 'object') ? g.tambahan : {};
       var opsi = (Array.isArray(g && g.opsi) ? g.opsi : String((g && g.opsi) || '').split(','))
-        .map(function (o) { return str(o, 30); }).filter(Boolean);
+        .map(function (o) {
+          var m = /^(.*?)\s*\+\s*(?:Rp\.?\s*)?([\d.]+)\s*$/i.exec(String(o || ''));
+          var name = str(m ? m[1] : o, 30);
+          if (m && name) tambahan[name] = Number(m[2].replace(/\./g, ''));
+          return name;
+        }).filter(Boolean);
       opsi = opsi.filter(function (o, i) { return opsi.indexOf(o) === i; }).slice(0, LIMITS.varianOpsi);
-      if (nama && opsi.length) p.varian.push({ nama: nama, opsi: opsi });
+      opsi.forEach(function (o) { if (!tambahan[o] && rawT[o]) tambahan[o] = rawT[o]; });
+      var tb = {};
+      opsi.forEach(function (o) { var v = int(tambahan[o], 0, 1e8); if (v) tb[o] = v; });
+      if (nama && opsi.length) p.varian.push(Object.keys(tb).length ? { nama: nama, opsi: opsi, tambahan: tb } : { nama: nama, opsi: opsi });
     });
     return p;
   }
@@ -467,7 +484,7 @@
         var left = stockLeft(p, it.format);
         if (left === 0) line.problem = 'Stok habis.';
         else if (it.qty > left) line.problem = 'Stok tersisa ' + left + '.';
-        line.price = priceFor(p, it.format, member);
+        line.price = priceFor(p, it.format, member, it.varian);
         line.subtotal = line.price.harga * it.qty;
         return line;
       });
@@ -1053,7 +1070,7 @@
     (order.items || []).forEach(function (it) {
       var p = byId[it.productId];
       if (!p) { out.push({ nama: it.nama, format: it.format, expected: null, actual: it.harga, reason: 'Produk tidak lagi ada di katalog.' }); return; }
-      var pr = priceFor(p, it.format, it.hargaAnggota ? true : !!buyerIsMember);
+      var pr = priceFor(p, it.format, it.hargaAnggota ? true : !!buyerIsMember, it.varian);
       if (pr.harga !== it.harga) out.push({ nama: it.nama, format: it.format, expected: pr.harga, actual: it.harga, reason: it.hargaAnggota ? 'Harga anggota pada pesanan berbeda dengan katalog saat ini.' : 'Harga pada pesanan berbeda dengan katalog saat ini.' });
       if (it.subtotal !== it.harga * it.qty) out.push({ nama: it.nama, format: it.format, expected: it.harga * it.qty, actual: it.subtotal, reason: 'Subtotal tidak sesuai jumlah × harga.' });
     });
@@ -1238,7 +1255,7 @@
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
     paymentDeadline: paymentDeadline, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
-    watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage, watermarkPhoto: watermarkPhoto, MAX_PDF: MAX_PDF,
+    watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage, watermarkPhoto: watermarkPhoto, MAX_PDF: MAX_PDF, surcharge: surcharge,
     admin: admin
   };
 })(window);
