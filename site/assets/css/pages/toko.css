@@ -433,3 +433,4 @@ body[data-page="pesanan"] .ps-addr { font-style: normal; font-size: .94rem; line
 body[data-page="pesanan"] .ps-empty { padding: clamp(24px, 5vw, 56px) 0; }
 body[data-page="pesanan"] .ps-copy { vertical-align: middle; }
 body[data-page="keranjang"] .kr-summary.theme-dark, body[data-page="pesanan"] .ps-amount.theme-dark { background: var(--bg); color: var(--text); }
+body[data-page="toko"] .tk-detail__desc .rich-text__head:not(:first-child) { margin-top: 16px; }

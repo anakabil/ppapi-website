@@ -51,6 +51,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (30-10-2026): tombol Impor Produk (JSON `ppapi-toko-produk`) di Konsol Admin › Toko › Produk. Paket 5 kaus PPAPI
+  (Ratchet Master, Coupler Crew, Falsework, Torque Society, Rise Up; Rp120.000; katun combed 30s; sablon rubber) diserahkan
+  ke klien untuk diimpor; ukuran S–XXL dan stok tak terbatas adalah asumsi, konfirmasi klien.
 - Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 

@@ -251,7 +251,8 @@
     var list = await T.admin.listProducts();
     panel.innerHTML =
       '<div class="atk-toolbar atk-toolbar--products"><p class="atk-count">' + U.formatNumber(list.length) + ' produk · ' + U.formatNumber(list.filter(function (p) { return p.aktif; }).length) + ' tampil di toko</p>' +
-      '<button type="button" class="btn btn--primary btn--sm" data-atk="new"><span data-icon="plus" data-icon-size="16"></span><span>Tambah Produk</span></button></div>' +
+      '<span class="atk-toolbar__acts"><label class="btn btn--ghost btn--sm" data-atk="import"><span data-icon="upload" data-icon-size="16"></span><span>Impor Produk</span><input type="file" accept=".json,application/json" class="sr-only" data-atk-import></label>' +
+      '<button type="button" class="btn btn--primary btn--sm" data-atk="new"><span data-icon="plus" data-icon-size="16"></span><span>Tambah Produk</span></button></span></div>' +
       (list.length ? '<div class="table-wrap"><table class="table atk-table"><caption class="sr-only">Produk toko</caption><thead><tr><th scope="col">Produk</th><th scope="col">Kategori</th><th scope="col">Harga</th><th scope="col">Stok</th><th scope="col">Tampil</th><th scope="col"><span class="sr-only">Aksi</span></th></tr></thead><tbody>' +
         list.map(function (p) {
           var fp = T.fromPrice(p, false), mp = T.fromPrice(p, true);
@@ -264,6 +265,8 @@
         }).join('') + '</tbody></table></div>'
       : PPAPI.ui.emptyState({ icon: 'briefcase', title: 'Katalog masih kosong', text: 'Tambahkan produk pertama: suvenir, pakaian, aksesori, klem & komponen perancah, atau produk pengetahuan.', actionHtml: '<button type="button" class="btn btn--primary btn--sm" data-atk="new"><span>Tambah Produk</span></button>' }));
     panel.querySelectorAll('[data-atk="new"]').forEach(function (b) { b.addEventListener('click', function () { productForm(null); }); });
+    var imp = panel.querySelector('[data-atk-import]');
+    if (imp) imp.addEventListener('change', function () { var f = imp.files && imp.files[0]; imp.value = ''; if (f) importProducts(f, list); });
     panel.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () { productForm(list.filter(function (p) { return p.id === b.dataset.edit; })[0]); }); });
     panel.querySelectorAll('[data-del]').forEach(function (b) {
       b.addEventListener('click', async function () {
@@ -273,6 +276,34 @@
         catch (e) { PPAPI.ui.toast(e.message, { type: 'error' }); }
       });
     });
+  }
+
+  /* Impor produk dari berkas JSON {format: 'ppapi-toko-produk', produk: [{…produk, foto: [data:image/jpeg]}]}.
+     Produk dengan id yang sudah ada diperbarui; foto JPEG ≤ 150 KB (maks. 3). */
+  async function importProducts(file, list) {
+    var T = PPAPI.toko, ui = PPAPI.ui;
+    var data;
+    try {
+      if (file.size > 8 * 1024 * 1024) throw new Error('size');
+      data = JSON.parse(await file.text());
+      if (!data || data.format !== 'ppapi-toko-produk' || !Array.isArray(data.produk) || !data.produk.length) throw new Error('format');
+    } catch (e) { ui.toast('Berkas bukan paket impor produk PPAPI yang sah.', { type: 'error' }); return; }
+    var items = data.produk.slice(0, 50), ids = list.map(function (p) { return p.id; });
+    var baru = items.filter(function (p) { return ids.indexOf(p.id) === -1; }).length;
+    var ok = await ui.confirm(items.map(function (p) { return (p.nama || '(tanpa nama)') + ' (' + T.fmt.rupiah(Number(p.harga) || 0) + ')'; }).join(', ') + '. ' +
+      baru + ' produk baru' + (items.length - baru ? ', ' + (items.length - baru) + ' produk yang sudah ada akan diperbarui' : '') + '.',
+      { title: 'Impor ' + items.length + ' produk ke toko?', okLabel: 'Impor' });
+    if (!ok) return;
+    var done = 0, gagal = [];
+    for (var i = 0; i < items.length; i++) {
+      var raw = Object.assign({}, items[i]), foto = Array.isArray(raw.foto) ? raw.foto : undefined;
+      delete raw.foto;
+      try { await T.admin.saveProduct(raw, { foto: foto }); done++; }
+      catch (e) { gagal.push((raw.nama || 'Produk ' + (i + 1)) + ': ' + e.message); }
+    }
+    if (done) ui.toast(done + ' produk berhasil diimpor.', { type: 'success' });
+    if (gagal.length) ui.toast('Gagal diimpor: ' + gagal.join('; '), { type: 'error' });
+    paint();
   }
 
   async function productForm(p) {

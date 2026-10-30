@@ -228,7 +228,7 @@
               '<button type="button" class="tk-qty__btn" data-step="1" aria-label="Tambah jumlah">' + icon('plus', { size: 16 }) + '</button></div>' +
               '<span class="tk-qtyrow__stock" data-d-stock></span></div>' +
             '<p class="tk-detail__note" data-d-note></p>' +
-            (p.deskripsi ? '<div class="tk-detail__desc">' + p.deskripsi.split(/\n{2,}/).map(function (para) { return '<p>' + h(para).replace(/\n/g, '<br>') + '</p>'; }).join('') + '</div>' : '') +
+            (p.deskripsi ? '<div class="tk-detail__desc">' + PPAPI.util.richText(p.deskripsi) + '</div>' : '') +
           '</form>' +
         '</div>';
       var m = ui.modal({
