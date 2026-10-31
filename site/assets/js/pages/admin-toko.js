@@ -555,6 +555,23 @@
   /* Impor tabel tarif kurir dari berkas JSON {format: 'ppapi-toko-ongkir', kurir, asal, sumber, diperbarui (YYYY-MM-DD),
      toleransi (gram), tarif: {Provinsi: rupiah/kg | null}}. Nama provinsi mengikuti util.PROVINSI (huruf besar/kecil bebas);
      null/kosong = dikonfirmasi sekretariat. Berkas yang memuat kesalahan ditolak utuh agar tidak ada tarif yang hilang diam-diam. */
+  /* tanggal pengecekan → TTTT-BB-HH; menerima 2026-10-31, 2026/10/31, 31-10-2026, 31/10/2026, 31.10.2026,
+     dan 31 Oktober 2026 (nama bulan Indonesia/Inggris, boleh disingkat). '' bila tidak dikenali atau tidak valid. */
+  function tanggalIso(s) {
+    var BULAN = ['jan', 'feb', 'mar', 'apr', 'mei|may', 'jun', 'jul', 'agu|aug', 'sep', 'okt|oct', 'nov', 'des|dec'];
+    var y, m, d, x;
+    s = String(s || '').trim().toLowerCase();
+    if ((x = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s))) { y = +x[1]; m = +x[2]; d = +x[3]; }
+    else if ((x = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(s))) { d = +x[1]; m = +x[2]; y = +x[3]; }
+    else if ((x = /^(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})$/.exec(s))) {
+      d = +x[1]; y = +x[3];
+      BULAN.forEach(function (b, i) { b.split('|').forEach(function (k) { if (x[2].indexOf(k) === 0) m = i + 1; }); });
+    }
+    if (!y || !m || !d) return '';
+    var dt = new Date(Date.UTC(y, m - 1, d));
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return '';
+    return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
   async function importTarif(file) {
     var U = PPAPI.util, T = PPAPI.toko, ui = PPAPI.ui;
     var data;
@@ -573,18 +590,20 @@
       if (!(Number.isInteger(x) && x > 0 && x <= 1e7)) { salah.push(pv); return; }
       tarif[pv] = x;
     });
-    var kurir = String(data.kurir || '').trim(), tgl = String(data.diperbarui || '').trim();
+    var kurir = String(data.kurir || '').trim(), tglRaw = String(data.diperbarui || '').trim(), tgl = tanggalIso(tglRaw);
+    var tglOtomatis = !tglRaw;
+    if (tglOtomatis) tgl = U.todayIso ? U.todayIso() : new Date().toISOString().slice(0, 10);
     var tol = data.toleransi === undefined || data.toleransi === null || data.toleransi === '' ? 300 : Number(data.toleransi);
     var masalah = [];
     if (asing.length) masalah.push('nama provinsi tidak dikenal: ' + asing.join(', '));
     if (salah.length) masalah.push('tarif bukan angka rupiah yang sah: ' + salah.join(', '));
     if (kurir.length < 2) masalah.push('nama kurir dan layanan belum diisi');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(tgl) || isNaN(Date.parse(tgl))) masalah.push('tanggal pengecekan harus berformat TTTT-BB-HH');
+    if (!tgl) masalah.push('tanggal pengecekan "' + tglRaw + '" tidak dikenali (tulis mis. 31-10-2026, 31/10/2026, 2026-10-31, atau 31 Oktober 2026)');
     if (!(Number.isInteger(tol) && tol >= 0 && tol <= 900)) masalah.push('toleransi berat harus 0–900 gram');
     if (!masalah.length && !Object.keys(tarif).length) masalah.push('belum ada tarif provinsi yang diisi');
     if (masalah.length) { ui.toast('Tabel tarif tidak diimpor: ' + masalah.join('; ') + '.', { type: 'error' }); return; }
     var n = Object.keys(tarif).length, kosong = U.PROVINSI.length - n;
-    var ok = await ui.confirm(kurir + (data.asal ? ' dari ' + String(data.asal).trim() : '') + ', tarif per ' + (U.formatDate ? U.formatDate(tgl) : tgl) + '. ' +
+    var ok = await ui.confirm(kurir + (data.asal ? ' dari ' + String(data.asal).trim() : '') + ', tarif per ' + (U.formatDate ? U.formatDate(tgl) : tgl) + (tglOtomatis ? ' (tanggal pengecekan tidak diisi, dipakai tanggal hari ini)' : '') + '. ' +
       n + ' provinsi berisi tarif' + (kosong ? ', ' + kosong + ' provinsi tetap dikonfirmasi sekretariat' : '') + '. Tabel lama diganti dan ongkos kirim beralih ke mode tabel tarif.',
       { title: 'Impor tabel tarif kurir?', okLabel: 'Impor' });
     if (!ok) return;

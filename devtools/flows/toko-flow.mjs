@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { DEMO_USER, DEMO_MEMBER, registryEntryFor } from './qa-lib.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -224,9 +225,17 @@ await go('/pesanan.html?id=' + orderId);
 const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('[data-dl]')]);
 const out = path.join(SHOTS, 'unduhan-' + orderId + '.pdf');
 await dl.saveAs(out);
-const bytes = fs.readFileSync(out);
+const encBytes = fs.readFileSync(out);
+ok(encBytes.toString('latin1').startsWith('%PDF-'), 'berkas PDF terunduh (' + encBytes.length + ' bita, nama ' + dl.suggestedFilename() + ')');
+// berkas dikunci (AES, kata sandi = email pembeli); buka dengan pustaka yang sama lalu simpan tanpa kunci untuk diperiksa
+const PDFLib = createRequire(import.meta.url)('../../site/assets/vendor/pdf-lib-cantoo-2.8.4.min.js');
+const probe = await PDFLib.PDFDocument.load(encBytes, { ignoreEncryption: true });
+ok(probe.isEncrypted, 'berkas terenkripsi');
+let tolak = false; try { await PDFLib.PDFDocument.load(encBytes, { password: 'salah@contoh.id' }); } catch { tolak = true; }
+ok(tolak, 'kata sandi lain ditolak');
+const dec = await PDFLib.PDFDocument.load(encBytes, { password: DEMO_USER.email.toLowerCase(), updateMetadata: false });
+const bytes = Buffer.from(await dec.save({ useObjectStreams: false }));
 const txt = bytes.toString('latin1');
-ok(txt.startsWith('%PDF-'), 'berkas PDF terunduh (' + bytes.length + ' bita, nama ' + dl.suggestedFilename() + ')');
 const u16 = (x) => Buffer.from(x, 'utf16le').swap16().toString('hex').toUpperCase();   // pdf-lib writes Info text as UTF-16BE hex
 const TXTU = txt.toUpperCase();
 ok([DEMO_USER.name, DEMO_USER.email, orderId].every(x => txt.includes(x) || TXTU.includes(u16(x))), 'metadata PDF (Subject/Keywords) memuat nama, email, dan nomor pesanan');
@@ -299,9 +308,16 @@ const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('ppapi_
 await page.setInputFiles('[data-st-import]', tarifFile({ ...tabelUji, tarif: { 'Jawa Barat': 12000, 'Jabar': 15000 } }));
 await page.waitForTimeout(400);
 ok(!(await page.isVisible('.modal__footer')) && !(await stored()).ongkirTabel, 'provinsi tak dikenal → berkas ditolak utuh, tidak ada yang disimpan');
-await page.setInputFiles('[data-st-import]', tarifFile({ ...tabelUji, diperbarui: '30-10-2026' }));
+await page.setInputFiles('[data-st-import]', tarifFile({ ...tabelUji, diperbarui: '31-02-2026' }));
 await page.waitForTimeout(400);
-ok(!(await stored()).ongkirTabel, 'tanggal pengecekan tidak sah → ditolak');
+ok(!(await stored()).ongkirTabel, 'tanggal pengecekan tidak sah (31-02-2026) → ditolak');
+for (const tg of ['30-10-2026', '30/10/2026', '30 Oktober 2026']) {
+  await page.setInputFiles('[data-st-import]', tarifFile({ ...tabelUji, diperbarui: tg }));
+  await page.waitForSelector('.modal__footer .btn--primary');
+  ok((await page.textContent('.modal')).includes('30 Oktober 2026'), 'format tanggal "' + tg + '" dikenali');
+  await page.click('.modal__footer .btn--ghost'); await page.waitForTimeout(300);
+}
+ok(!(await stored()).ongkirTabel, 'membatalkan konfirmasi → tidak ada yang disimpan');
 await page.setInputFiles('[data-st-import]', tarifFile({ format: 'ppapi-toko-produk', produk: [] }));
 await page.waitForTimeout(400);
 ok(!(await stored()).ongkirTabel, 'berkas berformat lain → ditolak');
