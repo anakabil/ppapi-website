@@ -55,7 +55,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Toko (30-10-2026): ongkir mode `tabel` (`shop_settings/main.ongkirTabel` = tarif Rp/kg per provinsi, toleransi gram) + `products.berat`
   (gram/unit). Tarif kurir belum diisi: situs kurir (jne.co.id dll.) diblokir jaringan sesi; isi dari cek tarif resmi.
   Tombol **Impor Tabel Tarif** (31-10-2026, Toko › Pengaturan, JSON `ppapi-toko-ongkir`, ditolak utuh bila ada provinsi/tarif/tanggal
-  tidak sah; uji di `devtools/flows/toko-flow.mjs` bagian 8). Templat berkas diserahkan ke klien. Berat estimasi: kaos 200 g,
+  tidak sah; uji di `devtools/flows/toko-flow.mjs` bagian 8). Templat berkas diserahkan ke klien; versi 31-10-2026 (`daftar_kurir.json`,
+  JNE REG dari Parung, 38 provinsi `null`, `_kota_acuan` ibu kota, `_petunjuk` diabaikan impor) menunggu angka cek tarif resmi.
+  Awas: tarif `56.000` tanpa kutip dibaca JSON sebagai 56 dan **diterima** importer; tulis `56000` atau `"Rp 56.000"`. Berat estimasi: kaos 200 g,
   CoP cetak 600 g. CoP versi cetak Rp200.000 (paket `toko-ppapi-pembaruan-2026-10-30.json` diserahkan ke klien).
 - Toko (30-10-2026): biaya tambahan varian (`varian[i].tambahan`, ditulis "XXL +5000" di formulir; dihitung di keranjang,
   pesanan, dan priceCheck). Paket `kaos-ppapi-5-desain.json` (id `kaos-*`, KAOS_001–005, XXL +Rp5.000) diserahkan ke klien.
