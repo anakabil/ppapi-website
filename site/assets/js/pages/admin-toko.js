@@ -486,6 +486,8 @@
       function inp(id, label, val, extra) { return '<div class="field"><label class="field__label" for="' + id + '">' + label + '</label><input class="field__control" id="' + id + '" value="' + h(val === undefined || val === null ? '' : val) + '" ' + (extra || '') + '></div>'; }
       return '<details class="atk-tabel mt-3"' + (s.ongkirMode === 'tabel' ? ' open' : '') + '><summary>Tabel tarif kurir (rupiah per kg, per provinsi tujuan)</summary>' +
         '<p class="atk-note">Isi dari pengecek tarif di situs resmi kurir (JNE, J&amp;T, TIKI, atau Pos Indonesia) dari kota asal pengiriman. Ongkos kirim = tarif provinsi tujuan × berat tertagih (minimal 1 kg; kelebihan di atas kilogram bulat dihitung 1 kg bila melebihi toleransi). Berat diambil dari kolom berat tiap produk. Provinsi yang dikosongkan tetap dikonfirmasi sekretariat. Tarif antarkota dalam satu provinsi dapat berbeda; gunakan tarif tertinggi di provinsi tersebut agar tidak kurang bayar.</p>' +
+        '<p class="atk-note">Tabel juga dapat dimasukkan sekaligus dari berkas tarif kurir (JSON <code>ppapi-toko-ongkir</code>). Impor langsung menyimpan tabel, menggantikan tabel lama, dan mengubah ongkos kirim ke mode tabel tarif.</p>' +
+        '<div class="atk-toolbar__acts mb-3"><label class="btn btn--ghost btn--sm"><span data-icon="upload" data-icon-size="16"></span><span>Impor Tabel Tarif</span><input type="file" accept=".json,application/json" class="sr-only" data-st-import></label></div>' +
         '<div class="form__row form__row--2">' +
           inp('st-tk-kurir', 'Kurir dan layanan', t.kurir, 'maxlength="60" placeholder="JNE REG"') +
           inp('st-tk-asal', 'Kota asal pengiriman', t.asal, 'maxlength="80" placeholder="Kabupaten Bogor"') +
@@ -524,6 +526,8 @@
       '<div class="form__actions"><button type="submit" class="btn btn--primary" id="st-save"><span>Simpan Pengaturan</span></button></div>' +
     '</form>';
     var f = panel.querySelector('[data-ps-form]');
+    var imp = f.querySelector('[data-st-import]');
+    imp.addEventListener('change', function () { var file = imp.files && imp.files[0]; imp.value = ''; if (file) importTarif(file); });
     f.addEventListener('submit', async function (e) {
       e.preventDefault();
       var v = function (id) { return f.querySelector('#' + id).value.trim(); };
@@ -546,6 +550,49 @@
         paint();
       } catch (err) { ui.setLoading(btn, false); ui.toast(err.message, { type: 'error' }); }
     });
+  }
+
+  /* Impor tabel tarif kurir dari berkas JSON {format: 'ppapi-toko-ongkir', kurir, asal, sumber, diperbarui (YYYY-MM-DD),
+     toleransi (gram), tarif: {Provinsi: rupiah/kg | null}}. Nama provinsi mengikuti util.PROVINSI (huruf besar/kecil bebas);
+     null/kosong = dikonfirmasi sekretariat. Berkas yang memuat kesalahan ditolak utuh agar tidak ada tarif yang hilang diam-diam. */
+  async function importTarif(file) {
+    var U = PPAPI.util, T = PPAPI.toko, ui = PPAPI.ui;
+    var data;
+    try {
+      if (file.size > 256 * 1024) throw new Error('size');
+      data = JSON.parse(await file.text());
+      if (!data || data.format !== 'ppapi-toko-ongkir' || !data.tarif || typeof data.tarif !== 'object' || Array.isArray(data.tarif)) throw new Error('format');
+    } catch (e) { ui.toast('Berkas bukan paket tabel tarif kurir PPAPI yang sah.', { type: 'error' }); return; }
+    var kunci = {}; U.PROVINSI.forEach(function (pv) { kunci[pv.toLowerCase()] = pv; });
+    var tarif = {}, asing = [], salah = [];
+    Object.keys(data.tarif).forEach(function (k) {
+      var raw = data.tarif[k], pv = kunci[String(k).trim().toLowerCase()];
+      if (!pv) { asing.push(k); return; }
+      if (raw === null || raw === '') return;
+      var x = typeof raw === 'number' ? raw : (/^\s*(Rp\.?\s*)?[\d.]+\s*$/i.test(String(raw)) ? Number(String(raw).replace(/\D/g, '')) : NaN);
+      if (!(Number.isInteger(x) && x > 0 && x <= 1e7)) { salah.push(pv); return; }
+      tarif[pv] = x;
+    });
+    var kurir = String(data.kurir || '').trim(), tgl = String(data.diperbarui || '').trim();
+    var tol = data.toleransi === undefined || data.toleransi === null || data.toleransi === '' ? 300 : Number(data.toleransi);
+    var masalah = [];
+    if (asing.length) masalah.push('nama provinsi tidak dikenal: ' + asing.join(', '));
+    if (salah.length) masalah.push('tarif bukan angka rupiah yang sah: ' + salah.join(', '));
+    if (kurir.length < 2) masalah.push('nama kurir dan layanan belum diisi');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tgl) || isNaN(Date.parse(tgl))) masalah.push('tanggal pengecekan harus berformat TTTT-BB-HH');
+    if (!(Number.isInteger(tol) && tol >= 0 && tol <= 900)) masalah.push('toleransi berat harus 0–900 gram');
+    if (!masalah.length && !Object.keys(tarif).length) masalah.push('belum ada tarif provinsi yang diisi');
+    if (masalah.length) { ui.toast('Tabel tarif tidak diimpor: ' + masalah.join('; ') + '.', { type: 'error' }); return; }
+    var n = Object.keys(tarif).length, kosong = U.PROVINSI.length - n;
+    var ok = await ui.confirm(kurir + (data.asal ? ' dari ' + String(data.asal).trim() : '') + ', tarif per ' + (U.formatDate ? U.formatDate(tgl) : tgl) + '. ' +
+      n + ' provinsi berisi tarif' + (kosong ? ', ' + kosong + ' provinsi tetap dikonfirmasi sekretariat' : '') + '. Tabel lama diganti dan ongkos kirim beralih ke mode tabel tarif.',
+      { title: 'Impor tabel tarif kurir?', okLabel: 'Impor' });
+    if (!ok) return;
+    try {
+      await T.admin.saveSettings({ ongkirMode: 'tabel', ongkirTabel: { kurir: kurir, asal: data.asal, sumber: data.sumber, diperbarui: tgl, toleransi: tol, tarif: tarif } });
+      ui.toast('Tabel tarif ' + kurir + ' diimpor (' + n + ' provinsi).', { type: 'success' });
+      paint();
+    } catch (e) { ui.toast(e.message, { type: 'error' }); }
   }
 
   w.PPAPI_ADMIN_SECTIONS = (w.PPAPI_ADMIN_SECTIONS || []).concat({
