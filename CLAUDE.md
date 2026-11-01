@@ -52,6 +52,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (01-11-2026, lanjutan): bukti transfer = **foto diunggah langsung** (JPEG ≤ ±300 KB) ke `orders/{no}/bukti/foto`
+  (baca: pemilik + admin; tulis: pemilik selama belum dibayar); `pembayaran.bukti = 'foto'` (tautan https lama tetap terbaca).
+  Tombol JNE → `jne.co.id/shipping-fee?origin=BKI10000&weight={berat}` (asal Bekasi + berat terisi). **Perlu Publish aturan.**
 - Toko (01-11-2026): mode `konfirmasi` kini = **ongkir diisi pembeli** (wajib, ≥ Rp1.000) setelah cek tarif di situs kurir
   (tombol JNE/J&T/TIKI/Pos; `config.js` › `toko.asalKirim` = Jakasetia, Bekasi Selatan, Kota Bekasi; `toko.kurir` = URL cek tarif;
   URL TIKI belum terkonfirmasi). Pesanan menyimpan `ringkasan.ongkirSumber='pembeli'`, `ongkirKurir`; admin melihat kotak periksa
@@ -82,7 +85,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
 - **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; 28-10-2026:
-  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko, `berat` produk & `ongkirTabel`; tanpa publish, unggah
+  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko, `berat` produk & `ongkirTabel`; 01-11-2026: `orders/{no}/bukti` foto bukti transfer; tanpa publish, unggah
   flyer/tanda tangan/PDF di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan

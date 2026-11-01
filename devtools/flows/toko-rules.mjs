@@ -17,7 +17,9 @@ const bal = (o, c) => SRC.split(o).length === SRC.split(c).length;
 ok(bal('{', '}') && bal('(', ')') && bal('[', ']'), 'kurung seimbang di toko.rules');
 ['products', 'product_media', 'product_files', 'entitlements', 'orders', 'shop_settings', 'carts'].forEach(c => ok(SRC.includes(`match /${c}/{`), `blok match /${c}`));
 ok(/product_files[\s\S]*?allow get: if signedIn\(\)\s*&& \(exists\(\/databases\/\$\(database\)\/documents\/entitlements\/\$\(request\.auth\.uid \+ '_' \+ id\)\)/.test(SRC), 'product_files: satu exists() pada entitlements/{uid}_{id}');
-ok(!/get\(\/databases/.test(SRC), 'tanpa get() dokumen tambahan (anggaran evaluasi hemat)');
+const BUKTI = (SRC.match(/match \/bukti\/\{doc\} \{[\s\S]*?\n      \}/) || [''])[0];
+ok(BUKTI && /get\(\/databases\/\$\(database\)\/documents\/orders\/\$\(id\)\)\.data\.uid == request\.auth\.uid/.test(BUKTI), 'orders/{id}/bukti: pemilik dicek dari dokumen pesanan');
+ok(!/get\(\/databases/.test(SRC.replace(BUKTI, '')), 'tanpa get() dokumen tambahan di luar foto bukti (anggaran evaluasi hemat)');
 
 /* ---- mirror ---- */
 const NOW = Symbol('request.time');
@@ -53,8 +55,8 @@ const rules = {
       if (!UNPAID.includes(before.status) || after.updatedAt !== NOW || !listMax(after.riwayat, 40)) return false;
       if (after.status === 'Menunggu Konfirmasi') {
         const p = after.pembayaran || {};
-        return hasOnly(ch, ['pembayaran', 'status', 'riwayat', 'updatedAt']) && hasOnly(Object.keys(p), ['buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
-          && typeof p.buktiUrl === 'string' && p.buktiUrl.length <= 1000 && /^https:\/\/.+/.test(p.buktiUrl) && Number.isInteger(p.jumlah) && p.jumlah > 0 && strMax(p.catatan ?? '', 500);
+        return hasOnly(ch, ['pembayaran', 'status', 'riwayat', 'updatedAt']) && hasOnly(Object.keys(p), ['bukti', 'buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
+          && ((p.bukti ?? '') === 'foto' || (typeof (p.buktiUrl ?? '') === 'string' && (p.buktiUrl ?? '').length <= 1000 && /^https:\/\/.+/.test(p.buktiUrl ?? ''))) && Number.isInteger(p.jumlah) && p.jumlah > 0 && strMax(p.catatan ?? '', 500);
       }
       if (after.status === 'Dibatalkan') return hasOnly(ch, ['status', 'riwayat', 'updatedAt', 'alasanBatal', 'dibatalkanOleh']) && after.dibatalkanOleh === 'pembeli' && strMax(after.alasanBatal ?? '', 500);
       return false;
@@ -96,6 +98,9 @@ ok(rules.order_read(buyer, stored) && !rules.order_read(other, stored) && rules.
 const pay = { ...stored, status: 'Menunggu Konfirmasi', pembayaran: { buktiUrl: 'https://drive.google.com/x', tanggal: '2026-10-21', jumlah: 150000, pengirim: 'Uji', catatan: '', dikirimAt: 'T' }, riwayat: [{}], updatedAt: NOW };
 ok(rules.order_update(buyer, pay, stored), 'pemilik mengirim bukti bayar');
 ok(!rules.order_update(buyer, { ...pay, pembayaran: { ...pay.pembayaran, buktiUrl: 'javascript:alert(1)' } }, stored), 'bukti harus https://');
+const { buktiUrl: _u, ...payFoto } = pay.pembayaran;
+ok(rules.order_update(buyer, { ...pay, pembayaran: { ...payFoto, bukti: 'foto' } }, stored), 'bukti berupa foto unggahan diterima');
+ok(!rules.order_update(buyer, { ...pay, pembayaran: { ...payFoto, bukti: 'tautan' } }, stored), 'penanda bukti selain "foto" tanpa tautan → ditolak');
 ok(!rules.order_update(buyer, { ...pay, ringkasan: { ...stored.ringkasan, total: 1 } }, stored), 'pemilik tidak dapat mengubah total');
 ok(!rules.order_update(buyer, { ...stored, status: 'Dibayar', updatedAt: NOW }, stored), 'pemilik tidak dapat menandai Dibayar');
 ok(!rules.order_update(other, pay, stored), 'orang lain tidak dapat mengirim bukti');

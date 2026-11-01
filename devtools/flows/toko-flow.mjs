@@ -197,12 +197,19 @@ const before = await page.evaluate(async (pid) => { try { await PPAPI.toko.fileU
 ok(before === 'toko/forbidden', 'pembeli belum bayar TIDAK dapat membaca tautan berkas (' + before + ')');
 ok(!(await page.isVisible('[data-dl]')), 'tombol unduh belum tersedia');
 await shot('pesanan-bayar');
-await page.fill('#ps-bukti', 'https://drive.google.com/file/d/contohBuktiTransfer123/view');
+await page.click('[data-ps="proof-submit"]'); await page.waitForTimeout(400);
+ok((await page.textContent('.ps-head')).includes('Menunggu Pembayaran'), 'bukti tanpa foto ditolak');
+// foto bukti transfer: PNG kecil buatan (latar putih 400×300) diunggah langsung, diperkecil jadi JPEG
+const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 400; c.height = 300; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 400, 300); x.fillStyle = '#123'; x.font = '24px sans-serif'; x.fillText('Transfer Rp 370.000', 40, 150); return c.toDataURL('image/png').split(',')[1]; });
+await page.setInputFiles('[data-ps="proof"] input[name="foto"]', { name: 'bukti.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+await page.waitForSelector('[data-ps-preview]:not([hidden])');
+ok(true, 'pratinjau foto bukti tampil');
 await page.fill('#ps-jml', '370.000');
 await page.fill('#ps-pengirim', 'Rahmat Hidayat — Bank Uji');
 await page.click('[data-ps="proof-submit"]');
 await page.waitForTimeout(600);
 ok((await page.textContent('.ps-head')).includes('Menunggu Konfirmasi'), 'status → Menunggu Konfirmasi');
+ok(await page.evaluate((id) => /^data:image\/jpeg;base64,/.test(JSON.parse(localStorage.getItem('ppapi_toko_bukti'))[id] || ''), orderId) && await page.isVisible('[data-ps-lihat]'), 'foto bukti tersimpan (JPEG) dan dapat dilihat pembeli');
 
 console.log('\n4. Admin konfirmasi');
 await as(ADMIN);

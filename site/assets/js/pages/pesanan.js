@@ -81,10 +81,11 @@
     function proofForm(o) {
       var p = o.pembayaran || {};
       return '<form class="form ps-proof" data-ps="proof" novalidate>' +
-        '<div class="field"><label class="field__label" for="ps-bukti">Tautan bukti pembayaran <span class="field__req" aria-hidden="true">*</span></label>' +
-          '<div class="input-icon"><span data-icon="link" data-icon-size="18"></span><input class="field__control" id="ps-bukti" name="buktiUrl" type="url" inputmode="url" maxlength="1000" required aria-required="true" placeholder="https://drive.google.com/…" value="' + h(p.buktiUrl || '') + '" aria-describedby="ps-bukti-hint ps-bukti-err"></div>' +
-          '<p class="field__hint" id="ps-bukti-hint">Unggah foto atau tangkapan layar bukti transfer ke Google Drive (atau layanan serupa), atur akses “Siapa saja yang memiliki link”, lalu tempel tautannya di sini.</p>' +
-          '<p class="field__error" id="ps-bukti-err">Isi tautan yang diawali https://.</p></div>' +
+        '<div class="field ps-foto"><span class="field__label" id="ps-foto-l">Foto bukti transfer' + (p.bukti === 'foto' ? ' <span class="opt">(pilih bila ingin mengganti)</span>' : ' <span class="field__req" aria-hidden="true">*</span>') + '</span>' +
+          '<div class="ps-foto__box"><img class="ps-foto__img" data-ps-preview alt="Pratinjau foto bukti transfer" hidden>' +
+          '<label class="btn btn--ghost btn--sm"><span data-icon="upload" data-icon-size="16"></span><span data-ps-foto-label>' + (p.bukti === 'foto' ? 'Ganti foto' : 'Pilih foto') + '</span><input class="sr-only" type="file" name="foto" accept="image/jpeg,image/png,image/webp" aria-labelledby="ps-foto-l" aria-describedby="ps-foto-hint ps-foto-err"></label></div>' +
+          '<p class="field__hint" id="ps-foto-hint">Foto atau tangkapan layar bukti transfer (JPG, PNG, atau WebP). Foto diperkecil otomatis lalu disimpan aman di situs; hanya Anda dan sekretariat yang dapat melihatnya.</p>' +
+          '<p class="field__error" id="ps-foto-err">Pilih foto bukti transfer.</p></div>' +
         '<div class="form__row form__row--2">' +
           '<div class="field"><label class="field__label" for="ps-tgl">Tanggal transfer <span class="field__req" aria-hidden="true">*</span></label><input class="field__control" id="ps-tgl" name="tanggal" type="date" max="' + U.todayIso() + '" required aria-required="true" value="' + h(p.tanggal || U.todayIso()) + '" aria-describedby="ps-tgl-err"><p class="field__error" id="ps-tgl-err">Isi tanggal transfer (tidak setelah hari ini).</p></div>' +
           '<div class="field"><label class="field__label" for="ps-jml">Jumlah ditransfer (Rp) <span class="field__req" aria-hidden="true">*</span></label><input class="field__control" id="ps-jml" name="jumlah" type="text" inputmode="numeric" maxlength="14" required aria-required="true" value="' + h(p.jumlah ? U.formatNumber(p.jumlah) : U.formatNumber(o.ringkasan.total)) + '" aria-describedby="ps-jml-err"><p class="field__error" id="ps-jml-err">Isi jumlah yang ditransfer.</p></div>' +
@@ -151,7 +152,7 @@
           '<dl class="kv"><div class="kv__row"><dt>Tanggal transfer</dt><dd>' + h(when(p.tanggal)) + '</dd></div>' +
           '<div class="kv__row"><dt>Jumlah</dt><dd>' + h(R(p.jumlah)) + '</dd></div>' +
           '<div class="kv__row"><dt>Pengirim</dt><dd>' + h(p.pengirim || '—') + '</dd></div>' +
-          '<div class="kv__row"><dt>Bukti</dt><dd><a class="link" href="' + h(p.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka tautan bukti ' + icon('arrow-up-right', { size: 14 }) + '</a></dd></div></dl>' +
+          '<div class="kv__row"><dt>Bukti</dt><dd>' + (p.bukti === 'foto' ? '<button type="button" class="link" data-ps-lihat>Lihat foto bukti</button>' : p.buktiUrl ? '<a class="link" href="' + h(p.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka tautan bukti ' + icon('arrow-up-right', { size: 14 }) + '</a>' : '—') + '</dd></div></dl>' +
           (p.jumlah && p.jumlah !== r.total ? '<p class="ps-paynote">' + icon('info', { size: 15 }) + 'Jumlah yang Anda laporkan berbeda dengan total pesanan (' + h(R(r.total)) + '). Sekretariat akan menghubungi Anda bila diperlukan.</p>' : '') +
           '<details class="ps-more"><summary>Perbarui bukti pembayaran</summary>' + proofForm(o) + '</details>' +
         '</section>';
@@ -199,12 +200,29 @@
     }
 
     function wire(o) {
+      var lihat = view.querySelector('[data-ps-lihat]');
+      if (lihat) lihat.addEventListener('click', async function () {
+        var img = await T.getBukti(o.id);
+        ui.modal({ title: 'Foto bukti transfer', eyebrow: o.id, size: 'md',
+          body: img ? '<img src="' + h(img) + '" alt="Foto bukti transfer pesanan ' + h(o.id) + '" style="display:block;width:100%;height:auto">' : '<p>Foto bukti tidak dapat dimuat.</p>',
+          actions: [{ label: 'Tutup', variant: 'primary' }] });
+      });
       view.querySelectorAll('[data-ps="proof"]').forEach(function (f) {
+        var foto = '';
+        f.elements.foto.addEventListener('change', async function () {
+          var file = f.elements.foto.files && f.elements.foto.files[0]; if (!file) return;
+          var fl = f.querySelector('.ps-foto'), pv = f.querySelector('[data-ps-preview]');
+          try {
+            foto = await T.buktiFromFile(file);
+            pv.src = foto; pv.hidden = false; fl.classList.remove('is-invalid');
+            f.querySelector('[data-ps-foto-label]').textContent = 'Ganti foto';
+          } catch (err) { foto = ''; pv.hidden = true; ui.toast(err.message, { type: 'error' }); }
+        });
         f.addEventListener('input', function (e) { var fl = e.target.closest('.field'); if (fl) { fl.classList.remove('is-invalid'); e.target.removeAttribute('aria-invalid'); } });
         f.addEventListener('submit', async function (e) {
           e.preventDefault();
           var btn = f.querySelector('[type=submit]');
-          var data = { buktiUrl: f.elements.buktiUrl.value.trim(), tanggal: f.elements.tanggal.value, jumlah: f.elements.jumlah.value.replace(/\D/g, ''), pengirim: f.elements.pengirim.value, catatan: f.elements.catatan.value };
+          var data = { foto: foto, tanggal: f.elements.tanggal.value, jumlah: f.elements.jumlah.value.replace(/\D/g, ''), pengirim: f.elements.pengirim.value, catatan: f.elements.catatan.value };
           ui.setLoading(btn, true, 'Mengirim…');
           try {
             await T.submitPayment(o.id, data);
@@ -213,7 +231,7 @@
             var t = $('#ps-pay-t'); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); }
           } catch (err) {
             ui.setLoading(btn, false);
-            var map = { buktiUrl: 'buktiUrl', tanggal: 'tanggal', jumlah: 'jumlah', pengirim: 'pengirim' }, first = null;
+            var map = { foto: 'foto', tanggal: 'tanggal', jumlah: 'jumlah', pengirim: 'pengirim' }, first = null;
             (err.missing || []).forEach(function (m) { var el = f.elements[map[m.key]]; if (el) { el.setAttribute('aria-invalid', 'true'); el.closest('.field').classList.add('is-invalid'); first = first || el; } });
             if (first) first.focus();
             ui.toast(err.message, { type: 'error' });

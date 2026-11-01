@@ -137,7 +137,8 @@
           '</dl>' +
           '<p class="field__label kr-ongkir__label">Cek tarif di situs kurir</p>' +
           '<div class="kr-kurir">' + kur.map(function (k) {
-            return '<a class="kr-kurir__btn" href="' + h(k.url) + '" target="_blank" rel="noopener noreferrer" style="--kurir:' + h(k.warna || '#333') + '" data-kurir="' + h(k.kode) + '">' +
+            var kgT = Math.max(1, Math.ceil((beratG || 1000) / 1000));
+            return '<a class="kr-kurir__btn" href="' + h(String(k.url).replace('{berat}', kgT)) + '" target="_blank" rel="noopener noreferrer" style="--kurir:' + h(k.warna || '#333') + '" data-kurir="' + h(k.kode) + '">' +
               '<span class="kr-kurir__logo">' + h(k.nama) + '</span><span class="kr-kurir__cta">Cek tarif ' + icon('arrow-up-right', { size: 14 }) + '</span></a>';
           }).join('') + '</div>' +
           '<div class="form__row form__row--3 mt-3">' +

@@ -200,8 +200,8 @@
       '<dl class="tk-sum atk-sum"><div class="tk-sum__row"><dt>Subtotal</dt><dd>' + h(R(r.subtotal)) + '</dd></div>' + (o.perluKirim ? '<div class="tk-sum__row"><dt>Ongkos kirim</dt><dd>' + (r.ongkirFinal === false ? 'Belum ditetapkan' : h(R(r.ongkir))) + '</dd></div>' : '') + '<div class="tk-sum__row tk-sum__row--total"><dt>Total</dt><dd>' + h(R(r.total)) + '</dd></div></dl></div>' +
       (a ? '<div class="drawer__section"><h3 class="drawer__section-title">Alamat pengiriman</h3><address class="atk-addr"><strong>' + h(a.nama) + '</strong> · ' + h(a.telepon) + '<br>' + h(a.alamat) + '<br>' + h(a.kota) + ', ' + h(a.provinsi) + ' ' + h(a.kodePos) + (a.catatan ? '<br>Catatan: ' + h(a.catatan) : '') + '</address>' +
         (o.pengiriman ? '<p class="atk-note">Dikirim melalui ' + h(o.pengiriman.kurir) + ' · resi <span class="tk-mono">' + h(o.pengiriman.resi) + '</span></p>' : '') + '</div>' : '') +
-      '<div class="drawer__section"><h3 class="drawer__section-title">Pembayaran</h3>' + (p.buktiUrl ?
-        '<dl class="kv"><div class="kv__row"><dt>Bukti</dt><dd><a class="link" href="' + h(p.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka tautan bukti ' + icon('arrow-up-right', { size: 14 }) + '</a></dd></div>' +
+      '<div class="drawer__section"><h3 class="drawer__section-title">Pembayaran</h3>' + (p.buktiUrl || p.bukti === 'foto' ?
+        '<dl class="kv"><div class="kv__row"><dt>Bukti</dt><dd>' + (p.bukti === 'foto' ? '<a class="atk-bukti" data-atk-bukti href="#" aria-label="Buka foto bukti transfer ukuran penuh"><span class="atk-note">Memuat foto bukti…</span></a>' : '<a class="link" href="' + h(p.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka tautan bukti ' + icon('arrow-up-right', { size: 14 }) + '</a>') + '</dd></div>' +
         '<div class="kv__row"><dt>Tanggal transfer</dt><dd>' + h(U.formatDate(p.tanggal)) + '</dd></div>' +
         '<div class="kv__row"><dt>Jumlah</dt><dd>' + h(R(p.jumlah)) + (p.jumlah !== r.total ? ' <span class="badge badge--warn">berbeda dari total</span>' : ' <span class="badge badge--ok">sesuai total</span>') + '</dd></div>' +
         '<div class="kv__row"><dt>Pengirim</dt><dd>' + h(p.pengirim) + '</dd></div>' + (p.catatan ? '<div class="kv__row"><dt>Catatan</dt><dd>' + h(p.catatan) + '</dd></div>' : '') + '</dl>'
@@ -245,6 +245,17 @@
       if (o.status === 'Dikirim' || !o.perluKirim) actions.push({ label: 'Tandai Selesai', variant: 'primary', id: 'atk-done', onClick: act(function () { return T.admin.complete(o.id); }, 'Pesanan selesai.') });
     }
     ui.drawer({ title: 'Pesanan ' + o.id, eyebrow: 'Toko PPAPI', size: 'lg', body: body, actions: actions, cls: 'atk-drawer' });
+    if (p.bukti === 'foto') {
+      T.getBukti(o.id).then(function (img) {
+        var a = document.querySelector('.atk-drawer [data-atk-bukti]'); if (!a) return;
+        if (!img) { a.outerHTML = '<span class="atk-note">Foto bukti tidak dapat dimuat.</span>'; return; }
+        a.innerHTML = '<img src="' + h(img) + '" alt="Foto bukti transfer pesanan ' + h(o.id) + '">';
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          ui.modal({ title: 'Foto bukti transfer', eyebrow: o.id, size: 'lg', body: '<img src="' + h(img) + '" alt="Foto bukti transfer pesanan ' + h(o.id) + '" style="display:block;width:100%;height:auto">', actions: [{ label: 'Tutup', variant: 'primary' }] });
+        });
+      });
+    }
   }
 
   /* ============================== PRODUCTS ============================== */

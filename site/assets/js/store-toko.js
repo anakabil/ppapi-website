@@ -680,22 +680,47 @@
     catch (e) { throw mapFs(e); }
     return readOrder(id);
   }
+  /* ---- foto bukti transfer: orders/{id}/bukti/foto {img (JPEG data URL ≤ ±300 KB), uid, updatedAt};
+     Mode Demo: localStorage ppapi_toko_bukti {id: img} ---- */
+  var BUKTI_MAX = 420000;   // karakter data URL (±300 KB)
+  async function saveBukti(id, img) {
+    var u = requireUser();
+    if (!jpeg(img, BUKTI_MAX)) throw err('toko/invalid-image', 'Foto bukti tidak dapat diproses. Gunakan foto JPG, PNG, atau WebP.');
+    if (local()) { var m = lsMap('ppapi_toko_bukti'); m[id] = img; lsSet('ppapi_toko_bukti', m); return; }
+    var f = await fx();
+    try { await f.db.collection('orders').doc(id).collection('bukti').doc('foto').set({ img: img, uid: u.uid, updatedAt: serverTs(f) }); }
+    catch (e) { throw mapFs(e); }
+  }
+  /** getBukti(orderId) → data URL foto bukti ('' bila tidak ada) — pemilik pesanan atau admin */
+  async function getBukti(id) {
+    requireUser();
+    if (local()) return jpeg(lsMap('ppapi_toko_bukti')[id], BUKTI_MAX);
+    var f = await fx();
+    try { var s = await f.db.collection('orders').doc(id).collection('bukti').doc('foto').get(); return s.exists ? jpeg((s.data() || {}).img, BUKTI_MAX) : ''; }
+    catch (e) { return ''; }
+  }
+  /** buktiFromFile(file) → data URL JPEG ≤ ±300 KB, sisi terpanjang ≤ 1600 px */
+  function buktiFromFile(file) { return compressImage(file, { max: 1600, maxKB: 300 }); }
   async function submitPayment(id, data) {
     var u = requireUser();
     var o = await getOrder(id);
     if (!o || o.uid !== u.uid) throw err('toko/not-found', 'Pesanan tidak ditemukan.');
     if (!o.isUnpaid) throw err('toko/invalid-transition', 'Bukti pembayaran hanya dapat dikirim untuk pesanan yang belum dibayar.');
     data = data || {};
+    var foto = data.foto ? jpeg(data.foto, BUKTI_MAX) : '';
+    var adaFoto = !!foto || (!data.foto && (o.pembayaran || {}).bukti === 'foto');
     var p = {
-      buktiUrl: httpsUrl(data.buktiUrl), tanggal: str(data.tanggal, 10), jumlah: int(data.jumlah, 0, 1e10),
+      tanggal: str(data.tanggal, 10), jumlah: int(data.jumlah, 0, 1e10),
       pengirim: str(data.pengirim, 120), catatan: str(data.catatan, 500), dikirimAt: nowIso()
     };
+    if (adaFoto) p.bukti = 'foto'; else p.buktiUrl = httpsUrl(data.buktiUrl);
     var bad = [];
-    if (!p.buktiUrl) bad.push({ key: 'buktiUrl', label: 'Tautan bukti pembayaran (https://…)' });
+    if (!adaFoto && !p.buktiUrl) bad.push({ key: 'foto', label: 'Foto bukti transfer' });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.tanggal) || p.tanggal > todayIso()) bad.push({ key: 'tanggal', label: 'Tanggal transfer (tidak boleh setelah hari ini)' });
     if (!p.jumlah || p.jumlah <= 0) bad.push({ key: 'jumlah', label: 'Jumlah yang ditransfer' });
     if (p.pengirim.length < 3) bad.push({ key: 'pengirim', label: 'Nama pemilik rekening pengirim' });
     if (bad.length) { var e = err('toko/payment-incomplete', 'Lengkapi: ' + bad.map(function (b) { return b.label; }).join(', ') + '.'); e.missing = bad; throw e; }
+    if (foto) await saveBukti(id, foto);
     var riwayat = o.riwayat.concat([historyEntry('Menunggu Konfirmasi', 'pembeli', o.status === 'Menunggu Konfirmasi' ? 'Bukti pembayaran diperbarui.' : 'Bukti pembayaran dikirim.')]).slice(-40);
     return writeOrderPatch(id, { pembayaran: p, status: 'Menunggu Konfirmasi', riwayat: riwayat });
   }
@@ -1313,7 +1338,7 @@
     getSettings: getSettings, shippingQuote: shippingQuote, beratKirim: beratKirim, kgTagih: kgTagih, validateAlamat: validateAlamat,
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
-    paymentDeadline: paymentDeadline, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
+    paymentDeadline: paymentDeadline, getBukti: getBukti, buktiFromFile: buktiFromFile, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
     watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage, watermarkPhoto: watermarkPhoto, MAX_PDF: MAX_PDF, surcharge: surcharge,
     admin: admin
   };

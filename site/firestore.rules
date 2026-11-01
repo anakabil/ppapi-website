@@ -1021,10 +1021,11 @@ service cloud.firestore {
           && (
                (after.status == 'Menunggu Konfirmasi'
                 && changed.hasOnly(['pembayaran', 'status', 'riwayat', 'updatedAt'])
-                && after.pembayaran.keys().hasOnly(['buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
-                && after.pembayaran.buktiUrl is string
-                && after.pembayaran.buktiUrl.size() <= 1000
-                && after.pembayaran.buktiUrl.matches('^https://.+')
+                && after.pembayaran.keys().hasOnly(['bukti', 'buktiUrl', 'tanggal', 'jumlah', 'pengirim', 'catatan', 'dikirimAt'])
+                && (after.pembayaran.get('bukti', '') == 'foto'
+                    || (after.pembayaran.get('buktiUrl', '') is string
+                        && after.pembayaran.get('buktiUrl', '').size() <= 1000
+                        && after.pembayaran.get('buktiUrl', '').matches('^https://.+')))
                 && after.pembayaran.jumlah is int && after.pembayaran.jumlah > 0
                 && strMax(after.pembayaran.get('catatan', ''), 500))
             || (after.status == 'Dibatalkan'
@@ -1045,6 +1046,23 @@ service cloud.firestore {
                             && request.resource.data.uid == resource.data.uid
                             && request.resource.data.id == resource.data.id));
       allow delete: if false;
+
+      // Foto bukti transfer (JPEG data URL ≤ ±300 KB): dibaca pemilik pesanan dan admin;
+      // ditulis pemilik selama pesanan belum dibayar.
+      match /bukti/{doc} {
+        allow get: if signedIn()
+                   && (get(/databases/$(database)/documents/orders/$(id)).data.uid == request.auth.uid || isAdmin());
+        allow create, update: if signedIn() && doc == 'foto'
+                              && get(/databases/$(database)/documents/orders/$(id)).data.uid == request.auth.uid
+                              && tokoUnpaid(get(/databases/$(database)/documents/orders/$(id)).data.status)
+                              && request.resource.data.keys().hasOnly(['img', 'uid', 'updatedAt'])
+                              && request.resource.data.uid == request.auth.uid
+                              && request.resource.data.img is string
+                              && request.resource.data.img.size() <= 420000
+                              && request.resource.data.img.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+                              && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin();
+      }
     }
 
     match /shop_settings/{id} {
