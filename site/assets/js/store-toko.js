@@ -985,6 +985,222 @@
     return compressImage({ img: img }, { max: 560, maxKB: LIMITS.thumbKB });
   }
 
+  /* ---------------------------------------------------------------- dokumen PDF: invoice & ringkasan transaksi */
+  var JSPDF = [
+    { src: 'assets/vendor/jspdf-2.5.1.umd.min.js', integrity: '' },
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      integrity: 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==' }
+  ];
+  var jspdfP = null;
+  function loadJsPdf() {
+    if (w.jspdf && w.jspdf.jsPDF) return Promise.resolve(w.jspdf.jsPDF);
+    if (jspdfP) return jspdfP;
+    jspdfP = (async function () {
+      for (var i = 0; i < JSPDF.length; i++) {
+        try { await loadScript(JSPDF[i].src, JSPDF[i].integrity); if (w.jspdf && w.jspdf.jsPDF) return w.jspdf.jsPDF; } catch (e) { /* berikutnya */ }
+      }
+      jspdfP = null;
+      throw err('toko/pdf-lib', 'Pustaka pembuat PDF tidak dapat dimuat. Periksa koneksi internet Anda, lalu coba lagi.');
+    })();
+    return jspdfP;
+  }
+  var logoP = null;
+  function logoData() {
+    if (logoP) return logoP;
+    logoP = fetch('assets/img/sertifikat/logo-ppapi.png').then(function (r) { if (!r.ok) throw new Error(); return r.blob(); }).then(function (b) {
+      return new Promise(function (res) { var fr = new FileReader(); fr.onload = function () { var img = new Image(); img.onload = function () {
+        /* perkecil ke lebar 480 px agar berkas PDF ringan */
+        var k = Math.min(1, 480 / img.naturalWidth), c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res({ src: c.toDataURL('image/png'), w: c.width, h: c.height });
+      }; img.onerror = function () { res(null); }; img.src = fr.result; }; fr.readAsDataURL(b); });
+    }).catch(function () { return null; });
+    return logoP;
+  }
+  function pdfText(v) { return latin(String(v === null || v === undefined ? '' : v)); }
+  function rp(n) { return 'Rp ' + Math.round(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function tgl(v) { if (!v) return '-'; var f = U().formatDate; try { return f ? f(String(v).slice(0, 10)) : String(v).slice(0, 10); } catch (e) { return String(v).slice(0, 10); } }
+  function savePdf(doc, name) {
+    var blob = doc.output('blob'), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.rel = 'noopener';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    return { ok: true, fileName: name };
+  }
+  /* kop dokumen: logo, nama perkumpulan, kontak; judul di kanan. Mengembalikan posisi y berikutnya (mm). */
+  async function kop(doc, judul, sub) {
+    var c = (PPAPI.config && PPAPI.config.contact) || {}, logo = await logoData(), W = doc.internal.pageSize.getWidth();
+    if (logo) { var lw = 38, lh = lw * logo.h / logo.w; doc.addImage(logo.src, 'PNG', 15, 12, lw, lh, 'logo-ppapi', 'FAST'); }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(22, 32, 52);
+    doc.text(pdfText(judul), W - 15, 20, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 96, 108);
+    (sub || []).forEach(function (t, i) { doc.text(pdfText(t), W - 15, 27 + i * 5, { align: 'right' }); });
+    var y = Math.max(36, 27 + 5 * (sub || []).length + 3);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(22, 32, 52);
+    doc.text('Perkumpulan Praktisi dan Ahli Perancah Indonesia (PPAPI)', 15, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(90, 96, 108);
+    var info = [[c.address, c.city].filter(Boolean).join(', '), [c.email, c.phone ? 'Telp/WA ' + c.phone : ''].filter(Boolean).join(' | ') + ' | ppapi.or.id'];
+    info.forEach(function (t, i) { if (t) doc.text(pdfText(t), 15, y + 4.6 * (i + 1)); });
+    y += 4.6 * info.length + 4;
+    doc.setDrawColor(240, 180, 0); doc.setLineWidth(0.8); doc.line(15, y, W - 15, y);
+    return y + 7;
+  }
+  function kaki(doc, teks) {
+    var n = doc.internal.getNumberOfPages(), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    for (var i = 1; i <= n; i++) {
+      doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 126, 138);
+      doc.setDrawColor(220, 222, 226); doc.setLineWidth(0.2); doc.line(15, H - 16, W - 15, H - 16);
+      doc.text(pdfText(teks), 15, H - 11);
+      doc.text('Halaman ' + i + ' dari ' + n, W - 15, H - 11, { align: 'right' });
+    }
+  }
+  /* tabel sederhana: cols [{t, w, align}], rows [[...]]; teks dibungkus; halaman baru otomatis */
+  function tabel(doc, y, cols, rows, opt) {
+    opt = opt || {};
+    var x0 = 15, H = doc.internal.pageSize.getHeight(), lh = 4.2;
+    function head() {
+      doc.setFillColor(22, 32, 52); doc.rect(x0, y, cols.reduce(function (n, c) { return n + c.w; }, 0), 7.5, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(255, 255, 255);
+      var x = x0; cols.forEach(function (c) { doc.text(pdfText(c.t), c.align === 'right' ? x + c.w - 2 : x + 2, y + 5, c.align === 'right' ? { align: 'right' } : undefined); x += c.w; });
+      y += 7.5;
+    }
+    head();
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    rows.forEach(function (r, ri) {
+      var cells = r.map(function (v, i) { return doc.splitTextToSize(pdfText(v), cols[i].w - 4); });
+      var rh = Math.max.apply(null, cells.map(function (c) { return c.length; })) * lh + 3.4;
+      if (y + rh > H - 24) { doc.addPage(); y = 18; head(); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); }
+      if (ri % 2) { doc.setFillColor(246, 246, 244); doc.rect(x0, y, cols.reduce(function (n, c) { return n + c.w; }, 0), rh, 'F'); }
+      doc.setTextColor(30, 34, 44);
+      var x = x0;
+      cells.forEach(function (lines, i) {
+        var c = cols[i];
+        lines.forEach(function (ln, li) { doc.text(ln, c.align === 'right' ? x + c.w - 2 : x + 2, y + 4.6 + li * lh, c.align === 'right' ? { align: 'right' } : undefined); });
+        x += c.w;
+      });
+      y += rh;
+    });
+    return y;
+  }
+  function statusLabel(o) { return o.isPaid ? 'LUNAS' : o.status === 'Dibatalkan' ? 'DIBATALKAN' : 'BELUM DIBAYAR'; }
+  function itemLabel(it) {
+    return [it.nama, it.format && it.format !== 'fisik' ? (FORMAT_LABEL[it.format] || it.format) : '', it.varianLabel || varianLabel(it.varian)].filter(Boolean).join(' | ');
+  }
+  /** invoicePdf(order) — pembeli pemilik pesanan atau admin; mengunduh INV-<nomor>.pdf */
+  async function invoicePdf(order) {
+    requireUser();
+    var o = order, r = o.ringkasan || {}, b = o.buyer || {}, a = o.alamat, pay = o.pembayaran || {};
+    var JsPDF = await loadJsPdf(), settings = await getSettings().catch(function () { return DEFAULT_SETTINGS; });
+    var doc = new JsPDF({ unit: 'mm', format: 'a4' }), W = doc.internal.pageSize.getWidth();
+    doc.setProperties({ title: 'Invoice ' + o.id + ' - PPAPI', subject: 'Invoice pesanan Toko PPAPI', author: 'PPAPI', creator: 'Toko PPAPI' });
+    var y = await kop(doc, 'INVOICE', ['No. INV/' + o.id, 'Tanggal pesanan: ' + tgl(o.createdAt)]);
+    /* status */
+    var st = statusLabel(o), col = o.isPaid ? [22, 128, 61] : o.status === 'Dibatalkan' ? [180, 35, 24] : [180, 110, 0];
+    doc.setDrawColor(col[0], col[1], col[2]); doc.setTextColor(col[0], col[1], col[2]); doc.setLineWidth(0.6);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    var sw = doc.getTextWidth(st) + 8; doc.roundedRect(W - 15 - sw, y - 5, sw, 8, 1.5, 1.5); doc.text(st, W - 15 - sw / 2, y + 0.6, { align: 'center' });
+    /* pihak */
+    doc.setTextColor(120, 126, 138); doc.setFontSize(7.5); doc.text('DITAGIHKAN KEPADA', 15, y);
+    if (a) doc.text('DIKIRIM KE', 90, y);
+    doc.setTextColor(30, 34, 44); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
+    doc.text(pdfText(b.name || '-'), 15, y + 5.5);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    [b.email, b.phone].filter(Boolean).forEach(function (t, i) { doc.text(pdfText(t), 15, y + 10 + i * 4.4); });
+    var yA = y + 5.5;
+    if (a) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text(pdfText(a.nama + (a.telepon ? ' (' + a.telepon + ')' : '')), 90, yA);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+      var al = doc.splitTextToSize(pdfText([a.alamat, [a.kota, a.provinsi, a.kodePos].filter(Boolean).join(', ')].filter(Boolean).join(', ')), W - 15 - 90 - (sw + 4));
+      al.forEach(function (t, i) { doc.text(t, 90, yA + 4.5 + i * 4.2); });
+      yA += 4.5 + al.length * 4.2;
+    }
+    y = Math.max(y + 20, yA + 4);
+    /* butir */
+    var rows = (o.items || []).map(function (it, i) { return [String(i + 1), itemLabel(it), String(it.qty), rp(it.harga), rp(it.subtotal)]; });
+    y = tabel(doc, y, [{ t: 'No', w: 10 }, { t: 'Produk', w: 88 }, { t: 'Jml', w: 14, align: 'right' }, { t: 'Harga', w: 34, align: 'right' }, { t: 'Subtotal', w: 34, align: 'right' }], rows);
+    /* total */
+    y += 4;
+    var tot = [['Subtotal', rp(r.subtotal)]];
+    if (r.hemat) tot.push(['Hemat harga anggota', '- ' + rp(r.hemat)]);
+    if (o.perluKirim) tot.push(['Ongkos kirim' + (r.ongkirKurir ? ' (' + r.ongkirKurir + ')' : ''), r.ongkirFinal === false ? 'dikonfirmasi' : rp(r.ongkir)]);
+    doc.setFontSize(9);
+    tot.forEach(function (t) { doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 66, 78); doc.text(pdfText(t[0]), W - 55, y, { align: 'right' }); doc.text(pdfText(t[1]), W - 15, y, { align: 'right' }); y += 5.2; });
+    doc.setFillColor(22, 32, 52); doc.rect(W - 110, y - 3.2, 95, 9, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL', W - 55, y + 2.8, { align: 'right' }); doc.text(rp(r.total), W - 17, y + 2.8, { align: 'right' });
+    y += 15;
+    /* pembayaran */
+    doc.setTextColor(120, 126, 138); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.text('PEMBAYARAN', 15, y); y += 5;
+    doc.setTextColor(30, 34, 44); doc.setFontSize(8.5);
+    var lines = [];
+    if (o.isPaid) {
+      lines.push('Pembayaran telah dikonfirmasi sekretariat' + (o.dibayarAt ? ' pada ' + tgl(o.dibayarAt) : '') + '.');
+      if (pay.tanggal) lines.push('Transfer tanggal ' + tgl(pay.tanggal) + ' sebesar ' + rp(pay.jumlah) + (pay.pengirim ? ' dari ' + pay.pengirim : '') + '.');
+    } else if (o.status === 'Dibatalkan') {
+      lines.push('Pesanan dibatalkan' + (o.alasanBatal ? ': ' + o.alasanBatal : '') + '.');
+    } else {
+      lines.push('Transfer sesuai total ke rekening resmi PPAPI berikut, lalu kirim foto bukti transfer dari halaman Pesanan Saya:');
+      (settings.rekening || []).forEach(function (k) { lines.push('- ' + k.bank + ' ' + k.nomor + ' a.n. ' + k.atasNama); });
+      if (!(settings.rekening || []).length) lines.push('- Informasi rekening akan diumumkan sekretariat.');
+      lines.push('Cantumkan nomor pesanan ' + o.id + ' pada berita transfer bila memungkinkan.');
+    }
+    lines.forEach(function (t) { doc.splitTextToSize(pdfText(t), W - 30).forEach(function (ln) { doc.text(ln, 15, y); y += 4.4; }); });
+    if (o.pengiriman && o.pengiriman.resi) { y += 2; doc.text(pdfText('Pengiriman: ' + (o.pengiriman.kurir || '') + ' resi ' + o.pengiriman.resi), 15, y); }
+    kaki(doc, 'Dokumen dibuat otomatis oleh Toko PPAPI pada ' + tgl(nowIso()) + '. Status terkini: ppapi.or.id/pesanan.html');
+    return savePdf(doc, 'Invoice-' + o.id + '.pdf');
+  }
+  /** ringkasanPdf(orders, {judul, periode, admin}) — ringkasan transaksi: rekap status, pendapatan, produk terjual, daftar pesanan */
+  async function ringkasanPdf(orders, opt) {
+    requireUser(); opt = opt || {};
+    var JsPDF = await loadJsPdf();
+    var doc = new JsPDF({ unit: 'mm', format: 'a4' }), W = doc.internal.pageSize.getWidth();
+    doc.setProperties({ title: 'Ringkasan Transaksi - PPAPI', author: 'PPAPI', creator: 'Toko PPAPI' });
+    var list = sortOrders((orders || []).slice()).reverse();
+    var y = await kop(doc, 'RINGKASAN TRANSAKSI', [opt.judul || '', 'Periode: ' + (opt.periode || 'semua pesanan'), 'Dicetak: ' + tgl(nowIso())].filter(Boolean));
+    var paid = list.filter(function (o) { return o.isPaid; });
+    var sum = function (arr, f) { return arr.reduce(function (n, o) { return n + (f(o) || 0); }, 0); };
+    var kotak = [
+      ['Jumlah pesanan', String(list.length)],
+      ['Pesanan lunas', String(paid.length)],
+      ['Belum dibayar', String(list.filter(function (o) { return o.isUnpaid; }).length)],
+      ['Dibatalkan', String(list.filter(function (o) { return o.status === 'Dibatalkan'; }).length)]
+    ];
+    var bw = (W - 30 - 9) / 4;
+    kotak.forEach(function (k, i) {
+      var x = 15 + i * (bw + 3);
+      doc.setFillColor(246, 246, 244); doc.rect(x, y, bw, 16, 'F');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 126, 138); doc.text(pdfText(k[0].toUpperCase()), x + 3, y + 5.5);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(22, 32, 52); doc.text(k[1], x + 3, y + 12.5);
+    });
+    y += 23;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(22, 32, 52); doc.text('Nilai transaksi lunas', 15, y); y += 3;
+    y = tabel(doc, y, [{ t: 'Uraian', w: 120 }, { t: 'Jumlah', w: 60, align: 'right' }], [
+      ['Penjualan produk (subtotal)', rp(sum(paid, function (o) { return o.ringkasan.subtotal; }))],
+      ['Ongkos kirim', rp(sum(paid, function (o) { return o.ringkasan.ongkir; }))],
+      ['Total diterima', rp(sum(paid, function (o) { return o.ringkasan.total; }))]
+    ]) + 8;
+    var prod = {};
+    paid.forEach(function (o) { (o.items || []).forEach(function (it) { var k = itemLabel(it); prod[k] = prod[k] || { qty: 0, nilai: 0 }; prod[k].qty += it.qty || 0; prod[k].nilai += it.subtotal || 0; }); });
+    var pk = Object.keys(prod).sort(function (a, b) { return prod[b].nilai - prod[a].nilai; });
+    if (pk.length) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(22, 32, 52); doc.text('Produk terjual (pesanan lunas)', 15, y); y += 3;
+      y = tabel(doc, y, [{ t: 'Produk', w: 120 }, { t: 'Jml', w: 20, align: 'right' }, { t: 'Nilai', w: 40, align: 'right' }], pk.map(function (k) { return [k, String(prod[k].qty), rp(prod[k].nilai)]; })) + 8;
+    }
+    if (y > doc.internal.pageSize.getHeight() - 50) { doc.addPage(); y = 18; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(22, 32, 52); doc.text('Daftar pesanan', 15, y); y += 3;
+    tabel(doc, y, opt.admin
+      ? [{ t: 'Tanggal', w: 19 }, { t: 'Nomor', w: 37 }, { t: 'Pembeli', w: 28 }, { t: 'Produk', w: 48 }, { t: 'Total', w: 23, align: 'right' }, { t: 'Status', w: 25 }]
+      : [{ t: 'Tanggal', w: 24 }, { t: 'Nomor', w: 38 }, { t: 'Produk', w: 64 }, { t: 'Total', w: 26, align: 'right' }, { t: 'Status', w: 28 }],
+      list.map(function (o) {
+        var pr = (o.items || []).map(function (it) { return it.qty + 'x ' + it.nama; }).join('; ');
+        return opt.admin ? [tgl(o.createdAt), o.id, (o.buyer || {}).name || '-', pr, rp(o.ringkasan.total), o.status]
+                         : [tgl(o.createdAt), o.id, pr, rp(o.ringkasan.total), o.status];
+      }));
+    kaki(doc, 'Ringkasan transaksi Toko PPAPI - dibuat otomatis pada ' + tgl(nowIso()) + '.');
+    return savePdf(doc, 'Ringkasan-Transaksi-PPAPI-' + todayIso() + '.pdf');
+  }
+
   /* ---------------------------------------------------------------- admin */
   async function adminListProducts() { await requireAdmin(); return listProducts({ includeInactive: true }); }
   async function adminGetFile(id) {
@@ -1338,7 +1554,7 @@
     getSettings: getSettings, shippingQuote: shippingQuote, beratKirim: beratKirim, kgTagih: kgTagih, validateAlamat: validateAlamat,
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
-    paymentDeadline: paymentDeadline, getBukti: getBukti, buktiFromFile: buktiFromFile, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
+    paymentDeadline: paymentDeadline, invoicePdf: invoicePdf, ringkasanPdf: ringkasanPdf, getBukti: getBukti, buktiFromFile: buktiFromFile, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,
     watermark: watermark, loadPdfLib: loadPdfLib, compressImage: compressImage, watermarkPhoto: watermarkPhoto, MAX_PDF: MAX_PDF, surcharge: surcharge,
     admin: admin
   };

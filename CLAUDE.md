@@ -52,6 +52,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (01-11-2026, lanjutan 2): berbagi produk (Web Share + foto, WhatsApp, salin teks); invoice PDF (pembeli & admin) dan
+  ringkasan transaksi PDF (pembeli: semua pesanannya; admin: rentang tanggal) — `T.invoicePdf`, `T.ringkasanPdf`, jsPDF lokal.
+  URL kurir: J&T `jet.co.id/rates`, TIKI `tiki.id/id/tariff`, Pos `posindonesia.co.id/id/check-tarif` (dari sumber pihak ketiga; minta klien uji).
 - Toko (01-11-2026, lanjutan): bukti transfer = **foto diunggah langsung** (JPEG ≤ ±300 KB) ke `orders/{no}/bukti/foto`
   (baca: pemilik + admin; tulis: pemilik selama belum dibayar); `pembayaran.bukti = 'foto'` (tautan https lama tetap terbaca).
   Tombol JNE → `jne.co.id/shipping-fee?origin=BKI10000&weight={berat}` (asal Bekasi + berat terisi). **Perlu Publish aturan.**

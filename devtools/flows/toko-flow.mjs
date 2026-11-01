@@ -167,6 +167,7 @@ ok((await page.textContent('.tk-modal')).includes('tanda air identitas pembeli')
 await page.click('#d-add');
 await page.waitForTimeout(400);
 ok(await page.isVisible('.tk-fab'), 'tombol keranjang mengambang tampil');
+ok((await page.locator('.tk-card__share').count()) > 0, 'tombol bagikan tampil di kartu produk');
 await go('/keranjang.html');
 ok((await page.locator('.kr-line').count()) === 2, 'keranjang berisi 2 baris');
 ok((await page.textContent('.kr-summary')).includes('Rp 350.000'), 'subtotal Rp 350.000 (2 × 100.000 + 150.000)');
@@ -259,6 +260,13 @@ ok(pagesWithWm >= 2, `tanda air diagonal "${wm}" ada di ${pagesWithWm} aliran ko
 ok(all.includes(hex('Berlisensi untuk ' + DEMO_USER.name)), 'baris kaki "Berlisensi untuk …" ada di aliran konten');
 ok(pdfHits >= 1, 'berkas diambil dari tautan privat di server uji');
 await shot('pesanan-dibayar');
+{
+  if (await page.isVisible('.modal')) { await page.keyboard.press('Escape'); await page.waitForTimeout(400); }
+  const [inv] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('[data-ps="invoice"]')]);
+  const invPath = path.join(SHOTS, inv.suggestedFilename()); await inv.saveAs(invPath);
+  const ib = fs.readFileSync(invPath);
+  ok(ib.toString('latin1').startsWith('%PDF-') && /^Invoice-PSN-/.test(inv.suggestedFilename()), 'invoice PDF terunduh (' + inv.suggestedFilename() + ', ' + ib.length + ' bita)');
+}
 
 console.log('\n6. Admin mengirim & menyelesaikan');
 await as(ADMIN);

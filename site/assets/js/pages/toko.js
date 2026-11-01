@@ -77,10 +77,49 @@
       void normalAll;
       return out;
     }
+    /* ---------------- berbagi produk (promosi di grup WhatsApp, dll.) ---------------- */
+    function shareUrl(p) { return location.origin + location.pathname + '?produk=' + encodeURIComponent(p.id); }
+    function shareText(p) {
+      var harga = T.formatsOf(p).map(function (f) {
+        var pr = T.priceFor(p, f, false);
+        return (T.isKnowledge(p) ? (f === 'soft' ? 'Soft file ' : 'Cetak ') : '') + R(pr.harga);
+      }).join(' | ');
+      var tb = []; p.varian.forEach(function (g) { Object.keys(g.tambahan || {}).forEach(function (o) { tb.push(o + ' +' + R(g.tambahan[o])); }); });
+      return '*' + p.nama + '*\n' + harga + (tb.length ? ' (' + tb.join(', ') + ')' : '') + '\n' +
+        (p.ringkasan ? p.ringkasan + '\n' : '') +
+        (p.varian.length ? p.varian.map(function (g) { return g.nama + ': ' + g.opsi.join(', '); }).join('\n') + '\n' : '') +
+        '\nPesan di Toko PPAPI: ' + shareUrl(p);
+    }
+    function copyText(t) {
+      if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+      return new Promise(function (res, rej) { var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var ok = document.execCommand('copy'); ta.remove(); ok ? res() : rej(); });
+    }
+    async function shareNative(p) {
+      var text = shareText(p), data = { title: p.nama, text: text };
+      try {
+        var foto = p.fotoCount ? (await T.getMedia(p.id).catch(function () { return []; }))[0] : p.thumb;
+        if (foto && navigator.canShare) {
+          var blob = await (await fetch(foto)).blob();
+          var file = new File([blob], (p.kode || p.id).replace(/[^\w-]+/g, '-') + '.jpg', { type: 'image/jpeg' });
+          if (navigator.canShare({ files: [file], text: text })) data.files = [file];
+        }
+      } catch (e) { /* tanpa foto */ }
+      try { await navigator.share(data); }
+      catch (e) { if (e && e.name !== 'AbortError') window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener'); }
+    }
+    function shareBar(p) {
+      return '<div class="tk-share" role="group" aria-label="Bagikan produk">' +
+        '<span class="tk-share__label">Bagikan</span>' +
+        (navigator.share ? '<button type="button" class="btn btn--ghost btn--sm" data-share="native">' + icon('share', { size: 16 }) + '<span>Bagikan dengan foto</span></button>' : '') +
+        '<a class="btn btn--ghost btn--sm" data-share="wa" href="https://wa.me/?text=' + encodeURIComponent(shareText(p)) + '" target="_blank" rel="noopener noreferrer">' + icon('whatsapp', { size: 16 }) + '<span>WhatsApp</span></a>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-share="copy">' + icon('copy', { size: 16 }) + '<span>Salin teks promosi</span></button>' +
+      '</div>';
+    }
     function card(p) {
       var soldOut = T.formatsOf(p).every(function (f) { return !T.inStock(p, f); });
       return '<article class="tk-card' + (soldOut ? ' is-soldout' : '') + '">' +
-        '<div class="tk-card__media">' + media(p, 'tk-card__img') + '</div>' +
+        '<div class="tk-card__media">' + media(p, 'tk-card__img') +
+          '<button type="button" class="tk-card__share" data-share-card="' + h(p.id) + '" aria-label="Bagikan ' + h(p.nama) + '" title="Bagikan">' + icon('share', { size: 16 }) + '</button></div>' +
         '<div class="tk-card__body">' +
           '<p class="tk-card__kat">' + h(p.kategori) + (p.kode ? '<span class="tk-card__code">' + h(p.kode) + '</span>' : '') + '</p>' +
           '<h3 class="tk-card__title"><button type="button" data-open="' + h(p.id) + '">' + h(p.nama) + '</button></h3>' +
@@ -194,7 +233,15 @@
     els.sort.addEventListener('change', function () { state.sort = els.sort.value; render(); sync(); });
     els.toolbar.addEventListener('submit', function (e) { e.preventDefault(); });
     els.empty.addEventListener('click', function (e) { if (e.target.closest('[data-reset]')) { state.kat = ''; state.q = ''; els.q.value = ''; render(); sync(); } });
-    els.grid.addEventListener('click', function (e) { var b = e.target.closest('[data-open]'); if (b) openProduct(b.dataset.open, b); });
+    els.grid.addEventListener('click', function (e) {
+      var sc = e.target.closest('[data-share-card]');
+      if (sc) {
+        var sp = products.filter(function (x) { return x.id === sc.dataset.shareCard; })[0]; if (!sp) return;
+        if (navigator.share) shareNative(sp); else window.open('https://wa.me/?text=' + encodeURIComponent(shareText(sp)), '_blank', 'noopener');
+        return;
+      }
+      var b = e.target.closest('[data-open]'); if (b) openProduct(b.dataset.open, b);
+    });
     render();
     ui.reveal(els.tiles);
 
@@ -220,6 +267,7 @@
             (p.kode ? '<p class="tk-detail__code">' + h(p.kode) + '</p>' : '') +
             '<div class="tk-detail__price" data-d-price aria-live="polite"></div>' +
             (p.ringkasan ? '<p class="tk-detail__lead">' + h(p.ringkasan) + '</p>' : '') +
+            shareBar(p) +
             (formats.length > 1 || T.isKnowledge(p) ? radioGroup('d-format', 'Format', formats.map(function (f) { return { value: f, label: f === 'soft' ? 'Soft file (PDF)' : 'Cetak', disabled: !T.inStock(p, f) }; }), firstOk) : '') +
             p.varian.map(function (g, i) { return radioGroup('d-var-' + i, g.nama, g.opsi.map(function (o) { var t = (g.tambahan || {})[o]; return { value: o, label: t ? o + ' (+' + R(t) + ')' : o }; }), g.opsi.length === 1 ? g.opsi[0] : '', 'tk-opt--var'); }).join('') +
             '<div class="tk-qtyrow" data-d-qtyrow><label class="field__label" for="d-qty">Jumlah</label>' +
@@ -282,6 +330,11 @@
       }
       function wire(el) {
         root = el;
+        el.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-share]'); if (!b) return;
+          if (b.dataset.share === 'native') { e.preventDefault(); shareNative(p); }
+          else if (b.dataset.share === 'copy') { e.preventDefault(); copyText(shareText(p)).then(function () { ui.toast('Teks promosi dan tautan produk disalin. Tempel di grup WhatsApp.', { type: 'success' }); }, function () { ui.toast('Teks tidak dapat disalin otomatis.', { type: 'warn' }); }); }
+        });
         el.addEventListener('change', function (e) { if (e.target.matches('input[type=radio]')) { var fs = e.target.closest('.tk-opt'); if (fs) fs.classList.remove('is-invalid'); paint(); } });
         el.addEventListener('input', function (e) { if (e.target.id === 'd-qty') paint(); });
         el.addEventListener('click', function (e) {

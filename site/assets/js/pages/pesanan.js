@@ -34,7 +34,8 @@
         view.innerHTML = '<div class="ps-empty">' + ui.emptyState({ icon: 'file-text', title: 'Belum ada pesanan', text: 'Pesanan yang Anda buat di Toko PPAPI akan tampil di sini beserta status pembayaran, pengiriman, dan berkas unduhannya.', actionHtml: '<a class="btn btn--primary" href="toko.html"><span>Buka Toko PPAPI</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a>' }) + '</div>';
         ui.reveal(view); return;
       }
-      view.innerHTML = '<ul class="ps-list" role="list">' + orders.map(function (o) {
+      view.innerHTML = '<div class="ps-tools"><button type="button" class="btn btn--ghost btn--sm" data-ps="ringkasan"><span data-icon="download" data-icon-size="16"></span><span>Unduh ringkasan transaksi (PDF)</span></button></div>' +
+        '<ul class="ps-list" role="list">' + orders.map(function (o) {
         var need = o.status === 'Menunggu Pembayaran';
         return '<li class="ps-row' + (need ? ' is-action' : '') + '">' +
           '<div class="ps-row__id"><span class="tk-mono">' + h(o.id) + '</span><time datetime="' + h(o.createdAt) + '">' + h(when(o.createdAt)) + '</time></div>' +
@@ -46,6 +47,13 @@
       }).join('') + '</ul>' +
       '<p class="ps-foot"><a class="btn btn--link" href="toko.html"><span>Kembali ke Toko</span><span data-icon="arrow-right" data-icon-class="btn__icon" data-icon-size="18"></span></a></p>';
       ui.reveal(view);
+      var rb = view.querySelector('[data-ps="ringkasan"]');
+      if (rb) rb.addEventListener('click', async function () {
+        ui.setLoading(rb, true, 'Menyiapkan…');
+        try { var res = await T.ringkasanPdf(orders, { judul: 'Pembeli: ' + ((PPAPI.auth.current() || {}).name || '') }); ui.toast('Ringkasan transaksi diunduh: ' + res.fileName, { type: 'success' }); }
+        catch (e) { ui.toast(e.message, { type: 'error' }); }
+        ui.setLoading(rb, false);
+      });
     }
 
     /* =============================== DETAIL =============================== */
@@ -175,7 +183,8 @@
         '<p class="ps-back"><a class="btn btn--link btn--sm" href="pesanan.html"><span data-icon="arrow-left" data-icon-size="16"></span><span>Semua pesanan</span></a></p>' +
         '<header class="ps-head">' +
           '<div class="ps-head__text"><p class="ps-head__eyebrow">Status pesanan</p><p class="ps-head__status">' + T.fmt.statusBadge(o.status) + '</p><p class="ps-head__lead">' + h(T.STATUS_TEXT[o.status]) + '</p></div>' +
-          (o.isUnpaid ? '<div class="ps-head__actions"><button type="button" class="btn btn--ghost btn--sm" data-ps="cancel"><span>Batalkan pesanan</span></button></div>' : '') +
+          '<div class="ps-head__actions"><button type="button" class="btn btn--ghost btn--sm" data-ps="invoice"><span data-icon="download" data-icon-size="16"></span><span>Unduh Invoice</span></button>' +
+            (o.isUnpaid ? '<button type="button" class="btn btn--ghost btn--sm" data-ps="cancel"><span>Batalkan pesanan</span></button>' : '') + '</div>' +
         '</header>' +
         (o.status === 'Dibatalkan' ? '<div class="alert alert--err ps-cancelled" role="note">' + icon('x-circle') + '<div><p class="alert__title">Pesanan dibatalkan' + (o.dibatalkanOleh === 'admin' ? ' oleh sekretariat' : '') + '</p>' + (o.alasanBatal ? '<p>' + h(o.alasanBatal) + '</p>' : '') + '</div></div>' : track(o)) +
         '<div class="ps-layout">' +
@@ -200,6 +209,13 @@
     }
 
     function wire(o) {
+      var inv = view.querySelector('[data-ps="invoice"]');
+      if (inv) inv.addEventListener('click', async function () {
+        ui.setLoading(inv, true, 'Menyiapkan…');
+        try { var res = await T.invoicePdf(o); ui.toast('Invoice diunduh: ' + res.fileName, { type: 'success' }); }
+        catch (e) { ui.toast(e.message, { type: 'error' }); }
+        ui.setLoading(inv, false);
+      });
       var lihat = view.querySelector('[data-ps-lihat]');
       if (lihat) lihat.addEventListener('click', async function () {
         var img = await T.getBukti(o.id);

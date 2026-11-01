@@ -108,7 +108,8 @@
         '<div class="field atk-toolbar__q"><label class="field__label" for="atk-q">Cari pesanan</label><div class="search-box"><span data-icon="search" data-icon-size="18"></span><input class="field__control" id="atk-q" type="search" maxlength="80" placeholder="Nomor pesanan, nama, email, resi" value="' + h(state.q) + '"><button type="button" class="search-box__clear" aria-label="Hapus pencarian"><span data-icon="close" data-icon-size="16"></span></button></div></div>' +
         '<div class="field atk-toolbar__st"><label class="field__label" for="atk-st">Status</label><select class="field__control" id="atk-st">' +
           filters.map(function (f) { return '<option value="' + h(f[0]) + '"' + (state.status === f[0] ? ' selected' : '') + '>' + h(f[1]) + ' (' + f[2] + ')</option>'; }).join('') + '</select></div>' +
-        '<button type="button" class="btn btn--ghost btn--sm atk-toolbar__csv" data-atk="csv"' + (shown.length ? '' : ' disabled') + '><span data-icon="download" data-icon-size="16"></span><span>Ekspor CSV</span></button>' +
+        '<div class="atk-toolbar__csv"><button type="button" class="btn btn--ghost btn--sm" data-atk="csv"' + (shown.length ? '' : ' disabled') + '><span data-icon="download" data-icon-size="16"></span><span>Ekspor CSV</span></button>' +
+        '<button type="button" class="btn btn--ghost btn--sm" data-atk="ringkasan"><span data-icon="file-text" data-icon-size="16"></span><span>Ringkasan PDF</span></button></div>' +
       '</div>' +
       '<p class="atk-count" role="status">' + U.formatNumber(shown.length) + ' pesanan</p>' +
       (shown.length ?
@@ -125,6 +126,22 @@
     panel.querySelector('#atk-st').addEventListener('change', function (e) { state.status = e.target.value; paint(); });
     var q = panel.querySelector('#atk-q');
     q.addEventListener('input', U.debounce(function () { state.q = q.value.trim(); var pos = q.selectionStart; paint().then(function () { var q2 = state.container.querySelector('#atk-q'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } }); }, 300));
+    panel.querySelector('[data-atk="ringkasan"]').addEventListener('click', function () {
+      var t = U.todayIso(), awal = t.slice(0, 8) + '01';
+      PPAPI.ui.modal({
+        title: 'Ringkasan transaksi (PDF)', size: 'sm',
+        body: '<p>Rekap jumlah pesanan per status, nilai transaksi lunas (penjualan dan ongkos kirim), produk terjual, serta daftar pesanan pada periode tanggal pesanan berikut.</p>' +
+          '<div class="form__row form__row--2 mt-3"><div class="field"><label class="field__label" for="atk-r1">Dari</label><input class="field__control" type="date" id="atk-r1" value="' + awal + '" max="' + t + '"></div>' +
+          '<div class="field"><label class="field__label" for="atk-r2">Sampai</label><input class="field__control" type="date" id="atk-r2" value="' + t + '" max="' + t + '"></div></div>',
+        actions: [{ label: 'Batal', variant: 'ghost' }, { label: 'Unduh PDF', variant: 'primary', onClick: async function (close, ctx) {
+          var d1 = ctx.el.querySelector('#atk-r1').value, d2 = ctx.el.querySelector('#atk-r2').value;
+          if (!d1 || !d2 || d1 > d2) { PPAPI.ui.toast('Periksa rentang tanggal.', { type: 'warn' }); return false; }
+          var pilih = all.filter(function (o) { var c = String(o.createdAt || '').slice(0, 10); return c >= d1 && c <= d2; });
+          try { var r = await T.ringkasanPdf(pilih, { admin: true, judul: 'Toko PPAPI - seluruh pembeli', periode: U.formatDate(d1) + ' s.d. ' + U.formatDate(d2) }); PPAPI.ui.toast('Ringkasan diunduh: ' + r.fileName + ' (' + pilih.length + ' pesanan).', { type: 'success' }); }
+          catch (e) { PPAPI.ui.toast(e.message, { type: 'error' }); return false; }
+        } }]
+      });
+    });
     panel.querySelector('[data-atk="csv"]').addEventListener('click', function () {
       var csv = T.admin.exportOrdersCsv(shown);
       var a = document.createElement('a');
@@ -220,6 +237,7 @@
     }
     var actions = [];
     if (mail) actions.push({ label: 'Email Pembeli', variant: 'link', onClick: function () { location.href = mail; return false; } });
+    actions.push({ label: 'Unduh Invoice', variant: 'link', onClick: function () { T.invoicePdf(o).then(function (r) { ui.toast('Invoice diunduh: ' + r.fileName, { type: 'success' }); }, function (e) { ui.toast(e.message, { type: 'error' }); }); return false; } });
     if (o.isUnpaid) {
       actions.push({ label: 'Batalkan', variant: 'ghost', onClick: act(function () { return ask({ title: 'Batalkan pesanan ' + o.id + '?', ok: 'Batalkan pesanan', danger: true, body: noteField('atk-n', 'Alasan pembatalan', true), collect: function (el) { return needText(el, '#atk-n', 5); }, run: function (v) { return T.admin.cancel(o.id, v); } }); }, 'Pesanan dibatalkan.') });
       if (o.status === 'Menunggu Konfirmasi') actions.push({ label: 'Tolak Bukti', variant: 'ghost', onClick: act(function () { return ask({ title: 'Tolak bukti pembayaran', ok: 'Kembalikan ke pembeli', body: '<p>Status kembali ke Menunggu Pembayaran dan catatan Anda tampil bagi pembeli.</p>' + noteField('atk-n', 'Alasan', true, 'Contoh: nominal transfer belum sesuai total.'), collect: function (el) { return needText(el, '#atk-n', 5); }, run: function (v) { return T.admin.rejectPayment(o.id, v); } }); }, 'Bukti pembayaran dikembalikan.') });
