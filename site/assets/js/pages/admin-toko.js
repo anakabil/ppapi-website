@@ -183,6 +183,7 @@
     var mail = o.buyer.email ? 'mailto:' + encodeURIComponent(o.buyer.email) + '?subject=' + encodeURIComponent('Pesanan Toko PPAPI ' + o.id) + '&body=' + encodeURIComponent('Yth. ' + o.buyer.name + ',\n\nTerkait pesanan ' + o.id + ' (status: ' + o.status + ').\n\n\nSalam,\nSekretariat PPAPI') : '';
     var body =
       '<div class="drawer__section"><p class="atk-dstatus">' + T.fmt.statusBadge(o.status) + '<span>' + h(T.STATUS_TEXT[o.status]) + '</span></p>' +
+        (r.ongkirSumber === 'pembeli' && o.perluKirim ? '<div class="alert alert--info" role="note" data-atk="ongkir-pembeli">' + icon('info') + '<div><p class="alert__title">Ongkos kirim diisi pembeli</p><p>' + h(R(r.ongkir || 0)) + (r.ongkirKurir ? ' via ' + h(r.ongkirKurir) : '') + (o.alamat ? ' ke ' + h([o.alamat.kota, o.alamat.provinsi, o.alamat.kodePos].filter(Boolean).join(', ')) : '') + (r.beratGram ? ', perkiraan berat ' + h(String(Math.round(r.beratGram / 100) / 10).replace('.', ',')) + ' kg' : '') + '. Cocokkan dengan cek tarif kurir sebelum mengonfirmasi pembayaran; gunakan Ubah Ongkir bila berbeda.</p></div></div>' : '') +
         (issues.length ? '<div class="alert alert--warn" role="note" data-atk="price-warn">' + icon('alert-triangle') + '<div><p class="alert__title">Periksa harga sebelum konfirmasi</p><ul class="atk-issues">' + issues.map(function (i) { return '<li><strong>' + h(i.nama) + '</strong> — ' + h(i.reason) + (i.expected !== undefined && i.expected !== null ? ' (katalog ' + h(R(i.expected)) + ', pesanan ' + h(R(i.actual)) + ')' : '') + '</li>'; }).join('') + '</ul></div></div>' : '') +
         (o.alasanBatal ? '<p class="atk-note">Alasan pembatalan: ' + h(o.alasanBatal) + '</p>' : '') +
       '</div>' +
@@ -511,7 +512,7 @@
       '</fieldset>' +
       '<fieldset class="atk-fieldset"><legend class="atk-legend">Ongkos kirim</legend>' +
         '<div class="atk-checks" role="radiogroup" aria-label="Cara menetapkan ongkos kirim">' +
-          '<label class="check"><input type="radio" name="st-mode" value="konfirmasi"' + (s.ongkirMode !== 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Dikonfirmasi sekretariat per pesanan</span></label>' +
+          '<label class="check"><input type="radio" name="st-mode" value="konfirmasi"' + (s.ongkirMode !== 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Diisi pembeli dari cek tarif kurir, diperiksa sekretariat per pesanan</span></label>' +
           '<label class="check"><input type="radio" name="st-mode" value="flat"' + (s.ongkirMode === 'flat' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Tarif tetap</span></label>' +
           '<label class="check"><input type="radio" name="st-mode" value="tabel"' + (s.ongkirMode === 'tabel' ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Otomatis dari tabel tarif kurir per provinsi</span></label></div>' +
         '<div class="form__row form__row--2 mt-3"><div class="field"><label class="field__label" for="st-flat">Tarif tetap (Rp)</label><input class="field__control" id="st-flat" inputmode="numeric" maxlength="10" value="' + (s.ongkirFlat === null ? '' : s.ongkirFlat) + '"><p class="field__error">Isi tarif untuk mode tarif tetap.</p></div>' +

@@ -29,7 +29,7 @@
     function saveDraft() {
       var f = $('#kr-form'); if (!f) return;
       var d = {};
-      ['nama', 'telepon', 'alamat', 'kota', 'provinsi', 'kodePos', 'catatanKirim', 'catatan'].forEach(function (k) { var el = f.elements[k]; if (el) d[k] = el.value; });
+      ['nama', 'telepon', 'alamat', 'kota', 'provinsi', 'kodePos', 'catatanKirim', 'catatan', 'kurir', 'layanan', 'ongkir'].forEach(function (k) { var el = f.elements[k]; if (el) d[k] = el.value; });
       U.storage.set(draftKey, d);
     }
 
@@ -103,7 +103,20 @@
       var prof = (member && member.profile) || {};
       var beratG = T.beratKirim(ok);
       var provNow = (draft().provinsi || prof.province || '');
-      function quote(prov) { return T.shippingQuote(settings, perluKirim, { provinsi: prov, berat: beratG }); }
+      /* mode konfirmasi: pembeli mengisi ongkos kirim dari cek tarif kurir (wajib sebelum membuat pesanan) */
+      var isiOngkir = perluKirim && !!user && settings.ongkirMode === 'konfirmasi';
+      function ongkirVal() {
+        var el = layout.querySelector('#kr-ongkir'), raw = el ? el.value : (draft().ongkir || '');
+        var n = Number(String(raw).replace(/\D/g, ''));
+        return n >= 1000 ? n : 0;
+      }
+      function quote(prov) {
+        var base = T.shippingQuote(settings, perluKirim, { provinsi: prov, berat: beratG });
+        if (!isiOngkir || base.final) return base;
+        var v = ongkirVal();
+        return v ? { ongkir: v, final: true, catatan: 'Ongkos kirim sesuai isian Anda dari cek tarif kurir; diperiksa sekretariat sebelum pembayaran dikonfirmasi.' }
+                 : { ongkir: null, final: false, catatan: 'Isi ongkos kirim dari hasil cek tarif kurir pada bagian Alamat pengiriman.' };
+      }
       var q = quote(provNow);
       var count = lines.reduce(function (n, l) { return n + l.item.qty; }, 0);
       var hasProblem = lines.length !== ok.length;
@@ -111,6 +124,30 @@
       function shipRow(q) { return perluKirim ? '<div class="tk-sum__row" data-kr-ship><dt>Ongkos kirim</dt><dd>' + (q.final ? h(R(q.ongkir)) : 'Dikonfirmasi') + '</dd></div>' : ''; }
       function totalRow(q) { return '<div class="tk-sum__row tk-sum__row--total" data-kr-total><dt>Total' + (q.final ? '' : '*') + '</dt><dd>' + h(R(subtotal + (q.ongkir || 0))) + '</dd></div>'; }
       function sumShip(q) { return shipRow(q) + totalRow(q); }
+      function ongkirHtml() {
+        var cfg = (PPAPI.config && PPAPI.config.toko) || {}, kur = cfg.kurir || [], d = draft();
+        var kg = beratG ? (Math.round(beratG / 100) / 10).toString().replace('.', ',') + ' kg' : '';
+        return '<div class="kr-ongkir" data-kr-ongkir>' +
+          '<h3 class="kr-ongkir__title">Ongkos kirim</h3>' +
+          '<p class="kr-panel__text">Cek tarif di situs resmi kurir dengan data di bawah, lalu isi hasilnya. Pesanan dapat dibuat setelah ongkos kirim diisi; sekretariat memeriksanya sebelum mengonfirmasi pembayaran.</p>' +
+          '<dl class="kv kv--stacked kr-ongkir__info">' +
+            '<div class="kv__row"><dt>Kota asal</dt><dd><span data-kr-asal>' + h(cfg.asalKirim || '') + '</span> <button type="button" class="btn btn--link btn--sm" data-kr-copy>Salin</button></dd></div>' +
+            '<div class="kv__row"><dt>Tujuan</dt><dd data-kr-tujuan>Isi kota/kabupaten dan kode pos di atas</dd></div>' +
+            (kg ? '<div class="kv__row"><dt>Perkiraan berat</dt><dd>' + h(kg) + ' (termasuk kemasan)</dd></div>' : '') +
+          '</dl>' +
+          '<p class="field__label kr-ongkir__label">Cek tarif di situs kurir</p>' +
+          '<div class="kr-kurir">' + kur.map(function (k) {
+            return '<a class="kr-kurir__btn" href="' + h(k.url) + '" target="_blank" rel="noopener noreferrer" style="--kurir:' + h(k.warna || '#333') + '" data-kurir="' + h(k.kode) + '">' +
+              '<span class="kr-kurir__logo">' + h(k.nama) + '</span><span class="kr-kurir__cta">Cek tarif ' + icon('arrow-up-right', { size: 14 }) + '</span></a>';
+          }).join('') + '</div>' +
+          '<div class="form__row form__row--3 mt-3">' +
+            '<div class="field"><label class="field__label" for="kr-kurir">Kurir <span class="field__req" aria-hidden="true">*</span></label><select class="field__control" id="kr-kurir" name="kurir" required aria-required="true" aria-describedby="kr-kurir-err"><option value="">Pilih kurir</option>' +
+              kur.map(function (k) { return '<option' + (d.kurir === k.nama ? ' selected' : '') + '>' + h(k.nama) + '</option>'; }).join('') + '</select><p class="field__error" id="kr-kurir-err">Pilih kurir yang tarifnya Anda cek.</p></div>' +
+            field('layanan', 'Layanan', { max: 40, ph: 'REG, EZ, ONS', hint: 'Mis. REG atau EZ.' }) +
+            field('ongkir', 'Ongkos kirim (Rp)', { req: true, max: 12, mode: 'numeric', err: 'Isi ongkos kirim dari hasil cek tarif (minimal Rp1.000).' }) +
+          '</div>' +
+        '</div>';
+      }
       function shipNote(q) { return (q.final ? '' : '* Belum termasuk ongkos kirim. ') + h(q.catatan); }
       updateShip = function (prov) {
         var nq = quote(prov), row = layout.querySelector('[data-kr-ship]'), tot = layout.querySelector('[data-kr-total]'), note = layout.querySelector('[data-kr-shipnote]');
@@ -152,6 +189,7 @@
               field('kodePos', 'Kode pos', { req: true, max: 5, mode: 'numeric', auto: 'postal-code', err: 'Kode pos terdiri atas 5 angka.' }) +
               field('catatanKirim', 'Patokan / catatan kurir', { max: 300 }) +
             '</div>' +
+            (isiOngkir ? ongkirHtml() : '') +
           '</section>' : '') +
           '<section class="kr-panel" aria-labelledby="bayar-t">' +
             '<p class="kr-panel__num">' + (perluKirim ? '03' : '02') + '</p><h2 class="kr-panel__title" id="bayar-t">Pembayaran</h2>' +
@@ -231,6 +269,27 @@
       f.addEventListener('change', function (e) { if (e.target.id === 'kr-setuju') f.classList.toggle('agree-invalid', false); });
       f.addEventListener('submit', submit);
       if (f.elements.provinsi) f.elements.provinsi.addEventListener('change', function () { updateShip(f.elements.provinsi.value); });
+      var ong = f.elements.ongkir;
+      if (ong) {
+        var tuj = layout.querySelector('[data-kr-tujuan]');
+        var paintTujuan = function () {
+          var t = [f.elements.kota.value.trim(), f.elements.provinsi.value, f.elements.kodePos.value.trim()].filter(Boolean).join(', ');
+          if (tuj) tuj.textContent = t || 'Isi kota/kabupaten dan kode pos di atas';
+        };
+        paintTujuan();
+        ['kota', 'provinsi', 'kodePos'].forEach(function (k) { f.elements[k].addEventListener('input', paintTujuan); f.elements[k].addEventListener('change', paintTujuan); });
+        ong.addEventListener('input', function () {
+          var n = ong.value.replace(/\D/g, '');
+          ong.value = n ? Number(n).toLocaleString('id-ID') : '';
+          updateShip(f.elements.provinsi.value);
+        });
+        if (ong.value) ong.value = Number(ong.value.replace(/\D/g, '') || 0).toLocaleString('id-ID') || '';
+        var cp = layout.querySelector('[data-kr-copy]');
+        if (cp) cp.addEventListener('click', function () {
+          var t = layout.querySelector('[data-kr-asal]').textContent;
+          (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { ui.toast('Kota asal disalin.', { type: 'success' }); }, function () { ui.toast('Salin manual: ' + t, { type: 'info' }); });
+        });
+      }
       if (location.hash === '#pemesanan') { var sec = $('#pemesanan'); if (sec) setTimeout(function () { sec.scrollIntoView({ block: 'start' }); sec.focus({ preventScroll: true }); }, 60); }
     }
 
@@ -250,13 +309,19 @@
         var v = T.validateAlamat(alamat);
         v.missing.forEach(function (m) { var el = invalid(m.key); first = first || el; });
       }
+      var ongkir;
+      if (perluKirim && f.elements.ongkir) {
+        ongkir = { kurir: f.elements.kurir.value, layanan: f.elements.layanan.value.trim(), ongkir: Number(f.elements.ongkir.value.replace(/\D/g, '')) };
+        if (!ongkir.kurir) { var ek = invalid('kurir'); first = first || ek; }
+        if (!(ongkir.ongkir >= 1000)) { var eo = invalid('ongkir'); first = first || eo; }
+      }
       if (!f.elements.setuju.checked) { f.classList.add('agree-invalid'); first = first || f.elements.setuju; }
       if (first) { first.focus(); ui.toast('Periksa kembali isian yang ditandai.', { type: 'warn' }); return; }
       ui.setLoading(btn, true, 'Membuat pesanan…');
       try {
         var order = await T.createOrder({
           kontak: { nama: (member && member.name) || user.name, email: user.email, telepon: user.phone || (member && member.phone) || '' },
-          alamat: alamat, catatan: f.elements.catatan.value
+          alamat: alamat, ongkir: ongkir, catatan: f.elements.catatan.value
         });
         await T.cart.clear();
         U.storage.remove(draftKey);

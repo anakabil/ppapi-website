@@ -612,10 +612,19 @@
     var normal = items.reduce(function (n, it) { return n + it.hargaNormal * it.qty; }, 0);
     var berat = beratKirim(lines);
     var q = shippingQuote(settings, perluKirim, { provinsi: alamat && alamat.provinsi, berat: berat });
+    /* mode konfirmasi: ongkos kirim diisi pembeli dari cek tarif kurir (wajib), diperiksa sekretariat */
+    var ob = null;
+    if (perluKirim && !q.final && settings.ongkirMode === 'konfirmasi') {
+      var oi = input.ongkir || {};
+      var kur = str(oi.kurir, 40), lay = str(oi.layanan, 40), nilai = int(oi.ongkir, 0, 1e8);
+      if (!kur || !nilai || nilai < 1000) { var e3 = err('toko/ongkir-required', 'Pilih kurir dan isi ongkos kirim dari hasil cek tarif kurir.'); e3.missing = [{ key: 'ongkir', label: 'Ongkos kirim' }]; throw e3; }
+      ob = { kurir: kur, layanan: lay, ongkir: nilai };
+      q = { ongkir: nilai, final: true, catatan: 'Ongkos kirim diisi pembeli dari cek tarif ' + kur + (lay ? ' ' + lay : '') + '; diperiksa sekretariat sebelum pembayaran dikonfirmasi.' };
+    }
     var id = 'PSN-' + ymd() + '-' + rand(5);
     var order = {
       id: id, uid: u.uid, buyer: buyer, items: items, perluKirim: perluKirim, alamat: alamat,
-      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, beratGram: berat, total: subtotal + (q.ongkir || 0) },
+      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, beratGram: berat, ongkirSumber: ob ? 'pembeli' : '', ongkirKurir: ob ? (ob.kurir + (ob.layanan ? ' ' + ob.layanan : '')) : '', total: subtotal + (q.ongkir || 0) },
       status: 'Menunggu Pembayaran', hargaAnggota: member && normal !== subtotal,
       catatan: str(input.catatan, 500),
       riwayat: [historyEntry('Menunggu Pembayaran', 'pembeli', 'Pesanan dibuat.')]
@@ -1227,7 +1236,7 @@
         need(o, UNPAID, 'Ongkos kirim hanya dapat diubah sebelum pembayaran dikonfirmasi.');
         var v = int(ongkir, 0, 1e8);
         if (v === null) throw err('toko/invalid-amount', 'Isi ongkos kirim dalam rupiah.');
-        var r = Object.assign({}, o.ringkasan, { ongkir: v, ongkirFinal: true, ongkirCatatan: str(note, 500) || 'Ongkos kirim telah ditetapkan sekretariat.' });
+        var r = Object.assign({}, o.ringkasan, { ongkir: v, ongkirFinal: true, ongkirSumber: 'sekretariat', ongkirCatatan: str(note, 500) || 'Ongkos kirim telah ditetapkan sekretariat.' });
         r.total = r.subtotal + v;
         return { patch: { ringkasan: r, riwayat: hist(o, o.status, 'Ongkos kirim ditetapkan ' + rupiah(v) + '. Total pembayaran ' + rupiah(r.total) + '.') } };
       });

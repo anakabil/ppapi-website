@@ -147,6 +147,19 @@ window.PPAPI_CONFIG = {
     hours: []
   },
 
+  /* ---------- TOKO: PENGIRIMAN ---------- */
+  // Titik asal pengiriman yang ditampilkan kepada pembeli saat mengecek ongkos kirim, dan
+  // tautan halaman cek tarif resmi tiap kurir (dibuka di tab baru). Ubah bila alamat berubah.
+  toko: {
+    asalKirim: 'Jakasetia, Kecamatan Bekasi Selatan, Kota Bekasi, Jawa Barat',
+    kurir: [
+      { kode: 'jne',  nama: 'JNE',           warna: '#0b3b8c', url: 'https://www.jne.co.id/id/tracking/tarif' },
+      { kode: 'jnt',  nama: 'J&T Express',   warna: '#d71920', url: 'https://jet.co.id/rates' },
+      { kode: 'tiki', nama: 'TIKI',          warna: '#1a4f9c', url: 'https://www.tiki.id/id' },
+      { kode: 'pos',  nama: 'Pos Indonesia', warna: '#f26522', url: 'https://www.posindonesia.co.id/id/check-tarif' }
+    ]
+  },
+
   /* ---------- MEDIA SOSIAL ---------- */
   // Tempel alamat lengkap profil (https://…). Isian kosong = ikon tidak ditampilkan.
   social: {

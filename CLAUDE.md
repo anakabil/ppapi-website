@@ -52,6 +52,10 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (01-11-2026): mode `konfirmasi` kini = **ongkir diisi pembeli** (wajib, ≥ Rp1.000) setelah cek tarif di situs kurir
+  (tombol JNE/J&T/TIKI/Pos; `config.js` › `toko.asalKirim` = Jakasetia, Bekasi Selatan, Kota Bekasi; `toko.kurir` = URL cek tarif;
+  URL TIKI belum terkonfirmasi). Pesanan menyimpan `ringkasan.ongkirSumber='pembeli'`, `ongkirKurir`; admin melihat kotak periksa
+  dan dapat Ubah Ongkir. Tanpa perubahan aturan Firestore.
 - Toko (30-10-2026): ongkir mode `tabel` (`shop_settings/main.ongkirTabel` = tarif Rp/kg per provinsi, toleransi gram) + `products.berat`
   (gram/unit). Tarif kurir belum diisi: situs kurir (jne.co.id dll.) diblokir jaringan sesi; isi dari cek tarif resmi.
   Tombol **Impor Tabel Tarif** (31-10-2026, Toko › Pengaturan, JSON `ppapi-toko-ongkir`, ditolak utuh bila ada provinsi/tarif/tanggal
