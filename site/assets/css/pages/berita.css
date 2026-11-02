@@ -456,3 +456,8 @@ body[data-page="berita"] .berita-pager__meta { display: flex; flex-wrap: wrap; a
   body[data-page="berita"] .berita-article__title,
   body[data-page="berita"] .berita-article__author { color: var(--c-black) !important; }
 }
+
+/* tombol ajakan di akhir artikel (mis. menuju produk di Toko PPAPI) */
+body[data-page="berita"] .berita-article__cta { margin: clamp(28px, 4vw, 40px) 0 0; }
+body[data-page="berita"] .berita-article__cta .btn { max-width: 100%; white-space: normal; text-align: left; }
+body[data-page="berita"] .prose .berita-article__cta a, body[data-page="berita"] .prose .berita-article__cta a:hover { text-decoration: none; }

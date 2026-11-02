@@ -457,7 +457,7 @@
        SETELAH teks di-escape, sehingga tidak membuka celah HTML. Paragraf setelah subjudul
        "Daftar Pustaka" dirender sebagai entri rujukan (indentasi gantung, berita.css). */
     function inline(t) { return h(t).replace(/\*([^*\n]{1,300}?)\*/g, '<em>$1</em>'); }
-    function renderIsi(isi) {
+    function renderIsi(isi, cta) {
       var out = [], list = null, refs = false;
       function flush() { if (list) { out.push('<ul>' + list.map(function (li) { return '<li>' + inline(li) + '</li>'; }).join('') + '</ul>'); list = null; } }
       (Array.isArray(isi) ? isi : [isi]).forEach(function (raw) {
@@ -469,14 +469,24 @@
         else if (/^##\s+/.test(t)) {
           var title = t.replace(/^##\s+/, '');
           refs = /^daftar pustaka$/i.test(title.trim());
+          if (refs && cta) { out.push(cta); cta = ''; }   /* tombol ajakan tepat sebelum Daftar Pustaka */
           out.push('<h2' + (refs ? ' class="berita-refs__title"' : '') + '>' + h(title) + '</h2>');
         }
         else out.push('<p' + (refs ? ' class="berita-ref"' : '') + '>' + inline(t) + '</p>');
       });
       flush();
+      if (cta) out.push(cta);
       return out.join('');
     }
 
+    /* Tombol ajakan opsional di akhir artikel (mis. menuju produk di Toko PPAPI).
+       Hanya tautan internal berbentuk halaman.html[?kueri] yang diterima. */
+    function ajakanHtml(b) {
+      var a = b && b.ajakan;
+      if (!a || typeof a.label !== 'string' || typeof a.href !== 'string') return '';
+      if (!/^[a-z0-9-]+\.html(\?[a-z0-9=&%._-]*)?$/i.test(a.href) || !a.label.trim()) return '';
+      return '<p class="berita-article__cta"><a class="btn btn--primary" href="' + h(a.href) + '"><span>' + h(a.label.trim().slice(0, 80)) + '</span>' + icon('arrow-right', { cls: 'btn__icon', size: 18 }) + '</a></p>';
+    }
     function setMeta(title, desc, article) {
       document.title = title + ' — PPAPI';
       var set = function (sel, val) { var m = document.querySelector(sel); if (m) m.setAttribute('content', val); };
@@ -583,7 +593,7 @@
           '<div class="container berita-article__layout">' +
             '<div class="berita-article__main">' +
               (b.ringkasan ? '<p class="berita-article__standfirst">' + h(b.ringkasan) + '</p>' : '') +
-              '<div class="prose berita-article__prose">' + renderIsi(b.isi) + '</div>' +
+              '<div class="prose berita-article__prose">' + renderIsi(b.isi, ajakanHtml(b)) + '</div>' +
               (b.contoh ? '<div class="alert alert--info berita-article__note" role="note">' + icon('info', { size: 18 }) + '<div><p class="alert__title">Konten contoh</p><p>Artikel ini disiapkan untuk memperlihatkan tampilan situs. Sekretariat akan menggantinya dengan berita resmi.</p></div></div>' : '') +
               '<footer class="berita-article__foot">' +
                 '<dl class="berita-article__facts">' +

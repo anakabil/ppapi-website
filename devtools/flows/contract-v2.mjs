@@ -597,7 +597,7 @@ async function browserChecks() {
       const H = window.__h, C = PPAPI.store.content, r = {};
       const base = await C.list('berita');
       r.base = [base.length, base.every(x => x._static && !x._managed), base[0].id === PPAPI.data.berita[0].id];
-      const n = await C.save('berita', { judul: 'Rapat Kerja Uji', ringkasan: 'Ringkasan rapat kerja.', tanggal: '2026-10-16', kategori: 'Organisasi', isi: 'Paragraf satu.\n\nParagraf dua.', gambar: 'javascript:alert(1)' });
+      const n = await C.save('berita', { judul: 'Rapat Kerja Uji', ringkasan: 'Ringkasan rapat kerja.', tanggal: '2026-11-16', kategori: 'Organisasi', isi: 'Paragraf satu.\n\nParagraf dua.', gambar: 'javascript:alert(1)' });
       const l1 = await C.list('berita');
       r.newItem = [n.id, n._static, n._managed, n.isi.length, n.gambar, n.contoh, l1.length, l1[0].id];
       const sid = PPAPI.data.berita[3].id;
@@ -642,11 +642,11 @@ async function browserChecks() {
       r.fileActive = await PPAPI.store.pustaka.fileUrl(pk);
       return r;
     });
-    eq(CT.base, [9, true, true], 'list(berita) = 9 static items (_static, not _managed), static order');
-    eq(CT.newItem, ['rapat-kerja-uji', false, true, 2, '', false, 10, 'rapat-kerja-uji'], 'save(new) → slug id, _managed, isi split into paragraphs, unsafe gambar dropped, sorted newest first');
-    eq(CT.override, ['Judul diubah admin', true, true, true, 10], 'save(static id) overrides in place (_static + _managed)');
-    eq(CT.hidden, [false, 9, true], 'remove(static) hides it (includeHidden shows hidden:true)');
-    eq(CT.restored, [true, false, 10], 'restore(static) drops the override');
+    eq(CT.base, [10, true, true], 'list(berita) = 10 static items (_static, not _managed), static order');
+    eq(CT.newItem, ['rapat-kerja-uji', false, true, 2, '', false, 11, 'rapat-kerja-uji'], 'save(new) → slug id, _managed, isi split into paragraphs, unsafe gambar dropped, sorted newest first');
+    eq(CT.override, ['Judul diubah admin', true, true, true, 11], 'save(static id) overrides in place (_static + _managed)');
+    eq(CT.hidden, [false, 10, true], 'remove(static) hides it (includeHidden shows hidden:true)');
+    eq(CT.restored, [true, false, 11], 'restore(static) drops the override');
     ok(CT.managedGone === false, 'remove(managed) deletes the item');
     eq([CT.restoreBad, CT.badType, CT.incomplete, CT.badId], ['store/not-found', 'store/invalid-type', 'store/content-incomplete', 'store/invalid-id'], 'content guards');
     eq(CT.agenda, ['Agenda Uji Awal', true], 'agenda sorted by mulai ascending');
