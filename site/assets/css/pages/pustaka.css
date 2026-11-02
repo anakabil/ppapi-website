@@ -186,8 +186,8 @@ body[data-page="pustaka"] .pk-view .segmented__option { flex: 1 1 0; padding: 0 
   body[data-page="pustaka"] .pk-toolbar:not(.is-saring-open) .pk-toolbar__saring { display: none; }
   body[data-page="pustaka"] .pk-chipset { padding-top: 16px; }
   body[data-page="pustaka"] .pk-chipset .filter-chips {
-    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-    margin-inline: -20px; padding: 2px 20px 4px; scroll-padding-inline: 20px;
+    /* terlipat ke baris baru agar tidak ada chip yang terpotong di tepi layar */
+    flex-wrap: wrap; gap: 8px; padding: 2px 0 4px;
   }
   body[data-page="pustaka"] .pk-chipset .filter-chips::-webkit-scrollbar { display: none; }
   body[data-page="pustaka"] .pk-chipset .chip { flex: none; }

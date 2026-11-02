@@ -56,6 +56,11 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   asing) membuat SEMUA update ditolak (anggota & admin). `store.admin.memberIssues(uid)` / `repairMember(uid)` + kotak peringatan
   di laci detail anggota; `ensureMember` tidak lagi gagal memuat bila sinkronisasi kontak ditolak. Toko: transaksi admin yang
   ditolak menjalankan `diagnoseOrderWrite` (uji tulis tanpa efek) agar pesan galat menyebut langkah yang ditolak.
+- Tampilan (02-11-2026): tabel di dalam pop-up (modal/laci) memakai container query `tblwrap` (main.css): bertumpuk menjadi kartu
+  bila wadah < 720 px, sel terlipat pada wadah lebar (tidak ada lagi tombol "Tandai Hadir" terpotong). Tab (`.tabs__list`), menu
+  Konsol Admin di ponsel/tablet, chip filter Pustaka/Instruktur, dan indeks Profil kini terlipat (bukan strip geser).
+  Audit: `node flows/audit-popup.mjs` (dari devtools/; laptop 1280 + ponsel 375; hasil di `shots/audit-popup/temuan.json`).
+  Satu-satunya geser yang disengaja: kartu dokumen kunci di Regulasi (ponsel, carousel bernomor).
 - Kalender (02-11-2026): tombol "Tambahkan ke Kalender" (agenda + Kegiatan Saya) membuka `ui.addToCalendar` (core.js): Google Calendar
   (`calendar.google.com/calendar/render?action=TEMPLATE`), Outlook (`outlook.live.com/.../compose?rru=addevent`), atau Apple (.ics dibuka
   langsung di perangkat Apple; perangkat lain menyimpan .ics). Tidak lagi mengunduh berkas lebih dahulu.

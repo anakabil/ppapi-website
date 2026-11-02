@@ -70,17 +70,15 @@ body[data-page="admin"] .adm-nav__note strong { color: var(--text); font-weight:
 @media (max-width: 1199px) {
   body[data-page="admin"] .adm-nav { margin-inline: calc(-1 * var(--gutter)); border-bottom: 1px solid var(--line); }
   body[data-page="admin"] .adm-nav__label, body[data-page="admin"] .adm-nav__foot, body[data-page="admin"] .adm-nav__num { display: none; }
+  /* menu terlipat ke beberapa baris (bukan strip geser) agar tidak ada menu yang terpotong di tepi layar */
   body[data-page="admin"] .adm-nav__list {
-    display: flex; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-    padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+    display: flex; flex-wrap: wrap; gap: 0 2px; padding: 4px var(--gutter) 6px;
   }
   body[data-page="admin"] .adm-nav__list::-webkit-scrollbar { display: none; }
   /* end gutter as a spacer: inline-end padding of a scrolling flex row is not always kept, which clipped
      the last tab (Toko since 21 Oct 2026) when it was scrolled into view */
-  body[data-page="admin"] .adm-nav__list { padding-inline-end: 0; }
-  body[data-page="admin"] .adm-nav__list::after { content: ""; flex: 0 0 var(--gutter); }
   body[data-page="admin"] .adm-nav__list > li { flex: none; }
-  body[data-page="admin"] .adm-nav__link { min-height: 52px; padding: 0 14px; gap: 9px; }
+  body[data-page="admin"] .adm-nav__link { min-height: 44px; padding: 0 12px; gap: 8px; }
   body[data-page="admin"] .adm-nav__link::after {
     content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: transparent; transition: background-color .3s var(--ease);
   }

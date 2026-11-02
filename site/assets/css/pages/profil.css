@@ -45,6 +45,11 @@ body[data-page="profil"] .profil-index__num { font-weight: 500; letter-spacing: 
   body[data-page="profil"] .profil-index { --index-h: 56px; }
   body[data-page="profil"] .profil-index .container { padding-inline: 0; }
   body[data-page="profil"] .profil-index__list > li:first-child { border-left: 0; }
+  /* ponsel: indeks bagian menjadi kisi tiga kolom, bukan strip geser, agar tidak ada tautan yang terpotong */
+  body[data-page="profil"] .profil-index__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; min-height: 0; }
+  body[data-page="profil"] .profil-index__list > li, body[data-page="profil"] .profil-index__list > li:first-child { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+  body[data-page="profil"] .profil-index__list > li:nth-child(3n) { border-right: 0; }
+  body[data-page="profil"] .profil-index__link { min-height: 48px; padding: 0 12px; gap: 8px; letter-spacing: .12em; font-size: .7rem; white-space: normal; }
 }
 
 /* ---------- 01 · Tentang ---------- */

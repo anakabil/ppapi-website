@@ -58,8 +58,8 @@ body[data-page="instruktur"] .in-toolbar .chip.is-zero { color: var(--muted); bo
   body[data-page="instruktur"] .in-toolbar { padding: 20px; gap: 18px; }
   body[data-page="instruktur"] .in-toolbar__selects { gap: 14px 12px; }
   body[data-page="instruktur"] .in-toolbar__chips .filter-chips {
-    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-    margin-inline: -20px; padding: 2px 20px 4px; scroll-padding-inline: 20px;
+    /* terlipat ke baris baru agar tidak ada chip yang terpotong di tepi layar */
+    flex-wrap: wrap; gap: 8px; padding: 2px 0 4px;
   }
   body[data-page="instruktur"] .in-toolbar__chips .filter-chips::-webkit-scrollbar { display: none; }
   body[data-page="instruktur"] .in-toolbar__chips .chip { flex: none; }
