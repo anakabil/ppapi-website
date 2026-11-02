@@ -211,6 +211,13 @@ await page.click('[data-ps="proof-submit"]');
 await page.waitForTimeout(600);
 ok((await page.textContent('.ps-head')).includes('Menunggu Konfirmasi'), 'status → Menunggu Konfirmasi');
 ok(await page.evaluate((id) => /^data:image\/jpeg;base64,/.test(JSON.parse(localStorage.getItem('ppapi_toko_bukti'))[id] || ''), orderId) && await page.isVisible('[data-ps-lihat]'), 'foto bukti tersimpan (JPEG) dan dapat dilihat pembeli');
+ok(await page.isVisible('.modal:has-text("Kirim ke WhatsApp")'), 'setelah bukti dikirim, pembeli ditawari mengirim konfirmasi ke WhatsApp');
+await page.click('.modal__footer .btn--ghost'); await page.waitForTimeout(300);
+{
+  const wa = await page.getAttribute('[data-ps="wa"]', 'href');
+  const teks = decodeURIComponent(wa.split('text=')[1] || '');
+  ok(wa.startsWith('https://wa.me/6281227280075?text=') && teks.includes(orderId) && teks.includes('Total: Rp') && teks.includes('Foto bukti transfer sudah saya unggah'), 'tombol Konfirmasi via WhatsApp berisi pesan tersusun ke nomor sekretariat');
+}
 
 console.log('\n4. Admin konfirmasi');
 await as(ADMIN);

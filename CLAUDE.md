@@ -52,6 +52,12 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Toko (02-11-2026): **ongkir JNE otomatis** — `devtools/ongkir/tarik-jne.mjs` menarik tarif JNE REG Bekasi (BKI10000) → ibu kota 38
+  provinsi dari `jne.co.id/shipping-fee` (+ `api-destination`), menulis `site/assets/data/ongkir-jne.js`; pages.yml menjalankannya tiap
+  Senin 01:17 UTC + setiap terbit (continue-on-error, data repo jadi cadangan). `T.ongkirJne(prov, gram)`; createOrder menghitung
+  ulang (ongkirSumber `otomatis`), priceCheck membandingkan. J&T/TIKI ber-captcha → manual. TIKI URL benar: `tiki.id/id/cek-ongkir`.
+  Logo kurir di `site/assets/img/kurir/`. Tombol **Konfirmasi via WhatsApp** (pesanan.html; wa.me/6281227280075 dari
+  `contact.whatsapp`, pesan tersusun) + tawaran otomatis setelah bukti transfer dikirim.
 - Toko (01-11-2026, lanjutan 2): berbagi produk (Web Share + foto, WhatsApp, salin teks); invoice PDF (pembeli & admin) dan
   ringkasan transaksi PDF (pembeli: semua pesanannya; admin: rentang tanggal) — `T.invoicePdf`, `T.ringkasanPdf`, jsPDF lokal.
   URL kurir: J&T `jet.co.id/rates`, TIKI `tiki.id/id/tariff`, Pos `posindonesia.co.id/id/check-tarif` (dari sumber pihak ketiga; minta klien uji).

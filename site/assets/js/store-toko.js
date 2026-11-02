@@ -387,6 +387,14 @@
     if (sisa > (toleransi === undefined ? 300 : toleransi)) kg += 1;
     return Math.max(1, kg);
   }
+  /** ongkirJne(provinsi, gram) → {ongkir, kg, tarif, kota, etd, diambil} | null — tarif JNE REG dari Bekasi ke ibu kota
+      provinsi, ditarik dari jne.co.id (assets/data/ongkir-jne.js). Berat dibulatkan ke atas per kg (min. 1 kg). */
+  function ongkirJne(provinsi, gram) {
+    var d = PPAPI.data && PPAPI.data.ongkirJne, t = d && d.tarif && d.tarif[provinsi];
+    if (!t || !t.reg || gram === null || gram === undefined) return null;
+    var kg = Math.max(1, Math.ceil((gram || 0) / 1000));
+    return { ongkir: t.reg * kg, kg: kg, tarif: t.reg, kota: t.kota, etd: t.etd, diambil: d.diambil, layanan: d.layanan || 'REG' };
+  }
   /** shippingQuote(settings, perluKirim, {provinsi, berat}) → {ongkir, final, catatan, kg?} */
   function shippingQuote(settings, perluKirim, ctx) {
     if (!perluKirim) return { ongkir: 0, final: true, catatan: '' };
@@ -617,14 +625,19 @@
     if (perluKirim && !q.final && settings.ongkirMode === 'konfirmasi') {
       var oi = input.ongkir || {};
       var kur = str(oi.kurir, 40), lay = str(oi.layanan, 40), nilai = int(oi.ongkir, 0, 1e8);
+      /* JNE: ongkir dihitung ulang dari tarif resmi (angka dari peramban tidak dipakai) */
+      var oto = kur === 'JNE' ? ongkirJne(alamat && alamat.provinsi, berat) : null;
+      if (oto) { lay = oto.layanan; nilai = oto.ongkir; }
       if (!kur || !nilai || nilai < 1000) { var e3 = err('toko/ongkir-required', 'Pilih kurir dan isi ongkos kirim dari hasil cek tarif kurir.'); e3.missing = [{ key: 'ongkir', label: 'Ongkos kirim' }]; throw e3; }
-      ob = { kurir: kur, layanan: lay, ongkir: nilai };
-      q = { ongkir: nilai, final: true, catatan: 'Ongkos kirim diisi pembeli dari cek tarif ' + kur + (lay ? ' ' + lay : '') + '; diperiksa sekretariat sebelum pembayaran dikonfirmasi.' };
+      ob = { kurir: kur, layanan: lay, ongkir: nilai, otomatis: !!oto };
+      q = oto
+        ? { ongkir: nilai, final: true, catatan: 'Ongkos kirim JNE ' + oto.layanan + ' dari Bekasi ke ' + oto.kota + ': ' + oto.kg + ' kg × ' + rupiah(oto.tarif) + ' (tarif jne.co.id per ' + oto.diambil + ', estimasi ' + oto.etd + ').' }
+        : { ongkir: nilai, final: true, catatan: 'Ongkos kirim diisi pembeli dari cek tarif ' + kur + (lay ? ' ' + lay : '') + '; diperiksa sekretariat sebelum pembayaran dikonfirmasi.' };
     }
     var id = 'PSN-' + ymd() + '-' + rand(5);
     var order = {
       id: id, uid: u.uid, buyer: buyer, items: items, perluKirim: perluKirim, alamat: alamat,
-      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, beratGram: berat, ongkirSumber: ob ? 'pembeli' : '', ongkirKurir: ob ? (ob.kurir + (ob.layanan ? ' ' + ob.layanan : '')) : '', total: subtotal + (q.ongkir || 0) },
+      ringkasan: { subtotal: subtotal, hemat: Math.max(0, normal - subtotal), ongkir: q.ongkir, ongkirFinal: q.final, ongkirCatatan: q.catatan, beratGram: berat, ongkirSumber: ob ? (ob.otomatis ? 'otomatis' : 'pembeli') : '', ongkirKurir: ob ? (ob.kurir + (ob.layanan ? ' ' + ob.layanan : '')) : '', total: subtotal + (q.ongkir || 0) },
       status: 'Menunggu Pembayaran', hargaAnggota: member && normal !== subtotal,
       catatan: str(input.catatan, 500),
       riwayat: [historyEntry('Menunggu Pembayaran', 'pembeli', 'Pesanan dibuat.')]
@@ -1370,6 +1383,11 @@
     });
     var sum = (order.items || []).reduce(function (n, it) { return n + (it.subtotal || 0); }, 0);
     var r = order.ringkasan || {};
+    if (r.ongkirSumber === 'otomatis' && order.alamat) {
+      var ln = (order.items || []).map(function (it) { return { item: it, product: byId[it.productId] || null }; });
+      var oj = ongkirJne(order.alamat.provinsi, beratKirim(ln));
+      if (oj && oj.ongkir !== r.ongkir) out.push({ nama: 'Ongkos kirim JNE', format: '', expected: oj.ongkir, actual: r.ongkir, reason: 'Ongkos kirim berbeda dengan tarif JNE terbaru (tarif diperbarui mingguan, atau berat produk berubah).' });
+    }
     /* ongkir otomatis (tabel tarif): hitung ulang dari katalog saat ini */
     if (settings && settings.ongkirMode === 'tabel' && order.perluKirim && r.ongkirFinal !== false && order.alamat) {
       var lines = (order.items || []).map(function (it) { return { item: it, product: byId[it.productId] || null }; });
@@ -1551,7 +1569,7 @@
     isKnowledge: isKnowledge, formatsOf: formatsOf, needsShipping: needsShipping, priceFor: priceFor, fromPrice: fromPrice,
     inStock: inStock, stockLeft: stockLeft, sanitizeProduct: sanitizeProduct,
     listProducts: listProducts, getProduct: getProduct, getMedia: getMedia,
-    getSettings: getSettings, shippingQuote: shippingQuote, beratKirim: beratKirim, kgTagih: kgTagih, validateAlamat: validateAlamat,
+    getSettings: getSettings, shippingQuote: shippingQuote, beratKirim: beratKirim, kgTagih: kgTagih, ongkirJne: ongkirJne, validateAlamat: validateAlamat,
     cart: cart,
     createOrder: createOrder, myOrders: myOrders, getOrder: getOrder, submitPayment: submitPayment, cancelOrder: cancelOrder,
     paymentDeadline: paymentDeadline, invoicePdf: invoicePdf, ringkasanPdf: ringkasanPdf, getBukti: getBukti, buktiFromFile: buktiFromFile, hasEntitlement: hasEntitlement, fileUrl: fileUrl, fileInfo: fileInfo, downloadSoft: downloadSoft,

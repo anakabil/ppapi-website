@@ -152,12 +152,14 @@ window.PPAPI_CONFIG = {
   // tautan halaman cek tarif resmi tiap kurir (dibuka di tab baru). Ubah bila alamat berubah.
   toko: {
     asalKirim: 'Jakasetia, Kecamatan Bekasi Selatan, Kota Bekasi, Jawa Barat',
+    // logo: berkas di assets/img/kurir (diambil dari situs resmi masing-masing kurir).
+    // otomatis: true = ongkir dihitung dari tarif yang ditarik dari situs kurir (assets/data/ongkir-jne.js).
     kurir: [
       // {berat} diganti berat tertagih (kg); BKI10000 = kode asal Bekasi di halaman cek ongkir JNE
-      { kode: 'jne',  nama: 'JNE',           warna: '#0b3b8c', url: 'https://jne.co.id/shipping-fee?origin=BKI10000&weight={berat}' },
-      { kode: 'jnt',  nama: 'J&T Express',   warna: '#d71920', url: 'https://jet.co.id/rates' },
-      { kode: 'tiki', nama: 'TIKI',          warna: '#1a4f9c', url: 'https://tiki.id/id/tariff' },
-      { kode: 'pos',  nama: 'Pos Indonesia', warna: '#f26522', url: 'https://www.posindonesia.co.id/id/check-tarif' }
+      { kode: 'jne',  nama: 'JNE',           warna: '#0b3b8c', logo: 'assets/img/kurir/jne.svg',  otomatis: true, url: 'https://jne.co.id/shipping-fee?origin=BKI10000&weight={berat}' },
+      { kode: 'jnt',  nama: 'J&T Express',   warna: '#d71920', logo: 'assets/img/kurir/jnt.png',  url: 'https://jet.co.id/rates' },
+      { kode: 'tiki', nama: 'TIKI',          warna: '#1a4f9c', logo: 'assets/img/kurir/tiki.png', url: 'https://tiki.id/id/cek-ongkir' },
+      { kode: 'pos',  nama: 'Pos Indonesia', warna: '#f26522', logo: 'assets/img/kurir/pos.png',  url: 'https://www.posindonesia.co.id/id/check-tarif' }
     ]
   },
 

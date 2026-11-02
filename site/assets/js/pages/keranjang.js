@@ -12,7 +12,7 @@
     var sess = PPAPI.session.current();
     var user = sess.user, member = sess.member;
     var layout = $('[data-kr="layout"]');
-    var updateShip = function () {};
+    var updateShip = function () {}, beratAktif = null;
     var draftKey = 'ppapi_toko_checkout_draft';
     var products = [], settings = null, lines = [];
 
@@ -102,6 +102,7 @@
       var normal = ok.reduce(function (n, l) { return n + l.price.normal * l.item.qty; }, 0);
       var prof = (member && member.profile) || {};
       var beratG = T.beratKirim(ok);
+      beratAktif = beratG;
       var provNow = (draft().provinsi || prof.province || '');
       /* mode konfirmasi: pembeli mengisi ongkos kirim dari cek tarif kurir (wajib sebelum membuat pesanan) */
       var isiOngkir = perluKirim && !!user && settings.ongkirMode === 'konfirmasi';
@@ -129,7 +130,7 @@
         var kg = beratG ? (Math.round(beratG / 100) / 10).toString().replace('.', ',') + ' kg' : '';
         return '<div class="kr-ongkir" data-kr-ongkir>' +
           '<h3 class="kr-ongkir__title">Ongkos kirim</h3>' +
-          '<p class="kr-panel__text">Cek tarif di situs resmi kurir dengan data di bawah, lalu isi hasilnya. Pesanan dapat dibuat setelah ongkos kirim diisi; sekretariat memeriksanya sebelum mengonfirmasi pembayaran.</p>' +
+          '<p class="kr-panel__text">Dengan <strong>JNE</strong>, ongkos kirim dihitung otomatis dari tarif resmi JNE. Bila memilih kurir lain, cek tarif di situs resminya dengan data di bawah, lalu isi hasilnya; sekretariat memeriksanya sebelum mengonfirmasi pembayaran.</p>' +
           '<dl class="kv kv--stacked kr-ongkir__info">' +
             '<div class="kv__row"><dt>Kota asal</dt><dd><span data-kr-asal>' + h(cfg.asalKirim || '') + '</span> <button type="button" class="btn btn--link btn--sm" data-kr-copy>Salin</button></dd></div>' +
             '<div class="kv__row"><dt>Tujuan</dt><dd data-kr-tujuan>Isi kota/kabupaten dan kode pos di atas</dd></div>' +
@@ -139,14 +140,16 @@
           '<div class="kr-kurir">' + kur.map(function (k) {
             var kgT = Math.max(1, Math.ceil((beratG || 1000) / 1000));
             return '<a class="kr-kurir__btn" href="' + h(String(k.url).replace('{berat}', kgT)) + '" target="_blank" rel="noopener noreferrer" style="--kurir:' + h(k.warna || '#333') + '" data-kurir="' + h(k.kode) + '">' +
-              '<span class="kr-kurir__logo">' + h(k.nama) + '</span><span class="kr-kurir__cta">Cek tarif ' + icon('arrow-up-right', { size: 14 }) + '</span></a>';
+              '<span class="kr-kurir__logo">' + (k.logo ? '<img src="' + h(k.logo) + '" alt="' + h(k.nama) + '" loading="lazy" decoding="async">' : h(k.nama)) + '</span>' +
+              '<span class="kr-kurir__cta">' + (k.otomatis ? 'Tarif otomatis · cek ' : 'Cek tarif ') + icon('arrow-up-right', { size: 14 }) + '</span></a>';
           }).join('') + '</div>' +
           '<div class="form__row form__row--3 mt-3">' +
             '<div class="field"><label class="field__label" for="kr-kurir">Kurir <span class="field__req" aria-hidden="true">*</span></label><select class="field__control" id="kr-kurir" name="kurir" required aria-required="true" aria-describedby="kr-kurir-err"><option value="">Pilih kurir</option>' +
-              kur.map(function (k) { return '<option' + (d.kurir === k.nama ? ' selected' : '') + '>' + h(k.nama) + '</option>'; }).join('') + '</select><p class="field__error" id="kr-kurir-err">Pilih kurir yang tarifnya Anda cek.</p></div>' +
+              kur.map(function (k) { var pilih = d.kurir ? d.kurir === k.nama : !!k.otomatis; return '<option' + (pilih ? ' selected' : '') + '>' + h(k.nama) + '</option>'; }).join('') + '</select><p class="field__error" id="kr-kurir-err">Pilih kurir yang tarifnya Anda cek.</p></div>' +
             field('layanan', 'Layanan', { max: 40, ph: 'REG, EZ, ONS', hint: 'Mis. REG atau EZ.' }) +
             field('ongkir', 'Ongkos kirim (Rp)', { req: true, max: 12, mode: 'numeric', err: 'Isi ongkos kirim dari hasil cek tarif (minimal Rp1.000).' }) +
           '</div>' +
+          '<p class="kr-ongkir__auto" data-kr-auto hidden></p>' +
         '</div>';
       }
       function shipNote(q) { return (q.final ? '' : '* Belum termasuk ongkos kirim. ') + h(q.catatan); }
@@ -279,6 +282,25 @@
         };
         paintTujuan();
         ['kota', 'provinsi', 'kodePos'].forEach(function (k) { f.elements[k].addEventListener('input', paintTujuan); f.elements[k].addEventListener('change', paintTujuan); });
+        var auto = layout.querySelector('[data-kr-auto]');
+        var paintAuto = function () {
+          var oj = f.elements.kurir.value === 'JNE' ? T.ongkirJne(f.elements.provinsi.value, beratAktif) : null;
+          ong.readOnly = !!oj; f.elements.layanan.readOnly = !!oj;
+          if (oj) {
+            ong.value = Number(oj.ongkir).toLocaleString('id-ID'); f.elements.layanan.value = oj.layanan;
+            ong.closest('.field').classList.remove('is-invalid');
+            auto.hidden = false;
+            auto.innerHTML = icon('check-circle', { size: 16 }) + '<span>Dihitung otomatis dari tarif resmi JNE ' + h(oj.layanan) + ' Bekasi ke ' + h(oj.kota) + ' (jne.co.id, per ' + h(U.formatDate ? U.formatDate(oj.diambil) : oj.diambil) + '): ' + oj.kg + ' kg × ' + h(R(oj.tarif)) + ', estimasi ' + h(oj.etd.replace(' D', ' hari').replace(' H', ' jam')) + '.</span>';
+          } else {
+            if (auto.hidden === false && ong.dataset.auto === '1') { ong.value = ''; f.elements.layanan.value = ''; }
+            auto.hidden = true;
+          }
+          ong.dataset.auto = oj ? '1' : '';
+          updateShip(f.elements.provinsi.value);
+        };
+        f.elements.kurir.addEventListener('change', paintAuto);
+        f.elements.provinsi.addEventListener('change', paintAuto);
+        paintAuto();
         ong.addEventListener('input', function () {
           var n = ong.value.replace(/\D/g, '');
           ong.value = n ? Number(n).toLocaleString('id-ID') : '';

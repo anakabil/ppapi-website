@@ -450,7 +450,11 @@ body[data-page="keranjang"] .kr-kurir__btn {
 }
 body[data-page="keranjang"] .kr-kurir__btn:hover { border-color: var(--kurir); box-shadow: var(--shadow-1); translate: 0 -2px; }
 body[data-page="keranjang"] .kr-kurir__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-body[data-page="keranjang"] .kr-kurir__logo { font: 800 1.15rem/1 var(--f-cond); letter-spacing: .02em; color: var(--kurir); text-align: center; }
+body[data-page="keranjang"] .kr-kurir__logo { display: flex; align-items: center; justify-content: center; height: 34px; font: 800 1.15rem/1 var(--f-cond); letter-spacing: .02em; color: var(--kurir); text-align: center; }
+body[data-page="keranjang"] .kr-kurir__logo img { display: block; max-width: 110px; max-height: 34px; width: auto; height: auto; }
+body[data-page="keranjang"] .kr-ongkir__auto { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; font-size: .86rem; line-height: 1.55; color: var(--muted); }
+body[data-page="keranjang"] .kr-ongkir__auto svg { flex: none; margin-top: 3px; color: #1f7a3f; }
+body[data-page="keranjang"] .field__control[readonly] { background: var(--surface-2); }
 body[data-page="keranjang"] .kr-kurir__cta { display: inline-flex; align-items: center; gap: 4px; font: 600 .66rem/1 var(--f-cond); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
 
 /* Pesanan — foto bukti transfer */
@@ -469,3 +473,4 @@ body[data-page="toko"] .tk-card__share {
 }
 body[data-page="toko"] .tk-card__share:hover { border-color: var(--text); }
 body[data-page="toko"] .tk-card__share:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+body[data-page="pesanan"] .ps-wa { gap: 6px; }

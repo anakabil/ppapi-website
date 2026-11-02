@@ -183,7 +183,8 @@
         '<p class="ps-back"><a class="btn btn--link btn--sm" href="pesanan.html"><span data-icon="arrow-left" data-icon-size="16"></span><span>Semua pesanan</span></a></p>' +
         '<header class="ps-head">' +
           '<div class="ps-head__text"><p class="ps-head__eyebrow">Status pesanan</p><p class="ps-head__status">' + T.fmt.statusBadge(o.status) + '</p><p class="ps-head__lead">' + h(T.STATUS_TEXT[o.status]) + '</p></div>' +
-          '<div class="ps-head__actions"><button type="button" class="btn btn--ghost btn--sm" data-ps="invoice"><span data-icon="download" data-icon-size="16"></span><span>Unduh Invoice</span></button>' +
+          '<div class="ps-head__actions">' + (o.status !== 'Dibatalkan' && o.status !== 'Selesai' ? waTombol(o, 'btn--primary btn--sm') : '') +
+            '<button type="button" class="btn btn--ghost btn--sm" data-ps="invoice"><span data-icon="download" data-icon-size="16"></span><span>Unduh Invoice</span></button>' +
             (o.isUnpaid ? '<button type="button" class="btn btn--ghost btn--sm" data-ps="cancel"><span>Batalkan pesanan</span></button>' : '') + '</div>' +
         '</header>' +
         (o.status === 'Dibatalkan' ? '<div class="alert alert--err ps-cancelled" role="note">' + icon('x-circle') + '<div><p class="alert__title">Pesanan dibatalkan' + (o.dibatalkanOleh === 'admin' ? ' oleh sekretariat' : '') + '</p>' + (o.alasanBatal ? '<p>' + h(o.alasanBatal) + '</p>' : '') + '</div></div>' : track(o)) +
@@ -206,6 +207,31 @@
         '</div>';
       ui.reveal(view);
       wire(o);
+    }
+
+    /* ---- konfirmasi via WhatsApp sekretariat (nomor dari config.contact.whatsapp) ---- */
+    function waNomor() { return String(((PPAPI.config || {}).contact || {}).whatsapp || '').replace(/\D/g, ''); }
+    function waTeks(o) {
+      var r = o.ringkasan || {}, p = o.pembayaran || {}, a = o.alamat;
+      var baris = ['Halo Sekretariat PPAPI, saya ingin mengonfirmasi pesanan di Toko PPAPI.', '',
+        '*Nomor pesanan:* ' + o.id,
+        '*Nama:* ' + ((o.buyer || {}).name || '-'), ''];
+      baris.push('*Produk:*');
+      (o.items || []).forEach(function (it) {
+        var ket = [it.format && it.format !== 'fisik' ? T.FORMAT_LABEL[it.format] : '', T.fmt.varianLabel(it.varian)].filter(Boolean).join(', ');
+        baris.push('- ' + it.qty + 'x ' + it.nama + (ket ? ' (' + ket + ')' : '') + ' = ' + R(it.subtotal));
+      });
+      if (o.perluKirim) baris.push('Ongkos kirim' + (r.ongkirKurir ? ' (' + r.ongkirKurir + ')' : '') + ': ' + (r.ongkirFinal === false ? 'menunggu konfirmasi' : R(r.ongkir)));
+      baris.push('*Total: ' + R(r.total) + '*');
+      if (a) baris.push('', '*Dikirim ke:* ' + [a.nama, a.telepon, a.alamat, a.kota, a.provinsi, a.kodePos].filter(Boolean).join(', '));
+      if (p.tanggal) baris.push('', '*Pembayaran:* transfer ' + R(p.jumlah) + ' tanggal ' + when(p.tanggal) + (p.pengirim ? ' dari ' + p.pengirim : '') + (p.bukti === 'foto' ? '. Foto bukti transfer sudah saya unggah di situs.' : '.'));
+      else baris.push('', 'Status: ' + o.status + '.');
+      baris.push('', 'Rincian pesanan: ' + location.origin + location.pathname + '?id=' + encodeURIComponent(o.id), '', 'Terima kasih.');
+      return baris.join('\n');
+    }
+    function waUrl(o) { return 'https://wa.me/' + waNomor() + '?text=' + encodeURIComponent(waTeks(o)); }
+    function waTombol(o, cls) {
+      return waNomor() ? '<a class="btn ' + (cls || 'btn--ghost btn--sm') + ' ps-wa" data-ps="wa" href="' + h(waUrl(o)) + '" target="_blank" rel="noopener noreferrer">' + icon('whatsapp', { size: 16 }) + '<span>Konfirmasi via WhatsApp</span></a>' : '';
     }
 
     function wire(o) {
@@ -244,6 +270,17 @@
             await T.submitPayment(o.id, data);
             ui.toast('Bukti pembayaran terkirim. Sekretariat akan segera memeriksanya.', { type: 'success' });
             await detail();
+            var baru = await T.getOrder(o.id).catch(function () { return null; });
+            if (baru && waNomor()) {
+              ui.modal({
+                title: 'Kabari sekretariat lewat WhatsApp', eyebrow: o.id, size: 'sm',
+                body: '<p>Bukti pembayaran sudah tersimpan. Tekan tombol di bawah untuk mengirim konfirmasi ke WhatsApp sekretariat PPAPI; pesannya sudah tersusun (nomor pesanan, produk, total, dan data transfer), Anda tinggal menekan kirim.</p>',
+                actions: [
+                  { label: 'Nanti saja', variant: 'ghost' },
+                  { label: 'Kirim ke WhatsApp', variant: 'primary', onClick: function () { var wdw = window.open(waUrl(baru), '_blank', 'noopener,noreferrer'); if (wdw) wdw.opener = null; } }
+                ]
+              });
+            }
             var t = $('#ps-pay-t'); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); }
           } catch (err) {
             ui.setLoading(btn, false);

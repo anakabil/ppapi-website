@@ -8,6 +8,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Setiap Senin: tarik ulang tarif JNE REG dari jne.co.id lalu terbitkan ulang (ongkir otomatis keranjang).
+  schedule:
+    - cron: '17 1 * * 1'
 
 permissions:
   contents: read
@@ -66,6 +69,9 @@ jobs:
           node flows/firebase-v2-stub.mjs
           node flows/sec-v2-firebase-attacks.mjs
           node flows/auth-demo.mjs
+      - name: Perbarui tarif JNE dari jne.co.id (gagal = pakai data tersimpan di repositori)
+        continue-on-error: true
+        run: node devtools/ongkir/tarik-jne.mjs
       - name: Siapkan artefak situs (alamat situs disisipkan ke config.js)
         run: |
           rm -rf /tmp/site && cp -r site /tmp/site
