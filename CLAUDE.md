@@ -52,6 +52,10 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Perbaikan (03-11-2026): dokumen anggota lama yang gagal `memberCore`/`memberStrings` (mis. memberType "Mitra Korporat", kolom
+  asing) membuat SEMUA update ditolak (anggota & admin). `store.admin.memberIssues(uid)` / `repairMember(uid)` + kotak peringatan
+  di laci detail anggota; `ensureMember` tidak lagi gagal memuat bila sinkronisasi kontak ditolak. Toko: transaksi admin yang
+  ditolak menjalankan `diagnoseOrderWrite` (uji tulis tanpa efek) agar pesan galat menyebut langkah yang ditolak.
 - Kalender (02-11-2026): tombol "Tambahkan ke Kalender" (agenda + Kegiatan Saya) membuka `ui.addToCalendar` (core.js): Google Calendar
   (`calendar.google.com/calendar/render?action=TEMPLATE`), Outlook (`outlook.live.com/.../compose?rru=addevent`), atau Apple (.ics dibuka
   langsung di perangkat Apple; perangkat lain menyimpan .ics). Tidak lagi mengunduh berkas lebih dahulu.

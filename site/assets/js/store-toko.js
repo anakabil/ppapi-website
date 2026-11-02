@@ -1443,9 +1443,40 @@
           Object.keys(before.ent).forEach(function (k) { if (!res.ent[k]) tx.delete(f.db.collection('entitlements').doc(k)); });
         }
       });
-    } catch (e) { throw mapFs(e); }
+    } catch (e) {
+      if (e && /permission-denied/.test(e.code || '')) {
+        var step = await diagnoseOrderWrite(f, id).catch(function () { return ''; });
+        var er = mapFs(e);
+        if (step) er.message = 'Akses ditolak saat ' + step + '. ' + er.message;
+        throw er;
+      }
+      throw mapFs(e);
+    }
     productCache = null;
     return readOrder(id);
+  }
+  /* Bila transaksi admin ditolak aturan Firestore, uji tiap langkah dengan penulisan yang tidak mengubah isi
+     (stempel waktu saja; hak unduh dibuat lalu langsung dihapus) agar pesan galat menyebut langkah yang ditolak. */
+  async function diagnoseOrderWrite(f, id) {
+    var ref = f.db.collection('orders').doc(id), snap;
+    try { snap = await ref.get(); } catch (e) { return 'membaca pesanan'; }
+    if (!snap.exists) return '';
+    try { await ref.update({ updatedAt: serverTs(f) }); } catch (e) { return 'memperbarui pesanan ' + id + ' (periksa hak admin akun ini: dokumen admins/{uid})'; }
+    var o = sanitizeOrder(snap.data(), id);
+    var fisik = o.items.filter(function (it) { return it.format !== 'soft'; }).map(function (it) { return it.productId; });
+    for (var i = 0; i < fisik.length; i++) {
+      var pr = f.db.collection('products').doc(fisik[i]);
+      try { var ps = await pr.get(); if (ps.exists) await pr.update({ updatedAt: nowIso() }); } catch (e) { return 'memperbarui stok produk "' + fisik[i] + '" (data produk tidak lolos aturan; buka dan simpan ulang produk tersebut)'; }
+    }
+    var soft = o.items.filter(function (it) { return it.format === 'soft'; }).map(function (it) { return it.productId; });
+    for (var j = 0; j < soft.length; j++) {
+      var er = f.db.collection('entitlements').doc(entId(o.uid, soft[j]));
+      try {
+        var es = await er.get();
+        if (!es.exists) { await er.set({ uid: o.uid, productId: soft[j], orderId: id, grantedAt: serverTs(f), grantedBy: (me() || {}).uid }); await er.delete(); }
+      } catch (e) { return 'membuat hak unduh soft file "' + soft[j] + '"'; }
+    }
+    return '';
   }
   function stockDelta(o, products, sign) {
     o.items.forEach(function (it) {

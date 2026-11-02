@@ -477,6 +477,7 @@
     drawer.api = api;
     api.el.setAttribute('data-member', uid);
     loadPhoto(m, api);
+    checkIssues(uid, api);
   };
   function refreshDrawer() {
     if (!drawer || !drawer.api) return;
@@ -490,6 +491,26 @@
     api.setActions(memberActions(m));
     api.body.scrollTop = scroll;
     loadPhoto(m, api);
+    checkIssues(drawer.uid, api);
+  }
+  /* dokumen anggota lama yang tidak lagi lolos aturan Firestore → semua pembaruan ditolak; tawarkan perapian */
+  async function checkIssues(uid, api) {
+    var A = PPAPI.store && PPAPI.store.admin;
+    if (!A || !A.memberIssues) return;
+    var list = await A.memberIssues(uid).catch(function () { return []; });
+    if (!list.length || !api.body || api.body.querySelector('[data-member-issues]')) return;
+    var box = document.createElement('div');
+    box.className = 'alert alert--warn'; box.setAttribute('role', 'alert'); box.setAttribute('data-member-issues', '');
+    box.innerHTML = icon('alert-triangle') + '<div><p class="alert__title">Data anggota perlu dirapikan</p>' +
+      '<p>Dokumen ini memuat data dari versi lama situs, sehingga perubahan oleh anggota maupun admin (termasuk persetujuan) ditolak:</p>' +
+      '<ul>' + list.map(function (i) { return '<li>' + util.h(i.text) + '</li>'; }).join('') + '</ul>' +
+      '<p class="mt-2"><button type="button" class="btn btn--primary btn--sm" data-member-repair>Rapikan data sekarang</button></p></div>';
+    api.body.insertBefore(box, api.body.firstChild);
+    box.querySelector('[data-member-repair]').addEventListener('click', async function (e) {
+      var b = e.currentTarget; ui.setLoading(b, true, 'Merapikan…');
+      try { var r = await A.repairMember(uid); await decided('Data anggota dirapikan (' + r.fixed.length + ' perbaikan).'); }
+      catch (err) { ui.setLoading(b, false); ui.toast(err.message, { type: 'error' }); }
+    });
   }
   async function decided(message) {
     await K.after(['members'], message);

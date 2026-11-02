@@ -671,6 +671,9 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
 - Panel kelola kegiatan juga menyediakan daftar peserta (ekspor CSV, tandai hadir manual).
 - PDF dibuat di peramban dengan jsPDF 2.5.1 dari cdnjs (dengan SRI).
 
+### Data anggota lama perlu dirapikan
+Aturan Firestore memeriksa seluruh dokumen anggota setiap kali dokumen itu diubah. Dokumen dari versi lama situs (mis. kategori **Mitra Korporat** yang sudah dihapus, atau kolom lama yang tidak lagi dikenal) membuat semua perubahan ditolak, baik oleh anggota (formulir pendaftaran tidak dapat dimuat/disimpan) maupun oleh admin (persetujuan gagal, "Akses ditolak"). Konsol Admin menampilkan kotak **Data anggota perlu dirapikan** di detail anggota tersebut; tekan **Rapikan data sekarang** untuk menghapus kolom lama, mengembalikan kategori tidak berlaku ke Praktisi, dan memotong teks yang melebihi batas. Tindakan ini tercatat di Log Aktivitas.
+
 ## 18. Toko PPAPI
 
 ### 18.1 Halaman

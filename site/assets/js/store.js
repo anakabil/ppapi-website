@@ -37,6 +37,7 @@
   var HISTORY_ACTIONS = ['diajukan', 'ditarik', 'perbaikan', 'disetujui', 'ditolak', 'dinonaktifkan', 'diaktifkan', 'diperpanjang', 'kategori-diubah'];
   var AUDIT_LABELS = {
     'anggota.disetujui': 'Menyetujui pendaftaran',
+    'anggota.dirapikan': 'Merapikan data anggota lama',
     'anggota.perbaikan': 'Meminta perbaikan pengajuan',
     'anggota.ditolak': 'Menolak pengajuan',
     'anggota.dinonaktifkan': 'Menonaktifkan keanggotaan',
@@ -534,7 +535,12 @@
         var v = k === 'email' ? verifiedEmail(user) : user[k];
         if (!existing[k] && v) sync[k] = v;
       });
-      if (Object.keys(sync).length) return saveMember(user.uid, sync);
+      if (Object.keys(sync).length) {
+        /* sinkronisasi kontak bersifat tambahan: bila ditolak (mis. dokumen lama memuat kolom yang kini
+           tidak diizinkan aturan), halaman tetap dimuat dengan data yang ada */
+        try { return await saveMember(user.uid, sync); }
+        catch (e) { console.warn('[PPAPI] Sinkronisasi data akun ke data anggota belum berhasil:', e && (e.code || e.message)); return existing; }
+      }
       return existing;
     }
     var doc = defaultMember(user);
@@ -570,6 +576,73 @@
   }
   function identityLockedError() {
     return storeError('store/identity-locked', 'Nama lengkap tercantum pada KTA dan daftar verifikasi sehingga hanya dapat diubah oleh sekretariat. Hubungi sekretariat melalui halaman Kontak bila nama Anda perlu dikoreksi.');
+  }
+
+  /* ---- Pemeriksaan dokumen anggota terhadap aturan Firestore (memberCore): kolom di luar daftar atau
+     kategori/status yang tidak lagi berlaku membuat SEMUA pembaruan dokumen itu ditolak (oleh anggota
+     maupun admin). Admin dapat merapikannya: kolom asing dihapus, kategori tidak berlaku → 'Praktisi'. */
+  var MEMBER_KEYS = ['uid', 'name', 'email', 'phone', 'photoURL', 'kta', 'memberType', 'status', 'joinedAt', 'validUntil', 'approvedAt',
+    'approvedBy', 'profile', 'competencies', 'certificates', 'application', 'review', 'contoh', 'createdAt', 'updatedAt'];
+  var MEMBER_TYPES = ['Praktisi', 'Ahli', 'Kehormatan'];
+  var MEMBER_STATUS = ['Draf', 'Menunggu Verifikasi', 'Perlu Perbaikan', 'Aktif', 'Ditolak', 'Nonaktif'];
+  var MEMBER_STR = { name: 120, email: 200, phone: 24, photoURL: 1000, kta: 40, joinedAt: 32, validUntil: 10, approvedAt: 40, approvedBy: 128 };
+  function memberIssuesOf(raw, uid) {
+    var out = [];
+    if (!raw) return out;
+    Object.keys(raw).forEach(function (k) { if (MEMBER_KEYS.indexOf(k) === -1) out.push({ key: k, text: 'Kolom lama "' + k + '" tidak lagi dikenal aturan' }); });
+    if (raw.uid !== uid) out.push({ key: 'uid', text: 'Kolom uid tidak sama dengan akun' });
+    if (MEMBER_TYPES.indexOf(raw.memberType) === -1) out.push({ key: 'memberType', text: 'Kategori "' + (raw.memberType || '(kosong)') + '" tidak lagi berlaku (hanya Praktisi, Ahli, Kehormatan)' });
+    if (MEMBER_STATUS.indexOf(raw.status) === -1) out.push({ key: 'status', text: 'Status "' + (raw.status || '(kosong)') + '" tidak dikenal' });
+    /* memberStrings: teks (atau kosong/null) dengan panjang maksimum */
+    Object.keys(MEMBER_STR).forEach(function (k) {
+      var v = raw[k];
+      if (v === undefined || v === null) return;
+      if (typeof v !== 'string') out.push({ key: k, text: 'Kolom "' + k + '" bukan teks' });
+      else if (v.length > MEMBER_STR[k]) out.push({ key: k, text: 'Kolom "' + k + '" melebihi ' + MEMBER_STR[k] + ' karakter' });
+    });
+    if (raw.contoh !== undefined && typeof raw.contoh !== 'boolean') out.push({ key: 'contoh', text: 'Kolom "contoh" bukan nilai ya/tidak' });
+    return out;
+  }
+  async function adminMemberIssues(uid) {
+    await requireAdmin();
+    return memberIssuesOf(await rawMember(uid), uid);
+  }
+  async function adminRepairMember(uid) {
+    var adm = await requireAdmin();
+    var raw = await rawMember(uid);
+    var issues = memberIssuesOf(raw, uid);
+    if (!issues.length) return { fixed: [] };
+    if (mode() === 'local') {
+      Object.keys(raw).forEach(function (k) { if (MEMBER_KEYS.indexOf(k) === -1) delete raw[k]; });
+      raw.uid = uid;
+      if (MEMBER_TYPES.indexOf(raw.memberType) === -1) raw.memberType = 'Praktisi';
+      if (MEMBER_STATUS.indexOf(raw.status) === -1) raw.status = 'Draf';
+      Object.keys(MEMBER_STR).forEach(function (k) {
+        var v = raw[k];
+        if (v === undefined || v === null) return;
+        if (typeof v !== 'string') raw[k] = String(v).slice(0, MEMBER_STR[k]);
+        else if (v.length > MEMBER_STR[k]) raw[k] = k === 'photoURL' ? '' : v.slice(0, MEMBER_STR[k]);
+      });
+      if (raw.contoh !== undefined && typeof raw.contoh !== 'boolean') delete raw.contoh;
+      lsSet(K_MEMBER + uid, raw);
+    } else {
+      var f = await fx(), del = f.fb.firestore.FieldValue.delete(), upd = {};
+      Object.keys(raw).forEach(function (k) { if (MEMBER_KEYS.indexOf(k) === -1) upd[k] = del; });
+      if (raw.uid !== uid) upd.uid = uid;
+      if (MEMBER_TYPES.indexOf(raw.memberType) === -1) upd.memberType = 'Praktisi';
+      if (MEMBER_STATUS.indexOf(raw.status) === -1) upd.status = 'Draf';
+      Object.keys(MEMBER_STR).forEach(function (k) {
+        var v = raw[k];
+        if (v === undefined || v === null) return;
+        if (typeof v !== 'string') upd[k] = String(v).slice(0, MEMBER_STR[k]);
+        else if (v.length > MEMBER_STR[k]) upd[k] = k === 'photoURL' ? '' : v.slice(0, MEMBER_STR[k]);
+      });
+      if (raw.contoh !== undefined && typeof raw.contoh !== 'boolean') upd.contoh = del;
+      try { await f.db.collection('members').doc(uid).update(upd); }
+      catch (e) { throw mapFirestoreError(e); }
+    }
+    await writeAudit(auditEntry(adm, 'anggota.dirapikan', 'member', uid, raw.name || uid, issues.map(function (i) { return i.text; }).join('; ')));
+    return { fixed: issues };
   }
 
   async function saveMember(uid, patch) {
@@ -1781,6 +1854,8 @@
     admin: {
       listMembers: listMembers,
       getMember: adminGetMember,
+      memberIssues: adminMemberIssues,
+      repairMember: adminRepairMember,
       approve: approve,
       requestRevision: requestRevision,
       reject: reject,
