@@ -548,7 +548,7 @@
       /* templat bawaan: elemen yang sama dengan PDF (K().templateSpec) */
       var tpl = design.bg ? '<img class="kga-stage__bg" src="' + h(design.bg) + '" alt="">'
         : '<div class="kga-stage__tpl" aria-hidden="true">' +
-          K().templateSpec(design.orient, signerNow).map(function (s) {
+          K().templateSpec(design.orient, signerNow, design.tema).map(function (s) {
             if (s.k === 'img') return '<img class="kga-stage__img" src="' + h(s.src) + '" alt="" style="left:' + (s.x * 100) + '%;top:' + (s.y * 100) + '%;width:' + (s.w * 100) + '%' + (s.bg ? ';height:100%' : '') + '">';
             if (s.k === 'line' && s.y1 !== undefined) return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;top:' + (s.y1 * 100) + '%;height:' + ((s.y2 - s.y1) * 100) + '%;transform:none;border-left:1px solid ' + s.color + '"></span>';
             if (s.k === 'line') return '<span class="kga-stage__line" style="left:' + (s.x1 * 100) + '%;width:' + ((s.x2 - s.x1) * 100) + '%;top:' + (s.y * 100) + '%;border-top:' + Math.max(1, s.lw * 2.4).toFixed(1) + 'px solid ' + s.color + '"></span>';
@@ -601,6 +601,11 @@
               (design.bg ? '<button type="button" class="btn btn--link btn--sm" data-kgd="clear-bg"><span>Pakai templat bawaan</span></button>' : '') + '</div>' +
               '<p class="kga-hint mt-2" data-kgd-bginfo>' + (design.bg ? 'Desain ' + design.bgW + '×' + design.bgH + ' px · ' + Math.round(design.bg.length / 1024) + ' KB (setelah dikompresi).' : 'Belum ada desain unggahan; dipakai templat bawaan PPAPI.') +
               ' PNG atau JPEG, sebaiknya ukuran A4 (mis. 3508×2480 px). Gambar dikompresi otomatis hingga ≤ 900 KB. Templat bawaan memuat logo PPAPI, logo INOSHPRO (a member of), dan latar perancah; desain unggahan menggantikan seluruhnya.</p>' +
+              (design.bg ? '' : '<div class="kga-tema mt-3" role="radiogroup" aria-label="Tema desain sertifikat"><p class="field__label">Tema desain</p><div class="kga-tema__grid">' +
+                K().TEMA.map(function (t) {
+                  return '<button type="button" class="kga-tema__opt" role="radio" aria-checked="' + (design.tema === t.id) + '" data-kgd-tema="' + h(t.id) + '" title="' + h(t.nama) + '">' +
+                    '<img src="' + h(K().temaKecil(t.id, design.orient)) + '" alt="" loading="lazy" decoding="async"><span>' + h(t.nama) + '</span></button>';
+                }).join('') + '</div></div>') +
               (design.bg ? '' : '<div class="field mt-3"><label class="field__label" for="kgd-orient">Orientasi</label><select class="field__control" id="kgd-orient" data-kgd-orient><option value="landscape"' + (design.orient === 'landscape' ? ' selected' : '') + '>Lanskap</option><option value="portrait"' + (design.orient === 'portrait' ? ' selected' : '') + '>Potret</option></select></div>') +
             '</div>' +
             '<div><h3 class="form__section-title mt-0">Kolom: ' + h(K().FIELD_LABEL[sel]) + '</h3>' + propsHtml() + '</div>' +
@@ -700,6 +705,8 @@
     slot.addEventListener('click', async function (e) {
       var pick = e.target.closest('[data-kgd-pick]');
       if (pick) { select(pick.getAttribute('data-kgd-pick')); return; }
+      var tm = e.target.closest('[data-kgd-tema]');
+      if (tm) { design.tema = tm.getAttribute('data-kgd-tema'); markDirty(); paint(); return; }
       var b = e.target.closest('[data-kgd]');
       if (!b) return;
       var kind = b.getAttribute('data-kgd');

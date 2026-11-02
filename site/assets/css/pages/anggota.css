@@ -692,3 +692,19 @@ body[data-page="anggota"] .modal .agt-mform .field__error { color: var(--err-fg)
   }
   body[data-page="anggota"] .agt-kta__surface::before { display: none; }
 }
+
+/* Latar kartu (dibuat dengan model gambar OpenAI, motif perancah PPAPI): depan = menara ringlock bergaris emas,
+   belakang = pola pipa dan klem yang halus. Gradien gelap di kiri menjaga keterbacaan teks. */
+body[data-page="anggota"] .agt-kta__face--front .agt-kta__surface {
+  background:
+    linear-gradient(90deg, rgba(8,11,18,.82) 0%, rgba(8,11,18,.55) 48%, rgba(8,11,18,.05) 100%),
+    url("../../img/kta/latar-depan.jpg") center / cover no-repeat,
+    linear-gradient(160deg, var(--c-graphite) 0%, var(--c-black) 64%);
+}
+body[data-page="anggota"] .agt-kta__face--back .agt-kta__surface {
+  background:
+    linear-gradient(90deg, rgba(8,11,18,.86) 0%, rgba(8,11,18,.7) 55%, rgba(8,11,18,.35) 100%),
+    url("../../img/kta/latar-belakang.jpg") center / cover no-repeat,
+    linear-gradient(160deg, var(--c-graphite) 0%, var(--c-black) 64%);
+}
+body[data-page="anggota"] .agt-kta__surface > .agt-kta__lines { display: none; }

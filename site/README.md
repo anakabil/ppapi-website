@@ -660,6 +660,7 @@ langsung berlaku. Sitemap dapat ditambahkan setelah alamat akhir situs ditetapka
   (verifikasi publik per nomor; footer › Verifikasi Sertifikat). Sekretariat dapat mengunggah
   desain sertifikat (PNG/JPEG ≤ 900 KB) dan mengatur letak nama, judul, tanggal, nomor, dan QR,
   atau memakai templat bawaan; sertifikat dapat dicabut dan dipulihkan.
+- **Tema desain sertifikat (02-11-2026):** templat bawaan kini punya 11 pilihan latar (Bawaan PPAPI + 10 tema), masing-masing versi lanskap dan potret, mengikuti gaya referensi klien: kertas putih bersih, foto atau gambar perancah yang pudar di sudut, dan garis tipis emas. Pilih di Konsol Admin › Kegiatan › Kelola › Sertifikat › **Tema desain**; pratinjau langsung berubah dan tema tersimpan per kegiatan (`fields.tema`, tanpa perubahan aturan Firestore). Gambar: `assets/img/sertifikat/tema/` (dibuat dengan model gambar OpenAI; skrip dan prompt di `devtools/desain/`).
 - **Templat bawaan** (2026-10-28): latar perancah pudar, logo PPAPI sejajar logo INOSHPRO ("a member
   of"), judul "Sertifikat", baris tanggal kegiatan · penanda tangan · nomor sertifikat, dan QR verifikasi.
   Penanda tangan diatur di Konsol Admin › Kegiatan › **Penanda Tangan Sertifikat** (juga tombol "Ubah

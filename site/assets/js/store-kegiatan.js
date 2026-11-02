@@ -634,7 +634,8 @@
     var orient = raw.orient === 'portrait' ? 'portrait' : 'landscape';
     var def = defaultDesign(orient);
     var bg = typeof raw.bg === 'string' && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(raw.bg) && raw.bg.length <= LIMITS.designChars ? raw.bg : '';
-    var out = { bg: bg, bgW: bg ? int(raw.bgW) : 0, bgH: bg ? int(raw.bgH) : 0, orient: orient, fields: {}, updatedAt: msOf(raw.updatedAt) };
+    var out = { bg: bg, bgW: bg ? int(raw.bgW) : 0, bgH: bg ? int(raw.bgH) : 0, orient: orient, fields: {}, updatedAt: msOf(raw.updatedAt),
+      tema: temaValid(raw.tema || (raw.fields && raw.fields.tema && raw.fields.tema.id)) };
     var rf = legacyDefault(raw) ? {} : (raw.fields || {});
     FIELD_KEYS.forEach(function (k) {
       var a = Object.assign({}, def.fields[k], rf[k] || {});
@@ -754,11 +755,36 @@
     await audit(adm, 'sertifikat.penandatangan', 'penandatangan', data.nama || data.jabatan, data.ttd ? 'Dengan tanda tangan' : 'Tanpa tanda tangan');
     return getSigner();
   }
-  function templateSpec(orient, sgIn) {
+  /* Tema latar templat bawaan (dibuat dengan model gambar OpenAI, motif perancah PPAPI). Disimpan pada
+     desain sebagai fields.tema = {id} sehingga aturan Firestore (fields ≤ 8 kunci) tidak berubah. */
+  var TEMA = [
+    { id: 'bawaan', nama: 'Bawaan PPAPI (latar perancah pudar)' },
+    { id: '01-sudut-foto', nama: 'Foto perancah di sudut' },
+    { id: '02-sketsa-pensil', nama: 'Sketsa pensil' },
+    { id: '03-garis-teknis', nama: 'Gambar teknis ringlock' },
+    { id: '04-klem-monokrom', nama: 'Klem monokrom' },
+    { id: '05-cakrawala', nama: 'Cakrawala perancah' },
+    { id: '06-rosette-watermark', nama: 'Tanda air rosette' },
+    { id: '07-cetak-biru-lembut', nama: 'Cetak biru lembut' },
+    { id: '08-korporat-diagonal', nama: 'Korporat diagonal' },
+    { id: '09-duotone-kanan', nama: 'Duotone sisi kanan' },
+    { id: '10-bingkai-tipis', nama: 'Bingkai garis tipis' }
+  ];
+  function temaValid(id) { return TEMA.some(function (t) { return t.id === id; }) ? id : 'bawaan'; }
+  function temaBg(tema, orient) {
+    tema = temaValid(tema);
+    if (tema === 'bawaan') return orient === 'portrait' ? TPL_IMG.bgP : TPL_IMG.bgL;
+    return 'assets/img/sertifikat/tema/' + tema + (orient === 'portrait' ? '-potret.jpg' : '-lanskap.jpg');
+  }
+  function temaKecil(tema, orient) {
+    tema = temaValid(tema);
+    return tema === 'bawaan' ? temaBg(tema, orient) : 'assets/img/sertifikat/tema/' + tema + (orient === 'portrait' ? '-potret-kecil.jpg' : '-lanskap-kecil.jpg');
+  }
+  function templateSpec(orient, sgIn, tema) {
     var sg = sgIn || signer(), ink = '#22313a', soft = '#4a4f55', mute = '#6b6f75', gold = '#f2b705', rule = '#9aa0a6';
     var lbl = function (t, x, y) { return { k: 'text', t: t, x: x, y: y, size: 7.5, font: 'sans', style: 'bold', color: mute, spacing: 0.6 }; };
     if (orient === 'portrait') return [
-      { k: 'img', src: TPL_IMG.bgP, x: 0.5, y: 0.5, w: 1, r: 297 / 210, bg: true },
+      { k: 'img', src: temaBg(tema, 'portrait'), x: 0.5, y: 0.5, w: 1, r: 297 / 210, bg: true },
       /* baris logo: PPAPI | garis pemisah | "a member of" + INOSHPRO */
       { k: 'img', src: TPL_IMG.ppapi, x: 0.33, y: 0.11, w: 0.4, r: 245 / 700 },
       { k: 'line', x1: 0.575, x2: 0.575, y1: 0.075, y2: 0.145, color: rule, lw: 0.25 },
@@ -780,7 +806,7 @@
       { k: 'text', t: 'Keaslian sertifikat dapat diperiksa di ppapi.or.id/sertifikat.html', x: 0.5, y: 0.952, size: 7, font: 'sans', style: 'normal', color: mute }
     ].filter(Boolean);
     return [
-      { k: 'img', src: TPL_IMG.bgL, x: 0.5, y: 0.5, w: 1, r: 210 / 297, bg: true },
+      { k: 'img', src: temaBg(tema, 'landscape'), x: 0.5, y: 0.5, w: 1, r: 210 / 297, bg: true },
       /* baris logo: PPAPI | garis pemisah | "a member of" + INOSHPRO */
       { k: 'img', src: TPL_IMG.ppapi, x: 0.4, y: 0.13, w: 0.22, r: 245 / 700 },
       { k: 'line', x1: 0.545, x2: 0.545, y1: 0.08, y2: 0.18, color: rule, lw: 0.25 },
@@ -894,7 +920,7 @@
       doc.addImage(design.bg, /^data:image\/png/.test(design.bg) ? 'PNG' : 'JPEG', 0, 0, W, H, undefined, 'FAST');
     } else {
       /* templat bawaan: latar perancah pudar, logo PPAPI & INOSHPRO, teks tetap, garis isian */
-      var spec = templateSpec(design.orient, await getSigner().catch(function () { return signer(); }));
+      var spec = templateSpec(design.orient, await getSigner().catch(function () { return signer(); }), design.tema);
       var imgs = await Promise.all(spec.map(function (e) { return e.k === 'img' ? loadAsset(e.src).catch(function (err) { if (e.bg || e.src === TPL_IMG.ppapi) throw err; return null; }) : null; }));
       spec.forEach(function (e, i) {
         if (e.k === 'img') {
@@ -1282,7 +1308,8 @@
     var adm = await requireAdmin();
     var n = normDesign(design);
     if (design && design.bg && !n.bg) throw kErr('kegiatan/gambar', 'Gambar desain tidak valid atau melebihi 900 KB.');
-    var out = { bg: n.bg, bgW: n.bgW, bgH: n.bgH, orient: n.orient, fields: n.fields };
+    var fields = Object.assign({}, n.fields); if (n.tema !== 'bawaan') fields.tema = { id: n.tema };
+    var out = { bg: n.bg, bgW: n.bgW, bgH: n.bgH, orient: n.orient, fields: fields };
     if (mode() === 'local') {
       lsSet(K_DESIGN + id, Object.assign({}, out, { updatedAt: new Date().toISOString(), updatedBy: adm.uid }));
     } else {
@@ -1291,7 +1318,7 @@
       catch (e) { throw mapErr(e); }
     }
     var ev = await get(id);
-    await audit(adm, 'kegiatan.desain', id, ev ? ev.judul : id, n.bg ? 'Desain unggahan' : 'Templat bawaan');
+    await audit(adm, 'kegiatan.desain', id, ev ? ev.judul : id, n.bg ? 'Desain unggahan' : 'Templat bawaan, tema ' + n.tema);
     return getDesign(id);
   }
   /** Simpan flyer dari berkas gambar (dikompresi ke JPEG ≤ 900 KB, sisi terpanjang ≤ 1600 px),
@@ -1638,7 +1665,7 @@
     /* waktu & format */
     windowOf: windowOf, phaseOf: phaseOf, fromWib: fromWib, dateIso: dateIso, timeHm: timeHm, fmtTime: fmtTime, fmtDate: fmtDate,
     fmtDateTime: fmtDateTime, fmtSchedule: fmtSchedule, dateLabel: dateLabel, fmtCountdown: fmtCountdown, fmtDuration: fmtDuration,
-    defaultKode: defaultKode, normEvent: normEvent, templateSpec: templateSpec, getSigner: getSigner, TPL_IMG: Object.assign({}, TPL_IMG), ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
+    defaultKode: defaultKode, normEvent: normEvent, templateSpec: templateSpec, TEMA: TEMA.slice(), temaBg: temaBg, temaKecil: temaKecil, getSigner: getSigner, TPL_IMG: Object.assign({}, TPL_IMG), ics: ics, downloadIcs: downloadIcs, saveBlob: saveBlob,
     /* admin */
     admin: {
       list: adminList, get: adminGet, save: adminSave, setStatus: adminSetStatus, remove: adminRemove,
