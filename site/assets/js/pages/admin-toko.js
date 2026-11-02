@@ -508,6 +508,8 @@
   }
 
   /* ============================== SETTINGS ============================== */
+  /* Tarif kurir per kg di bawah Rp1.000 dianggap salah tulis: di JSON, 56.000 tanpa tanda kutip terbaca 56. */
+  var TARIF_MIN = 1000;
   async function paintSettings(panel) {
     var U = PPAPI.util, h = U.h, T = PPAPI.toko, ui = PPAPI.ui;
     var s = await T.getSettings({ fresh: true });
@@ -517,7 +519,8 @@
       function inp(id, label, val, extra) { return '<div class="field"><label class="field__label" for="' + id + '">' + label + '</label><input class="field__control" id="' + id + '" value="' + h(val === undefined || val === null ? '' : val) + '" ' + (extra || '') + '></div>'; }
       return '<details class="atk-tabel mt-3"' + (s.ongkirMode === 'tabel' ? ' open' : '') + '><summary>Tabel tarif kurir (rupiah per kg, per provinsi tujuan)</summary>' +
         '<p class="atk-note">Isi dari pengecek tarif di situs resmi kurir (JNE, J&amp;T, TIKI, atau Pos Indonesia) dari kota asal pengiriman. Ongkos kirim = tarif provinsi tujuan × berat tertagih (minimal 1 kg; kelebihan di atas kilogram bulat dihitung 1 kg bila melebihi toleransi). Berat diambil dari kolom berat tiap produk. Provinsi yang dikosongkan tetap dikonfirmasi sekretariat. Tarif antarkota dalam satu provinsi dapat berbeda; gunakan tarif tertinggi di provinsi tersebut agar tidak kurang bayar.</p>' +
-        '<p class="atk-note">Tabel juga dapat dimasukkan sekaligus dari berkas tarif kurir (JSON <code>ppapi-toko-ongkir</code>). Impor langsung menyimpan tabel, menggantikan tabel lama, dan mengubah ongkos kirim ke mode tabel tarif.</p>' +
+        '<p class="atk-note">Tabel juga dapat dimasukkan sekaligus dari berkas tarif kurir (JSON <code>ppapi-toko-ongkir</code>). Impor langsung menyimpan tabel, menggantikan tabel lama, dan mengubah ongkos kirim ke mode tabel tarif. Tarif per kg minimal Rp1.000.</p>' +
+        '<p class="atk-note">Selama mode tabel tarif dipakai, ongkir JNE otomatis (tarif jne.co.id yang diperbarui tiap minggu) dan pengisian ongkir oleh pembeli tidak berlaku. Untuk memakainya lagi, pilih mode “Diisi pembeli dari cek tarif kurir” lalu simpan.</p>' +
         '<div class="atk-toolbar__acts mb-3"><label class="btn btn--ghost btn--sm"><span data-icon="upload" data-icon-size="16"></span><span>Impor Tabel Tarif</span><input type="file" accept=".json,application/json" class="sr-only" data-st-import></label></div>' +
         '<div class="form__row form__row--2">' +
           inp('st-tk-kurir', 'Kurir dan layanan', t.kurir, 'maxlength="60" placeholder="JNE REG"') +
@@ -565,8 +568,15 @@
       var mode = f.querySelector('input[name="st-mode"]:checked').value;
       var flat = v('st-flat').replace(/\D/g, '');
       if (mode === 'flat' && !flat) { f.querySelector('#st-flat').closest('.field').classList.add('is-invalid'); f.querySelector('#st-flat').focus(); return; }
-      var tarif = {};
-      U.PROVINSI.forEach(function (pv, i) { var x = v('st-tk-p' + i).replace(/\D/g, ''); if (x) tarif[pv] = Number(x); });
+      var tarif = {}, kecil = [];
+      U.PROVINSI.forEach(function (pv, i) { var x = v('st-tk-p' + i).replace(/\D/g, ''); if (!x) return; if (Number(x) < TARIF_MIN) kecil.push(i); else tarif[pv] = Number(x); });
+      if (kecil.length) {
+        f.querySelector('.atk-tabel').open = true;
+        kecil.forEach(function (i) { f.querySelector('#st-tk-p' + i).closest('.field').classList.add('is-invalid'); });
+        f.querySelector('#st-tk-p' + kecil[0]).focus();
+        ui.toast('Tarif per kg minimal Rp' + U.formatNumber(TARIF_MIN) + '. Periksa tarif ' + kecil.map(function (i) { return U.PROVINSI[i]; }).join(', ') + '.', { type: 'warn' });
+        return;
+      }
       var tabel = { kurir: v('st-tk-kurir'), asal: v('st-tk-asal'), sumber: v('st-tk-sumber'), diperbarui: v('st-tk-tgl'), toleransi: v('st-tk-tol') === '' ? 300 : Number(v('st-tk-tol').replace(/\D/g, '')), tarif: tarif };
       if (mode === 'tabel' && !Object.keys(tarif).length) { ui.toast('Isi tarif minimal satu provinsi untuk mode tabel tarif.', { type: 'warn' }); f.querySelector('.atk-tabel').open = true; return; }
       var btn = f.querySelector('#st-save');
@@ -612,13 +622,14 @@
       if (!data || data.format !== 'ppapi-toko-ongkir' || !data.tarif || typeof data.tarif !== 'object' || Array.isArray(data.tarif)) throw new Error('format');
     } catch (e) { ui.toast('Berkas bukan paket tabel tarif kurir PPAPI yang sah.', { type: 'error' }); return; }
     var kunci = {}; U.PROVINSI.forEach(function (pv) { kunci[pv.toLowerCase()] = pv; });
-    var tarif = {}, asing = [], salah = [];
+    var tarif = {}, asing = [], salah = [], kecil = [];
     Object.keys(data.tarif).forEach(function (k) {
       var raw = data.tarif[k], pv = kunci[String(k).trim().toLowerCase()];
       if (!pv) { asing.push(k); return; }
       if (raw === null || raw === '') return;
       var x = typeof raw === 'number' ? raw : (/^\s*(Rp\.?\s*)?[\d.]+\s*$/i.test(String(raw)) ? Number(String(raw).replace(/\D/g, '')) : NaN);
-      if (!(Number.isInteger(x) && x > 0 && x <= 1e7)) { salah.push(pv); return; }
+      if (isFinite(x) && x > 0 && x < TARIF_MIN) { kecil.push(pv + ' (terbaca ' + String(x).replace('.', ',') + ')'); return; }
+      if (!(Number.isInteger(x) && x >= TARIF_MIN && x <= 1e7)) { salah.push(pv); return; }
       tarif[pv] = x;
     });
     var kurir = String(data.kurir || '').trim(), tglRaw = String(data.diperbarui || '').trim(), tgl = tanggalIso(tglRaw);
@@ -628,6 +639,7 @@
     var masalah = [];
     if (asing.length) masalah.push('nama provinsi tidak dikenal: ' + asing.join(', '));
     if (salah.length) masalah.push('tarif bukan angka rupiah yang sah: ' + salah.join(', '));
+    if (kecil.length) masalah.push('tarif di bawah Rp' + U.formatNumber(TARIF_MIN) + ' per kg: ' + kecil.join(', ') + '; angka ribuan bertitik harus diberi tanda kutip ("Rp 56.000") atau ditulis tanpa titik (56000)');
     if (kurir.length < 2) masalah.push('nama kurir dan layanan belum diisi');
     if (!tgl) masalah.push('tanggal pengecekan "' + tglRaw + '" tidak dikenali (tulis mis. 31-10-2026, 31/10/2026, 2026-10-31, atau 31 Oktober 2026)');
     if (!(Number.isInteger(tol) && tol >= 0 && tol <= 900)) masalah.push('toleransi berat harus 0–900 gram');
@@ -635,7 +647,7 @@
     if (masalah.length) { ui.toast('Tabel tarif tidak diimpor: ' + masalah.join('; ') + '.', { type: 'error' }); return; }
     var n = Object.keys(tarif).length, kosong = U.PROVINSI.length - n;
     var ok = await ui.confirm(kurir + (data.asal ? ' dari ' + String(data.asal).trim() : '') + ', tarif per ' + (U.formatDate ? U.formatDate(tgl) : tgl) + (tglOtomatis ? ' (tanggal pengecekan tidak diisi, dipakai tanggal hari ini)' : '') + '. ' +
-      n + ' provinsi berisi tarif' + (kosong ? ', ' + kosong + ' provinsi tetap dikonfirmasi sekretariat' : '') + '. Tabel lama diganti dan ongkos kirim beralih ke mode tabel tarif.',
+      n + ' provinsi berisi tarif' + (kosong ? ', ' + kosong + ' provinsi tetap dikonfirmasi sekretariat' : '') + '. Tabel lama diganti dan ongkos kirim beralih ke mode tabel tarif; selama mode ini dipakai, ongkir JNE otomatis dan pengisian ongkir oleh pembeli tidak berlaku.',
       { title: 'Impor tabel tarif kurir?', okLabel: 'Impor' });
     if (!ok) return;
     try {

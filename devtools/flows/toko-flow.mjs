@@ -343,6 +343,15 @@ for (const tg of ['30-10-2026', '30/10/2026', '30 Oktober 2026']) {
   ok((await page.textContent('.modal')).includes('30 Oktober 2026'), 'format tanggal "' + tg + '" dikenali');
   await page.click('.modal__footer .btn--ghost'); await page.waitForTimeout(300);
 }
+const toastTeks = async () => { await page.waitForTimeout(400); return page.evaluate(() => { const r = document.querySelector('.toast-region'); const t = r ? r.innerText : ''; if (r) r.innerHTML = ''; return t; }); };
+await toastTeks();
+/* pengaman tarif minimum: 56.000 tanpa kutip terbaca 56 oleh JSON */
+await page.setInputFiles('[data-st-import]', { name: 'tarif.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"ppapi-toko-ongkir","kurir":"Kurir Uji REG","diperbarui":"30-10-2026","tarif":{"Jawa Barat":12000,"Aceh":56.000}}') });
+let tt = await toastTeks();
+ok(!(await page.isVisible('.modal__footer')) && !(await stored()).ongkirTabel && tt.includes('Aceh (terbaca 56)') && tt.includes('"Rp 56.000"'), 'tarif 56.000 tanpa kutip (terbaca 56) → berkas ditolak utuh dengan petunjuk penulisan');
+await page.setInputFiles('[data-st-import]', tarifFile({ ...tabelUji, tarif: { 'Jawa Barat': 0, 'Bali': -5000, 'Aceh': 'Rp 999' } }));
+tt = await toastTeks();
+ok(!(await stored()).ongkirTabel && tt.includes('Jawa Barat, Bali') && tt.includes('Aceh (terbaca 999)'), 'tarif 0, negatif, dan di bawah Rp1.000 → ditolak');
 ok(!(await stored()).ongkirTabel, 'membatalkan konfirmasi → tidak ada yang disimpan');
 await page.setInputFiles('[data-st-import]', tarifFile({ format: 'ppapi-toko-produk', produk: [] }));
 await page.waitForTimeout(400);
@@ -350,6 +359,7 @@ ok(!(await stored()).ongkirTabel, 'berkas berformat lain → ditolak');
 await page.setInputFiles('[data-st-import]', tarifFile(tabelUji));
 await page.waitForSelector('.modal__footer .btn--primary');
 ok((await page.textContent('.modal')).includes('2 provinsi berisi tarif, 36 provinsi tetap dikonfirmasi sekretariat'), 'konfirmasi impor merangkum isi tabel');
+ok((await page.textContent('.modal')).includes('ongkir JNE otomatis dan pengisian ongkir oleh pembeli tidak berlaku'), 'konfirmasi impor mengingatkan bahwa ongkir JNE otomatis nonaktif di mode tabel');
 await page.click('.modal__footer .btn--primary');
 await page.waitForTimeout(700);
 const sTabel = await stored();
@@ -361,6 +371,13 @@ const est = await page.evaluate(async () => { const T = PPAPI.toko, s = await T.
 ok(est[0].final && est[0].ongkir === 24000 && est[0].catatan.includes('Kurir Uji REG'), 'tarif impor dipakai perhitungan ongkir (Jawa Barat, 1,4 kg → 2 kg × Rp12.000)');
 ok(!est[1].final && est[1].ongkir === null, 'provinsi yang dikosongkan di berkas tetap dikonfirmasi sekretariat');
 await shot('admin-impor-tarif');
+/* formulir manual: tarif di bawah Rp1.000 per kg ditolak, tabel tersimpan tidak berubah */
+await toastTeks();
+const idxAceh = await page.evaluate(() => PPAPI.util.PROVINSI.indexOf('Aceh'));
+await page.fill('#st-tk-p' + idxAceh, '500');
+await page.click('#st-save');
+tt = await toastTeks();
+ok(tt.includes('minimal Rp1.000') && tt.includes('Aceh') && await page.evaluate((i) => document.querySelector('#st-tk-p' + i).closest('.field').classList.contains('is-invalid'), idxAceh) && !('Aceh' in (await stored()).ongkirTabel.tarif), 'formulir manual: tarif Rp500/kg ditolak, kolom ditandai, tabel tersimpan tidak berubah');
 
 ok(issues.length === 0, 'tanpa galat konsol' + (issues.length ? ': ' + issues.join(' | ') : ''));
 await browser.close(); server.close();
