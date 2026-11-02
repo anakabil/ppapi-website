@@ -15,7 +15,7 @@ GitHub Pages). Cara pembaruannya dijelaskan di bagian 13.
 ## 1. Ringkasan fitur
 
 - Halaman publik: Beranda, Profil, Berita & Kegiatan, Agenda (dengan berkas pengingat
-  kalender `.ics`), **Produk Pengetahuan** (standar, Code of Practice, peraturan perundangan,
+  kalender langsung: Google Calendar, Outlook, atau Kalender Apple/.ics, tanpa harus mengunduh berkas lebih dahulu), **Produk Pengetahuan** (standar, Code of Practice, peraturan perundangan,
   petunjuk teknis, modul/panduan pelatihan, formulir, kajian teknis, aplikasi), Regulasi &
   Standar, Keanggotaan, Verifikasi Anggota (nomor KTA atau nama), Kontak & Umpan Balik,
   Kebijakan Privasi, dan halaman 404.

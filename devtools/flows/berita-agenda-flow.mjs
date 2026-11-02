@@ -440,7 +440,14 @@ console.log('\n[A2] Agenda — daftar, penyaring, URL, modal, .ics (agenda kelol
   await page.screenshot({ path: path.join(SHOTS, 'flow-agenda-modal-desktop.png') });
 
   // .ics dari modal (multi-hari, berjam)
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('.modal [data-agenda-ics]')]);
+  await page.click('.modal [data-agenda-ics]');
+  await page.waitForSelector('.cal-pick__opt');
+  {
+    const g = await page.getAttribute('[data-cal="google"]', 'href'), ol = await page.getAttribute('[data-cal="outlook"]', 'href');
+    ok(/^https:\/\/calendar\.google\.com\/calendar\/render\?action=TEMPLATE&text=/.test(g) && /&dates=\d{8}T\d{6}Z\/\d{8}T\d{6}Z/.test(g) && /recur=RRULE/.test(decodeURIComponent(g)), 'tautan Google Calendar langsung (berjam, berulang harian)');
+    ok(/^https:\/\/outlook\.live\.com\/calendar\/0\/action\/compose\?rru=addevent/.test(ol), 'tautan Outlook langsung');
+  }
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-cal="apple"]')]);
   const ics = fs.readFileSync(await dl.path(), 'utf8');
   const lines = ics.split('\r\n');
   const unfolded = ics.replace(/\r\n /g, '');
@@ -453,8 +460,8 @@ console.log('\n[A2] Agenda — daftar, penyaring, URL, modal, .ics (agenda kelol
   ok(/UID:agenda-pelatihan-inspeksi-kelolaan-20261021@ppapi/.test(unfolded) && /DTSTAMP:\d{8}T\d{6}Z/.test(unfolded), 'UID + DTSTAMP (UTC)');
   ok(unfolded.includes('LOCATION:Jakarta (lokasi rinci diinformasikan kepada peserta)') && /DESCRIPTION:Pelatihan tiga hari[^\r]*\\,[^\r]*\\n/.test(unfolded), 'teks di-escape (koma \\, & baris \\n)');
   ok(unfolded.includes('SUMMARY:Pelatihan Inspeksi') && !unfolded.includes('[Contoh]') && unfolded.includes('STATUS:CONFIRMED') && unfolded.includes('TRIGGER:-P1D'), 'SUMMARY tanpa [Contoh], STATUS CONFIRMED, alarm H-1');
-  const toastTxt = await page.locator('.toast').last().textContent().catch(() => '');
-  ok(/diunduh/.test(toastTxt), 'toast unduhan', toastTxt);
+  await page.waitForTimeout(500);
+  ok(!(await page.isVisible('.cal-pick__opt')), 'pilihan kalender tertutup setelah dipilih');
 
   // Esc menutup, fokus kembali, id dihapus
   await page.keyboard.press('Escape');
@@ -464,7 +471,9 @@ console.log('\n[A2] Agenda — daftar, penyaring, URL, modal, .ics (agenda kelol
   ok(!qsOf(page).has('id'), 'URL ?id= dihapus saat ditutup');
 
   // .ics dari baris (sehari)
-  const [dl2] = await Promise.all([page.waitForEvent('download'), page.locator('#agenda-webinar-smkk-kelolaan [data-agenda-ics]').click()]);
+  await page.locator('#agenda-webinar-smkk-kelolaan [data-agenda-ics]').click();
+  await page.waitForSelector('.cal-pick__opt');
+  const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('[data-cal="apple"]')]);
   const ics2 = fs.readFileSync(await dl2.path(), 'utf8').replace(/\r\n /g, '');
   ok(ics2.includes('DTSTART;TZID=Asia/Jakarta:20261029T133000') && ics2.includes('DTEND;TZID=Asia/Jakarta:20261029T153000') && !ics2.includes('RRULE'), 'agenda sehari: 13.30–15.30, tanpa RRULE');
   ok(ics2.includes('LOCATION:Daring (Zoom)') && ics2.includes('CATEGORIES:Webinar'), 'LOCATION & CATEGORIES');
@@ -669,7 +678,14 @@ console.log('\n[C2] Agenda — konten kelolaan admin');
   await page.waitForSelector('.modal .agenda-modal');
   s = await page.evaluate(() => ({ title: document.querySelector('.modal__title').textContent, kuota: [...document.querySelectorAll('.agenda-modal__facts dd')].map(e => e.textContent).join('|') }));
   ok(s.title === 'Rapat Teknis Kelolaan Admin' && /40 peserta/.test(s.kuota) && qsOf(page).get('id') === 'rapat-teknis-kelolaan', 'modal detail agenda kelolaan + ?id=', s);
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('.modal [data-agenda-ics]')]);
+  await page.click('.modal [data-agenda-ics]');
+  await page.waitForSelector('.cal-pick__opt');
+  {
+    const g = await page.getAttribute('[data-cal="google"]', 'href'), ol = await page.getAttribute('[data-cal="outlook"]', 'href');
+    ok(/^https:\/\/calendar\.google\.com\/calendar\/render\?action=TEMPLATE&text=/.test(g) && /&dates=\d{8}T\d{6}Z\/\d{8}T\d{6}Z/.test(g) && !/recur=RRULE/.test(decodeURIComponent(g)), 'tautan Google Calendar langsung (sehari, tanpa pengulangan)');
+    ok(/^https:\/\/outlook\.live\.com\/calendar\/0\/action\/compose\?rru=addevent/.test(ol), 'tautan Outlook langsung');
+  }
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-cal="apple"]')]);
   const ics = fs.readFileSync(await dl.path(), 'utf8').replace(/\r\n /g, '');
   ok(ics.includes('DTSTART;TZID=Asia/Jakarta:20261015T090000') && ics.includes('STATUS:CONFIRMED') && ics.includes('SUMMARY:Rapat Teknis Kelolaan Admin — PPAPI'), '.ics agenda kelolaan: waktu berzona, CONFIRMED (bukan contoh)');
   await page.keyboard.press('Escape');

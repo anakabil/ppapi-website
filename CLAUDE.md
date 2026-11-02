@@ -52,6 +52,9 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
 - Sertifikat (28-10-2026): templat bawaan (logo PPAPI + "a member of" INOSHPRO, judul "Sertifikat"). Penanda tangan + e-sign
   Ketua Umum: Konsol Admin › Kegiatan › Penanda Tangan Sertifikat → `cert_settings/penandatangan` (PNG ≤ 300 KB, baca: akun masuk).
   Berkas tanda tangan **jangan** dimasukkan ke repositori (publik).
+- Kalender (02-11-2026): tombol "Tambahkan ke Kalender" (agenda + Kegiatan Saya) membuka `ui.addToCalendar` (core.js): Google Calendar
+  (`calendar.google.com/calendar/render?action=TEMPLATE`), Outlook (`outlook.live.com/.../compose?rru=addevent`), atau Apple (.ics dibuka
+  langsung di perangkat Apple; perangkat lain menyimpan .ics). Tidak lagi mengunduh berkas lebih dahulu.
 - Desain (02-11-2026): 10 tema latar sertifikat (lanskap + potret) gaya referensi klien (putih, perancah pudar di sudut, garis emas
   tipis; klien minta "jangan norak") — `K().TEMA`, `temaBg`, `temaKecil`; disimpan sebagai `fields.tema = {id}`. Latar KTA baru
   (`assets/img/kta/latar-depan.jpg`, `latar-belakang.jpg`; CSS di anggota.css). Dibuat dengan OpenAI gpt-image-2 (`devtools/desain/`,

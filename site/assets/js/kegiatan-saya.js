@@ -205,7 +205,12 @@
     async function act(kind, btn) {
       var ev = st && st.event;
       if (!ev || busy) return;
-      if (kind === 'ics') { var n = K().downloadIcs(ev, { link: meeting && meeting.link }); ui().toast('Berkas kalender “' + n + '” diunduh.', { type: 'success' }); return; }
+      if (kind === 'ics') {
+        var lnk = meeting && meeting.link;
+        ui().addToCalendar({ judul: ev.judul + ' — PPAPI', mulai: ev.mulai, selesai: ev.selesai, deskripsi: [ev.deskripsi || '', lnk ? 'Tautan ruang: ' + lnk : ''].filter(Boolean).join('\n\n'),
+          lokasi: lnk || ev.lokasi || '', ics: K().ics(ev, { link: lnk }), namaBerkas: 'ppapi-kegiatan-' + ev.id + '.ics' });
+        return;
+      }
       if (kind === 'embed') { openForm(ev); return; }
       if (kind === 'rename') { rename(); return; }
       if (kind === 'cancel') {

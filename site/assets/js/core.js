@@ -902,6 +902,55 @@
     return api;
   };
 
+  /* ---------- Tambahkan ke kalender tanpa mengunduh berkas ----------
+     ui.addToCalendar({ judul, mulai, selesai (ms/Date), sepanjangHari, ulangHarian (jumlah hari), deskripsi, lokasi, ics, namaBerkas })
+     Google Calendar & Outlook: membuka layar "tambah acara" dengan data terisi (aplikasi/web kalender).
+     Kalender iPhone/aplikasi lain: berkas .ics dibuka langsung (iOS menampilkan "Tambahkan ke Kalender");
+     peramban yang tidak dapat membukanya akan menyimpannya sebagai cadangan. */
+  ui.addToCalendar = function (o) {
+    function p2(n) { return String(n).padStart(2, '0'); }
+    function utc(ms) { var d = new Date(ms); return d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + 'T' + p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + '00Z'; }
+    function tglLokal(ms) { var d = new Date(ms); return d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()); }
+    function iso(ms) { return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
+    var mulai = +o.mulai, selesai = +(o.selesai || o.mulai), judul = String(o.judul || 'Kegiatan PPAPI');
+    var detail = String(o.deskripsi || '').slice(0, 1500), lokasi = String(o.lokasi || '');
+    var gDates = o.sepanjangHari ? tglLokal(mulai) + '/' + tglLokal(selesai + 86400000) : utc(mulai) + '/' + utc(selesai);
+    var google = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(judul) + '&dates=' + gDates +
+      '&details=' + encodeURIComponent(detail) + (lokasi ? '&location=' + encodeURIComponent(lokasi) : '') + '&ctz=Asia%2FJakarta' +
+      (o.ulangHarian > 1 ? '&recur=' + encodeURIComponent('RRULE:FREQ=DAILY;COUNT=' + o.ulangHarian) : '');
+    var outlook = 'https://outlook.live.com/calendar/0/action/compose?rru=addevent&subject=' + encodeURIComponent(judul) +
+      '&startdt=' + encodeURIComponent(o.sepanjangHari ? new Date(mulai).toISOString().slice(0, 10) : iso(mulai)) +
+      '&enddt=' + encodeURIComponent(o.sepanjangHari ? new Date(selesai + 86400000).toISOString().slice(0, 10) : iso(selesai)) +
+      (o.sepanjangHari ? '&allday=true' : '') + '&body=' + encodeURIComponent(detail) + (lokasi ? '&location=' + encodeURIComponent(lokasi) : '');
+    var ua = navigator.userAgent || '', apple = /iPhone|iPad|iPod|Macintosh/.test(ua), android = /Android/.test(ua);
+    var opsi = [
+      { k: 'google', label: 'Google Calendar', sub: android ? 'Disarankan untuk Android' : 'Akun Google / Android', href: google },
+      { k: 'apple', label: 'Kalender iPhone / iPad / Mac', sub: apple ? 'Disarankan untuk perangkat ini' : 'Apple Calendar dan aplikasi kalender lain', href: '#' },
+      { k: 'outlook', label: 'Outlook', sub: 'Outlook.com / Microsoft 365', href: outlook }
+    ];
+    if (apple) opsi.unshift(opsi.splice(1, 1)[0]);
+    var m = ui.modal({
+      title: 'Tambahkan ke kalender', size: 'sm', cls: 'cal-pick',
+      body: '<p class="cal-pick__lead">' + util.h(judul) + '</p><div class="cal-pick__list">' + opsi.map(function (x) {
+        return '<a class="cal-pick__opt" data-cal="' + x.k + '" href="' + util.h(x.href) + '"' + (x.k === 'apple' ? '' : ' target="_blank" rel="noopener noreferrer"') + '>' +
+          icon('calendar', { size: 20 }) + '<span><b>' + util.h(x.label) + '</b><small>' + util.h(x.sub) + '</small></span>' + icon('arrow-up-right', { size: 16 }) + '</a>';
+      }).join('') + '</div><p class="cal-pick__note">Acara langsung terbuka di aplikasi atau situs kalender dengan judul, waktu, lokasi, dan keterangan terisi; tinggal tekan Simpan.</p>',
+      actions: [{ label: 'Tutup', variant: 'ghost' }]
+    });
+    m.el.addEventListener('click', function (e) {
+      var a = e.target.closest('[data-cal]'); if (!a) return;
+      if (a.getAttribute('data-cal') === 'apple') {
+        e.preventDefault();
+        var url = URL.createObjectURL(new Blob([o.ics || ''], { type: 'text/calendar;charset=utf-8' }));
+        if (apple) { location.href = url; }   /* iOS/macOS Safari: tampil langsung di Kalender */
+        else { var l = document.createElement('a'); l.href = url; l.download = o.namaBerkas || 'kegiatan-ppapi.ics'; document.body.appendChild(l); l.click(); l.remove(); }
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      }
+      setTimeout(function () { m.close(); }, 300);
+    });
+    return m;
+  };
+
   ui.confirm = function (message, opts) {
     opts = opts || {};
     return new Promise(function (resolve) {

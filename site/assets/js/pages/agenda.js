@@ -8,7 +8,8 @@
      halaman; baris agenda dituju setelah detail ditutup).
    • Sebelum data dimuat, kerangka jadwal (bentuk dari data bawaan) memesan
      ruang daftar agar bagian di bawahnya tidak terdorong (CLS).
-   • "Tambahkan ke Kalender": berkas .ics (RFC 5545) dibuat di peramban,
+   • "Tambahkan ke Kalender": pilihan Google Calendar / Outlook (layar tambah acara terisi) atau
+     Kalender Apple (berkas .ics RFC 5545 dibuat di peramban dan langsung dibuka),
      waktu dalam zona Asia/Jakarta (WIB; WITA/WIT dikenali bila tertulis).
    • Agenda dibaca melalui PPAPI.store.content.list('agenda'): data bawaan
      + agenda kelolaan admin; agenda yang disembunyikan admin tidak tampil.
@@ -770,21 +771,24 @@
       return L.map(fold).join('\r\n') + '\r\n';
     }
     function downloadIcs(id) {
+      /* langsung ke kalender (Google/Outlook/Apple) tanpa mengunduh berkas lebih dahulu */
       var ev = findEv(id);
       if (!ev) return;
-      var name = 'ppapi-agenda-' + (U.slugify(ev.id) || 'kegiatan') + '.ics';
+      var a = ev.raw, t = parseWaktu(a.waktu), days = dayCount(ev);
+      function ms(d, hm) { return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), hm[0] - t.tz.off, hm[1]); }
+      var page = U.siteUrl('agenda.html?id=' + encodeURIComponent(ev.id));
       try {
-        var blob = new Blob([buildIcs(ev)], { type: 'text/calendar;charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = url; link.download = name; link.rel = 'noopener'; link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(function () { URL.revokeObjectURL(url); if (link.parentNode) link.parentNode.removeChild(link); }, 2000);
-        ui.toast('Berkas kalender “' + name + '” diunduh. Buka berkas tersebut untuk menambahkan agenda ke kalender Anda.', { type: 'success' });
+        ui.addToCalendar({
+          judul: a.judul + ' — PPAPI',
+          mulai: t.start ? ms(ev.start, t.start) : ev.start.getTime(),
+          selesai: t.start ? ms(ev.start, t.end || [t.start[0] + 2, t.start[1]]) : ev.end.getTime(),
+          sepanjangHari: !t.start, ulangHarian: t.start && days > 1 ? days : 0,
+          deskripsi: [a.deskripsi || '', '', 'Jenis: ' + (a.jenis || '-'), 'Waktu: ' + (a.waktu || '-'), /^https?:/i.test(page) ? 'Info: ' + page : ''].join('\n').trim(),
+          lokasi: a.lokasi || '', ics: buildIcs(ev), namaBerkas: 'ppapi-agenda-' + (U.slugify(ev.id) || 'kegiatan') + '.ics'
+        });
       } catch (err) {
         console.error(err);
-        ui.toast('Berkas kalender gagal dibuat pada peramban ini.', { type: 'error' });
+        ui.toast('Kalender tidak dapat dibuka pada peramban ini.', { type: 'error' });
       }
     }
 
