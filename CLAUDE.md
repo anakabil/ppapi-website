@@ -56,12 +56,12 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   asing) membuat SEMUA update ditolak (anggota & admin). `store.admin.memberIssues(uid)` / `repairMember(uid)` + kotak peringatan
   di laci detail anggota; `ensureMember` tidak lagi gagal memuat bila sinkronisasi kontak ditolak. Toko: transaksi admin yang
   ditolak menjalankan `diagnoseOrderWrite` (uji tulis tanpa efek) agar pesan galat menyebut langkah yang ditolak.
-- CoP dijual (02-11-2026, permintaan klien): hanya **Bagian 3–7** versi rilis bertanda tangan (PDF dari klien, 110 hlm., digabung +
-  bookmark) menggantikan "Seri Lengkap 8 Bagian" pada produk id `ppapi-cop-01-2026-seri-lengkap` (id tetap agar impor memperbarui).
-  Paket `produk-cop-ppapi-01-2026-bagian-3-7.json` diserahkan ke klien (berisi PDF bertanda tangan: **jangan** di-commit). Harga tetap
-  Rp150.000 / cetak Rp200.000, berat 400 g (asumsi, konfirmasi klien). Artikel promosi `pedoman-praktik-perancah-ppapi-cop-01-2026`
-  (sorotan; gambar `assets/img/cop-01-2026.webp`) + kolom opsional `ajakan: {label, href}` di berita.js (tombol sebelum Daftar Pustaka,
-  hanya tautan internal `halaman.html?kueri`). Uji berita-agenda-flow/contract-v2 kini menghitung 10 artikel bawaan.
+- CoP dijual (03-11-2026, permintaan klien): **Seri Lengkap Bagian 1–8** versi rilis bertanda tangan (8 PDF dari klien 02/03-11-2026,
+  183 hlm., digabung + bookmark) pada produk id `ppapi-cop-01-2026-seri-lengkap` (id tetap agar impor memperbarui; menggantikan paket
+  sementara Bagian 3–7). Paket `produk-cop-ppapi-01-2026-seri-lengkap.json` diserahkan ke klien (berisi PDF bertanda tangan: **jangan**
+  di-commit). Harga Rp150.000 / cetak Rp200.000, berat 600 g. Artikel promosi `pedoman-praktik-perancah-ppapi-cop-01-2026` (sorotan;
+  gambar `assets/img/cop-01-2026.webp`, sitasi Bagian 1–8 = 2026a–h) + kolom opsional `ajakan: {label, href}` di berita.js (tombol
+  sebelum Daftar Pustaka, hanya tautan internal `halaman.html?kueri`). Uji berita-agenda-flow/contract-v2 menghitung 10 artikel bawaan.
 - Tampilan (02-11-2026): tabel di dalam pop-up (modal/laci) memakai container query `tblwrap` (main.css): bertumpuk menjadi kartu
   bila wadah < 720 px, sel terlipat pada wadah lebar (tidak ada lagi tombol "Tandai Hadir" terpotong). Tab (`.tabs__list`), menu
   Konsol Admin di ponsel/tablet, chip filter Pustaka/Instruktur, dan indeks Profil kini terlipat (bukan strip geser).

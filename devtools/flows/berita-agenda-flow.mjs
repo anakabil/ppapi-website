@@ -88,7 +88,7 @@ console.log('\n[B1] Berita — daftar (desktop)');
     agendaEmpty: !!document.querySelector('#berita-agenda-list .empty-state'),
   }));
   /* 2026-10-15: konten contoh dihapus; 2026-11-02: artikel CoP ditambah (sorotan). 10 artikel redaksi (Edukasi 6, Regulasi 2, Organisasi 2), pengumuman & agenda kosong */
-  ok(info.featured === 'Pedoman Praktik Perancah PPAPI-CoP-01:2026: Acuan Kerja dari Gudang Material sampai Bekerja di Ketinggian', 'sorotan utama = berita sorot terbaru', info.featured);
+  ok(info.featured === 'Pedoman Praktik Perancah PPAPI-CoP-01:2026: Delapan Bagian Acuan Kerja Perancah dari Perencanaan sampai Pemusnahan Material', 'sorotan utama = berita sorot terbaru', info.featured);
   ok(!info.featuredContoh, 'sorotan tanpa lencana Contoh (artikel redaksi, bukan contoh)');
   ok(info.notices === 0 && info.important === 0 && info.pengumumanHidden, 'tanpa pengumuman → bagian Pengumuman disembunyikan', [info.notices, info.pengumumanHidden]);
   ok(info.chips.length === 4 && /^Semua \(?10/.test(info.chips[0]) && info.chips.slice(1).map(c => c.split(' ')[0]).join() === 'Edukasi,Regulasi,Organisasi', 'chip: Semua (10) + 3 kategori yang ada, urutan baku', info.chips);
