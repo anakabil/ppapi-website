@@ -130,6 +130,7 @@
       var fid = 'kg-nama-' + h(ev.id);
       return '<li class="' + stepClass('current') + '">' + head +
         '<p class="kg-step__text">Daftarkan diri Anda agar dapat mengisi daftar hadir' + (ev.sertifikat ? ' dan mengunduh sertifikat' : '') + '. ' + quota + '</p>' +
+        (K().phaseOf(ev) === 'berlangsung' ? '<p class="kg-step__text"><span class="badge badge--ok">Sedang berlangsung</span> Pendaftaran tetap dibuka sampai kegiatan selesai pukul ' + h(K().fmtTime(ev.selesai)) + ' WIB. Tautan ruang daring tampil segera setelah Anda mendaftar.</p>' : '') +
         (o.compact ? '' : '<div class="field kg-field"><label class="field__label" for="' + fid + '">Nama pada sertifikat</label>' +
           '<input class="field__control" id="' + fid + '" type="text" maxlength="120" autocomplete="name" value="' + h(defName) + '" aria-describedby="' + fid + '-hint">' +
           '<p class="field__hint" id="' + fid + '-hint">Tulis lengkap beserta gelar bila perlu. Nama dapat diubah sampai daftar hadir diisi.</p></div>') +
