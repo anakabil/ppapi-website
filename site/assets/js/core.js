@@ -497,6 +497,8 @@
     'assets/img/stair-tower.webp': { w: 1920, h: 1280, sm: 'assets/img/stair-tower-sm.webp', smw: 720, smh: 480 },
     'assets/img/ringlock-pattern.webp': { w: 1000, h: 1500, sm: 'assets/img/ringlock-pattern-sm.webp', smw: 480, smh: 720 },
     'assets/img/tower-heritage.webp': { w: 1125, h: 1500, sm: 'assets/img/tower-heritage-sm.webp', smw: 540, smh: 720 },
+    'assets/img/cop-01-2026.webp': { w: 1920, h: 1280, sm: 'assets/img/cop-01-2026-sm.webp', smw: 720, smh: 480 },
+    'assets/img/tobi-shibuya-derek.webp': { w: 1920, h: 1280, sm: 'assets/img/tobi-shibuya-derek-sm.webp', smw: 720, smh: 480 },
     'assets/img/og-image.jpg': { w: 1200, h: 630 },
     /* logos: the 1200px masters (≈130 KB) are only needed for print / very large use; on screen
        the -sm WebP files (≈20–40 KB) are enough for ≤ 3× density at their usual sizes */

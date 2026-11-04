@@ -87,16 +87,16 @@ console.log('\n[B1] Berita — daftar (desktop)');
     pengumumanHidden: document.getElementById('pengumuman')?.hidden === true,
     agendaEmpty: !!document.querySelector('#berita-agenda-list .empty-state'),
   }));
-  /* 2026-10-15: konten contoh dihapus; 2026-11-02: artikel CoP ditambah (sorotan). 10 artikel redaksi (Edukasi 6, Regulasi 2, Organisasi 2), pengumuman & agenda kosong */
+  /* 2026-10-15: konten contoh dihapus; 2026-11-02: artikel CoP ditambah (sorotan). 11 artikel redaksi (Edukasi 7, Regulasi 2, Organisasi 2; 2026-11-04: artikel tobi), pengumuman & agenda kosong */
   ok(info.featured === 'Pedoman Praktik Perancah PPAPI-CoP-01:2026: Delapan Bagian Acuan Kerja Perancah dari Perencanaan sampai Pemusnahan Material', 'sorotan utama = berita sorot terbaru', info.featured);
   ok(!info.featuredContoh, 'sorotan tanpa lencana Contoh (artikel redaksi, bukan contoh)');
   ok(info.notices === 0 && info.important === 0 && info.pengumumanHidden, 'tanpa pengumuman → bagian Pengumuman disembunyikan', [info.notices, info.pengumumanHidden]);
-  ok(info.chips.length === 4 && /^Semua \(?10/.test(info.chips[0]) && info.chips.slice(1).map(c => c.split(' ')[0]).join() === 'Edukasi,Regulasi,Organisasi', 'chip: Semua (10) + 3 kategori yang ada, urutan baku', info.chips);
+  ok(info.chips.length === 4 && /^Semua \(?11/.test(info.chips[0]) && info.chips.slice(1).map(c => c.split(' ')[0]).join() === 'Edukasi,Regulasi,Organisasi', 'chip: Semua (11) + 3 kategori yang ada, urutan baku', info.chips);
   ok(info.cards === 6, 'kisi awal 6 kartu', info.cards);
   ok(!info.featuredInGrid, 'sorotan tidak diulang di kisi saat tanpa filter');
-  ok(/^9 artikel/.test(info.count), 'status: 9 artikel di luar sorotan', info.count);
-  ok(info.moreHidden === false && info.moreText === 'Menampilkan 6 dari 9 artikel', 'tombol muat lebih banyak + teks', info.moreText);
-  ok(/10 artikel/.test(info.heroMeta) && /3 kategori/.test(info.heroMeta) && /2 November 2026/.test(info.heroMeta), 'meta hero dari data (10 artikel, 3 kategori, terbit terakhir 2 Nov 2026)', info.heroMeta);
+  ok(/^10 artikel/.test(info.count), 'status: 10 artikel di luar sorotan', info.count);
+  ok(info.moreHidden === false && info.moreText === 'Menampilkan 6 dari 10 artikel', 'tombol muat lebih banyak + teks', info.moreText);
+  ok(/11 artikel/.test(info.heroMeta) && /3 kategori/.test(info.heroMeta) && /4 November 2026/.test(info.heroMeta), 'meta hero dari data (11 artikel, 3 kategori, terbit terakhir 4 Nov 2026)', info.heroMeta);
   ok(info.agendaItems === 0 && info.agendaEmpty && !info.agendaHref, 'pita agenda: belum ada agenda → keadaan kosong yang tenang', info);
   ok(info.detailGone, 'kontainer detail dihapus di mode daftar');
   ok(info.cardImgs, 'gambar kartu: width/height, lazy, alt');
@@ -107,7 +107,7 @@ console.log('\n[B1] Berita — daftar (desktop)');
   await page.click('#berita-more-btn');
   await page.waitForTimeout(100);
   const more = await page.evaluate(() => ({ cards: document.querySelectorAll('#berita-grid .news-card').length, hidden: document.querySelector('#berita-more').hidden, focus: document.activeElement?.closest('.news-card') === document.querySelectorAll('#berita-grid .news-card')[6] }));
-  ok(more.cards === 9 && more.hidden, 'muat lebih banyak → 9 kartu, tombol tersembunyi', more);
+  ok(more.cards === 10 && more.hidden, 'muat lebih banyak → 10 kartu, tombol tersembunyi', more);
   ok(more.focus, 'fokus pindah ke kartu baru pertama');
 
   // Chip kategori
@@ -633,7 +633,7 @@ console.log('\n[C1] Berita — konten kelolaan admin (tambah, sembunyikan, detai
   }));
   ok(s.featured === 'Hasil Rapat Pengurus <i>Oktober</i>' && !s.italic && !s.featuredContoh && s.featuredFallback, 'berita kelolaan (sorot, terbaru) menjadi sorotan; judul di-escape; tanpa lencana Contoh; pelat cadangan tanpa gambar', s);
   ok(s.notices.length === 1 && s.notices[0] === 'Pengumuman Kelolaan Admin', 'pengumuman kelolaan tampil (satu-satunya pengumuman → bagian muncul)', s.notices);
-  ok(/^Semua \(?10/.test(s.chipAll) && /^9 artikel/.test(s.count), 'jumlah: 10 artikel (1 tambah, 1 disembunyikan), 9 di luar sorotan', [s.chipAll, s.count]);
+  ok(/^Semua \(?11/.test(s.chipAll) && /^10 artikel/.test(s.count), 'jumlah: 11 artikel (1 tambah, 1 disembunyikan), 10 di luar sorotan', [s.chipAll, s.count]);
   await page.click('#berita-more-btn');
   await page.waitForTimeout(100);
   const all = await page.$$eval('#berita-grid .news-card__title', e => e.map(x => x.textContent));

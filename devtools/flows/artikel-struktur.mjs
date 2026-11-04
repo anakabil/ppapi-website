@@ -46,7 +46,7 @@ for (const b of B) {
   const heads = isi.filter(t => /^##\s/.test(t)).map(t => t.replace(/^##\s+/, ''));
   if (heads.join('|') !== HEADS.join('|')) problems.push('(a) subjudul: ' + heads.join(' | '));
   const di = isi.indexOf('## Daftar Pustaka');
-  const body = isi.slice(0, di);
+  const body = isi.slice(0, di).filter(t => !/^@gambar\s/i.test(t));   // baris gambar (keterangan + kredit foto) tidak dihitung
   const refs = isi.slice(di + 1);
   const textAll = [b.judul, b.ringkasan, ...body].join('\n');
   const kaku = [...textAll.matchAll(kakuRe)].map(m => m[0]);

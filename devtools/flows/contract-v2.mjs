@@ -642,11 +642,11 @@ async function browserChecks() {
       r.fileActive = await PPAPI.store.pustaka.fileUrl(pk);
       return r;
     });
-    eq(CT.base, [10, true, true], 'list(berita) = 10 static items (_static, not _managed), static order');
-    eq(CT.newItem, ['rapat-kerja-uji', false, true, 2, '', false, 11, 'rapat-kerja-uji'], 'save(new) → slug id, _managed, isi split into paragraphs, unsafe gambar dropped, sorted newest first');
-    eq(CT.override, ['Judul diubah admin', true, true, true, 11], 'save(static id) overrides in place (_static + _managed)');
-    eq(CT.hidden, [false, 10, true], 'remove(static) hides it (includeHidden shows hidden:true)');
-    eq(CT.restored, [true, false, 11], 'restore(static) drops the override');
+    eq(CT.base, [11, true, true], 'list(berita) = 11 static items (_static, not _managed), static order');
+    eq(CT.newItem, ['rapat-kerja-uji', false, true, 2, '', false, 12, 'rapat-kerja-uji'], 'save(new) → slug id, _managed, isi split into paragraphs, unsafe gambar dropped, sorted newest first');
+    eq(CT.override, ['Judul diubah admin', true, true, true, 12], 'save(static id) overrides in place (_static + _managed)');
+    eq(CT.hidden, [false, 11, true], 'remove(static) hides it (includeHidden shows hidden:true)');
+    eq(CT.restored, [true, false, 12], 'restore(static) drops the override');
     ok(CT.managedGone === false, 'remove(managed) deletes the item');
     eq([CT.restoreBad, CT.badType, CT.incomplete, CT.badId], ['store/not-found', 'store/invalid-type', 'store/content-incomplete', 'store/invalid-id'], 'content guards');
     eq(CT.agenda, ['Agenda Uji Awal', true], 'agenda sorted by mulai ascending');

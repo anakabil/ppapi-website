@@ -61,7 +61,13 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   sementara Bagian 3–7). Paket `produk-cop-ppapi-01-2026-seri-lengkap.json` diserahkan ke klien (berisi PDF bertanda tangan: **jangan**
   di-commit). Harga Rp150.000 / cetak Rp200.000, berat 600 g. Artikel promosi `pedoman-praktik-perancah-ppapi-cop-01-2026` (sorotan;
   gambar `assets/img/cop-01-2026.webp`, sitasi Bagian 1–8 = 2026a–h) + kolom opsional `ajakan: {label, href}` di berita.js (tombol
-  sebelum Daftar Pustaka, hanya tautan internal `halaman.html?kueri`). Uji berita-agenda-flow/contract-v2 menghitung 10 artikel bawaan.
+  sebelum Daftar Pustaka, hanya tautan internal `halaman.html?kueri`). 
+- Artikel tobi (04-11-2026): `tobi-shokunin-ergonomi-dan-risiko-scaffolder` (Edukasi, 11 rujukan; sumber Jepang: NDL, Kotobank/Nipponica,
+  Heibonsha, leaflet MHLW 2019 harness, bahan pelatihan MHLW 2026 via 全国仮設安全事業協同組合). Foto dari Wikimedia Commons (CC0/CC BY-SA/PD,
+  kredit di keterangan): `assets/img/tobi-*.webp`. berita.js kini mendukung baris `@gambar assets/img/x.webp WxH | keterangan` di isi
+  (diabaikan pemeriksa artikel) dan kolom `gambarKeterangan` (kredit foto sampul). Gambar sampul baru wajib didaftarkan di `IMAGES`
+  core.js (ukuran + versi -sm) agar lolos uji kartu. Foto kiriman klien (sumber/lisensi tidak diketahui) tidak dipakai. Kunci OpenAI
+  di env ditolak (401) per 04-11-2026. Uji berita-agenda-flow/contract-v2 kini menghitung 11 artikel bawaan.
 - Tampilan (02-11-2026): tabel di dalam pop-up (modal/laci) memakai container query `tblwrap` (main.css): bertumpuk menjadi kartu
   bila wadah < 720 px, sel terlipat pada wadah lebar (tidak ada lagi tombol "Tandai Hadir" terpotong). Tab (`.tabs__list`), menu
   Konsol Admin di ponsel/tablet, chip filter Pustaka/Instruktur, dan indeks Profil kini terlipat (bukan strip geser).
@@ -108,7 +114,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   dibubuhi tanda air pembeli + dienkripsi AES-128 (kata sandi = email pembeli, izin ubah/salin ditutup, cetak boleh) dengan
   `assets/vendor/pdf-lib-cantoo-2.8.4.min.js` (wajib `useObjectStreams: true`). Produk CoP: PPAPI-CoP-01:2026 Seri Lengkap
   8 bagian (183 hlm., Rp150.000), paket impor diserahkan ke klien; berkas PDF CoP **jangan** dimasukkan ke repositori.
-- Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 9 artikel, aplikasi anggota (data melekat ke
+- Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 11 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
 ## Pekerjaan tertunda

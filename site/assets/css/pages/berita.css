@@ -461,3 +461,9 @@ body[data-page="berita"] .berita-pager__meta { display: flex; flex-wrap: wrap; a
 body[data-page="berita"] .berita-article__cta { margin: clamp(28px, 4vw, 40px) 0 0; }
 body[data-page="berita"] .berita-article__cta .btn { max-width: 100%; white-space: normal; text-align: left; }
 body[data-page="berita"] .prose .berita-article__cta a, body[data-page="berita"] .prose .berita-article__cta a:hover { text-decoration: none; }
+
+/* gambar di dalam isi artikel ('@gambar …') dan kredit foto sampul */
+body[data-page="berita"] .berita-figure { margin: clamp(28px, 4vw, 44px) 0; }
+body[data-page="berita"] .berita-figure img { display: block; width: 100%; height: auto; background: var(--c-steel); box-shadow: var(--shadow-1); }
+body[data-page="berita"] .prose .berita-figure figcaption { margin-top: 12px; font: 400 .86rem/1.6 var(--f-body, inherit); letter-spacing: normal; text-transform: none; color: var(--muted); }
+body[data-page="berita"] .berita-article__credit { margin: 10px 0 0; font-size: .8rem; line-height: 1.5; color: var(--muted); text-align: right; }

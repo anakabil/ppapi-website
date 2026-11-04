@@ -465,6 +465,14 @@
         if (!t) return;
         if (/^-\s+/.test(t)) { (list = list || []).push(t.replace(/^-\s+/, '')); return; }
         flush();
+        /* '@gambar assets/img/berkas.webp 1200x800 | Keterangan dan kredit foto' → <figure> di dalam artikel.
+           Hanya berkas lokal di assets/img; ukuran ditulis agar tata letak tidak bergeser saat gambar dimuat. */
+        var fig = t.match(/^@gambar\s+(assets\/img\/[\w\-./]+\.(?:webp|jpe?g|png))\s+(\d{2,4})x(\d{2,4})\s*\|\s*(.+)$/i);
+        if (fig) {
+          out.push('<figure class="berita-figure"><img src="' + h(fig[1]) + '" width="' + fig[2] + '" height="' + fig[3] + '" loading="lazy" decoding="async" alt="' + h(fig[4].split(/\s+Foto:/)[0].trim()) + '"><figcaption>' + inline(fig[4]) + '</figcaption></figure>');
+          return;
+        }
+        if (/^@gambar\b/i.test(t)) return;   /* baris gambar yang tidak sah diabaikan */
         if (/^###\s+/.test(t)) out.push('<h3>' + h(t.replace(/^###\s+/, '')) + '</h3>');
         else if (/^##\s+/.test(t)) {
           var title = t.replace(/^##\s+/, '');
@@ -588,6 +596,7 @@
 
           '<div class="container berita-article__figure-wrap">' +
             '<figure class="berita-article__figure">' + media(b, { eager: true, sizes: '(max-width: 1240px) 100vw, 1160px', alt: b.judul }) + '</figure>' +
+            (b.gambarKeterangan ? '<p class="berita-article__credit">' + inline(String(b.gambarKeterangan).slice(0, 300)) + '</p>' : '') +
           '</div>' +
 
           '<div class="container berita-article__layout">' +
