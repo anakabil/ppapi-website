@@ -208,3 +208,4 @@
 .kga-tema__opt img { display: block; width: 100%; aspect-ratio: 297 / 210; object-fit: cover; background: var(--surface-2); }
 .kga-tema__opt[aria-checked="true"] { border-color: var(--text); box-shadow: 0 0 0 2px var(--text); }
 .kga-tema__opt:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.kg-room { overflow-wrap: anywhere; }

@@ -539,7 +539,7 @@
       var s = await f.db.collection('events').doc(id).collection('private').doc('ruang').get();
       var x = s.exists ? s.data() : {};
       return { link: httpsUrl(x.linkRuang), catatan: str(x.catatan, LIMITS.catatan) };
-    } catch (e) { return { link: '', catatan: '' }; }
+    } catch (e) { console.warn('[kegiatan] tautan ruang tidak dapat dibaca:', e && (e.code || e.message)); return { link: '', catatan: '' }; }
   }
 
   /** isi daftar hadir — hanya dalam jendela (selesai − 30 menit … selesai + 3 jam) */
@@ -1100,10 +1100,7 @@
   function ics(ev, o) {
     o = o || {};
     var page = U().siteUrl ? U().siteUrl('agenda.html?id=' + encodeURIComponent(ev.id)) : '';
-    var desc = [ev.deskripsi, '', 'Jenis: ' + ev.jenis, 'Jadwal: ' + fmtSchedule(ev), 'Mode: ' + ev.mode,
-      ev.lokasi ? 'Lokasi: ' + ev.lokasi : '', o.link ? 'Tautan ruang: ' + o.link : '',
-      'Daftar hadir: ' + fmtDateTime(ev.hadirBuka) + ' s.d. ' + fmtDateTime(ev.hadirTutup),
-      /^https?:/i.test(page) ? 'Info: ' + page : ''].filter(function (x, i) { return x || i === 1; }).join('\n');
+    var desc = calDesc(ev, o);
     var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PPAPI//Kegiatan//ID', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
       'UID:kegiatan-' + ev.id + '@ppapi', 'DTSTAMP:' + icsStamp(Date.now()), 'DTSTART:' + icsStamp(ev.mulai), 'DTEND:' + icsStamp(ev.selesai),
       'SUMMARY:' + icsEsc(ev.judul + ' — PPAPI'), 'DESCRIPTION:' + icsEsc(desc), 'CATEGORIES:' + icsEsc(ev.jenis)];
@@ -1111,6 +1108,15 @@
     if (/^https?:\/\//i.test(page)) L.push('URL:' + page);
     L.push('STATUS:CONFIRMED', 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc('Pengingat: ' + ev.judul), 'TRIGGER:-PT1H', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR');
     return L.map(icsFold).join('\r\n') + '\r\n';
+  }
+  /** isi kalender yang ringkas: fokus pada tautan ruang daring (Zoom) */
+  function calDesc(ev, o) {
+    o = o || {};
+    var lbl = /zoom\./i.test(o.link || '') ? 'Tautan Zoom' : 'Tautan ruang daring';
+    var mine = U().siteUrl ? U().siteUrl('kegiatan-saya.html') : '';
+    if (o.link) return [lbl + ': ' + o.link, o.catatan ? o.catatan : ''].filter(Boolean).join('\n');
+    if (ev.mode === 'Luring') return ev.lokasi ? 'Lokasi: ' + ev.lokasi : '';
+    return 'Tautan Zoom tersedia di menu Kegiatan Saya' + (/^https?:/i.test(mine) ? ': ' + mine : '') + ' (setelah disiapkan sekretariat).';
   }
   function downloadIcs(ev, o) {
     var name = 'ppapi-kegiatan-' + (U().slugify ? U().slugify(ev.judul) : ev.id).slice(0, 60) + '.ics';
@@ -1656,7 +1662,7 @@
     listPublished: listPublished, get: get, getFlyer: getFlyer, asAgendaItems: asAgendaItems, toAgendaItem: toAgendaItem,
     /* peserta */
     eligibility: eligibility, myRegistration: myRegistration, myAttendance: myAttendance, myStatus: myStatus, myEvents: myEvents,
-    register: register, updateName: updateName, cancel: cancel, meetingInfo: meetingInfo, attend: attend,
+    register: register, updateName: updateName, cancel: cancel, meetingInfo: meetingInfo, calDesc: calDesc, attend: attend,
     /* sertifikat */
     issueCertificate: issueCertificate, downloadCertificate: downloadCertificate, verify: verify, getDesign: getDesign,
     defaultDesign: defaultDesign, normDesign: normDesign, buildPdf: buildPdf, ensureJsPDF: ensureJsPDF, verifyUrl: verifyUrl,

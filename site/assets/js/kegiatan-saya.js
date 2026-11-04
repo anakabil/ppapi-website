@@ -107,7 +107,8 @@
         return '<li class="' + stepClass('done') + '">' + head +
           '<p class="kg-step__text"><span class="badge badge--ok">Terdaftar</span> ' + (isFinite(p.at) ? '<span class="kg-dim">sejak ' + h(K().fmtDate(p.at, { short: true })) + ', ' + h(K().fmtTime(p.at)) + ' WIB</span>' : '') + '</p>' +
           '<p class="kg-step__text kg-name">Nama pada sertifikat: <strong>' + h(p.nama) + '</strong>' + (canRename ? ' <button type="button" class="kg-inline-btn" data-kg="rename">Ubah</button>' : '') + '</p>' +
-          (meeting && meeting.catatan && !o.compact ? '<p class="kg-step__text kg-dim">' + h(meeting.catatan) + '</p>' : '') +
+          (meeting && meeting.link ? '<p class="kg-step__text kg-room">' + h(/zoom\./i.test(meeting.link) ? 'Tautan Zoom' : 'Tautan ruang daring') + ': <a class="link" href="' + h(meeting.link) + '" target="_blank" rel="noopener noreferrer">' + h(meeting.link) + '</a> <button type="button" class="kg-inline-btn" data-kg="copylink">Salin</button></p>' : '') +
+          (meeting && meeting.catatan ? '<p class="kg-step__text kg-dim">' + h(meeting.catatan) + '</p>' : '') +
           (ev.mode !== 'Luring' && !(meeting && meeting.link) && !o.compact ? '<p class="kg-step__text kg-dim">Tautan ruang daring akan tampil di sini setelah disiapkan sekretariat.</p>' : '') +
           (ev.tautanDaftar && !o.compact ? '<p class="kg-step__text kg-dim">Penyelenggara meminta Anda melengkapi formulir pendaftarannya juga.</p>' : '') +
           '<div class="kg-step__actions">' + acts.join('') + '</div>' +
@@ -207,8 +208,14 @@
       if (!ev || busy) return;
       if (kind === 'ics') {
         var lnk = meeting && meeting.link;
-        ui().addToCalendar({ judul: ev.judul + ' — PPAPI', mulai: ev.mulai, selesai: ev.selesai, deskripsi: [ev.deskripsi || '', lnk ? 'Tautan ruang: ' + lnk : ''].filter(Boolean).join('\n\n'),
-          lokasi: lnk || ev.lokasi || '', ics: K().ics(ev, { link: lnk }), namaBerkas: 'ppapi-kegiatan-' + ev.id + '.ics' });
+        var cat = meeting && meeting.catatan;
+        ui().addToCalendar({ judul: ev.judul + ' — PPAPI', mulai: ev.mulai, selesai: ev.selesai, deskripsi: K().calDesc(ev, { link: lnk, catatan: cat }),
+          lokasi: lnk || ev.lokasi || '', ics: K().ics(ev, { link: lnk, catatan: cat }), namaBerkas: 'ppapi-kegiatan-' + ev.id + '.ics' });
+        return;
+      }
+      if (kind === 'copylink') {
+        var l2 = meeting && meeting.link;
+        if (l2) { try { await navigator.clipboard.writeText(l2); ui().toast('Tautan disalin.', { type: 'success' }); } catch (e) { window.prompt('Salin tautan ini:', l2); } }
         return;
       }
       if (kind === 'embed') { openForm(ev); return; }

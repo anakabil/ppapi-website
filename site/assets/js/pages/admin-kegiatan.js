@@ -99,6 +99,15 @@
         '</tr>';
       }).join('') + '</tbody></table></div>';
     ui().reveal(body);
+    /* kegiatan daring/hybrid yang belum selesai tetapi belum punya tautan ruang (Zoom): beri tanda peringatan */
+    rows.forEach(function (ev) {
+      if (ev.mode === 'Luring' || K().phaseOf(ev, now) === 'selesai') return;
+      K().meetingInfo(ev.id).then(function (m) {
+        if (m && m.link) return;
+        var tr = body.querySelector('tr[data-id="' + (window.CSS && CSS.escape ? CSS.escape(ev.id) : ev.id) + '"] .kga-badges');
+        if (tr && !tr.querySelector('[data-kga-noroom]')) tr.insertAdjacentHTML('afterbegin', '<span class="badge badge--warn" data-kga-noroom>Tautan Zoom belum diisi</span>');
+      }).catch(function () {});
+    });
   }
   async function reload() {
     try { S.list = await K().admin.list(); S.error = null; }
@@ -166,7 +175,7 @@
         field('kg-mode', 'Mode', select('kg-mode', K().MODES, e.mode || 'Daring'), { key: 'mode' }) +
         field('kg-lokasi', 'Lokasi / platform', input('kg-lokasi', 'text', e.lokasi, { max: 300, placeholder: 'mis. Zoom Meeting atau alamat gedung' }), { opt: true, key: 'lokasi', hint: 'Tampil untuk publik.' }) +
       '</div>' +
-      field('kg-ruang', 'Tautan ruang daring', input('kg-ruang', 'url', e.linkRuang, { max: 500, placeholder: 'https://…' }), { opt: true, key: 'linkRuang', hint: 'Hanya ditampilkan kepada peserta yang sudah terdaftar.', err: 'Tautan harus diawali https://' }) +
+      field('kg-ruang', 'Tautan ruang daring', input('kg-ruang', 'url', e.linkRuang, { max: 500, placeholder: 'https://…' }), { opt: true, key: 'linkRuang', hint: 'Isi untuk kegiatan daring atau hybrid (mis. tautan Zoom). Tautan ini tampil di Kegiatan Saya dan di kalender, hanya bagi peserta terdaftar.', err: 'Tautan harus diawali https://' }) +
       field('kg-ruang-cat', 'Catatan ruang', input('kg-ruang-cat', 'text', e.catatanRuang, { max: 500, placeholder: 'mis. Meeting ID dan kode sandi' }), { opt: true, key: 'catatanRuang', hint: 'Juga hanya untuk peserta terdaftar.' }) +
       '<h3 class="form__section-title">Pendaftaran</h3>' +
       '<fieldset class="field kga-radio" data-field="akses"><legend class="field__label">Siapa yang boleh mendaftar</legend>' +
@@ -313,7 +322,7 @@
         kvRow('Akses', aksesBadge(ev) + ' <span class="kga-sub">' + h(K().AKSES_DESC[ev.akses]) + '</span>') +
         kvRow('Peserta', '<span class="kga-num">' + h(fmtN(ev.terdaftar)) + '</span>' + (ev.kuota ? ' dari ' + h(fmtN(ev.kuota)) + ' kursi' : ' (kuota tidak dibatasi)') + ' · hadir ' + h(fmtN(data.attendance.length))) +
         kvRow('Daftar hadir', '<strong>' + h(winLabel) + '</strong> · ' + h(K().fmtDateTime(win.buka, { short: true })) + ' – ' + h(K().fmtDateTime(win.tutup, { short: true }))) +
-        kvRow('Ruang daring', ev.linkRuang ? '<a class="link" href="' + h(ev.linkRuang) + '" target="_blank" rel="noopener noreferrer">' + h(ev.linkRuang) + '</a>' : '<span class="kga-sub">Belum diisi</span>') +
+        kvRow('Ruang daring', ev.linkRuang ? '<a class="link" href="' + h(ev.linkRuang) + '" target="_blank" rel="noopener noreferrer">' + h(ev.linkRuang) + '</a>' : '<span class="badge badge--warn">Belum diisi</span>') +
         (ev.tautanDaftar ? kvRow('Formulir eksternal', '<a class="link" href="' + h(ev.tautanDaftar) + '" target="_blank" rel="noopener noreferrer">' + h(ev.tautanDaftar) + '</a>') : '') +
         kvRow('Status', statusBadge(ev)) +
         '</dl>';
@@ -334,7 +343,7 @@
           '<button type="button" class="btn btn--link btn--sm" data-kgm="remove" data-uid="' + h(p.uid) + '"' + (a && a.sertNo ? ' disabled title="Sertifikat sudah terbit"' : '') + '>' + icon('trash', { size: 16 }) + '<span>Hapus</span><span class="sr-only"> ' + h(p.nama) + '</span></button></div></td></tr>';
       }).join('');
       var partPanel = '<div class="kga-list-actions"><p class="kga-count">' + h(fmtN(data.participants.length)) + ' peserta terdaftar</p>' +
-        (data.participants.length ? '<button type="button" class="btn btn--ghost btn--sm" data-kgm="csv">' + icon('download', { size: 16 }) + '<span>Unduh CSV</span></button>' : '') + '</div>' +
+        (data.participants.length ? '<div class="cluster"><button type="button" class="btn btn--ghost btn--sm" data-kgm="emails">' + icon('copy', { size: 16 }) + '<span>Salin Email Peserta</span></button><button type="button" class="btn btn--ghost btn--sm" data-kgm="csv">' + icon('download', { size: 16 }) + '<span>Unduh CSV</span></button></div>' : '') + '</div>' +
         (data.participants.length ? '<div class="table-wrap"><table class="table"><caption class="sr-only">Peserta terdaftar</caption><thead><tr><th scope="col">No</th><th scope="col">Peserta</th><th scope="col">Keanggotaan</th><th scope="col">Waktu daftar</th><th scope="col">Hadir</th><th scope="col"><span class="sr-only">Tindakan</span></th></tr></thead><tbody>' + partRows + '</tbody></table></div>'
           : ui().emptyState({ icon: 'users', title: 'Belum ada peserta', text: ev.status === 'terbit' ? 'Peserta yang mendaftar melalui halaman Agenda tampil di sini.' : 'Terbitkan kegiatan agar dapat didaftari.' }));
       var attPanel = '<p class="kga-window">' + icon('clock', { size: 16 }) + ' Daftar hadir dibuka otomatis <strong>' + h(K().fmtDateTime(win.buka, { weekday: true })) + '</strong> (30 menit sebelum selesai) dan ditutup <strong>' + h(K().fmtDateTime(win.tutup, { weekday: true })) + '</strong> (3 jam setelah selesai). Saat ini: <strong>' + h(winLabel) + '</strong>.</p>' +
@@ -370,7 +379,10 @@
         '</div></div></div>';
       var tabs = [['flyer', 'Flyer', 'upload', flyerPanel], ['peserta', 'Peserta', 'users', partPanel], ['hadir', 'Daftar Hadir', 'check-circle', attPanel], ['sertifikat', 'Sertifikat', 'award', certPanel]];
       var sel = selectTab || (ev.flyer ? 'peserta' : 'flyer');
-      dr.setBody(summary + actions +
+      var noRoom = ev.mode !== 'Luring' && !ev.linkRuang
+        ? '<div class="alert alert--warn mt-3" role="alert">' + icon('alert-triangle', { size: 18 }) + '<div><p class="alert__title">Tautan Zoom belum diisi</p><p>Peserta tidak dapat melihat tautan ruang daring di Kegiatan Saya maupun di kalender. Isi kolom <strong>Tautan ruang daring</strong> melalui tombol Ubah, lalu simpan.</p></div></div>'
+        : '';
+      dr.setBody(summary + noRoom + actions +
         '<div class="tabs kga-tabs" data-tabs><div class="tabs__list" role="tablist" aria-label="Kelola kegiatan">' +
         tabs.map(function (t) { return '<button class="tabs__tab" role="tab" id="kgt-' + t[0] + '" data-tab="' + t[0] + '" aria-controls="kgp-' + t[0] + '" aria-selected="' + (t[0] === sel) + '"' + (t[0] === sel ? '' : ' tabindex="-1"') + '>' + icon(t[2], { size: 16 }) + t[1] + '</button>'; }).join('') +
         '</div>' + tabs.map(function (t) { return '<div class="tabs__panel" role="tabpanel" id="kgp-' + t[0] + '" aria-labelledby="kgt-' + t[0] + '"' + (t[0] === sel ? '' : ' hidden') + '>' + t[3] + '</div>'; }).join('') + '</div>');
@@ -393,6 +405,16 @@
           ui().toast('Flyer dihapus.', { type: 'success' });
           await paint('flyer');
           await reload();
+          return;
+        }
+        if (kind === 'emails') {
+          /* daftar email unik, dipisah koma, untuk ditempel ke kolom BCC (mis. mengirim tautan Zoom) */
+          var seen = {}, list = (dr.__data.participants || []).map(function (p) { return String(p.email || '').trim(); })
+            .filter(function (e) { var k = e.toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen[k]) return false; seen[k] = 1; return true; });
+          if (!list.length) { ui().toast('Belum ada email peserta.', { type: 'error' }); return; }
+          var txt = list.join(', ');
+          try { await navigator.clipboard.writeText(txt); ui().toast(list.length + ' email peserta disalin. Tempel ke kolom BCC agar alamat tidak saling terlihat.', { type: 'success' }); }
+          catch (e) { window.prompt('Salin daftar email peserta (' + list.length + '):', txt); }
           return;
         }
         if (kind === 'csv') {

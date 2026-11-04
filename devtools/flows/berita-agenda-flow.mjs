@@ -458,7 +458,7 @@ console.log('\n[A2] Agenda — daftar, penyaring, URL, modal, .ics (agenda kelol
   ok(unfolded.includes('DTSTART;TZID=Asia/Jakarta:20261021T080000') && unfolded.includes('DTEND;TZID=Asia/Jakarta:20261021T160000'), 'DTSTART/DTEND berzona 08.00–16.00');
   ok(unfolded.includes('RRULE:FREQ=DAILY;COUNT=3'), 'RRULE harian 3 hari untuk rentang 21–23');
   ok(/UID:agenda-pelatihan-inspeksi-kelolaan-20261021@ppapi/.test(unfolded) && /DTSTAMP:\d{8}T\d{6}Z/.test(unfolded), 'UID + DTSTAMP (UTC)');
-  ok(unfolded.includes('LOCATION:Jakarta (lokasi rinci diinformasikan kepada peserta)') && /DESCRIPTION:Pelatihan tiga hari[^\r]*\\,[^\r]*\\n/.test(unfolded), 'teks di-escape (koma \\, & baris \\n)');
+  ok(unfolded.includes('LOCATION:Jakarta (lokasi rinci diinformasikan kepada peserta)') && /DESCRIPTION:(Tautan: [^\r]*\\n)?Info: http/.test(unfolded) && !/DESCRIPTION:[^\r]*Kuota:/.test(unfolded), 'deskripsi kalender ringkas (tautan saja, baris di-escape \\n)', (unfolded.match(/DESCRIPTION:[^\r]*/) || [''])[0]);
   ok(unfolded.includes('SUMMARY:Pelatihan Inspeksi') && !unfolded.includes('[Contoh]') && unfolded.includes('STATUS:CONFIRMED') && unfolded.includes('TRIGGER:-P1D'), 'SUMMARY tanpa [Contoh], STATUS CONFIRMED, alarm H-1');
   await page.waitForTimeout(500);
   ok(!(await page.isVisible('.cal-pick__opt')), 'pilihan kalender tertutup setelah dipilih');

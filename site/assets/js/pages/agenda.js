@@ -723,17 +723,7 @@
       var a = ev.raw, t = parseWaktu(a.waktu), tz = t.tz, days = dayCount(ev);
       var page = U.siteUrl('agenda.html?id=' + encodeURIComponent(ev.id));
       var reg = registerUrl(a);
-      var desc = [
-        a.deskripsi || '',
-        '',
-        'Jenis: ' + (a.jenis || '-'),
-        'Waktu: ' + (a.waktu || '-') + (days > 1 ? ' (setiap hari, ' + days + ' hari)' : ''),
-        'Lokasi: ' + (a.lokasi || '-'),
-        'Mode: ' + (MODE_DESC[a.mode] || a.mode || '-'),
-        'Kuota: ' + kuotaText(a.kuota),
-        'Pendaftaran: ' + (reg || 'melalui sekretariat PPAPI (halaman Kontak)'),
-        /^https?:/i.test(page) ? 'Info: ' + page : ''
-      ].concat(a.contoh ? ['', 'Catatan: agenda contoh — jadwal resmi diumumkan oleh sekretariat.'] : []).join('\n').replace(/\n+$/, '');
+      var desc = [reg ? 'Tautan: ' + reg : '', /^https?:/i.test(page) ? 'Info: ' + page : ''].filter(Boolean).join('\n');   /* ringkas: tautan saja */
       var L = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
@@ -783,7 +773,7 @@
           mulai: t.start ? ms(ev.start, t.start) : ev.start.getTime(),
           selesai: t.start ? ms(ev.start, t.end || [t.start[0] + 2, t.start[1]]) : ev.end.getTime(),
           sepanjangHari: !t.start, ulangHarian: t.start && days > 1 ? days : 0,
-          deskripsi: [a.deskripsi || '', '', 'Jenis: ' + (a.jenis || '-'), 'Waktu: ' + (a.waktu || '-'), /^https?:/i.test(page) ? 'Info: ' + page : ''].join('\n').trim(),
+          deskripsi: [/^https:\/\//i.test(a.tautanDaftar || '') ? 'Tautan: ' + a.tautanDaftar : '', /^https?:/i.test(page) ? 'Info: ' + page : ''].filter(Boolean).join('\n'),
           lokasi: a.lokasi || '', ics: buildIcs(ev), namaBerkas: 'ppapi-agenda-' + (U.slugify(ev.id) || 'kegiatan') + '.ics'
         });
       } catch (err) {
