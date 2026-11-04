@@ -435,6 +435,15 @@ body[data-page="anggota"] .agt-kta__face {
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 body[data-page="anggota"] .agt-kta__face--back { transform: rotateY(180deg); }
+/* Pengaman balik kartu: sebagian peramban (Safari, Chrome ponsel) tetap menggambar isi sisi depan yang memakai
+   line-clamp, z-index, atau teks ber-background-clip menembus backface-visibility, sehingga nama tampak di sisi
+   belakang dan bertumpuk dengan kode QR. Sisi yang membelakangi pengguna disembunyikan tepat di pertengahan putaran
+   (0,55 dtk dari 1,1 dtk), dan setiap sisi diberi lapisan 3D sendiri. */
+body[data-page="anggota"] .agt-kta__face { visibility: visible; transition: visibility 0s linear .55s; }
+body[data-page="anggota"] .agt-kta__face--front { transform: rotateY(0deg) translateZ(1px); }
+body[data-page="anggota"] .agt-kta__face--back { transform: rotateY(180deg) translateZ(1px); visibility: hidden; }
+body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__face--front { visibility: hidden; }
+body[data-page="anggota"] .agt-kta.is-flipped .agt-kta__face--back { visibility: visible; }
 body[data-page="anggota"] .agt-kta__surface {
   position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden;
   padding: 6.2cqw 6.6cqw 5.4cqw; border-radius: 3.6% / 5.8%;
