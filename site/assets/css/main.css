@@ -2308,3 +2308,12 @@ a.kpi:hover .kpi__icon { color: var(--text); border-color: var(--line-strong); }
 .cal-pick__opt span { display: grid; flex: 1; gap: 2px; }
 .cal-pick__opt small { color: var(--muted); font-size: .8rem; }
 .cal-pick__note { margin: 12px 0 0; font-size: .82rem; line-height: 1.55; color: var(--muted); }
+
+/* pemilih berkas unggahan (dokumen pendukung, sertifikat, bukti pembayaran) — store-berkas.js */
+.berkas-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 48px; padding: 8px 12px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+.berkas-pick__name { flex: 1 1 180px; min-width: 0; font-size: .92rem; color: var(--muted); overflow-wrap: anywhere; }
+.berkas-pick .btn { flex: none; }
+.berkas-pick label.btn { cursor: pointer; }
+.berkas-pick label.is-loading { opacity: .7; pointer-events: none; }
+.field.is-invalid .berkas-pick { border-color: var(--err-fg); }
+.daf-linkbtn { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }

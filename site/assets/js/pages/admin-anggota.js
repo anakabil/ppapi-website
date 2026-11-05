@@ -7,6 +7,18 @@
    ========================================================================== */
 (function (w, d) {
   'use strict';
+  /* berkas unggahan anggota (store-berkas.js): tombol membawa uid + id berkas, dibuka lewat satu pendengar */
+  function bkAttr(uid, fid, nama) {
+    var esc = function (v) { return String(v || '').replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    return 'data-berkas-open data-uid="' + esc(uid) + '" data-fid="' + esc(fid) + '" data-nama="' + esc(nama) + '"';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-berkas-open]');
+    if (!b || !PPAPI.berkas) return;
+    PPAPI.berkas.buka(b.getAttribute('data-uid'), b.getAttribute('data-fid'), b.getAttribute('data-nama'))
+      .catch(function (err) { PPAPI.ui.toast((err && err.message) || 'Berkas belum dapat dibuka.', { type: 'error' }); });
+  });
+
 
   var PPAPI = w.PPAPI;
   if (!PPAPI || !PPAPI.util) return;
@@ -413,19 +425,22 @@
         return '<li><div class="adm-items__row"><p class="adm-items__title">' + h(c.title) + '</p><span class="badge badge--' + h(cs.tone) + '">' + h(cs.label) + '</span></div>' +
           '<p class="adm-items__meta">' + h([c.issuer, c.number].filter(Boolean).join(' · ')) + '</p>' +
           '<p class="adm-items__meta">' + h([c.issuedAt ? 'Terbit ' + util.formatDate(c.issuedAt, { short: true }) : '', c.expiresAt ? 'berlaku s.d. ' + util.formatDate(c.expiresAt, { short: true }) : 'tanpa batas'].filter(Boolean).join(' · ')) + '</p>' +
-          (c.link ? '<p><a class="link" href="' + h(c.link) + '" target="_blank" rel="noopener noreferrer">Lihat bukti sertifikat<span class="sr-only"> ' + h(c.title) + ' (membuka tab baru)</span></a></p>' : '') + '</li>';
+          (c.berkas ? '<p><button type="button" class="link adm-linkbtn" ' + bkAttr(m.uid, PPAPI.berkas.idSertifikat(c.id), c.berkas) + '>Lihat berkas sertifikat<span class="sr-only"> ' + h(c.title) + '</span></button> <span class="adm-dim">' + h(c.berkas) + '</span></p>'
+            : c.link ? '<p><a class="link" href="' + h(c.link) + '" target="_blank" rel="noopener noreferrer">Lihat bukti sertifikat (tautan lama)<span class="sr-only"> ' + h(c.title) + ' (membuka tab baru)</span></a></p>' : '') + '</li>';
       }).join('') + '</ul>'
       : '<p class="adm-dim">Belum ada sertifikat yang dicatat.</p>');
     out += section('Dokumen pendukung', (a.dokumen || []).length
       ? '<ul class="adm-docs" role="list">' + a.dokumen.map(function (x) {
         return '<li class="adm-docs__item"><span class="adm-docs__icon" aria-hidden="true">' + icon('file-text', { size: 18 }) + '</span><div class="adm-docs__text"><span class="tag">' + h(x.jenis) + '</span><p class="adm-docs__label">' + h(x.label || 'Dokumen') + '</p></div>' +
-          (x.url ? '<a class="adm-act" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer"><span>Buka</span>' + icon('arrow-up-right', { size: 14 }) + '<span class="sr-only"> ' + h(x.label || x.jenis) + ' (membuka tab baru)</span></a>' : '<span class="adm-dim">Tanpa tautan</span>') + '</li>';
-      }).join('') + '</ul><p class="adm-hint">' + icon('info', { size: 15 }) + '<span>Tautan dokumen diisi sendiri oleh pemohon. Periksa alamatnya sebelum membuka.</span></p>'
-      : '<p class="adm-dim">Pemohon belum melampirkan tautan dokumen.</p>');
+          (x.berkas ? '<button type="button" class="adm-act" ' + bkAttr(m.uid, PPAPI.berkas.idDokumen(x.id), x.berkas) + '><span>Buka</span>' + icon('arrow-up-right', { size: 14 }) + '<span class="sr-only"> ' + h(x.label || x.jenis) + '</span></button>'
+            : x.url ? '<a class="adm-act" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer"><span>Buka tautan lama</span>' + icon('arrow-up-right', { size: 14 }) + '<span class="sr-only"> ' + h(x.label || x.jenis) + ' (membuka tab baru)</span></a>' : '<span class="adm-dim">Belum ada berkas</span>') + '</li>';
+      }).join('') + '</ul><p class="adm-hint">' + icon('info', { size: 15 }) + '<span>Berkas diunggah pemohon ke basis data PPAPI dan hanya dapat dibuka oleh pemohon dan admin.</span></p>'
+      : '<p class="adm-dim">Pemohon belum melampirkan dokumen.</p>');
     var cfg = PPAPI.config || {};
     if ((cfg.iuran && cfg.iuran.aktif) || a.pembayaran.buktiUrl || a.pembayaran.metode) {
       out += section('Pembayaran iuran', '<dl class="kv adm-kv">' + kvRow('Metode', a.pembayaran.metode) + kvRow('Tanggal', a.pembayaran.tanggal ? util.formatDate(a.pembayaran.tanggal) : '') +
-        kvRow('Bukti pembayaran', a.pembayaran.buktiUrl ? '<a class="link" href="' + h(a.pembayaran.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka bukti<span class="sr-only"> (membuka tab baru)</span></a>' : '', true) + '</dl>');
+        kvRow('Bukti pembayaran', String(a.pembayaran.buktiUrl || '').indexOf(PPAPI.berkas.MARK) === 0 ? '<button type="button" class="link adm-linkbtn" ' + bkAttr(m.uid, PPAPI.berkas.ID_BUKTI, 'bukti-pembayaran') + '>Buka bukti</button>'
+          : a.pembayaran.buktiUrl ? '<a class="link" href="' + h(a.pembayaran.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Buka bukti (tautan lama)<span class="sr-only"> (membuka tab baru)</span></a>' : '', true) + '</dl>');
     }
     var pn = a.pernyataan;
     function yes(v, label) { return '<li class="adm-pledge__item ' + (v ? 'is-yes' : 'is-no') + '">' + icon(v ? 'check-circle' : 'x-circle', { size: 18 }) + '<span>' + h(label) + '<span class="sr-only">' + (v ? ': disetujui' : ': belum disetujui') + '</span></span></li>'; }
@@ -520,7 +535,7 @@
   /* -------------------------------------------------------- dialogs */
   function who(m) { return '<div class="adm-who">' + K.person(m, { sub: kategoriText(m) + ' · ' + K.eff(m) }) + '</div>'; }
   var TEMPLATES = [
-    'Lengkapi tautan dokumen pendukung (CV dan sertifikat) yang dapat dibuka.',
+    'Lengkapi dokumen pendukung (CV dan sertifikat) dengan mengunggah berkasnya.',
     'Perbarui sertifikat yang masa berlakunya telah habis.',
     'Lengkapi riwayat proyek di bidang perancah beserta peran Anda.',
     'Pastikan nama lengkap sesuai dokumen identitas.'

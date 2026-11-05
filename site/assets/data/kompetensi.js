@@ -20,6 +20,31 @@
    ========================================================================== */
 window.PPAPI_DATA = window.PPAPI_DATA || {};
 PPAPI_DATA.kompetensi = {
+  /* Skema sertifikasi untuk isian "Tambah sertifikat" (formulir pendaftaran & profil anggota).
+     Kemnaker: lisensi K3 perancah (Teknisi K3 Perancah, Supervisor K3 Perancah; ditetapkan klien
+     05-11-2026) dan Ahli K3 Konstruksi. BNSP: jabatan kerja berjenjang KKNI pada Keputusan Dirjen Bina
+     Konstruksi 114/KPTS/Dk/2024 (SKKNI 46-2022 Operasi Scaffolding, SKKNI 54-2015, SKKNI 13-2024, SKKNI
+     350-2014) yang diujikan LSP berlisensi BNSP, serta skema LSP sektor migas (lihat "katalog" di bawah).
+     Pilihan "Lainnya" di formulir membuka isian nama sertifikat bebas. */
+  skema: [
+    { grup: "Kemnaker RI · Lisensi K3 Perancah", penerbit: "Kemnaker RI", opsi: ["Teknisi K3 Perancah", "Supervisor K3 Perancah"] },
+    { grup: "Kemnaker RI · K3 Konstruksi", penerbit: "Kemnaker RI", opsi: ["Ahli K3 Konstruksi"] },
+    { grup: "BNSP (LSP) · Scaffolding, jenjang KKNI", penerbit: "BNSP / LSP", opsi: [
+      "Tukang Pasang Perancah dan Acuan/Cetakan Beton (KKNI Jenjang 1)",
+      "Kepala Tukang Pasang Perancah dan Acuan/Cetakan Beton (KKNI Jenjang 2)",
+      "Operator Pemula Scaffolding (KKNI Jenjang 2)",
+      "Operator Scaffolding (KKNI Jenjang 3)",
+      "Teknisi Scaffolding (KKNI Jenjang 4)",
+      "Pengawas Scaffolding (KKNI Jenjang 5)",
+      "Scaffolder Dasar / Lanjut (LSP sektor migas)",
+      "Perancang Scaffolding (LSP sektor migas)",
+      "Inspektur Scaffolding (LSP sektor migas)"] },
+    { grup: "BNSP (LSP) · K3 Konstruksi, jenjang KKNI", penerbit: "BNSP / LSP", opsi: [
+      "Petugas K3 Konstruksi (KKNI Jenjang 3)",
+      "Ahli Muda K3 Konstruksi (KKNI Jenjang 7)",
+      "Ahli Madya K3 Konstruksi (KKNI Jenjang 8)",
+      "Ahli Utama K3 Konstruksi (KKNI Jenjang 9)"] }
+  ],
   katalog: [
     {
       kode: "SCF-01",

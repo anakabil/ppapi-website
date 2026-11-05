@@ -1099,7 +1099,9 @@
         '<td data-label="Berlaku hingga">' + (c.expiresAt ? dateCell(c.expiresAt) : '<span class="muted">Tanpa batas</span>') + '</td>' +
         '<td data-label="Status"><span class="badge badge--' + s.tone + '">' + h(certLabel(s)) + '</span><span class="table__muted">' + h(certSub(c, s)) + '</span></td>' +
         '<td data-label="" class="agt-cert__actions"><div class="agt-cert__actions-in">' +
-          (link
+          (c.berkas
+            ? '<button type="button" class="btn btn--link btn--sm agt-doclink" data-action="open-sertifikat" data-id="' + h(c.id) + '"><span>Lihat berkas</span><span class="sr-only"> ' + h(title) + '</span>' + icon('arrow-up-right', { size: 16, cls: 'btn__icon' }) + '</button>'
+            : link
             ? '<a class="btn btn--link btn--sm agt-doclink" href="' + h(link) + '" target="_blank" rel="noopener noreferrer"><span>Lihat dokumen</span><span class="sr-only"> ' + h(title) + ' (tab baru)</span>' + icon('arrow-up-right', { size: 16, cls: 'btn__icon' }) + '</a>'
             : '<span class="agt-nolink">Tanpa dokumen</span>') +
           '<span class="agt-cert__btns">' +
@@ -1167,10 +1169,7 @@
       var today = util.todayIso();
       var body =
         '<form class="form agt-mform" id="mc-form" novalidate>' +
-          '<div class="field">' +
-            '<label class="field__label" for="mc-title"><span>Judul sertifikat <span class="agt-req" aria-hidden="true">*</span></span></label>' +
-            '<input class="field__control" id="mc-title" aria-required="true" type="text" maxlength="200" autocomplete="off" placeholder="Contoh: Pengawas Scaffolding" value="' + h(item ? item.title : '') + '">' +
-          '</div>' +
+          PPAPI.berkas.ui.skemaHtml('mc', item ? item.title : '') +
           '<div class="form__row form__row--2">' +
             '<div class="field">' +
               '<label class="field__label" for="mc-number"><span>Nomor sertifikat <span class="agt-req" aria-hidden="true">*</span></span></label>' +
@@ -1198,15 +1197,12 @@
             '</div>' +
           '</div>' +
           '<label class="check"><input type="checkbox" id="mc-noexp"' + (noExp ? ' checked' : '') + '><span class="check__box"></span><span class="check__label">Tidak ada masa berlaku</span></label>' +
-          '<div class="field">' +
-            '<label class="field__label" for="mc-link">Tautan dokumen <span class="opt">(opsional)</span></label>' +
-            '<div class="input-icon">' + icon('link', { size: 18 }) + '<input class="field__control" id="mc-link" type="url" inputmode="url" maxlength="1000" placeholder="https://drive.google.com/…" autocomplete="off" aria-describedby="mc-link-hint" value="' + h(item ? item.link : '') + '"></div>' +
-            '<p class="field__hint" id="mc-link-hint">Unggah dokumen ke Google Drive lalu tempel tautannya di sini. Pastikan akses tautan diatur agar dapat dibuka, dan gunakan alamat yang diawali https://.</p>' +
-          '</div>' +
+          PPAPI.berkas.ui.fileHtml('mc', item ? item.berkas : '', 'Berkas sertifikat') +
+          (item && item.link && !item.berkas ? '<p class="field__hint">Sertifikat ini masih memakai tautan lama. Unggah berkasnya agar tersimpan di basis data PPAPI.</p>' : '') +
           '<button type="submit" hidden tabindex="-1" aria-hidden="true"></button>' +
         '</form>';
 
-      var root = null;
+      var root = null, pickFile = function () { return null; };
       function q(id) { return root ? root.querySelector('#' + id) : null; }
       function syncIssuer() {
         var lain = q('mc-issuer').value === 'Lainnya';
@@ -1220,18 +1216,18 @@
       }
       function submit() {
         var v = {
-          title: q('mc-title').value.trim().replace(/\s+/g, ' '),
+          title: PPAPI.berkas.ui.skemaValue(root, 'mc').title,
           number: q('mc-number').value.trim(),
           issuerSel: q('mc-issuer').value,
           other: q('mc-other').value.trim(),
           issued: q('mc-issued').value,
           expires: q('mc-expires').value,
-          noExp: q('mc-noexp').checked,
-          link: q('mc-link').value.trim()
+          noExp: q('mc-noexp').checked
         };
         var bad = [];
         function chk(el, msg) { setError(el, msg); if (msg) bad.push(el); }
-        chk(q('mc-title'), v.title.length < 3 ? 'Judul sertifikat minimal 3 karakter.' : '');
+        var skEl = PPAPI.berkas.ui.skemaValue(root, 'mc').el || q('mc-skema');
+        chk(skEl, !v.title ? 'Pilih skema sertifikasi.' : v.title.length < 3 ? 'Nama sertifikat minimal 3 karakter.' : '');
         chk(q('mc-number'), !v.number ? 'Nomor sertifikat wajib diisi.' : '');
         chk(q('mc-issuer'), !v.issuerSel ? 'Pilih lembaga penerbit.' : '');
         if (v.issuerSel === 'Lainnya') chk(q('mc-other'), v.other.length < 2 ? 'Tuliskan nama lembaga penerbit.' : '');
@@ -1250,7 +1246,6 @@
           else if (v.issued && util.parseDate(v.issued) && util.parseDate(v.expires) <= util.parseDate(v.issued)) expMsg = 'Tanggal kedaluwarsa harus setelah tanggal terbit.';
         }
         chk(q('mc-expires'), expMsg);
-        chk(q('mc-link'), v.link && !isHttpsUrl(v.link) ? 'Gunakan tautan lengkap yang diawali https://, misalnya tautan Google Drive.' : '');
         if (bad.length) { bad[0].focus(); return false; }
         var rec = {
           id: item ? item.id : util.uid('c'),
@@ -1259,12 +1254,17 @@
           issuer: v.issuerSel === 'Lainnya' ? v.other : v.issuerSel,
           issuedAt: v.issued,
           expiresAt: v.noExp ? '' : v.expires,
-          link: v.link ? new URL(v.link).href : ''
+          link: item && !item.berkas ? (item.link || '') : '',
+          berkas: item ? (item.berkas || '') : ''
         };
-        var next = item
-          ? member.certificates.map(function (c) { return c.id === item.id ? rec : c; })
-          : member.certificates.concat([rec]);
-        return persist({ certificates: next }).then(function () {
+        var file = pickFile();
+        var up = file ? PPAPI.berkas.simpan(PPAPI.berkas.idSertifikat(rec.id), file).then(function (meta) { rec.berkas = meta.nama; rec.link = ''; }) : Promise.resolve();
+        return up.then(function () {
+          var next = item
+            ? member.certificates.map(function (c) { return c.id === item.id ? rec : c; })
+            : member.certificates.concat([rec]);
+          return persist({ certificates: next });
+        }).then(function () {
           renderSertifikat();
           var s = util.certStatus(rec.expiresAt);
           var msg = editing ? 'Sertifikat berhasil diperbarui.' : 'Sertifikat berhasil ditambahkan.';
@@ -1291,7 +1291,14 @@
           root = el;
           q('mc-issuer').addEventListener('change', function () { syncIssuer(); if (q('mc-issuer').value === 'Lainnya') q('mc-other').focus(); });
           q('mc-noexp').addEventListener('change', syncNoExp);
-          ['mc-title', 'mc-number', 'mc-other', 'mc-issued', 'mc-expires', 'mc-link'].forEach(function (id) {
+          PPAPI.berkas.ui.skemaBind(el, 'mc', null);
+          pickFile = PPAPI.berkas.ui.fileBind(el, 'mc');
+          q('mc-skema').addEventListener('change', function () {
+            setError(q('mc-skema'), '');
+            var g = PPAPI.berkas.ui.skemaFind(q('mc-skema').value);
+            if (g && !q('mc-issuer').value) { q('mc-issuer').value = pen.indexOf(g.penerbit) !== -1 ? g.penerbit : 'Lainnya'; syncIssuer(); }
+          });
+          ['mc-title', 'mc-number', 'mc-other', 'mc-issued', 'mc-expires'].forEach(function (id) {
             q(id).addEventListener('input', function () { setError(q(id), ''); });
           });
           q('mc-form').addEventListener('submit', function (e) {
@@ -1312,6 +1319,7 @@
       if (!ok) return;
       try {
         await persist({ certificates: member.certificates.filter(function (x) { return x.id !== id; }) });
+        if (c.berkas) PPAPI.berkas.hapus(PPAPI.berkas.idSertifikat(c.id)).catch(function (e) { console.warn('[PPAPI] Berkas sertifikat belum terhapus:', e && e.message); });
         renderSertifikat();
         ui.toast('Sertifikat telah dihapus.', { type: 'success' });
         focusLater($('#panel-sertifikat [data-action="add-sertifikat"]'));
@@ -1319,6 +1327,63 @@
         console.error(err);
         ui.toast(errMessage(err, 'Sertifikat gagal dihapus. Silakan coba lagi.'), { type: 'error' });
       }
+    }
+
+    /* ---------- sertifikat kehadiran kegiatan (store-kegiatan.js) ---------- */
+    var kgcertRows = [];
+    async function renderKegiatanCerts() {
+      var K = PPAPI.kegiatan, host = $('#kgcert-list'), sec = host && host.closest('.agt-kgcert');
+      if (!K || !host) return;
+      var rows;
+      try { rows = (await K.myEvents({ fresh: true })).filter(function (r) { return r.attendance && r.event.sertifikat; }); }
+      catch (err) { console.warn('[PPAPI] Sertifikat kegiatan belum dapat dimuat:', err && err.message); return; }
+      kgcertRows = rows;
+      sec.hidden = false;
+      if (!rows.length) {
+        host.innerHTML = '<p class="agt-kgcert__empty">' + icon('award', { size: 18 }) + '<span>Belum ada sertifikat kehadiran. Setelah Anda mengisi daftar hadir sebuah kegiatan PPAPI, sertifikatnya tampil di sini. Lihat jadwal di <a class="link" href="agenda.html">Agenda</a>.</span></p>';
+        return;
+      }
+      host.innerHTML = '<ul class="agt-kgcert__grid" role="list">' + rows.map(function (r) {
+        var ev = r.event, no = r.attendance.sertNo, disp = no ? K.certDisplay(no) : '';
+        return '<li class="agt-kgcert__card" data-kgcert="' + h(ev.id) + '">' +
+          '<button type="button" class="agt-kgcert__thumb" data-action="kgcert-view" data-id="' + h(ev.id) + '" aria-label="Perbesar sertifikat ' + h(ev.judul) + '"><span class="skeleton agt-kgcert__ph" aria-hidden="true"></span></button>' +
+          '<div class="agt-kgcert__body"><p class="agt-kgcert__name">' + h(ev.judul) + '</p>' +
+            '<p class="agt-kgcert__meta">' + h([ev.jenis, K.fmtDate ? K.fmtDate(ev.mulai, { short: true }) : ''].filter(Boolean).join(' · ')) + '</p>' +
+            (no ? '<p class="agt-kgcert__meta">No. <span class="agt-kgcert__no">' + h(disp) + '</span> · <a class="link" href="sertifikat.html?no=' + encodeURIComponent(disp) + '">Periksa keaslian</a></p>'
+              : '<p class="agt-kgcert__meta">Nomor diterbitkan saat pertama kali diunduh.</p>') +
+            '<div class="agt-kgcert__acts"><button type="button" class="btn btn--primary btn--sm" data-action="kgcert-download" data-id="' + h(ev.id) + '">' + icon('download', { size: 16 }) + '<span>Unduh PDF</span></button></div>' +
+          '</div></li>';
+      }).join('') + '</ul>';
+      rows.forEach(function (r) { paintKgcert(r).catch(function (e) { console.warn('[PPAPI] Gambar sertifikat:', e && e.message); }); });
+    }
+    async function kgcertImage(r, width) {
+      var K = PPAPI.kegiatan, no = r.attendance.sertNo;
+      var design = await K.getDesign(r.event.id);
+      return K.certImage(r.event, design, { nama: r.attendance.nama || (r.participant && r.participant.nama) || member.name, no: no || '', verifyUrl: no ? K.verifyUrl(no) : '' }, { width: width || 900 });
+    }
+    async function paintKgcert(r) {
+      var url = await kgcertImage(r, 900);
+      var btn = $('[data-kgcert="' + r.event.id.replace(/"/g, '') + '"] .agt-kgcert__thumb');
+      if (btn) btn.innerHTML = '<img src="' + url + '" alt="Sertifikat ' + h(r.event.judul) + ' atas nama ' + h(r.attendance.nama || member.name) + '" loading="lazy">';
+    }
+    async function kgcertAction(act, id, btn) {
+      var r = kgcertRows.filter(function (x) { return x.event.id === id; })[0];
+      if (!r) return;
+      if (act === 'kgcert-view') {
+        var url = await kgcertImage(r, 1800).catch(function () { return ''; });
+        if (!url) return;
+        ui.modal({ title: r.event.judul, eyebrow: 'Sertifikat kehadiran', size: 'lg', cls: 'agt-modal', body: '<img class="agt-kgcert__big" src="' + url + '" alt="Sertifikat ' + h(r.event.judul) + '">',
+          actions: [{ label: 'Tutup', variant: 'ghost' }, { label: 'Unduh PDF', variant: 'primary', onClick: function () { kgcertAction('kgcert-download', id); return true; } }] });
+        return;
+      }
+      if (btn) ui.setLoading(btn, true);
+      try {
+        var res = await PPAPI.kegiatan.downloadCertificate(id);
+        ui.toast('Sertifikat ' + res.display + ' diunduh.', { type: 'success' });
+        if (!r.attendance.sertNo) await renderKegiatanCerts();
+      } catch (err) {
+        ui.toast(errMessage(err, 'Sertifikat belum dapat diunduh. Silakan coba lagi.'), { type: 'error' });
+      } finally { if (btn && btn.isConnected) ui.setLoading(btn, false); }
     }
 
     /* ==================================================================
@@ -1583,6 +1648,8 @@
         else if (act === 'add-sertifikat') openSertifikatModal(null);
         else if (act === 'edit-sertifikat') openSertifikatModal(member.certificates.filter(function (c) { return c.id === id; })[0] || null);
         else if (act === 'delete-sertifikat') deleteSertifikat(id);
+        else if (act === 'kgcert-view' || act === 'kgcert-download') kgcertAction(act, id, t);
+        else if (act === 'open-sertifikat') PPAPI.berkas.buka(member.uid || (auth.current() || {}).uid, PPAPI.berkas.idSertifikat(id)).catch(function (err) { ui.toast(errMessage(err, 'Berkas belum dapat dibuka.'), { type: 'error' }); });
         else if (act === 'reload-card') reloadCardRecord(t);
       });
     }
@@ -1596,6 +1663,7 @@
     renderCompleteness();
     renderKompetensi();
     renderSertifikat();
+    renderKegiatanCerts();
     renderKartu();
     loadCardRecord().then(renderKartu);
     renderAplikasi();

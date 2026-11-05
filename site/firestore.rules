@@ -424,6 +424,47 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------------
+    // member_files/{uid}/berkas/{fid} — dokumen pendukung yang diunggah anggota
+    // (CV, ijazah, sertifikat, bukti pembayaran) menggantikan tautan Google Drive (05-11-2026).
+    // Info berkas { uid, nama, jenis, ukuran, bagian, updatedAt } + isi di parts/{n} (≤ 900 KB,
+    // paling banyak 5 bagian = 4 MB). Baca: pemilik + admin. Tulis/hapus: pemilik selama
+    // formulir boleh diubah (photoEditable) atau keanggotaan Aktif (sertifikat di profil), dan admin.
+    // ---------------------------------------------------------------------
+    function filesEditable(uid) {
+      return photoEditable(uid)
+          || get(/databases/$(database)/documents/members/$(uid)).data.status == 'Aktif';
+    }
+    function canWriteFiles(uid) {
+      return (isOwner(uid) && filesEditable(uid)) || isAdmin();
+    }
+    match /member_files/{uid}/berkas/{fid} {
+      allow get, list: if isOwner(uid) || isAdmin();
+      allow create, update: if canWriteFiles(uid)
+                            && fid.size() <= 60
+                            && request.resource.data.keys().hasOnly(['uid', 'nama', 'jenis', 'ukuran', 'bagian', 'updatedAt'])
+                            && request.resource.data.uid == uid
+                            && strMax(request.resource.data.nama, 120)
+                            && request.resource.data.jenis in ['application/pdf', 'image/jpeg']
+                            && request.resource.data.ukuran is int
+                            && request.resource.data.ukuran > 0 && request.resource.data.ukuran <= 4194304
+                            && request.resource.data.bagian is int
+                            && request.resource.data.bagian >= 1 && request.resource.data.bagian <= 5
+                            && request.resource.data.updatedAt == request.time;
+      allow delete: if canWriteFiles(uid);
+
+      match /parts/{n} {
+        allow get, list: if isOwner(uid) || isAdmin();
+        allow create, update: if canWriteFiles(uid)
+                              && n in ['0', '1', '2', '3', '4']
+                              && request.resource.data.keys().hasOnly(['b', 'i'])
+                              && request.resource.data.b is bytes
+                              && request.resource.data.b.size() <= 921600
+                              && request.resource.data.i is int;
+        allow delete: if canWriteFiles(uid);
+      }
+    }
+
+    // ---------------------------------------------------------------------
     // admins/{uid} — peran admin (sekretariat)
     // ---------------------------------------------------------------------
     match /admins/{uid} {

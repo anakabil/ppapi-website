@@ -238,6 +238,13 @@
             <div id="sertifikat-list" aria-live="polite">
               <div class="skeleton" aria-hidden="true"><span class="skeleton__line"></span><span class="skeleton__line"></span><span class="skeleton__line"></span></div>
             </div>
+            <section class="agt-kgcert" aria-labelledby="kgcert-title" hidden>
+              <div class="agt-kgcert__head">
+                <h3 class="agt-kgcert__title" id="kgcert-title">Sertifikat kehadiran kegiatan</h3>
+                <p class="agt-kgcert__lead">Sertifikat dari webinar, pelatihan, dan seminar PPAPI yang Anda hadiri. Nomor sertifikat diterbitkan saat pertama kali diunduh dan dapat diperiksa keasliannya oleh siapa pun.</p>
+              </div>
+              <div id="kgcert-list" aria-live="polite"></div>
+            </section>
           </div>
 
           <!-- ---------- d) KARTU ANGGOTA ---------- -->
@@ -279,6 +286,8 @@
   <script src="assets/js/core.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/store.js" defer></script>
+  <script src="assets/js/store-berkas.js" defer></script>
+  <script src="assets/js/store-kegiatan.js" defer></script>
   <script src="assets/js/pages/anggota.js" defer></script>
 </body>
 </html>

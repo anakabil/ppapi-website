@@ -523,3 +523,4 @@ body[data-page="admin"] #log-list > .adm-count + .adm-day { margin-top: 8px; }
   body[data-page="admin"] .adm-nav, body[data-page="admin"] .adm-hero__actions, body[data-page="admin"] .adm-toolbar { display: none; }
   body[data-page="admin"] .adm-shell { display: block; }
 }
+.adm-linkbtn { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }

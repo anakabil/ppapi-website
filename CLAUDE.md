@@ -68,6 +68,17 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   (diabaikan pemeriksa artikel) dan kolom `gambarKeterangan` (kredit foto sampul). Gambar sampul baru wajib didaftarkan di `IMAGES`
   core.js (ukuran + versi -sm) agar lolos uji kartu. Foto kiriman klien (sumber/lisensi tidak diketahui) tidak dipakai. Kunci OpenAI
   di env ditolak (401) per 04-11-2026. Uji berita-agenda-flow/contract-v2 kini menghitung 11 artikel bawaan.
+- Berkas pendukung (05-11-2026): dokumen pengajuan, bukti pembayaran, dan berkas sertifikat **diunggah langsung** (bukan tautan
+  Drive) lewat `assets/js/store-berkas.js` → `member_files/{uid}/berkas/{fid}` (+ `parts/{n}` ≤ 900 KB, maks. 5 = 4 MB; PDF atau foto →
+  JPEG). fid: `dok-<rowId>`, `srt-<certId>`, `bukti-bayar`; baris menyimpan `berkas` (nama), bukti = `pembayaran.buktiUrl='berkas:bukti-bayar'`.
+  Tautan https lama tetap terbaca. Aturan `member_files` (baca pemilik+admin; tulis selama formulir boleh diubah atau status Aktif)
+  **perlu di-Publish**. Skema sertifikasi (`kompetensi.js` › `skema`): Kemnaker (Teknisi/Supervisor K3 Perancah, Ahli K3 Konstruksi),
+  BNSP berjenjang KKNI (jabatan kerja Kepdirjen 114/KPTS/Dk/2024 + LSP migas), Ahli Muda/Madya/Utama K3 Konstruksi, + "Lainnya".
+  Uji: `flows/berkas-flow.mjs`. Uji lama yang masih mengisi tautan (`pendaftaran-flow`, `anggota-flow`, `journey*`, `review-fungsi-*`)
+  perlu disesuaikan (bukan bagian CI).
+- Sertifikat kehadiran di profil (05-11-2026): tab Sertifikat › "Sertifikat kehadiran kegiatan" (`anggota.js` renderKegiatanCerts) —
+  gambar dari `K().certImage` (kanvas, templat/desain sama dengan PDF), tombol Unduh PDF + perbesar. jsPDF kini dimuat dari
+  `assets/vendor/jspdf-2.5.1.umd.min.js` lebih dahulu (CSP halaman profil tidak mengizinkan cdnjs).
 - KTA (04-11-2026): nama sisi depan tembus ke sisi belakang saat kartu dibalik (Safari/Chrome ponsel mengabaikan backface-visibility
   pada line-clamp/background-clip). Perbaikan di anggota.css: sisi yang membelakangi disembunyikan `visibility` tepat di pertengahan
   putaran (delay .55s) + `translateZ(1px)` per sisi.
@@ -128,7 +139,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   Ganti juga *Public-facing name* proyek menjadi `PPAPI`.
 - Kebijakan Privasi: mutakhirkan (data aplikasi anggota kini tersimpan di akun/Firestore, plus data kegiatan & pesanan).
 - **Publish ulang `site/firestore.rules`** (24-10-2026: Mitra Korporat dihapus; 27-10-2026: flyer kegiatan; 28-10-2026:
-  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko, `berat` produk & `ongkirTabel`; 01-11-2026: `orders/{no}/bukti` foto bukti transfer; tanpa publish, unggah
+  `cert_settings` penanda tangan sertifikat; 30-10-2026: `product_files/{id}/parts` berkas PDF toko, `berat` produk & `ongkirTabel`; 01-11-2026: `orders/{no}/bukti` foto bukti transfer; 05-11-2026: `member_files` berkas pendukung anggota; tanpa publish, unggah
   flyer/tanda tangan/PDF di Mode Firebase ditolak `permission-denied`).
 - Data dari klien: nomor & tanggal Keputusan Pengurus penetapan Kode Etik, **ART final yang disahkan Rapat Umum Anggota** (draf "AD-ART rev 01"
   tahun 2020 belum layak terbit: isian kosong, sisa teks organisasi lain, tidak selaras dengan akta), salinan

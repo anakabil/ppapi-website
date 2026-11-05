@@ -152,6 +152,8 @@
   function alnum(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
   function own(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
   /* https://… only (documents, proofs, certificate links) */
+  /* bukti pembayaran: berkas unggahan ('berkas:bukti-bayar', store-berkas.js) atau tautan https lama */
+  function buktiRef(v) { var s = str(v, 1000); return /^berkas:[A-Za-z0-9_-]{1,60}$/.test(s) ? s : httpsUrl(s); }
   function httpsUrl(v, max) { var s = str(v, max || 1000); return /^https:\/\/[^\s<>"']+$/i.test(s) ? s : ''; }
   /* http(s)://… (public regulation links from official sites, some of which are still http) */
   function httpUrl(v, max) { var s = str(v, max || 1000); return /^https?:\/\/[^\s<>"']+$/i.test(s) ? s : ''; }
@@ -239,7 +241,7 @@
        data) also counts. Lists may omit the image itself — see getMember / listMembers / store.pasFoto */
     ap.pasFotoAda = app.pasFotoAda === true || !!ap.pasFoto;
     var pb = app.pembayaran && typeof app.pembayaran === 'object' ? app.pembayaran : {};
-    ap.pembayaran = { metode: txt(pb.metode, 60), tanggal: isIsoDate(pb.tanggal) ? pb.tanggal : '', buktiUrl: httpsUrl(txt(pb.buktiUrl)) };
+    ap.pembayaran = { metode: txt(pb.metode, 60), tanggal: isIsoDate(pb.tanggal) ? pb.tanggal : '', buktiUrl: buktiRef(txt(pb.buktiUrl)) };
     var pn = app.pernyataan && typeof app.pernyataan === 'object' ? app.pernyataan : {};
     ap.pernyataan = { kodeEtik: pn.kodeEtik === true, kebenaranData: pn.kebenaranData === true, privasi: pn.privasi === true, namaTerang: txt(pn.namaTerang, 120), tanggal: isIsoDate(pn.tanggal) ? pn.tanggal : '' };
     out.photoURL = photoUrl(out.photoURL);
@@ -334,7 +336,8 @@
       return {
         id: itemId(c, 'c', i, read),
         title: txt(c.title, 200), number: txt(c.number, 120), issuer: txt(c.issuer, 200),
-        issuedAt: txt(c.issuedAt, 10), expiresAt: txt(c.expiresAt, 10), link: httpsUrl(txt(c.link, 1000))
+        issuedAt: txt(c.issuedAt, 10), expiresAt: txt(c.expiresAt, 10), link: httpsUrl(txt(c.link, 1000)),
+        berkas: txt(c.berkas, 120)   /* nama berkas yang diunggah ke member_files (store-berkas.js) */
       };
     });
   }
@@ -345,8 +348,8 @@
   }
   function cleanDokumen(list, read) {
     return (Array.isArray(list) ? list : []).filter(function (x) { return x && typeof x === 'object'; }).slice(0, LIMITS.dokumen).map(function (x, i) {
-      return { id: str(itemId(x, 'd', i, read), 60), jenis: DOC_TYPES.indexOf(x.jenis) !== -1 ? x.jenis : 'Lainnya', label: str(txt(x.label), 160), url: httpsUrl(txt(x.url)) };
-    }).filter(function (x) { return x.label || x.url; });
+      return { id: str(itemId(x, 'd', i, read), 60), jenis: DOC_TYPES.indexOf(x.jenis) !== -1 ? x.jenis : 'Lainnya', label: str(txt(x.label), 160), url: httpsUrl(txt(x.url)), berkas: str(txt(x.berkas), 120) };
+    }).filter(function (x) { return x.label || x.url || x.berkas; });
   }
   function merge(base, patch) {
     var out = clone(base);
@@ -385,7 +388,7 @@
       a.pembayaran = {
         metode: pb.metode !== undefined ? str(pb.metode, 60) : (cur.metode || ''),
         tanggal: pb.tanggal !== undefined ? (isIsoDate(pb.tanggal) ? pb.tanggal : '') : (cur.tanggal || ''),
-        buktiUrl: pb.buktiUrl !== undefined ? httpsUrl(pb.buktiUrl) : (cur.buktiUrl || '')
+        buktiUrl: pb.buktiUrl !== undefined ? buktiRef(pb.buktiUrl) : (cur.buktiUrl || '')
       };
     }
     if (p.pernyataan && typeof p.pernyataan === 'object') {
@@ -423,7 +426,7 @@
     need(filled(p.position), 'position', 'profesional', 'Jabatan');
     need(a.pengalaman.length > 0 || (p.experienceYears !== null && p.experienceYears !== '' && p.experienceYears !== undefined), 'pengalaman', 'profesional', 'Pengalaman di bidang perancah (tahun) atau riwayat proyek');
     var cfg = PPAPI.config || {};
-    if (cfg.iuran && cfg.iuran.aktif) need(!!a.pembayaran.buktiUrl, 'pembayaran', 'dokumen', 'Tautan bukti pembayaran iuran');
+    if (cfg.iuran && cfg.iuran.aktif) need(!!a.pembayaran.buktiUrl, 'pembayaran', 'dokumen', 'Bukti pembayaran iuran');
     need(a.pernyataan.kodeEtik === true, 'kodeEtik', 'pernyataan', 'Pernyataan mematuhi Kode Etik dan AD/ART PPAPI');
     need(a.pernyataan.kebenaranData === true, 'kebenaranData', 'pernyataan', 'Pernyataan kebenaran data');
     need(a.pernyataan.privasi === true, 'privasi', 'pernyataan', 'Persetujuan Kebijakan Privasi');

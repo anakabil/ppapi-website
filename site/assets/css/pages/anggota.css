@@ -717,3 +717,20 @@ body[data-page="anggota"] .agt-kta__face--back .agt-kta__surface {
     linear-gradient(160deg, var(--c-graphite) 0%, var(--c-black) 64%);
 }
 body[data-page="anggota"] .agt-kta__surface > .agt-kta__lines { display: none; }
+
+/* sertifikat kehadiran kegiatan di tab Sertifikat (dibuat dari templat sertifikat kegiatan) */
+body[data-page="anggota"] .agt-kgcert { margin-top: clamp(36px, 5vw, 56px); padding-top: clamp(24px, 3vw, 32px); border-top: 1px solid var(--line); }
+body[data-page="anggota"] .agt-kgcert__title { margin: 0 0 8px; font: 600 1.35rem/1.2 var(--f-display); }
+body[data-page="anggota"] .agt-kgcert__lead { margin: 0 0 22px; max-width: 70ch; color: var(--muted); }
+body[data-page="anggota"] .agt-kgcert__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 20px; margin: 0; padding: 0; list-style: none; }
+body[data-page="anggota"] .agt-kgcert__card { display: flex; flex-direction: column; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+body[data-page="anggota"] .agt-kgcert__thumb { display: block; width: 100%; aspect-ratio: 297 / 210; padding: 0; border: 0; border-bottom: 1px solid var(--line); background: #fff; cursor: zoom-in; }
+body[data-page="anggota"] .agt-kgcert__thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+body[data-page="anggota"] .agt-kgcert__ph { display: block; width: 100%; height: 100%; }
+body[data-page="anggota"] .agt-kgcert__body { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 18px; }
+body[data-page="anggota"] .agt-kgcert__name { margin: 0; font-weight: 600; line-height: 1.4; }
+body[data-page="anggota"] .agt-kgcert__meta { margin: 0; font-size: .88rem; color: var(--muted); overflow-wrap: anywhere; }
+body[data-page="anggota"] .agt-kgcert__no { font-variant-numeric: tabular-nums; color: var(--text); }
+body[data-page="anggota"] .agt-kgcert__acts { margin-top: 8px; }
+body[data-page="anggota"] .agt-kgcert__empty { display: flex; gap: 10px; align-items: flex-start; margin: 0; color: var(--muted); }
+body[data-page="anggota"] .agt-kgcert__big { display: block; width: 100%; height: auto; background: #fff; }

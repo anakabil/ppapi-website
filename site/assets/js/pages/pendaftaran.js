@@ -27,7 +27,7 @@
     { key: 'kompetensi', label: 'Kompetensi & Sertifikat', title: 'Kompetensi & <em>sertifikat</em>',
       lead: 'Cantumkan kompetensi yang Anda kuasai dan sertifikat yang Anda miliki. Bagian ini tidak wajib, tetapi sangat membantu verifikasi — terutama untuk kategori Ahli.' },
     { key: 'dokumen', label: 'Dokumen Pendukung', title: 'Dokumen <em>pendukung</em>',
-      lead: 'Lampirkan tautan dokumen yang disimpan di layanan penyimpanan daring. Situs ini tidak menyimpan berkas, hanya tautannya.' },
+      lead: 'Unggah dokumen pendukung langsung dari perangkat Anda. Berkas disimpan di basis data PPAPI dan hanya dapat dibuka oleh Anda dan sekretariat.' },
     { key: 'pernyataan', label: 'Pernyataan', title: 'Pernyataan <em>pemohon</em>',
       lead: 'Baca dan setujui pernyataan berikut, lalu ketik nama terang Anda sebagai tanda tangan elektronik.' },
     { key: 'tinjau', label: 'Tinjau & Kirim', title: 'Tinjau & <em>kirim</em>',
@@ -370,7 +370,7 @@
         '<ul class="daf-help__list">' +
           '<li>Data identitas dan nomor HP yang aktif</li>' +
           '<li>Riwayat pekerjaan atau proyek perancah</li>' +
-          '<li>Tautan dokumen (CV, sertifikat, ijazah) di Google Drive atau layanan serupa</li>' +
+          '<li>Berkas dokumen (CV, sertifikat, ijazah) dalam bentuk PDF atau foto</li>' +
           '<li>Pas foto berlatar polos <span class="muted">(opsional)</span></li>' +
         '</ul>' +
         '<p class="daf-help__foot">Ada pertanyaan? <a class="link" href="umpan-balik.html?kategori=Pertanyaan">Hubungi sekretariat</a></p>' +
@@ -378,7 +378,7 @@
     }
     function renderWizard(opts) {
       S.peng = (member.application.pengalaman || []).map(function (x) { return { id: safeId(x.id), proyek: x.proyek, peran: x.peran, tahun: x.tahun, lokasi: x.lokasi }; });
-      S.dok = (member.application.dokumen || []).map(function (x) { return { id: safeId(x.id), jenis: x.jenis, label: x.label, url: x.url }; });
+      S.dok = (member.application.dokumen || []).map(function (x) { return { id: safeId(x.id), jenis: x.jenis, label: x.label, url: x.url, berkas: x.berkas || '' }; });
       root.innerHTML = noticesHtml() +
         '<div class="daf-wizard">' +
           /* daf-railmeta: the completeness line for phones, where the hero status card is hidden to bring the form up */
@@ -614,17 +614,20 @@
             '<div class="field"><label class="field__label" for="f-pay-tanggal">Tanggal pembayaran <span class="opt">(opsional)</span></label>' +
               '<input class="field__control" id="f-pay-tanggal" type="date" max="' + h(util.todayIso()) + '" data-bind="app.pembayaran.tanggal"></div>' +
           '</div>' +
-          '<div class="field"><label class="field__label" for="f-pay-bukti">Tautan bukti pembayaran' + req() + '</label>' +
-            '<div class="input-icon">' + icon('link', { size: 18 }) + '<input class="field__control" id="f-pay-bukti" type="url" inputmode="url" maxlength="1000" required placeholder="https://drive.google.com/…" data-bind="app.pembayaran.buktiUrl"></div></div>' +
+          '<div class="field"><span class="field__label" id="f-pay-bukti-label">Bukti pembayaran' + req() + '</span>' +
+            '<div class="berkas-pick" id="f-pay-bukti" tabindex="-1"><span class="berkas-pick__name" data-bukti-name></span>' +
+            '<button type="button" class="btn btn--link btn--sm" data-action="bukti-open" hidden>' + icon('eye', { size: 16 }) + '<span>Lihat</span></button>' +
+            '<label class="btn btn--ghost btn--sm"><span data-bukti-pick>Unggah bukti</span><input class="sr-only" type="file" id="f-pay-file" accept="' + h(BK().ACCEPT) + '" aria-labelledby="f-pay-bukti-label"></label></div>' +
+            '<p class="field__hint">Foto atau PDF bukti transfer (PDF maksimal 4 MB).</p><p class="field__error"></p></div>' +
         '</div>';
       }
       return '<form class="daf-form form" data-form="dokumen" novalidate>' +
         '<div class="daf-tip">' + icon('upload', { size: 20 }) +
           '<div><p class="daf-tip__title">Cara melampirkan dokumen</p>' +
-          '<ol class="daf-tip__list"><li>Unggah berkas (PDF atau foto) ke Google Drive, OneDrive, atau layanan serupa.</li>' +
-          '<li>Ubah akses berbagi menjadi <strong>“Siapa saja yang memiliki link dapat melihat”</strong>.</li>' +
-          '<li>Salin tautannya, lalu tempel di bawah. Tautan harus diawali <span class="nowrap">https://</span>.</li></ol>' +
-          '<p class="daf-tip__note"><strong>Jangan melampirkan KTP, NIK, atau data rekening kecuali diminta sekretariat.</strong> Di situs ini tautan hanya dapat dilihat oleh Anda dan sekretariat, tetapi siapa pun yang memegang tautan tersebut dapat membuka berkasnya. Pertahankan akses berbagi sampai pengajuan Anda diputuskan; setelah itu akses tersebut dapat Anda nonaktifkan (lihat <a class="link" href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a>).</p></div>' +
+          '<ol class="daf-tip__list"><li>Pilih <strong>Tambah dokumen</strong>, lalu tentukan jenisnya.</li>' +
+          '<li>Pilih <strong>Unggah berkas</strong> dan ambil berkas dari perangkat Anda: PDF maksimal 4 MB, atau foto JPG/PNG yang dikompresi otomatis.</li>' +
+          '<li>Berkas langsung tersimpan di basis data PPAPI. Tidak perlu Google Drive atau tautan berbagi.</li></ol>' +
+          '<p class="daf-tip__note"><strong>Jangan melampirkan KTP, NIK, atau data rekening kecuali diminta sekretariat.</strong> Berkas hanya dapat dibuka oleh Anda dan sekretariat PPAPI, dan tidak dapat diubah setelah pengajuan dikirim sampai sekretariat mengembalikannya untuk diperbaiki (lihat <a class="link" href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi<span class="sr-only"> (tab baru)</span></a>).</p></div>' +
         '</div>' +
         '<div class="daf-sub">' +
           '<div class="daf-sub__head"><h3 class="daf-sub__title">Daftar dokumen</h3><span class="daf-sub__count" id="dok-count" aria-live="polite"></span></div>' +
@@ -703,7 +706,7 @@
       if (IURAN) {
         $('#f-pay-metode').value = a.pembayaran.metode || '';
         $('#f-pay-tanggal').value = a.pembayaran.tanggal || '';
-        $('#f-pay-bukti').value = a.pembayaran.buktiUrl || '';
+        syncBukti();
       }
       $('#f-kodeEtik').checked = !!a.pernyataan.kodeEtik;
       $('#f-kebenaranData').checked = !!a.pernyataan.kebenaranData;
@@ -806,16 +809,70 @@
       var opts = DOC_TYPES.map(function (t) { return '<option value="' + h(t) + '"' + (t === x.jenis ? ' selected' : '') + '>' + h(t) + '</option>'; }).join('');
       return '<li class="daf-rep" data-id="' + h(id) + '">' +
         '<div class="daf-rep__head"><span class="daf-rep__num">' + pad(i + 1) + '</span><span class="daf-rep__title">' + h(x.label || x.jenis || 'Dokumen') + '</span>' +
-          (isHttps(x.url) ? '<a class="btn btn--link btn--sm daf-rep__open" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer"><span>Buka</span><span class="sr-only"> dokumen ' + (i + 1) + ' (tab baru)</span>' + icon('arrow-up-right', { size: 16, cls: 'btn__icon' }) + '</a>' : '') +
+          (x.berkas ? '<button type="button" class="btn btn--link btn--sm daf-rep__open" data-action="dok-open" data-id="' + h(id) + '"><span>Buka</span><span class="sr-only"> dokumen ' + (i + 1) + '</span>' + icon('arrow-up-right', { size: 16, cls: 'btn__icon' }) + '</button>'
+            : isHttps(x.url) ? '<a class="btn btn--link btn--sm daf-rep__open" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer"><span>Buka tautan lama</span><span class="sr-only"> dokumen ' + (i + 1) + ' (tab baru)</span>' + icon('arrow-up-right', { size: 16, cls: 'btn__icon' }) + '</a>' : '') +
           '<button type="button" class="icon-btn icon-btn--ghost icon-btn--sm" data-action="dok-remove" data-id="' + h(id) + '" aria-label="Hapus dokumen ' + (i + 1) + '">' + icon('trash', { size: 18 }) + '</button></div>' +
         '<div class="daf-rep__grid">' +
           '<div class="field"><label class="field__label" for="dok-jenis-' + id + '">Jenis dokumen</label>' +
             '<select class="field__control" id="dok-jenis-' + id + '" data-rep="dok" data-key="jenis">' + opts + '</select></div>' +
           '<div class="field"><label class="field__label" for="dok-label-' + id + '">Keterangan <span class="opt">(opsional)</span></label>' +
             '<input class="field__control" id="dok-label-' + id + '" type="text" maxlength="160" autocomplete="off" placeholder="mis. CV terbaru 2026" data-rep="dok" data-key="label" value="' + h(x.label || '') + '"></div>' +
-          '<div class="field daf-rep__wide"><label class="field__label" for="dok-url-' + id + '">Tautan dokumen' + req() + '</label>' +
-            '<div class="input-icon">' + icon('link', { size: 18 }) + '<input class="field__control" id="dok-url-' + id + '" type="url" inputmode="url" maxlength="1000" autocomplete="off" placeholder="https://drive.google.com/…" data-rep="dok" data-key="url" value="' + h(x.url || '') + '"></div></div>' +
+          '<div class="field daf-rep__wide"><span class="field__label" id="dok-flabel-' + id + '">Berkas dokumen' + req() + '</span>' +
+            '<div class="berkas-pick" id="dok-url-' + id + '" tabindex="-1"><span class="berkas-pick__name">' + (x.berkas ? h(x.berkas) : (isHttps(x.url) ? 'Masih berupa tautan lama. Unggah berkasnya agar tersimpan di PPAPI.' : 'Belum ada berkas')) + '</span>' +
+            '<label class="btn btn--ghost btn--sm"><span>' + (x.berkas ? 'Ganti berkas' : 'Unggah berkas') + '</span><input class="sr-only" type="file" accept="' + h(BK().ACCEPT) + '" data-dok-file="' + h(id) + '" aria-labelledby="dok-flabel-' + id + '"></label></div>' +
+            '<p class="field__hint">PDF maksimal 4 MB, atau foto JPG/PNG.</p><p class="field__error"></p></div>' +
         '</div></li>';
+    }
+    function BK() { return PPAPI.berkas; }
+    /* unggah berkas satu baris dokumen → member_files (store-berkas.js), lalu simpan nama berkasnya */
+    async function uploadDok(id, inp) {
+      var file = inp.files && inp.files[0];
+      inp.value = '';
+      if (!file) return;
+      readDok();
+      var x = S.dok.filter(function (r) { return r.id === id; })[0];
+      if (!x) return;
+      var lab = inp.closest('label'), span = lab && lab.querySelector('span');
+      if (lab) lab.classList.add('is-loading');
+      if (span) span.textContent = 'Mengunggah…';
+      try {
+        var meta = await BK().simpan(BK().idDokumen(id), file);
+        x.berkas = meta.nama; x.url = '';
+        renderDok();
+        queueApp({ dokumen: readDok() });
+        setError(d.getElementById('dok-url-' + id), ''); pruneErrSum();
+        ui.toast('Berkas “' + meta.nama + '” (' + BK().fmtUkuran(meta.ukuran) + ') tersimpan.', { type: 'success' });
+      } catch (err) {
+        renderDok();
+        ui.toast(errMsg(err, 'Berkas gagal diunggah. Silakan coba lagi.'), { type: 'error' });
+      }
+    }
+    function syncBukti() {
+      var box = $('#f-pay-bukti');
+      if (!box) return;
+      var v = String((member.application.pembayaran || {}).buktiUrl || ''), up = v.indexOf(BK().MARK) === 0;
+      box.querySelector('[data-bukti-name]').textContent = up ? (S.buktiNama || 'Bukti pembayaran tersimpan') : (/^https:/.test(v) ? 'Masih berupa tautan lama. Unggah berkasnya agar tersimpan di PPAPI.' : 'Belum ada bukti pembayaran');
+      box.querySelector('[data-bukti-pick]').textContent = up ? 'Ganti bukti' : 'Unggah bukti';
+      box.querySelector('[data-action="bukti-open"]').hidden = !up;
+      if (up && !S.buktiNama) BK().info(user.uid, BK().ID_BUKTI).then(function (m) { if (m) { S.buktiNama = m.nama + ' (' + BK().fmtUkuran(m.ukuran) + ')'; syncBukti(); } }).catch(function () {});
+    }
+    async function uploadBukti(inp) {
+      var file = inp.files && inp.files[0];
+      inp.value = '';
+      if (!file) return;
+      var span = $('[data-bukti-pick]');
+      if (span) span.textContent = 'Mengunggah…';
+      try {
+        var meta = await BK().simpan(BK().ID_BUKTI, file);
+        S.buktiNama = meta.nama + ' (' + BK().fmtUkuran(meta.ukuran) + ')';
+        member.application.pembayaran = Object.assign({}, member.application.pembayaran || {}, { buktiUrl: BK().MARK + BK().ID_BUKTI });
+        queueApp({ pembayaran: { buktiUrl: BK().MARK + BK().ID_BUKTI } });
+        setError($('#f-pay-bukti'), ''); pruneErrSum();
+        ui.toast('Bukti pembayaran tersimpan.', { type: 'success' });
+      } catch (err) {
+        ui.toast(errMsg(err, 'Bukti pembayaran gagal diunggah. Silakan coba lagi.'), { type: 'error' });
+      }
+      syncBukti();
     }
     function renderDok() {
       var list = $('#dok-list');
@@ -828,13 +885,13 @@
     }
     function readDok() {
       S.dok.forEach(function (x) {
-        ['jenis', 'label', 'url'].forEach(function (k) {
+        ['jenis', 'label'].forEach(function (k) {
           var el = d.getElementById('dok-' + k + '-' + x.id);
-          if (el) x[k] = k === 'url' ? fixUrl(el.value) : el.value.trim().replace(/\s+/g, ' ');
+          if (el) x[k] = el.value.trim().replace(/\s+/g, ' ');
         });
       });
-      return S.dok.filter(function (x) { return x.label || x.url; }).map(function (x) {
-        return { id: x.id, jenis: x.jenis || 'Lainnya', label: x.label, url: x.url };
+      return S.dok.filter(function (x) { return x.label || x.url || x.berkas; }).map(function (x) {
+        return { id: x.id, jenis: x.jenis || 'Lainnya', label: x.label, url: x.berkas ? '' : (x.url || ''), berkas: x.berkas || '' };
       });
     }
 
@@ -859,7 +916,8 @@
         '<span class="daf-item__icon" aria-hidden="true">' + icon('certificate', { size: 18 }) + '</span>' +
         '<span class="daf-item__body"><span class="daf-item__title">' + h(title) + '</span><span class="daf-item__meta">' + h(meta) + '</span>' +
           '<span class="daf-item__badges"><span class="badge badge--' + h(s.tone) + '">' + h(s.label) + '</span>' +
-          (isHttp(c.link) ? '<a class="daf-item__link" href="' + h(c.link) + '" target="_blank" rel="noopener noreferrer">Lihat dokumen<span class="sr-only"> ' + h(title) + ' (tab baru)</span>' + icon('arrow-up-right', { size: 14 }) + '</a>' : '') +
+          (c.berkas ? '<button type="button" class="daf-item__link" data-action="cert-open" data-id="' + h(c.id) + '">Lihat berkas<span class="sr-only"> ' + h(title) + '</span>' + icon('arrow-up-right', { size: 14 }) + '</button>'
+            : isHttp(c.link) ? '<a class="daf-item__link" href="' + h(c.link) + '" target="_blank" rel="noopener noreferrer">Lihat dokumen (tautan lama)<span class="sr-only"> ' + h(title) + ' (tab baru)</span>' + icon('arrow-up-right', { size: 14 }) + '</a>' : '') +
           '</span></span>' +
         '<span class="daf-item__actions">' +
           '<button type="button" class="icon-btn icon-btn--ghost icon-btn--sm" data-action="cert-edit" data-id="' + h(c.id) + '" aria-label="Ubah sertifikat ' + h(title) + '">' + icon('edit', { size: 18 }) + '</button>' +
@@ -1112,16 +1170,15 @@
       } else if (key === 'dokumen') {
         readDok().forEach(function (x, i) {
           var uEl = d.getElementById('dok-url-' + x.id);
-          var um = !x.url ? 'Tempel tautan dokumen, atau hapus baris ini.' : (isHttps(x.url) ? '' : 'Tautan harus diawali https:// (misalnya https://drive.google.com/…).');
+          var um = x.berkas ? '' : 'Unggah berkas dokumen, atau hapus baris ini.';
           setError(uEl, um);
-          if (um) list.push({ el: uEl, msg: um, label: 'Dokumen ' + (i + 1) + ' — tautan' });
+          if (um) list.push({ el: uEl, msg: um, label: 'Dokumen ' + (i + 1) + ' — berkas' });
         });
         if (IURAN) {
-          var b = $('#f-pay-bukti'), bv2 = fixUrl(b.value), bm2 = '';
-          if (!bv2) bm2 = 'Tempel tautan bukti pembayaran iuran.';
-          else if (!isHttps(bv2)) bm2 = 'Tautan harus diawali https://.';
+          var b = $('#f-pay-bukti'), bv2 = String((member.application.pembayaran || {}).buktiUrl || ''), bm2 = '';
+          if (bv2.indexOf(BK().MARK) !== 0) bm2 = 'Unggah bukti pembayaran iuran (foto atau PDF).';
           setError(b, bm2);
-          if (bm2) list.push({ el: b, msg: bm2, label: 'Tautan bukti pembayaran' });
+          if (bm2) list.push({ el: b, msg: bm2, label: 'Bukti pembayaran' });
         }
       } else if (key === 'pernyataan') {
         [['kodeEtik', 'Setujui pernyataan mematuhi Kode Etik dan AD/ART PPAPI.', 'Kode Etik & AD/ART'],
@@ -1314,7 +1371,7 @@
     }
     function stripRow(kind) {
       return function (x) {
-        return kind === 'peng' ? { id: safeId(x.id), proyek: x.proyek, peran: x.peran, tahun: x.tahun, lokasi: x.lokasi } : { id: safeId(x.id), jenis: x.jenis, label: x.label, url: x.url };
+        return kind === 'peng' ? { id: safeId(x.id), proyek: x.proyek, peran: x.peran, tahun: x.tahun, lokasi: x.lokasi } : { id: safeId(x.id), jenis: x.jenis, label: x.label, url: x.url, berkas: x.berkas || '' };
       };
     }
     function readPernyataan() {
@@ -1358,7 +1415,6 @@
         syncCounters();
       } else if (bind.indexOf('app.pembayaran.') === 0) {
         var pk = bind.slice(15), val = String(v).trim();
-        if (pk === 'buktiUrl') { val = fixUrl(val); if (val && !isHttps(val)) return; }
         var pb = {}; pb[pk] = val;
         queueApp({ pembayaran: pb });
       } else if (bind.indexOf('app.pernyataan.') === 0) {
@@ -1456,8 +1512,7 @@
       var editing = !!item;
       var dl = '<datalist id="mc-issuers">' + PENERBIT.map(function (p) { return '<option value="' + h(p) + '"></option>'; }).join('') + '</datalist>';
       var body = '<form class="form daf-mform" id="mc-form" novalidate>' +
-        '<div class="field"><label class="field__label" for="mc-title">Nama sertifikat' + req() + '</label>' +
-          '<input class="field__control" id="mc-title" type="text" maxlength="200" autocomplete="off" required placeholder="mis. Teknisi Perancah" value="' + h(item ? item.title : '') + '"></div>' +
+        BK().ui.skemaHtml('mc', item ? item.title : '') +
         '<div class="form__row form__row--2">' +
           '<div class="field"><label class="field__label" for="mc-number">Nomor sertifikat <span class="opt">(opsional)</span></label>' +
             '<input class="field__control" id="mc-number" type="text" maxlength="120" autocomplete="off" value="' + h(item ? item.number : '') + '"></div>' +
@@ -1471,25 +1526,28 @@
             '<input class="field__control" id="mc-expires" type="date" aria-describedby="mc-expires-hint" value="' + h(item ? item.expiresAt : '') + '">' +
             '<p class="field__hint" id="mc-expires-hint">Kosongkan bila sertifikat tidak memiliki masa berlaku.</p></div>' +
         '</div>' +
-        '<div class="field"><label class="field__label" for="mc-link">Tautan dokumen <span class="opt">(opsional)</span></label>' +
-          '<div class="input-icon">' + icon('link', { size: 18 }) + '<input class="field__control" id="mc-link" type="url" inputmode="url" maxlength="1000" autocomplete="off" placeholder="https://drive.google.com/…" value="' + h(item ? item.link : '') + '"></div></div>' +
+        BK().ui.fileHtml('mc', item ? item.berkas : '', 'Berkas sertifikat') +
+        (item && item.link && !item.berkas ? '<p class="field__hint">Sertifikat ini masih memakai tautan lama. Unggah berkasnya agar tersimpan di basis data PPAPI.</p>' : '') +
         '<button type="submit" hidden tabindex="-1" aria-hidden="true"></button></form>';
-      var el = null;
+      var el = null, pickFile = function () { return null; };
       function q(id) { return el ? el.querySelector('#' + id) : null; }
       function submit() {
-        var title = q('mc-title').value.trim().replace(/\s+/g, ' ');
+        var sk = BK().ui.skemaValue(el, 'mc'), title = sk.title;
         var issued = q('mc-issued').value, expires = q('mc-expires').value;
-        var link = fixUrl(q('mc-link').value);
         var bad = [];
         function chk(c, m) { setError(c, m); if (m) bad.push(c); }
-        chk(q('mc-title'), title.length < 3 ? 'Isi nama sertifikat (minimal 3 karakter).' : '');
+        chk(sk.el || q('mc-skema'), !title ? 'Pilih skema sertifikasi.' : title.length < 3 ? 'Isi nama sertifikat (minimal 3 karakter).' : '');
         chk(q('mc-issued'), q('mc-issued').validity.badInput || (issued && issued > util.todayIso()) ? 'Tanggal terbit tidak valid.' : '');
         chk(q('mc-expires'), q('mc-expires').validity.badInput || (expires && issued && expires < issued) ? 'Tanggal berlaku harus setelah tanggal terbit.' : '');
-        chk(q('mc-link'), link && !isHttp(link) ? 'Tautan harus diawali https://.' : '');
         if (bad.length) { bad[0].focus(); return false; }
-        var rec = { id: item ? item.id : util.uid('c'), title: title, number: q('mc-number').value.trim(), issuer: q('mc-issuer').value.trim(), issuedAt: issued, expiresAt: expires, link: link };
-        var list = item ? member.certificates.map(function (c) { return c.id === item.id ? rec : c; }) : member.certificates.concat([rec]);
-        return saveMemberNow({ certificates: list }).then(function () {
+        var rec = { id: item ? item.id : util.uid('c'), title: title, number: q('mc-number').value.trim(), issuer: q('mc-issuer').value.trim(), issuedAt: issued, expiresAt: expires,
+          link: item && !item.berkas ? (item.link || '') : '', berkas: item ? (item.berkas || '') : '' };
+        var file = pickFile();
+        var up = file ? BK().simpan(BK().idSertifikat(rec.id), file).then(function (meta) { rec.berkas = meta.nama; rec.link = ''; }) : Promise.resolve();
+        return up.then(function () {
+          var list = item ? member.certificates.map(function (c) { return c.id === item.id ? rec : c; }) : member.certificates.concat([rec]);
+          return saveMemberNow({ certificates: list });
+        }).then(function () {
           renderKomp();
           ui.toast(editing ? 'Sertifikat diperbarui.' : 'Sertifikat ditambahkan.', { type: 'success' });
           setTimeout(function () { focusEl(root.querySelector('[data-action="cert-edit"][data-id="' + cssEsc(rec.id) + '"]') || root.querySelector('[data-action="cert-add"]')); }, 60);
@@ -1501,8 +1559,10 @@
         actions: [{ label: 'Batal', variant: 'ghost' }, { label: editing ? 'Simpan perubahan' : 'Tambahkan', variant: 'primary', onClick: function () { return submit(); } }],
         onOpen: function (m) {
           el = m;
-          ['mc-title', 'mc-issued', 'mc-expires', 'mc-link'].forEach(function (id) { q(id).addEventListener('input', function () { setError(q(id), ''); }); });
-          q('mc-link').addEventListener('blur', function () { var f = fixUrl(q('mc-link').value); if (f !== q('mc-link').value.trim()) q('mc-link').value = f; });
+          BK().ui.skemaBind(m, 'mc', q('mc-issuer'));
+          pickFile = BK().ui.fileBind(m, 'mc');
+          ['mc-title', 'mc-issued', 'mc-expires'].forEach(function (id) { q(id).addEventListener('input', function () { setError(q(id), ''); }); });
+          q('mc-skema').addEventListener('change', function () { setError(q('mc-skema'), ''); });
           q('mc-form').addEventListener('submit', function (e) { e.preventDefault(); var b = m.querySelectorAll('.modal__footer .btn'); if (b.length) b[b.length - 1].click(); });
         }
       });
@@ -1521,6 +1581,7 @@
         var patch = {};
         patch[isK ? 'competencies' : 'certificates'] = list.filter(function (x) { return x.id !== id; });
         await saveMemberNow(patch);
+        if (!isK && it.berkas) BK().hapus(BK().idSertifikat(it.id)).catch(function (e) { console.warn('[PPAPI] Berkas sertifikat belum terhapus:', e && e.message); });
         renderKomp();
         ui.toast((isK ? 'Kompetensi' : 'Sertifikat') + ' dihapus.', { type: 'success' });
         focusEl(root.querySelector('[data-action="' + (isK ? 'komp-add' : 'cert-add') + '"]'));
@@ -1595,13 +1656,14 @@
       var docs = a.dokumen.length
         ? '<ul class="daf-sum-list">' + a.dokumen.map(function (x) {
             var label = x.label || x.jenis || 'Dokumen';
-            return '<li><span class="daf-sum-list__title">' + (x.url ? '<a class="link" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer">' + h(label) + '<span class="sr-only"> (tab baru)</span></a>' : h(label) + ' <span class="daf-miss daf-miss--req">tautan belum valid</span>') + '</span>' +
-              '<span class="daf-sum-list__meta">' + h(x.jenis) + (x.url ? ' · ' + h(prettyUrl(x.url).slice(0, 48)) + (prettyUrl(x.url).length > 48 ? '…' : '') : '') + '</span></li>';
+            return '<li><span class="daf-sum-list__title">' + (x.berkas ? '<button type="button" class="link daf-linkbtn" data-action="dok-open" data-id="' + h(x.id) + '">' + h(label) + '</button>' : x.url ? '<a class="link" href="' + h(x.url) + '" target="_blank" rel="noopener noreferrer">' + h(label) + '<span class="sr-only"> (tab baru)</span></a> <span class="daf-miss daf-miss--req">masih tautan, unggah berkasnya</span>' : h(label) + ' <span class="daf-miss daf-miss--req">berkas belum diunggah</span>') + '</span>' +
+              '<span class="daf-sum-list__meta">' + h(x.jenis) + (x.berkas ? ' · ' + h(x.berkas) : '') + '</span></li>';
           }).join('') + '</ul>'
         : val('');
       var payRows = '';
       if (IURAN) {
-        payRows = kvRow('Bukti pembayaran', a.pembayaran.buktiUrl ? '<a class="link" href="' + h(a.pembayaran.buktiUrl) + '" target="_blank" rel="noopener noreferrer">Lihat bukti<span class="sr-only"> (tab baru)</span></a>' : val('', true)) +
+        var bu = String(a.pembayaran.buktiUrl || '');
+        payRows = kvRow('Bukti pembayaran', bu.indexOf(BK().MARK) === 0 ? '<button type="button" class="link daf-linkbtn" data-action="bukti-open">Lihat bukti</button>' : /^https:/.test(bu) ? '<a class="link" href="' + h(bu) + '" target="_blank" rel="noopener noreferrer">Lihat bukti (tautan lama)<span class="sr-only"> (tab baru)</span></a>' : val('', true)) +
           kvRow('Metode / tanggal', val([a.pembayaran.metode, a.pembayaran.tanggal ? fmtDate(a.pembayaran.tanggal) : ''].filter(Boolean).join(' · ')));
       }
       out += sumGroup(5, 'dokumen', 'Dokumen pendukung', '<dl class="kv">' + kvRow('Dokumen', docs) + payRows + kvRow('Catatan', a.catatan ? '<span class="daf-pre">' + h(a.catatan) + '</span>' : val('')) + '</dl>', editable, miss['step:dokumen']);
@@ -1879,6 +1941,8 @@
     root.addEventListener('change', function (e) {
       var el = e.target;
       if (el.id === 'f-pasFoto') { onPhotoChosen(el); return; }
+      if (el.hasAttribute('data-dok-file')) { uploadDok(el.getAttribute('data-dok-file'), el); return; }
+      if (el.id === 'f-pay-file') { uploadBukti(el); return; }
       if (el.hasAttribute('data-rep')) {
         if (el.getAttribute('data-rep') === 'dok') queueApp({ dokumen: readDok() });
         else queueApp({ pengalaman: readPeng() });
@@ -1953,6 +2017,15 @@
           focusEl(d.getElementById('dok-jenis-' + nd.id));
           break;
         case 'peng-remove':
+        case 'cert-open':
+          BK().buka(user.uid, BK().idSertifikat(t.getAttribute('data-id'))).catch(function (err) { ui.toast(errMsg(err, 'Berkas belum dapat dibuka.'), { type: 'error' }); });
+          break;
+        case 'dok-open':
+          BK().buka(user.uid, BK().idDokumen(t.getAttribute('data-id'))).catch(function (err) { ui.toast(errMsg(err, 'Berkas belum dapat dibuka.'), { type: 'error' }); });
+          break;
+        case 'bukti-open':
+          BK().buka(user.uid, BK().ID_BUKTI).catch(function (err) { ui.toast(errMsg(err, 'Berkas belum dapat dibuka.'), { type: 'error' }); });
+          break;
         case 'dok-remove':
           removeRow(act === 'peng-remove' ? 'peng' : 'dok', t.getAttribute('data-id'));
           break;
@@ -1998,7 +2071,7 @@
       list.forEach(function (x, i) { if (x.id === id) idx = i; });
       if (idx === -1) return;
       var x = list[idx];
-      var filled = kind === 'peng' ? (x.proyek || x.peran || x.tahun || x.lokasi) : (x.label || x.url);
+      var filled = kind === 'peng' ? (x.proyek || x.peran || x.tahun || x.lokasi) : (x.label || x.url || x.berkas);
       if (filled) {
         var ok = await ui.confirm(kind === 'peng' ? 'Riwayat proyek “' + (x.proyek || 'tanpa nama') + '” akan dihapus.' : 'Dokumen “' + (x.label || x.jenis) + '” akan dihapus dari daftar.', {
           title: kind === 'peng' ? 'Hapus riwayat proyek?' : 'Hapus dokumen?', okLabel: 'Hapus', danger: true
@@ -2007,7 +2080,10 @@
       }
       list.splice(idx, 1);
       if (kind === 'peng') { renderPeng(); queueApp({ pengalaman: readPeng() }); }
-      else { renderDok(); queueApp({ dokumen: readDok() }); }
+      else {
+        renderDok(); queueApp({ dokumen: readDok() });
+        if (x.berkas) BK().hapus(BK().idDokumen(x.id)).catch(function (e) { console.warn('[PPAPI] Berkas lama belum terhapus:', e && e.message); });
+      }
       flushNow();
       var rows = $$('#' + (kind === 'peng' ? 'peng' : 'dok') + '-list [data-action$="-remove"]', root);
       focusEl(rows[Math.min(idx, rows.length - 1)] || root.querySelector('[data-action="' + kind + '-add"]'));

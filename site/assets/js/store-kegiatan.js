@@ -893,17 +893,23 @@
 
   /* ---- jsPDF (dimuat saat dibutuhkan, dengan SRI) ---- */
   var jspdfLoading = null;
+  /* jsPDF: salinan lokal (assets/vendor, lolos CSP 'self' di semua halaman) lebih dahulu, cadangan CDN ber-SRI */
+  function loadJs(src, sri) {
+    return new Promise(function (res, rej) {
+      var s = d.createElement('script');
+      if (sri) { s.integrity = sri; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer'; }
+      s.src = src;
+      s.onload = function () { (w.jspdf && w.jspdf.jsPDF) ? res(w.jspdf.jsPDF) : rej(new Error('jspdf kosong')); };
+      s.onerror = function () { s.remove(); rej(new Error('gagal memuat ' + src)); };
+      d.head.appendChild(s);
+    });
+  }
   function ensureJsPDF() {
     if (w.jspdf && w.jspdf.jsPDF) return Promise.resolve(w.jspdf.jsPDF);
     if (jspdfLoading) return jspdfLoading;
-    jspdfLoading = new Promise(function (res, rej) {
-      var s = d.createElement('script');
-      s.integrity = JSPDF_SRI; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
-      s.src = JSPDF_SRC;
-      s.onload = function () { (w.jspdf && w.jspdf.jsPDF) ? res(w.jspdf.jsPDF) : rej(kErr('kegiatan/pdf', 'Pustaka PDF tidak dapat dimuat.')); };
-      s.onerror = function () { jspdfLoading = null; rej(kErr('kegiatan/pdf', 'Pustaka PDF tidak dapat dimuat. Periksa koneksi internet Anda, lalu coba lagi.')); };
-      d.head.appendChild(s);
-    });
+    jspdfLoading = loadJs('assets/vendor/jspdf-2.5.1.umd.min.js', '')
+      .catch(function () { return loadJs(JSPDF_SRC, JSPDF_SRI); })
+      .catch(function () { jspdfLoading = null; throw kErr('kegiatan/pdf', 'Pustaka PDF tidak dapat dimuat. Periksa koneksi internet Anda, lalu coba lagi.'); });
     return jspdfLoading;
   }
   function hexRgb(hex) { var n = parseInt(String(hex).slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
@@ -969,6 +975,67 @@
       }
     }
     return doc;
+  }
+  /** certImage(ev, design, data, {width}) → data URL JPEG — gambar sertifikat (templat & desain yang sama dengan
+      buildPdf) untuk pratinjau di profil anggota. data = {nama, no, verifyUrl}. */
+  async function certImage(ev, design, data, o) {
+    o = o || {};
+    design = normDesign(design);
+    var pg = pageSize(design), W = pg.w, H = pg.h, PX = (o.width || 1200) / W;
+    var cv = d.createElement('canvas'); cv.width = Math.round(W * PX); cv.height = Math.round(H * PX);
+    var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+    function img(src) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
+    function font(face, style, pt) { return (style && /bold/.test(style) ? 'bold ' : '') + (style && /italic/.test(style) ? 'italic ' : '') + (pt * PT * PX).toFixed(2) + 'px ' + (face === 'serif' ? '"Times New Roman", Times, serif' : 'Helvetica, Arial, sans-serif'); }
+    function wrap(t, maxW) {
+      if (!maxW) return [t];
+      var words = String(t).split(/\s+/), out = [], cur = '';
+      words.forEach(function (wd) { var nx = cur ? cur + ' ' + wd : wd; if (cx.measureText(nx).width > maxW && cur) { out.push(cur); cur = wd; } else cur = nx; });
+      if (cur) out.push(cur);
+      return out.length ? out : [''];
+    }
+    function text(t, x, y, maxW, lh, align, sp) {
+      cx.textBaseline = 'middle'; cx.textAlign = align || 'center';
+      try { cx.letterSpacing = sp ? (sp * PX).toFixed(2) + 'px' : '0px'; } catch (e) { /* peramban lama */ }
+      var lines = wrap(t, maxW), y0 = y - (lines.length - 1) * lh / 2;
+      lines.forEach(function (ln, j) { cx.fillText(ln, x, y0 + j * lh); });
+    }
+    if (design.bg) {
+      cx.drawImage(await img(design.bg), 0, 0, cv.width, cv.height);
+    } else {
+      var spec = templateSpec(design.orient, await getSigner().catch(function () { return signer(); }), design.tema);
+      var assets = await Promise.all(spec.map(function (e) { return e.k === 'img' ? loadAsset(e.src).then(function (a) { return img(a.data); }).catch(function () { return null; }) : null; }));
+      spec.forEach(function (e, i) {
+        if (e.k === 'img') {
+          if (!assets[i]) return;
+          var iw = e.w * W, ih = e.bg ? H : iw * e.r;
+          cx.drawImage(assets[i], (e.x * W - iw / 2) * PX, (e.y * H - ih / 2) * PX, iw * PX, ih * PX);
+        } else if (e.k === 'line') {
+          cx.strokeStyle = e.color; cx.lineWidth = Math.max(1, e.lw * PX); cx.beginPath();
+          if (e.y1 !== undefined) { cx.moveTo(e.x1 * W * PX, e.y1 * H * PX); cx.lineTo(e.x2 * W * PX, e.y2 * H * PX); }
+          else { cx.moveTo(e.x1 * W * PX, e.y * H * PX); cx.lineTo(e.x2 * W * PX, e.y * H * PX); }
+          cx.stroke();
+        } else {
+          cx.font = font(e.font, e.style, e.size); cx.fillStyle = e.color;
+          text(e.t, e.x * W * PX, e.y * H * PX, e.w ? e.w * W * PX : 0, e.size * PT * 1.25 * PX, 'center', e.spacing || 0);
+        }
+      });
+    }
+    var texts = fieldTexts(ev, data, design);
+    ['nama', 'judul', 'tanggal', 'nomor'].forEach(function (k) {
+      var f = design.fields[k];
+      if (!f.on || !texts[k]) return;
+      cx.font = font(f.font, f.bold ? 'bold' : '', f.size); cx.fillStyle = f.color;
+      text(texts[k], f.x * W * PX, f.y * H * PX, f.w * W * PX, f.size * PT * 1.18 * PX, f.align, 0);
+    });
+    try { cx.letterSpacing = '0px'; } catch (e) { /* peramban lama */ }
+    var q = design.fields.qr;
+    if (q.on && data.verifyUrl) {
+      var m = qrCode.encode(data.verifyUrl), n = m.size, quiet = 2;
+      var size = q.size * W * PX, cell = size / (n + quiet * 2), x0 = q.x * W * PX - size / 2, y0q = q.y * H * PX - size / 2;
+      cx.fillStyle = '#fff'; cx.fillRect(x0, y0q, size, size); cx.fillStyle = '#111113';
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (m.modules[y][x]) cx.fillRect(x0 + (quiet + x) * cell, y0q + (quiet + y) * cell, cell + 0.5, cell + 0.5);
+    }
+    return cv.toDataURL('image/jpeg', o.quality || 0.86);
   }
   function verifyUrl(docId) {
     var path = 'sertifikat.html?no=' + encodeURIComponent(certDisplay(docId));
@@ -1665,7 +1732,7 @@
     register: register, updateName: updateName, cancel: cancel, meetingInfo: meetingInfo, calDesc: calDesc, attend: attend,
     /* sertifikat */
     issueCertificate: issueCertificate, downloadCertificate: downloadCertificate, verify: verify, getDesign: getDesign,
-    defaultDesign: defaultDesign, normDesign: normDesign, buildPdf: buildPdf, ensureJsPDF: ensureJsPDF, verifyUrl: verifyUrl,
+    defaultDesign: defaultDesign, normDesign: normDesign, buildPdf: buildPdf, certImage: certImage, ensureJsPDF: ensureJsPDF, verifyUrl: verifyUrl,
     certDisplay: certDisplay, certDocId: certDocId, compressImage: compressImage, processSignature: processSignature, pageSize: pageSize, fieldTexts: fieldTexts,
     qr: qrCode,
     /* waktu & format */
