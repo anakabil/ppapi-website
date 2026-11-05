@@ -145,8 +145,23 @@
       }
       for (var j = parts; old && j < old.bagian; j++) await ref.collection('parts').doc(String(j)).delete().catch(function () {});
       await ref.set({ uid: u.uid, nama: info.nama, jenis: info.jenis, ukuran: info.ukuran, bagian: parts, updatedAt: f.fb.firestore.FieldValue.serverTimestamp() });
-    } catch (e) { throw mapFs(e); }
+    } catch (e) { throw await explainDenied(e, u.uid); }
     return { nama: info.nama, jenis: info.jenis, ukuran: info.ukuran };
+  }
+  /* izin ditolak padahal status formulir boleh diubah → aturan member_files di server belum diperbarui (belum di-Publish) */
+  async function explainDenied(e, uid) {
+    var m = mapFs(e);
+    if (!/permission-denied/.test(m.code)) return m;
+    try {
+      var mem = PPAPI.store && PPAPI.store.getMember ? await PPAPI.store.getMember(uid, { pasFoto: false }) : null;
+      var st = mem && mem.status;
+      var editable = ['Draf', 'Perlu Perbaikan', 'Ditolak', 'Aktif'].indexOf(st) !== -1 || (st === 'Menunggu Verifikasi' && !(mem.application && mem.application.submittedAt));
+      if (editable) {
+        console.warn('[PPAPI] member_files ditolak untuk status "' + st + '": aturan Firestore member_files kemungkinan belum di-Publish.');
+        return err('berkas/server-rules', 'Berkas belum dapat disimpan karena penyimpanan berkas di server PPAPI belum diaktifkan. Formulir Anda tetap dapat diubah. Mohon hubungi sekretariat, lalu coba unggah kembali beberapa saat lagi.', e);
+      }
+    } catch (x) { /* pakai pesan umum */ }
+    return m;
   }
   async function info(uid, fid) {
     if (!uid) return null;
