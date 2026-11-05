@@ -68,6 +68,10 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   (diabaikan pemeriksa artikel) dan kolom `gambarKeterangan` (kredit foto sampul). Gambar sampul baru wajib didaftarkan di `IMAGES`
   core.js (ukuran + versi -sm) agar lolos uji kartu. Foto kiriman klien (sumber/lisensi tidak diketahui) tidak dipakai. Kunci OpenAI
   di env ditolak (401) per 04-11-2026. Uji berita-agenda-flow/contract-v2 kini menghitung 11 artikel bawaan.
+- Laporan webinar 4-11-2026 (05-11-2026): artikel `laporan-webinar-collapse-prevention-dan-peluncuran-situs-ppapi` (Kegiatan, sorotan;
+  gambar dari flyer `events/{id}/assets/flyer` → `assets/img/webinar-2026-11-04*.webp`). Fakta dari klien (dibuka Ketua Umum, pemateri,
+  ditutup grand opening situs, lancar, peserta antusias bertanya) + data situs (166 pendaftar) + flyer. Tangkapan layar Zoom kiriman
+  klien belum dimuat (bukan berkas; berisi nama/wajah peserta → pangkas dulu). Uji berita/contract kini menghitung 12 artikel.
 - Berkas pendukung (05-11-2026): dokumen pengajuan, bukti pembayaran, dan berkas sertifikat **diunggah langsung** (bukan tautan
   Drive) lewat `assets/js/store-berkas.js` → `member_files/{uid}/berkas/{fid}` (+ `parts/{n}` ≤ 900 KB, maks. 5 = 4 MB; PDF atau foto →
   JPEG). fid: `dok-<rowId>`, `srt-<certId>`, `bukti-bayar`; baris menyimpan `berkas` (nama), bukti = `pembayaran.buktiUrl='berkas:bukti-bayar'`.
@@ -128,7 +132,7 @@ Repositori ini satu-satunya sumber kebenaran. Baca juga `README.md` (alur kerja)
   dibubuhi tanda air pembeli + dienkripsi AES-128 (kata sandi = email pembeli, izin ubah/salin ditutup, cetak boleh) dengan
   `assets/vendor/pdf-lib-cantoo-2.8.4.min.js` (wajib `useObjectStreams: true`). Produk CoP: PPAPI-CoP-01:2026 Seri Lengkap
   8 bagian (183 hlm., Rp150.000), paket impor diserahkan ke klien; berkas PDF CoP **jangan** dimasukkan ke repositori.
-- Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 11 artikel, aplikasi anggota (data melekat ke
+- Fitur: keanggotaan + Konsol Admin, Produk Pengetahuan, regulasi, 12 artikel, aplikasi anggota (data melekat ke
   akun), direktori instruktur, kegiatan (daftar hadir otomatis + sertifikat), toko & pesanan.
 
 ## Pekerjaan tertunda
